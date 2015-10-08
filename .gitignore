@@ -1,0 +1,7 @@
+bin/loginserver
+bin/worldserver
+bin/data.dat
+bin/world.xml
+bin/items.xml
+obj/
+CppCheckResults.xml

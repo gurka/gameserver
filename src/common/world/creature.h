@@ -1,0 +1,95 @@
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Simon Sandström
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef COMMON_WORLD_CREATURE_H_
+#define COMMON_WORLD_CREATURE_H_
+
+#include <string>
+#include "direction.h"
+
+using CreatureId = int;
+
+struct Outfit
+{
+  uint8_t type;
+  uint8_t ext;  // item
+  uint8_t head;
+  uint8_t body;
+  uint8_t legs;
+  uint8_t feet;
+};
+
+class Creature
+{
+ public:
+  explicit Creature(const std::string& name);
+
+  bool operator==(const Creature& other) const;
+
+  CreatureId getCreatureId() const { return creatureId_; }
+  const std::string& getName() const { return name_; }
+
+  const Direction& getDirection() const { return direction_; }
+  void setDirection(const Direction& direction) { direction_ = direction; }
+
+  int getMaxHealth() const { return maxHealth_; }
+  void setMaxHealth(int maxHealth) { maxHealth_ = maxHealth; }
+
+  int getHealth() const { return health_; }
+  void setHealth(int health) { health_ = health; }
+
+  int getSpeed() const { return speed_; }
+  void setSpeed(int speed) { speed_ = speed; }
+
+  const Outfit& getOutfit() const { return outfit_; }
+  void setOutfit(const Outfit& outfit) { outfit_ = outfit; }
+
+  int getLightColor() const { return lightColor_; }
+  void setLightColor(int lightColor) { lightColor_ = lightColor; }
+
+  int getLightLevel() const { return lightLevel_; }
+  void setLightLevel(int lightLevel) { lightLevel_ = lightLevel; }
+
+  int getStepSpeed() const { return stepSpeed_; }
+  void setStepSpeed(int stepSpeed) { stepSpeed_ = stepSpeed; }
+
+  static const CreatureId INVALID_ID = 0;
+  static int getFreeCreatureId() { return Creature::nextCreatureId_++; }
+
+ private:
+  CreatureId creatureId_;
+  std::string name_;
+  Direction direction_;
+  int maxHealth_;
+  int health_;
+  int speed_;
+  Outfit outfit_;
+  int lightColor_;
+  int lightLevel_;
+  int stepSpeed_;
+
+  static CreatureId nextCreatureId_;
+};
+
+#endif  // COMMON_WORLD_CREATURE_H_
