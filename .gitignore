@@ -1,7 +1,11 @@
 bin/loginserver
 bin/worldserver
+bin/unittest
 bin/data.dat
 bin/world.xml
 bin/items.xml
 obj/
 CppCheckResults.xml
+*.o
+*.a
+lib/googletest/make/sample1_unittest
