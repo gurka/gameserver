@@ -152,7 +152,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 int main(int argc, char* argv[])
 {
   // Read configuration
-  auto config = ConfigParser::parse("loginserver.cfg");
+  auto config = ConfigParser::parseFile("loginserver.cfg");
   if (!config.parsedOk())
   {
     LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());

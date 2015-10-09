@@ -30,5 +30,10 @@
 			<type>2</type>
 			<locationURI>PARENT-1-PROJECT_LOC/src</locationURI>
 		</link>
+		<link>
+			<name>test</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/test</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>

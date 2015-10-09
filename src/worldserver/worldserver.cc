@@ -387,7 +387,7 @@ Position getPosition(IncomingPacket* packet)
 int main(int argc, char* argv[])
 {
   // Read configuration
-  auto config = ConfigParser::parse("worldserver.cfg");
+  auto config = ConfigParser::parseFile("worldserver.cfg");
   if (!config.parsedOk())
   {
     LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());

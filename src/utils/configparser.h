@@ -91,7 +91,7 @@ class ConfigParser
 
   bool parsedOk() const
   {
-    return ok_;
+    return !error_;
   }
 
   std::string getErrorMessage() const
@@ -99,25 +99,38 @@ class ConfigParser
     return errorMessage_;
   }
 
-  static ConfigParser parse(const std::string& fileName)
+  static ConfigParser parseFile(const std::string& fileName)
   {
-    ConfigParser result;
-
     // Open file
     std::ifstream fileStream(fileName);
     if (!fileStream.is_open())
     {
-      result.ok_ = false;
+      ConfigParser result;
+      result.error_ = true;
       result.errorMessage_ = "Could not open file: " + fileName;
       return result;
     }
+
+    ConfigParser result = parseStream(&fileStream);
+    if (result.error_)
+    {
+      auto temp = result.errorMessage_;
+      result.errorMessage_ = fileName + ":" + temp;
+    }
+
+    return result;
+  }
+
+  static ConfigParser parseStream(std::istream* stream)
+  {
+    ConfigParser result;
 
     std::unordered_map<std::string, std::string>* currentSection = nullptr;
 
     // Read lines
     std::string line;
     auto lineNumber = 0;
-    while (std::getline(fileStream, line))
+    while (std::getline(*stream, line))
     {
       lineNumber++;
 
@@ -146,11 +159,9 @@ class ConfigParser
         if (sectionName.length() == 0)
         {
           std::ostringstream errorMessageStream;
-          errorMessageStream << fileName << ":" << lineNumber << ": Invalid section name (empty)";
+          errorMessageStream << lineNumber << ": Invalid section name (empty)";
 
-          LOG_ERROR("%s", errorMessageStream.str().c_str());
-
-          result.ok_ = false;
+          result.error_ = true;
           result.errorMessage_ = errorMessageStream.str();
           return result;
         }
@@ -164,11 +175,9 @@ class ConfigParser
       else if (currentSection == nullptr)
       {
         std::ostringstream errorMessageStream;
-        errorMessageStream << fileName << ":" << lineNumber << ": Key-value pair without section";
+        errorMessageStream << lineNumber << ": Key-value pair without section";
 
-        LOG_ERROR("%s", errorMessageStream.str().c_str());
-
-        result.ok_ = false;
+        result.error_ = true;
         result.errorMessage_ = errorMessageStream.str();
         return result;
       }
@@ -205,11 +214,9 @@ class ConfigParser
         if (key.length() == 0 || value.length() == 0)
         {
           std::ostringstream errorMessageStream;
-          errorMessageStream << fileName << ":" << lineNumber << ": Invalid key-value pair";
+          errorMessageStream << lineNumber << ": Invalid key-value pair";
 
-          LOG_ERROR("%s", errorMessageStream.str().c_str());
-
-          result.ok_ = false;
+          result.error_ = true;
           result.errorMessage_ = errorMessageStream.str();
           return result;
         }
@@ -217,12 +224,14 @@ class ConfigParser
         // Verify that the key isn't already read
         if (currentSection->count(key) == 1)
         {
-          std::ostringstream warningMessageStream;
-          warningMessageStream << fileName << ":" << lineNumber << ": Warning: key \"" << key << "\" read multiple times";
-          LOG_INFO("%s", warningMessageStream.str().c_str());
+          std::ostringstream errorMessageStream;
+          errorMessageStream << lineNumber << ": Key \"" << key << "\" read multiple times";
+
+          result.error_ = true;
+          result.errorMessage_ = errorMessageStream.str();
+          return result;
         }
 
-        LOG_DEBUG("Read value {%s} = {%s}", key.c_str(), value.c_str());
         currentSection->insert(std::make_pair(key, value));
       }
     }
@@ -232,11 +241,11 @@ class ConfigParser
 
  private:
   ConfigParser()
-    : ok_(true)
+    : error_(false)
   {
   }
 
-  bool ok_;
+  bool error_;
   std::string errorMessage_;
 
   std::unordered_map<std::string,

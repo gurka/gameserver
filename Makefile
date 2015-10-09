@@ -38,7 +38,7 @@ DEPEND_WORLD  = $(OBJECT_WORLD:.o=.d)
 INCLUDE_WORLD = -Isrc/utils -Ilib/rapidxml-1.13
 TARGET_WORLD  = bin/worldserver
 
-.PHONY: all login login-debug world world-debug clean
+.PHONY: all login login-debug world world-debug test clean
 
 all: login
 all: world
@@ -82,6 +82,17 @@ obj/utils/%.o: src/utils/%.cc
 obj/%.o: src/%.cc
 	$(dir_guard)
 	$(CXX) $(CXXFLAGS) -Isrc/common -o $@ $<
+
+test: lib/googletest/make/gtest_main.a configparser_test position_test
+
+lib/googletest/make/gtest_main.a:
+	make -C lib/googletest/make
+
+configparser_test: lib/googletest/make/gtest_main.a test/utils/configparser_test.cc src/utils/logger.cc
+	g++ -std=c++11 -isystem lib/googletest/include -Isrc/utils -g -Wall -Werror -pthread -lpthread $^ -o $@
+
+position_test: lib/googletest/make/gtest_main.a test/common/world/position_test.cc src/common/world/position.cc
+	g++ -std=c++11 -isystem lib/googletest/include -Isrc/common/world -g -Wall -Werror -pthread -lpthread $^ -o $@
 
 clean:
 	rm -rf obj/ $(TARGET_LOGIN) $(TARGET_WORLD)
