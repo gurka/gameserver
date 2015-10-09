@@ -34,7 +34,7 @@ struct Character
 {
   std::string name;
   std::string worldName;
-  uint32_t worldAddress;
+  uint32_t worldIp;
   uint16_t worldPort;
 };
 
@@ -47,16 +47,16 @@ struct Account
     OK,
   };
 
-  Account(Status status, const std::vector<Character>& characters, int premiumDays)
+  Account(Status status, int premiumDays, const std::vector<Character>& characters)
     : status(status),
-      characters(characters),
-      premiumDays(premiumDays)
+      premiumDays(premiumDays),
+      characters(characters)
   {
   }
 
   Status status;
-  std::vector<Character> characters;
   int premiumDays;
+  std::vector<Character> characters;
 };
 
 class AccountManager
@@ -67,11 +67,13 @@ class AccountManager
   AccountManager(const AccountManager&) = delete;
   AccountManager& operator=(const AccountManager&) = delete;
 
-  static void initialize();
+  static bool initialize(const std::string& accountsFilename);
   static const Account& getAccount(uint32_t account_name, const std::string& password);
   static bool verifyPassword(const std::string& character_name, const std::string& password);
 
  private:
+  static bool loadAccounts(const std::string& accountsFilename);
+
   static const Account ACCOUNT_NOT_FOUND;
   static const Account ACCOUNT_INVALID_PASSWORD;
 

@@ -24,48 +24,52 @@
 
 #include "accountmgr.h"
 
+#include <fstream>
+#include <sstream>
 #include <utility>
 
-const Account AccountManager::ACCOUNT_NOT_FOUND(Account::NOT_FOUND, {}, 0);
-const Account AccountManager::ACCOUNT_INVALID_PASSWORD(Account::INVALID_PASSWORD, {}, 0);
+#include "logger.h"
+#include "rapidxml.hpp"
+
+const Account AccountManager::ACCOUNT_NOT_FOUND(Account::NOT_FOUND, 0, {});
+const Account AccountManager::ACCOUNT_INVALID_PASSWORD(Account::INVALID_PASSWORD, 0, {});
 
 std::unordered_map<uint32_t, Account> AccountManager::accounts_;
 std::unordered_map<uint32_t, std::string> AccountManager::passwords_;
 std::unordered_map<std::string, uint32_t> AccountManager::characterToAccountNumber_;
 
-void AccountManager::initialize()
+namespace
 {
-  // Create static accounts
-  accounts_.insert(std::pair<uint32_t, Account>(1,
-                                                {
-                                                  Account::Status::OK,
-                                                  {
-                                                    // 192.168.1.3 => 0xC0 0xA8 0x01 0x03
-                                                    // 10.0.0.1 => 0x0A 0x00 0x00 0x01
-                                                    { "Alice", "Default", 0x0100000A, 7172, },
-                                                    { "Bob", "Default", 0x0100000A, 7172, },
-                                                  },
-                                                  90
-                                                }));
-  passwords_.insert(std::pair<uint32_t, std::string>(1, "1"));
-
-  accounts_.insert(std::pair<uint32_t, Account>(2,
-                                                {
-                                                  Account::Status::OK,
-                                                  {
-                                                    { "Gamemaster", "Default", 0x0100000A, 7172, },
-                                                  },
-                                                  1337,
-                                                }));
-  passwords_.insert(std::pair<uint32_t, std::string>(2, "2"));
-
-  for (const auto& accountsPair : accounts_)
+  // Converts an IP address on the form "xxx.xxx.xxx.xxx" to uint32
+  uint32_t ipAddressToUint32(const std::string& ipAddress)
   {
-    for (const auto& character : accountsPair.second.characters)
-    {
-      characterToAccountNumber_.insert(std::make_pair(character.name, accountsPair.first));
-    }
+    // We can't use uint8_t since the istringstream will read only one
+    // character instead of a number (since uint8_t == char)
+    uint16_t a;
+    uint16_t b;
+    uint16_t c;
+    uint16_t d;
+
+    std::istringstream ss(ipAddress);
+    ss >> a;
+    ss.ignore(1, '.');
+    ss >> b;
+    ss.ignore(1, '.');
+    ss >> c;
+    ss.ignore(1, '.');
+    ss >> d;
+    ss.ignore(1, '.');
+
+    return ((d & 0xFF) << 24) |
+           ((c & 0xFF) << 16) |
+           ((b & 0xFF) << 8)  |
+           ((a & 0xFF) << 0);
   }
+}  // namespace
+
+bool AccountManager::initialize(const std::string& accountsFilename)
+{
+  return loadAccounts(accountsFilename);
 }
 
 const Account& AccountManager::getAccount(uint32_t account_name,
@@ -105,4 +109,139 @@ bool AccountManager::verifyPassword(const std::string& character_name,
   }
 
   return password_cit->second == password;
+}
+
+bool AccountManager::loadAccounts(const std::string& accountsFilename)
+{
+  // Open XML and read into string
+  std::ifstream xmlFile(accountsFilename);
+  if (!xmlFile.is_open())
+  {
+    LOG_ERROR("loadAccounts(): Could not open file %s", accountsFilename.c_str());
+    return false;
+  }
+
+  std::string tempString;
+  std::ostringstream xmlStringStream;
+  while (std::getline(xmlFile, tempString))
+  {
+    xmlStringStream << tempString << "\n";
+  }
+
+  // Convert the std::string to a char*
+  char* xmlString = strdup(xmlStringStream.str().c_str());
+
+  // Parse the XML string with Rapidxml
+  rapidxml::xml_document<> accountsXml;
+  accountsXml.parse<0>(xmlString);
+
+  // Get top node (<accounts>)
+  rapidxml::xml_node<>* accountsNode = accountsXml.first_node("accounts");
+  if (accountsNode == nullptr)
+  {
+    LOG_ERROR("loadAccounts(): Invalid file: Could not find node <accounts>");
+    free(xmlString);
+    return false;
+  }
+
+  // Iterate over all <account> nodes
+  for (auto* accountNode = accountsNode->first_node("account");
+       accountNode != nullptr;
+       accountNode = accountNode->next_sibling())
+  {
+    // Get account number
+    auto* numberAttr = accountNode->first_attribute("number");
+    if (numberAttr == nullptr)
+    {
+      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"number\"");
+      free(xmlString);
+      return false;
+    }
+    auto number = std::stoi(numberAttr->value());
+
+    // Get account password
+    auto* passwordAttr = accountNode->first_attribute("password");
+    if (passwordAttr == nullptr)
+    {
+      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"password\"");
+      free(xmlString);
+      return false;
+    }
+    auto password = numberAttr->value();
+
+    // Get account paid days
+    auto* paidDaysAttr = accountNode->first_attribute("paid_days");
+    if (paidDaysAttr == nullptr)
+    {
+      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"paid_days\"");
+      free(xmlString);
+      return false;
+    }
+    auto paidDays = std::stoi(paidDaysAttr->value());
+
+    // Create Account object
+    Account account(Account::Status::OK, paidDays, {});
+
+    // Iterate over all <character> nodes
+    for (auto* characterNode = accountNode->first_node("character");
+         characterNode != nullptr;
+         characterNode = characterNode->next_sibling())
+    {
+      Character character;
+
+      // Get name
+      auto* charNameAttr = characterNode->first_attribute("name");
+      if (charNameAttr == nullptr)
+      {
+        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"name\"");
+        free(xmlString);
+        return false;
+      }
+      character.name = charNameAttr->value();
+
+      // Get world
+      auto* worldNameAttr = characterNode->first_attribute("world_name");
+      if (worldNameAttr == nullptr)
+      {
+        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_name\"");
+        free(xmlString);
+        return false;
+      }
+      character.worldName = worldNameAttr->value();
+
+      // Get address
+      auto* worldIpAttr = characterNode->first_attribute("world_ip");
+      if (worldIpAttr == nullptr)
+      {
+        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_ip\"");
+        free(xmlString);
+        return false;
+      }
+      character.worldIp = ipAddressToUint32(worldIpAttr->value());
+
+      // Get port
+      auto* worldPortAttr = characterNode->first_attribute("world_port");
+      if (worldPortAttr == nullptr)
+      {
+        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_port\"");
+        free(xmlString);
+        return false;
+      }
+      character.worldPort = std::stoi(worldPortAttr->value());
+
+      // Insert character
+      account.characters.push_back(character);
+      characterToAccountNumber_.insert(std::make_pair(character.name, number));
+    }
+
+    // Insert account and password
+    accounts_.insert(std::make_pair(number, account));
+    passwords_.insert(std::make_pair(number, password));
+  }
+
+  LOG_INFO("loadAccounts(): Successfully loaded %zu accounts with a total of %zu characters",
+           accounts_.size(), characterToAccountNumber_.size());
+
+  free(xmlString);
+  return true;
 }

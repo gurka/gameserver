@@ -39,10 +39,11 @@
 #include "world/world.h"
 #include "logger.h"
 
-GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& motd, const std::string& dataFilename)
+GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename)
   : state_(INITIALIZED),
     taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
-    world_(motd, dataFilename)
+    loginMessage_(loginMessage),
+    world_(dataFilename)
 {
 }
 
@@ -108,7 +109,7 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
     Position position(222, 222, 7);
     world_.addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
 
-    playerCtrl.onPlayerSpawn(player, position);
+    playerCtrl.onPlayerSpawn(player, position, loginMessage_);
   };
 
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());

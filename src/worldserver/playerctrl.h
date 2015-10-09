@@ -64,7 +64,7 @@ class PlayerCtrl : public CreatureCtrl
   void onTileUpdate(const Position& position);
 
   // Player specific ctrl
-  void onPlayerSpawn(const Player& player, const Position& position);
+  void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage);
 
   void onEquipmentUpdated(const Player& player, int inventoryIndex);
 

@@ -134,7 +134,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
       {
         response.addString(character.name);
         response.addString(character.worldName);
-        response.addU32(character.worldAddress);
+        response.addU32(character.worldIp);
         response.addU16(character.worldPort);
       }
       response.addU16(account.premiumDays);
@@ -159,14 +159,18 @@ int main(int argc, char* argv[])
     LOG_INFO("Will continue with default values");
   }
 
-  int serverPort = config.getInteger("server", "port", 7171);
+  auto serverPort = config.getInteger("server", "port", 7171);
+
   motd = config.getString("login", "motd", "Welcome to LoginServer!");
+  auto accountsFilename = config.getString("login", "accounts_file", "accounts.xml");
 
   // Print configuration values
   LOG_INFO("                            LoginServer configuration                           ");
   LOG_INFO("================================================================================");
   LOG_INFO("Server port:               %d", serverPort);
+  LOG_INFO("");
   LOG_INFO("Message of the day:        %s", motd.c_str());
+  LOG_INFO("Accounts filename:         %s", accountsFilename.c_str());
   LOG_INFO("================================================================================");
 
   // Setup io_service, AccountManager and Server
@@ -175,7 +179,7 @@ int main(int argc, char* argv[])
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
 
-  AccountManager::initialize();
+  AccountManager::initialize(accountsFilename);
 
   Server::Callbacks callbacks =
   {

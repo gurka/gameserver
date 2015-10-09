@@ -210,7 +210,7 @@ void PlayerCtrl::onTileUpdate(const Position& position)
   sendPacket_(packet);
 }
 
-void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position)
+void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage)
 {
   OutgoingPacket packet;
 
@@ -272,7 +272,7 @@ void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position)
   // Login message
   packet.addU8(0xB4);  // Message
   packet.addU8(0x11);  // Message type
-  packet.addString(worldInterface_->getMessageOfTheDay());  // Message text
+  packet.addString(loginMessage);  // Message text
 
   sendPacket_(packet);
 }

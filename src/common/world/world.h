@@ -50,7 +50,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(const std::string& motd, const std::string& dataFilename);
+  World(const std::string& dataFilename);
 
   bool initialize();
 
@@ -73,7 +73,6 @@ class World : public WorldInterface
   bool creatureCanReach(CreatureId creatureId, const Position& position) const;
 
   // WorldInterface
-  const std::string& getMessageOfTheDay() const;
   const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const;
   const Tile& getTile(const Position& position) const;
   const Creature& getCreature(CreatureId creatureId) const;
@@ -93,7 +92,6 @@ class World : public WorldInterface
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
 
   // Configuration stuff
-  std::string motd_;
   std::string dataFilename_;
 
   // World size

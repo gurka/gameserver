@@ -13,7 +13,7 @@ SOURCE_LOGIN  = src/loginserver/loginserver.cc \
                 src/common/network/server.cc
 OBJECT_LOGIN  = $(patsubst src/%.cc, obj/%.o, $(SOURCE_LOGIN))
 DEPEND_LOGIN  = $(OBJECT_LOGIN:.o=.d)
-INCLUDE_LOGIN = -Isrc/utils
+INCLUDE_LOGIN = -Isrc/utils -Ilib/rapidxml-1.13
 TARGET_LOGIN  = bin/loginserver
 
 # Worldserver

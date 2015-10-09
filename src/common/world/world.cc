@@ -33,9 +33,8 @@
 #include "logger.h"
 #include "rapidxml.hpp"
 
-World::World(const std::string& motd, const std::string& dataFilename)
-  : motd_(motd),
-    dataFilename_(dataFilename)
+World::World(const std::string& dataFilename)
+  : dataFilename_(dataFilename)
 {
 }
 
@@ -487,11 +486,6 @@ bool World::creatureCanReach(CreatureId creatureId, const Position& position) co
   return !(std::abs(creaturePosition.getX() - position.getX()) > 1 ||
            std::abs(creaturePosition.getY() - position.getY()) > 1 ||
            creaturePosition.getZ() != position.getZ());
-}
-
-const std::string& World::getMessageOfTheDay() const
-{
-  return motd_;
 }
 
 const std::list<const Tile*> World::getMapBlock(const Position& position, int width, int height) const

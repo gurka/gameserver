@@ -43,7 +43,7 @@ class OutgoingPacket;
 class GameEngine
 {
  public:
-  GameEngine(boost::asio::io_service* io_service, const std::string& motd, const std::string& dataFilename);
+  GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename);
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
   ~GameEngine();
@@ -89,6 +89,8 @@ class GameEngine
 
   std::unordered_map<CreatureId, std::unique_ptr<Player>> players_;
   std::unordered_map<CreatureId, std::unique_ptr<PlayerCtrl>> playerCtrls_;
+
+  std::string loginMessage_;
 
   World world_;
 };

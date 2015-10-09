@@ -37,7 +37,6 @@ class WorldInterface
  public:
   virtual ~WorldInterface() = default;
 
-  virtual const std::string& getMessageOfTheDay() const = 0;
   virtual const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
   virtual const Tile& getTile(const Position& position) const = 0;
   virtual const Creature& getCreature(CreatureId creatureId) const = 0;

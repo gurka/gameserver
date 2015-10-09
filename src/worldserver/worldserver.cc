@@ -394,20 +394,24 @@ int main(int argc, char* argv[])
     LOG_INFO("Will continue with default values");
   }
 
-  int serverPort = config.getInteger("server", "port", 7172);
-  std::string motd = config.getString("world", "motd", "Welcome to LoginServer!");
-  std::string dataFilename = config.getString("world", "datafile", "Data.dat");
-  std::string worldFilename = config.getString("world", "worldfile", "world.xml");
-  std::string itemsFilename = config.getString("world", "itemfile", "items.xml");
+  auto serverPort = config.getInteger("server", "port", 7172);
+
+  auto loginMessage = config.getString("world", "login_message", "Welcome to LoginServer!");
+  auto accountsFilename = config.getString("world", "accounts_file", "accounts.xml");
+  auto dataFilename = config.getString("world", "data_file", "data.dat");
+  auto itemsFilename = config.getString("world", "item_file", "items.xml");
+  auto worldFilename = config.getString("world", "world_file", "world.xml");
 
   // Print configuration values
   LOG_INFO("                            WorldServer configuration                           ");
   LOG_INFO("================================================================================");
   LOG_INFO("Server port:               %d", serverPort);
-  LOG_INFO("Message of the day:        %s", motd.c_str());
+  LOG_INFO("");
+  LOG_INFO("Login message:             %s", loginMessage.c_str());
+  LOG_INFO("Accounts filename:         %s", accountsFilename.c_str());
   LOG_INFO("Data filename:             %s", dataFilename.c_str());
-  LOG_INFO("World filename:            %s", worldFilename.c_str());
   LOG_INFO("Items filename:            %s", itemsFilename.c_str());
+  LOG_INFO("World filename:            %s", worldFilename.c_str());
   LOG_INFO("================================================================================");
 
   // Setup io_service, AccountManager, GameEngine and Server
@@ -420,8 +424,8 @@ int main(int argc, char* argv[])
     &onPacketReceived,
   };
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
-  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, motd, dataFilename));
-  AccountManager::initialize();
+  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, dataFilename));
+  AccountManager::initialize(accountsFilename);
 
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
