@@ -50,7 +50,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(const std::string& dataFilename);
+  explicit World(const std::string& dataFilename);
 
   bool initialize();
 
