@@ -1,0 +1,6 @@
+[submodule "lib/rapidxml"]
+	path = lib/rapidxml
+	url = git@github.com:gurka/rapidxml-fork.git
+[submodule "lib/googletest"]
+	path = lib/googletest
+	url = git@github.com:google/googletest.git
