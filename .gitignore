@@ -1,5 +1,5 @@
 *.swp
-/build/
+/build_*/
 /data/data.dat
 /data/items.xml
 /data/world.xml

@@ -1,0 +1,18 @@
+#!/bin/bash
+case $1 in
+  'release')
+    mkdir -p build_release && cd build_release && cmake .. -DCMAKE_BUILD_TYPE=release
+    ;;
+
+  'debug')
+    mkdir -p build_debug && cd build_debug && cmake .. -DCMAKE_BUILD_TYPE=debug
+    ;;
+
+  'test')
+    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dgameserver_test=ON
+    ;;
+
+  *)
+    echo "Usage: $0 [release | debug | test]"
+    ;;
+esac
