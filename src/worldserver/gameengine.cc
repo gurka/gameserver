@@ -39,11 +39,12 @@
 #include "world/world.h"
 #include "logger.h"
 
-GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename)
+GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename,
+                       const std::string& worldFilename, const std::string& itemsFilename)
   : state_(INITIALIZED),
     taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
     loginMessage_(loginMessage),
-    world_(dataFilename)
+    world_(dataFilename, worldFilename, itemsFilename)
 {
 }
 

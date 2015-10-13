@@ -24,8 +24,8 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1075015741" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.984561155" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.2004078420" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1245545882" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -33,8 +33,8 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.894135178" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.1286952462" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.761248737" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1632017331" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -47,8 +47,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.45817882" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.531112397" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.88564632" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -81,8 +81,8 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.61095733" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.933229547" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.12620296" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1165716406" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -90,8 +90,8 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.1821047053" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.1526299363" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1105769229" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1761476784" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -104,8 +104,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.917474863" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.1239718018" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.505490826" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -138,8 +138,8 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1464648104" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.811465500" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1220504678" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.434086029" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -147,8 +147,8 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.1634693916" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.566175390" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.420293108" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.855029221" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -161,8 +161,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.1506964002" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.1718592068" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1681160473" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -195,8 +195,8 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.553708008" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.105858523" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1185502851" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.182888696" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -204,8 +204,8 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.584210562" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.421318554" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.2133015709" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.711753938" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -218,8 +218,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.267016748" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.1828623747" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml-1.13&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/googletest/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../lib/rapidxml&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.654329183" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

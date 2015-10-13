@@ -33,27 +33,29 @@
 #include "logger.h"
 #include "rapidxml.hpp"
 
-World::World(const std::string& dataFilename)
-  : dataFilename_(dataFilename)
+World::World(const std::string& dataFilename, const std::string& worldFilename, const std::string& itemsFilename)
+  : dataFilename_(dataFilename),
+    worldFilename_(worldFilename),
+    itemsFilename_(itemsFilename)
 {
 }
 
 bool World::initialize()
 {
   // Load data file
-  LOG_INFO("Loading data file");
-  if (!ItemData::loadItemData(dataFilename_))
+  LOG_INFO("Loading data files");
+  if (!ItemData::loadItemData(dataFilename_, itemsFilename_))
   {
-    LOG_ERROR("initialize(): Could not load data file");
+    // ItemData::loadItemData logs error on failure
     return false;
   }
 
   // Open world.xml and read it into a string
-  LOG_INFO("Loading world.xml");
-  std::ifstream xmlFile("world.xml");
+  LOG_INFO("Loading world file: \"%s\"", worldFilename_.c_str());
+  std::ifstream xmlFile(worldFilename_);
   if (!xmlFile.is_open())
   {
-    LOG_ERROR("initialize(): Could not open world.xml");
+    LOG_ERROR("initialize(): Could not open file: \"%s\"", worldFilename_.c_str());
     return false;
   }
 

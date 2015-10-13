@@ -43,7 +43,8 @@ class OutgoingPacket;
 class GameEngine
 {
  public:
-  GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename);
+  GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename,
+             const std::string& worldFilename, const std::string& itemsFilename);
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
   ~GameEngine();

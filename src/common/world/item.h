@@ -33,7 +33,7 @@ using ItemId = int;
 class ItemData
 {
  public:
-  static bool loadItemData(const std::string& dataFilename);
+  static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
   static const ItemData* getItemData(ItemId itemId);
 
   static const ItemId INVALID_ID = 0;
@@ -61,7 +61,7 @@ class ItemData
   ItemData() = default;
 
   static bool loadFromDat(const std::string& dataFilename);
-  static bool loadFromXml();
+  static bool loadFromXml(const std::string& itemsFilename);
 
   static std::unordered_map<ItemId, ItemData> itemData_;
 };

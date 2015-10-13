@@ -387,7 +387,7 @@ Position getPosition(IncomingPacket* packet)
 int main(int argc, char* argv[])
 {
   // Read configuration
-  auto config = ConfigParser::parseFile("worldserver.cfg");
+  auto config = ConfigParser::parseFile("data/worldserver.cfg");
   if (!config.parsedOk())
   {
     LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());
@@ -397,10 +397,10 @@ int main(int argc, char* argv[])
   auto serverPort = config.getInteger("server", "port", 7172);
 
   auto loginMessage = config.getString("world", "login_message", "Welcome to LoginServer!");
-  auto accountsFilename = config.getString("world", "accounts_file", "accounts.xml");
-  auto dataFilename = config.getString("world", "data_file", "data.dat");
-  auto itemsFilename = config.getString("world", "item_file", "items.xml");
-  auto worldFilename = config.getString("world", "world_file", "world.xml");
+  auto accountsFilename = config.getString("world", "accounts_file", "data/accounts.xml");
+  auto dataFilename = config.getString("world", "data_file", "data/data.dat");
+  auto itemsFilename = config.getString("world", "item_file", "data/items.xml");
+  auto worldFilename = config.getString("world", "world_file", "data/world.xml");
 
   // Print configuration values
   LOG_INFO("                            WorldServer configuration                           ");
@@ -424,7 +424,8 @@ int main(int argc, char* argv[])
     &onPacketReceived,
   };
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
-  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, dataFilename));
+  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, dataFilename,
+                                                          worldFilename, itemsFilename));
   AccountManager::initialize(accountsFilename);
 
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);

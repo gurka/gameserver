@@ -152,7 +152,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 int main(int argc, char* argv[])
 {
   // Read configuration
-  auto config = ConfigParser::parseFile("loginserver.cfg");
+  auto config = ConfigParser::parseFile("data/loginserver.cfg");
   if (!config.parsedOk())
   {
     LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
   auto serverPort = config.getInteger("server", "port", 7171);
 
   motd = config.getString("login", "motd", "Welcome to LoginServer!");
-  auto accountsFilename = config.getString("login", "accounts_file", "accounts.xml");
+  auto accountsFilename = config.getString("login", "accounts_file", "data/accounts.xml");
 
   // Print configuration values
   LOG_INFO("                            LoginServer configuration                           ");

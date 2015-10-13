@@ -73,7 +73,7 @@ set(common_accmgr_src
 )
 set(common_accmgr_inc
   "src/utils"
-  "lib/rapidxml-1.13"
+  "lib/rapidxml"
 )
 add_library(common_accmgr ${common_accmgr_src})
 target_include_directories(common_accmgr PUBLIC ${common_accmgr_inc})
@@ -116,7 +116,7 @@ set(common_world_src
 )
 set(common_world_inc
   "src/utils"
-  "lib/rapidxml-1.13"
+  "lib/rapidxml"
 )
 add_library(common_world ${common_world_src})
 target_include_directories(common_world PUBLIC ${common_world_inc})
@@ -133,7 +133,7 @@ if (gameserver_test)
     "src/common/accountmanager"
     "src/common/network"
     "src/common/world"
-    "lib/rapidxml-1.13"
+    "lib/rapidxml"
   )
 
   set(unittest_lib

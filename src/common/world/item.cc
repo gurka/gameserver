@@ -33,13 +33,13 @@
 
 std::unordered_map<ItemId, ItemData> ItemData::itemData_;
 
-bool ItemData::loadItemData(const std::string& dataFilename)
+bool ItemData::loadItemData(const std::string& dataFilename, const std::string& itemsFilename)
 {
   if (!loadFromDat(dataFilename))
   {
     return false;
   }
-  if (!loadFromXml())
+  if (!loadFromXml(itemsFilename))
   {
     return false;
   }
@@ -54,7 +54,7 @@ bool ItemData::loadFromDat(const std::string& dataFilename)
   FILE* f = fopen(dataFilename.c_str(), "rb");
   if (f == nullptr)
   {
-    LOG_ERROR("loadItemData(): Could not open file: %s", dataFilename.c_str());
+    LOG_ERROR("loadFromDat(): Could not open file: %s", dataFilename.c_str());
     return false;
   }
 
@@ -213,13 +213,13 @@ bool ItemData::loadFromDat(const std::string& dataFilename)
   return true;
 }
 
-bool ItemData::loadFromXml()
+bool ItemData::loadFromXml(const std::string& itemsFilename)
 {
   // Open XML and read into string
-  std::ifstream xmlFile("items.xml");
+  std::ifstream xmlFile(itemsFilename);
   if (!xmlFile.is_open())
   {
-    LOG_ERROR("loadFromXml(): Could not open items.xml");
+    LOG_ERROR("loadFromXml(): Could not open file: \"%s\"", itemsFilename.c_str());
     return false;
   }
 

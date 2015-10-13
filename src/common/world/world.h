@@ -50,7 +50,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  explicit World(const std::string& dataFilename);
+  World(const std::string& dataFilename, const std::string& worldFilename, const std::string& itemsFilename);
 
   bool initialize();
 
@@ -93,6 +93,8 @@ class World : public WorldInterface
 
   // Configuration stuff
   std::string dataFilename_;
+  std::string worldFilename_;
+  std::string itemsFilename_;
 
   // World size
   int worldSizeX_ = 0;
