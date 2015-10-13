@@ -24,6 +24,7 @@
 
 #include "creature.h"
 
+const CreatureId Creature::INVALID_ID = 0;
 CreatureId Creature::nextCreatureId_ = 0x4713;
 
 Creature::Creature(const std::string& name)
@@ -47,4 +48,9 @@ Creature::Creature(const std::string& name)
 bool Creature::operator==(const Creature& other) const
 {
   return creatureId_ == other.creatureId_;
+}
+
+bool Creature::operator!=(const Creature& other) const
+{
+  return !(*this == other);
 }

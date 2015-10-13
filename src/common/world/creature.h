@@ -46,6 +46,7 @@ class Creature
   explicit Creature(const std::string& name);
 
   bool operator==(const Creature& other) const;
+  bool operator!=(const Creature& other) const;
 
   CreatureId getCreatureId() const { return creatureId_; }
   const std::string& getName() const { return name_; }
@@ -74,7 +75,7 @@ class Creature
   int getStepSpeed() const { return stepSpeed_; }
   void setStepSpeed(int stepSpeed) { stepSpeed_ = stepSpeed; }
 
-  static const CreatureId INVALID_ID = 0;
+  static const CreatureId INVALID_ID;
   static int getFreeCreatureId() { return Creature::nextCreatureId_++; }
 
  private:
