@@ -129,6 +129,8 @@ if (gameserver_test)
     "test/utils/configparser_test.cc"
     "test/common/world/position_test.cc"
     "test/common/world/creature_test.cc"
+    "test/common/world/item_test.cc"
+    "test/common/world/tile_test.cc"
   )
 
   set(unittest_inc

@@ -28,7 +28,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(PositionTest, ConstructorTest)
+TEST(PositionTest, Constructor)
 {
   Position position;
 
@@ -48,7 +48,7 @@ TEST(PositionTest, ConstructorTest)
   ASSERT_EQ(position.getZ(), Position::INVALID.getZ());
 }
 
-TEST(PositionTest, ComparisonTest)
+TEST(PositionTest, Equals)
 {
   Position first(0, 0, 0);
   Position second(0, 0, 0);
@@ -74,7 +74,7 @@ TEST(PositionTest, ComparisonTest)
   ASSERT_EQ(fourth, third);
 }
 
-TEST(PositionTest, HashTest)
+TEST(PositionTest, Hash)
 {
   Position first(1, 2, 3);
   Position second(1, 2, 3);
@@ -91,7 +91,7 @@ TEST(PositionTest, HashTest)
   ASSERT_NE(secondHash, thirdHash);
 }
 
-TEST(PositionTest, AddDirectionTest)
+TEST(PositionTest, AddDirection)
 {
   Position position(5, 5, 5);
 

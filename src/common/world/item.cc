@@ -43,3 +43,26 @@ float Item::getAttribute(const std::string& name) const
 {
   return std::stof(itemData_->attributes.at(name));
 }
+
+bool Item::operator==(const Item& other) const
+{
+  if (this->itemData_ == nullptr && other.itemData_ == nullptr)
+  {
+    // Both are invalid
+    return true;
+  }
+  else if (this->itemData_ == nullptr || other.itemData_ == nullptr)
+  {
+    // One of them is invalid
+    return false;
+  }
+  else
+  {
+    return this->itemData_->id == other.itemData_->id;
+  }
+}
+
+bool Item::operator!=(const Item& other) const
+{
+  return !(*this == other);
+}

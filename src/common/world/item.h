@@ -98,15 +98,8 @@ class Item
 
   int getSubtype() const { return 0; }  // TODO(gurka): ??
 
-  bool operator==(const Item& other) const
-  {
-    return this->itemData_->id == other.itemData_->id;
-  }
-
-  bool operator!=(const Item& other) const
-  {
-    return !(*this == other);
-  }
+  bool operator==(const Item& other) const;
+  bool operator!=(const Item& other) const;
 
  private:
   const ItemData* itemData_;

@@ -26,7 +26,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(CreatureTest, ConstructorTest)
+TEST(CreatureTest, Constructor)
 {
   std::string TestCreatureName("TestCreature");
   Creature creature(TestCreatureName);
@@ -35,7 +35,7 @@ TEST(CreatureTest, ConstructorTest)
   ASSERT_EQ(creature.getName(), TestCreatureName);
 }
 
-TEST(CreatureTest, CreatureIdTest)
+TEST(CreatureTest, CreatureId)
 {
   Creature creatureFoo("foo");
   Creature creatureBar("bar");
@@ -45,7 +45,7 @@ TEST(CreatureTest, CreatureIdTest)
   ASSERT_NE(creatureFoo.getCreatureId(), creatureBar.getCreatureId());
 }
 
-TEST(CreatureTest, CreatureOperatorEquals)
+TEST(CreatureTest, Equals)
 {
   Creature creatureFoo("foo");
   Creature creatureBar("bar");
@@ -56,7 +56,7 @@ TEST(CreatureTest, CreatureOperatorEquals)
   ASSERT_EQ(creatureFoo, creatureFooRef);
 }
 
-TEST(CreatureTest, CreatureGettersSetters)
+TEST(CreatureTest, GettersSetters)
 {
   Creature creature("TestCreature");
 
