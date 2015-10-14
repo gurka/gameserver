@@ -33,23 +33,14 @@
 #include "logger.h"
 #include "rapidxml.hpp"
 
-World::World(const std::string& dataFilename, const std::string& worldFilename, const std::string& itemsFilename)
-  : dataFilename_(dataFilename),
-    worldFilename_(worldFilename),
-    itemsFilename_(itemsFilename)
+World::World(const ItemFactory* itemFactory, const std::string& worldFilename)
+  : itemFactory_(itemFactory),
+    worldFilename_(worldFilename)
 {
 }
 
 bool World::initialize()
 {
-  // Load data file
-  LOG_INFO("Loading data files");
-  if (!ItemData::loadItemData(dataFilename_, itemsFilename_))
-  {
-    // ItemData::loadItemData logs error on failure
-    return false;
-  }
-
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename_.c_str());
   std::ifstream xmlFile(worldFilename_);
@@ -120,7 +111,8 @@ bool World::initialize()
       }
 
       auto groundItemId = std::stoi(groundItemAttr->value());
-      tiles_.insert(std::make_pair(position, Tile(groundItemId)));
+      auto groundItem = itemFactory_->createItem(groundItemId);
+      tiles_.insert(std::make_pair(position, Tile(groundItem)));
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -135,7 +127,7 @@ bool World::initialize()
         }
 
         auto itemId = std::stoi(itemIdAttr->value());
-        getTile(position).addItem(Item(itemId));
+        getTile(position).addItem(itemFactory_->createItem(itemId));
       }
 
       // Go to next <tile> in XML
@@ -341,7 +333,7 @@ World::ReturnCode World::addItem(int itemId, int count, const Position& position
     return ReturnCode::INVALID_POSITION;
   }
 
-  Item item(itemId);
+  auto item = itemFactory_->createItem(itemId);
 
   // Add Item to toTile
   auto& toTile = getTile(position);
@@ -365,7 +357,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
     return ReturnCode::INVALID_POSITION;
   }
 
-  Item item(itemId);
+  auto item = itemFactory_->createItem(itemId);
 
   // Try to remove Item from fromTile
   auto& fromTile = getTile(position);
@@ -435,7 +427,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     return ReturnCode::CANNOT_REACH_THAT_OBJECT;
   }
 
-  Item item(itemId);
+  auto item = itemFactory_->createItem(itemId);
 
   // Try to remove Item from fromTile
   auto& fromTile = getTile(fromPosition);
@@ -460,7 +452,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   nearCreatureIds = getNearCreatureIds(toPosition);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(Item(itemId), toPosition);
+    getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile

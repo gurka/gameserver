@@ -1,5 +1,13 @@
 #!/bin/bash
 case $1 in
+  'all')
+    mkdir -p build_release && cd build_release && cmake .. -DCMAKE_BUILD_TYPE=release
+    cd ..
+    mkdir -p build_debug && cd build_debug && cmake .. -DCMAKE_BUILD_TYPE=debug
+    cd ..
+    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dgameserver_test=ON
+    ;;
+
   'release')
     mkdir -p build_release && cd build_release && cmake .. -DCMAKE_BUILD_TYPE=release
     ;;

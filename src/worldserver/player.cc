@@ -28,15 +28,15 @@
 
 Equipment::Equipment()
 {
-  items_.insert(std::make_pair(Slot::HELMET,     Item(1744)));  // Golden Helmet
-  items_.insert(std::make_pair(Slot::AMULET,     Item(1561)));  // Amulet of Life
-  items_.insert(std::make_pair(Slot::BACKPACK,   Item(1411)));  // Backpack
-  items_.insert(std::make_pair(Slot::ARMOR,      Item(1745)));  // Magic Plate Armor
-  items_.insert(std::make_pair(Slot::RIGHT_HAND, Item(1786)));  // Blessed Shield
-  items_.insert(std::make_pair(Slot::LEFT_HAND,  Item(1706)));  // Great Axe
-  items_.insert(std::make_pair(Slot::LEGS,       Item(1742)));  // Dragon Scale Legs
-  items_.insert(std::make_pair(Slot::FEET,       Item(1876)));  // Golden Boots
-  items_.insert(std::make_pair(Slot::RING,       Item(1544)));  // Golden Ring
+  items_.insert(std::make_pair(Slot::HELMET,     Item()));
+  items_.insert(std::make_pair(Slot::AMULET,     Item()));
+  items_.insert(std::make_pair(Slot::BACKPACK,   Item()));
+  items_.insert(std::make_pair(Slot::ARMOR,      Item()));
+  items_.insert(std::make_pair(Slot::RIGHT_HAND, Item()));
+  items_.insert(std::make_pair(Slot::LEFT_HAND,  Item()));
+  items_.insert(std::make_pair(Slot::LEGS,       Item()));
+  items_.insert(std::make_pair(Slot::FEET,       Item()));
+  items_.insert(std::make_pair(Slot::RING,       Item()));
   items_.insert(std::make_pair(Slot::AMMO,       Item()));
 }
 

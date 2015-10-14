@@ -35,6 +35,7 @@
 #include "creaturectrl.h"
 #include "tile.h"
 #include "position.h"
+#include "itemfactory.h"
 
 class World : public WorldInterface
 {
@@ -50,7 +51,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(const std::string& dataFilename, const std::string& worldFilename, const std::string& itemsFilename);
+  World(const ItemFactory* itemFactory, const std::string& worldFilename);
 
   bool initialize();
 
@@ -91,10 +92,11 @@ class World : public WorldInterface
   Creature& getCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
 
+  // Item factory
+  const ItemFactory* itemFactory_;
+
   // Configuration stuff
-  std::string dataFilename_;
   std::string worldFilename_;
-  std::string itemsFilename_;
 
   // World size
   int worldSizeX_ = 0;

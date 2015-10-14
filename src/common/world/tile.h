@@ -32,11 +32,6 @@
 class Tile
 {
  public:
-  explicit Tile(ItemId groundItemId)
-    : groundItem_(groundItemId)
-  {
-  }
-
   explicit Tile(const Item& groundItem)
     : groundItem_(groundItem)
   {

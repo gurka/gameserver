@@ -105,6 +105,8 @@ set(common_world_src
   "src/common/world/direction.h"
   "src/common/world/item.cc"
   "src/common/world/item.h"
+  "src/common/world/itemfactory.cc"
+  "src/common/world/itemfactory.h"
   "src/common/world/npcctrl.h"
   "src/common/world/position.cc"
   "src/common/world/position.h"

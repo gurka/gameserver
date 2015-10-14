@@ -22,24 +22,27 @@
  * SOFTWARE.
  */
 
+#ifndef COMMON_WORLD_ITEMFACTORY_H_
+#define COMMON_WORLD_ITEMFACTORY_H_
+
+#include <string>
+#include <unordered_map>
+
 #include "item.h"
 
-const ItemId ItemData::INVALID_ID = 0;
-
-template<>
-std::string Item::getAttribute(const std::string& name) const
+class ItemFactory
 {
-  return itemData_->attributes.at(name);
-}
+ public:
+  bool initialize(const std::string& dataFilename, const std::string& itemsFilename);
 
-template<>
-int Item::getAttribute(const std::string& name) const
-{
-  return std::stoi(itemData_->attributes.at(name));
-}
+  Item createItem(ItemId itemId) const;
 
-template<>
-float Item::getAttribute(const std::string& name) const
-{
-  return std::stof(itemData_->attributes.at(name));
-}
+ private:
+  bool loadFromDat(const std::string& dataFilename);
+  bool loadFromXml(const std::string& itemsFilename);
+
+  std::unordered_map<ItemId, ItemData> itemData_;
+};
+
+#endif  // COMMON_WORLD_ITEMFACTORY_H_
+

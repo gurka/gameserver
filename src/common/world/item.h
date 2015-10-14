@@ -30,13 +30,9 @@
 
 using ItemId = int;
 
-class ItemData
+struct ItemData
 {
- public:
-  static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
-  static const ItemData* getItemData(ItemId itemId);
-
-  static const ItemId INVALID_ID = 0;
+  static const ItemId INVALID_ID;
 
   // Loaded from data file
   ItemId id         = INVALID_ID;
@@ -52,18 +48,8 @@ class ItemData
   bool isEquipable  = false;
 
   // Loaded from items.xml
-  std::string name    = "";
-  std::string article = "";
-  std::string plural  = "";
+  std::string name  = "";
   std::unordered_map<std::string, std::string> attributes;
-
- private:
-  ItemData() = default;
-
-  static bool loadFromDat(const std::string& dataFilename);
-  static bool loadFromXml(const std::string& itemsFilename);
-
-  static std::unordered_map<ItemId, ItemData> itemData_;
 };
 
 class Item
@@ -75,11 +61,13 @@ class Item
   {
   }
 
-  explicit Item(ItemId itemId)
-    : itemData_(ItemData::getItemData(itemId)),
+  explicit Item(const ItemData* itemData)
+    : itemData_(itemData),
       count_((itemData_ != nullptr) ? 1 : 0)
   {
   }
+
+  static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
 
   bool isValid() const { return itemData_ != nullptr; }
 
@@ -98,8 +86,6 @@ class Item
 
   // Loaded from items.xml
   const std::string& getName() const { return itemData_->name; }
-  const std::string& getArticle() const { return itemData_->article; }
-  const std::string& getPlural() const { return itemData_->plural; }
 
   bool hasAttribute(const std::string& name) const { return itemData_->attributes.count(name) == 1; }
 
@@ -110,8 +96,7 @@ class Item
   void setCount(int count) { count_ = count; }
   int getCount() const { return count_; }
 
-  // TODO(gurka): ??
-  int getSubtype() const { return 0; }
+  int getSubtype() const { return 0; }  // TODO(gurka): ??
 
   bool operator==(const Item& other) const
   {

@@ -37,6 +37,7 @@
 #include "world/world.h"
 #include "playerctrl.h"
 #include "taskqueue.h"
+#include "world/itemfactory.h"
 
 class OutgoingPacket;
 
@@ -92,6 +93,10 @@ class GameEngine
   std::unordered_map<CreatureId, std::unique_ptr<PlayerCtrl>> playerCtrls_;
 
   std::string loginMessage_;
+
+  std::string dataFilename_;
+  std::string itemsFilename_;
+  ItemFactory itemFactory_;
 
   World world_;
 };

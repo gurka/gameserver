@@ -44,7 +44,9 @@ GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& l
   : state_(INITIALIZED),
     taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
     loginMessage_(loginMessage),
-    world_(dataFilename, worldFilename, itemsFilename)
+    dataFilename_(dataFilename),
+    itemsFilename_(itemsFilename),
+    world_(&itemFactory_, worldFilename)
 {
 }
 
@@ -61,6 +63,14 @@ bool GameEngine::start()
   if (state_ == RUNNING)
   {
     LOG_ERROR("GameEngine is already running");
+    return false;
+  }
+
+  // Load data file
+  LOG_INFO("Loading data files");
+  if (!itemFactory_.initialize(dataFilename_, itemsFilename_))
+  {
+    // ItemFactory::initialize logs error on failure
     return false;
   }
 
@@ -245,7 +255,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
 
     auto& player = getPlayer(creatureId);
     auto& playerCtrl = getPlayerCtrl(creatureId);
-    Item item(itemId);
+    auto item = itemFactory_.createItem(itemId);
 
     // Check if the player can reach the fromPosition
     if (!world_.creatureCanReach(creatureId, fromPosition))
@@ -291,7 +301,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
 
     auto& player = getPlayer(creatureId);
     auto& playerCtrl = getPlayerCtrl(creatureId);
-    Item item(itemId);
+    auto item = itemFactory_.createItem(itemId);
 
     // First check if the player can throw the Item to the toPosition
     if (!world_.creatureCanThrowTo(creatureId, toPosition))
@@ -327,7 +337,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
 
     auto& player = getPlayer(creatureId);
     auto& playerCtrl = getPlayerCtrl(creatureId);
-    Item item(itemId);
+    auto item = itemFactory_.createItem(itemId);
 
     // TODO(gurka): Count
 
@@ -393,7 +403,7 @@ void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, I
   }
   else
   {
-    Item item(itemId);
+    auto item = itemFactory_.createItem(itemId);
     if (item.getName().size() > 0)
     {
       if (item.isStackable() && item.getCount() > 1)
