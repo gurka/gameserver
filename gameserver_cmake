@@ -21,6 +21,6 @@ case $1 in
     ;;
 
   *)
-    echo "Usage: $0 [release | debug | test]"
+    echo "Usage: $0 [all | release | debug | test]"
     ;;
 esac
