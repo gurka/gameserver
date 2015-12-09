@@ -123,8 +123,7 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
     playerCtrl.onPlayerSpawn(player, position, loginMessage_);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerSpawnFunc, expire);
+  taskQueue_.addTask(playerSpawnFunc);
 
   return creatureId;
 }
@@ -141,8 +140,7 @@ bool GameEngine::playerDespawn(CreatureId creatureId)
     playerCtrls_.erase(creatureId);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerDespawnFunc, expire);
+  taskQueue_.addTask(playerDespawnFunc);
 
   // Logout is always OK
   return true;
@@ -156,12 +154,12 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
     world_.creatureMove(creatureId, direction);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveFunc, expire);
+  taskQueue_.addTask(playerMoveFunc);
 }
 
 void GameEngine::playerMove(CreatureId creatureId, const std::list<Direction>& path)
 {
+  /*
   auto playerMoveFunc = [this, creatureId, path]()
   {
     LOG_INFO("playerMove(): Player move path, creature id: %d, moves left: %d", creatureId, path.size());
@@ -177,6 +175,7 @@ void GameEngine::playerMove(CreatureId creatureId, const std::list<Direction>& p
 
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
   taskQueue_.addTask(playerMoveFunc, expire);
+  */
 }
 
 void GameEngine::playerTurn(CreatureId creatureId, Direction direction)
@@ -187,8 +186,7 @@ void GameEngine::playerTurn(CreatureId creatureId, Direction direction)
     world_.creatureTurn(creatureId, direction);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerTurnFunc, expire);
+  taskQueue_.addTask(playerTurnFunc);
 }
 
 void GameEngine::playerSay(CreatureId creatureId, uint8_t type, const std::string& message,
@@ -200,8 +198,7 @@ void GameEngine::playerSay(CreatureId creatureId, uint8_t type, const std::strin
     world_.creatureSay(creatureId, message);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerSayFunc, expire);
+  taskQueue_.addTask(playerSayFunc);
 }
 
 void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
@@ -241,8 +238,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
     }
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveItemFunc, expire);
+  taskQueue_.addTask(playerMoveItemFunc);
 }
 
 void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
@@ -288,8 +284,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
     playerCtrl.onEquipmentUpdated(player, toInventoryId);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveItemFunc, expire);
+  taskQueue_.addTask(playerMoveItemFunc);
 }
 
 void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition)
@@ -324,8 +319,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
     world_.addItem(itemId, count, toPosition);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveItemFunc, expire);
+  taskQueue_.addTask(playerMoveItemFunc);
 }
 
 void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)
@@ -363,8 +357,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
     playerCtrl.onEquipmentUpdated(player, toInventoryId);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveItemFunc, expire);
+  taskQueue_.addTask(playerMoveItemFunc);
 }
 
 void GameEngine::playerUseItem(CreatureId creatureId, int itemId, int inventoryIndex)
@@ -376,8 +369,7 @@ void GameEngine::playerUseItem(CreatureId creatureId, int itemId, int inventoryI
     //  world_.useItem(creatureId, itemId, inventoryIndex);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerUseItemFunc, expire);
+  taskQueue_.addTask(playerUseItemFunc);
 }
 
 void GameEngine::playerUseItem(CreatureId creatureId, int itemId, const Position& position, int stackPos)
@@ -389,8 +381,7 @@ void GameEngine::playerUseItem(CreatureId creatureId, int itemId, const Position
     //  world_.useItem(creatureId, itemId, position, stackPos);
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerUseItemFunc, expire);
+  taskQueue_.addTask(playerUseItemFunc);
 }
 
 void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, ItemId itemId)

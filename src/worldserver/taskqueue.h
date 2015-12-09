@@ -58,6 +58,11 @@ class TaskQueue
   TaskQueue(const TaskQueue&) = delete;
   TaskQueue& operator=(const TaskQueue&) = delete;
 
+  void addTask(const Task& task)
+  {
+    addTask(task, boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time()));
+  }
+
   void addTask(const Task& task, const boost::posix_time::ptime& expire)
   {
     TaskWrapper taskWrapper { task, expire };
