@@ -151,7 +151,23 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
   auto playerMoveFunc = [this, creatureId, direction]()
   {
     LOG_INFO("playerMove(): Player move, creature id: %d", creatureId);
-    world_.creatureMove(creatureId, direction);
+
+    auto& playerCtrl = getPlayerCtrl(creatureId);
+    auto nextWalkTime = playerCtrl.getNextWalkTime();
+    auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
+
+    if (now < nextWalkTime)
+    {
+      world_.creatureMove(creatureId, direction);
+    }
+    else
+    {
+      auto creatureMoveFunc = [this, creatureId, direction]
+      {
+        world_.creatureMove(creatureId, direction);
+      };
+      taskQueue_.addTask(creatureMoveFunc, nextWalkTime);
+    }
   };
 
   taskQueue_.addTask(playerMoveFunc);

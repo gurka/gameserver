@@ -44,6 +44,7 @@ class Creature
 {
  public:
   explicit Creature(const std::string& name);
+  virtual ~Creature() = default;
 
   bool operator==(const Creature& other) const;
   bool operator!=(const Creature& other) const;
@@ -60,7 +61,7 @@ class Creature
   int getHealth() const { return health_; }
   void setHealth(int health) { health_ = health; }
 
-  int getSpeed() const { return speed_; }
+  virtual int getSpeed() const { return speed_; }
   void setSpeed(int speed) { speed_ = speed; }
 
   const Outfit& getOutfit() const { return outfit_; }
@@ -71,9 +72,6 @@ class Creature
 
   int getLightLevel() const { return lightLevel_; }
   void setLightLevel(int lightLevel) { lightLevel_ = lightLevel; }
-
-  int getStepSpeed() const { return stepSpeed_; }
-  void setStepSpeed(int stepSpeed) { stepSpeed_ = stepSpeed; }
 
   static const CreatureId INVALID_ID;
   static int getFreeCreatureId() { return Creature::nextCreatureId_++; }
@@ -88,7 +86,6 @@ class Creature
   Outfit outfit_;
   int lightColor_;
   int lightLevel_;
-  int stepSpeed_;
 
   static CreatureId nextCreatureId_;
 };

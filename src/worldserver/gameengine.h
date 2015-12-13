@@ -41,6 +41,7 @@
 
 class OutgoingPacket;
 
+// TODO(gurka): Separate into GameEngine and GameEngineImpl to make sure that Tasks are always used
 class GameEngine
 {
  public:

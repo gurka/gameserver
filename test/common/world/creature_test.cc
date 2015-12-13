@@ -78,9 +78,6 @@ TEST(CreatureTest, GettersSetters)
   creature.setSpeed(123);
   ASSERT_EQ(creature.getSpeed(), 123);
 
-  creature.setStepSpeed(456);
-  ASSERT_EQ(creature.getStepSpeed(), 456);
-
   Outfit outfitSet;
   outfitSet.type = 11;
   outfitSet.ext = 22;

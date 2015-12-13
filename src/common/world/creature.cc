@@ -33,10 +33,9 @@ Creature::Creature(const std::string& name)
     direction_(SOUTH),
     maxHealth_(100),
     health_(100),
-    speed_(900),
+    speed_(110),
     lightColor_(0),
-    lightLevel_(0),
-    stepSpeed_(220)
+    lightLevel_(0)
 {
   outfit_.type = 128;
   outfit_.head = 20;

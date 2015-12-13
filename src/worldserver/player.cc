@@ -170,10 +170,15 @@ Player::Player(const std::string& name)
     maxMana_(100),
     mana_(100),
     capacity_(300),
-    experience_(0),
+    experience_(4200),
     magicLevel_(1),
     partyShield_(0)
 {
+}
+
+int Player::getSpeed() const
+{
+  return 220 + (2 * (getLevel() - 1));
 }
 
 int Player::getLevel() const

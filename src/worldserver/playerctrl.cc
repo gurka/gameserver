@@ -69,6 +69,30 @@ void PlayerCtrl::onCreatureMove(const Creature& creature,
                                 const Position& oldPosition, uint8_t oldStackPos,
                                 const Position& newPosition, uint8_t newStackPos)
 {
+  if (creature.getCreatureId() == creatureId_)
+  {
+    // Set next walk time
+    const auto& tile = worldInterface_->getTile(newPosition);
+
+    auto groundSpeed = tile.getGroundItem().speed();
+    auto creatureSpeed = creature.getSpeed();
+    auto duration = (1000 * groundSpeed) / creatureSpeed;
+
+    // Walking diagonally?
+    if (oldPosition.getX() != newPosition.getX() &&
+        oldPosition.getY() != newPosition.getY())
+    {
+      duration *= 2;
+    }
+
+    auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
+    nextWalkTime_ = now + boost::posix_time::millisec(duration);
+
+    LOG_DEBUG("%s: creatureId: %d, groundSpeed: %d, creatureSpeed: %d, duration: %d",
+              __func__, creature.getCreatureId(), groundSpeed, creatureSpeed, duration);
+  }
+
+  // Build outgoing packet
   OutgoingPacket packet;
 
   bool canSeeOldPos = canSee(oldPosition);
@@ -328,6 +352,11 @@ void PlayerCtrl::sendCancel(const std::string& message)
   packet.addString(message);
 
   sendPacket_(packet);
+}
+
+boost::posix_time::ptime PlayerCtrl::getNextWalkTime() const
+{
+  return nextWalkTime_;
 }
 
 bool PlayerCtrl::canSee(const Position& position) const

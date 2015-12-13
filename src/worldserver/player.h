@@ -81,6 +81,10 @@ class Player : public Creature
  public:
   explicit Player(const std::string& name);
 
+  // From Creature
+  int getSpeed() const override;
+
+
   int getMaxMana() const { return maxMana_; }
   void setMaxMana(int maxMana) { maxMana_ = maxMana; }
 

@@ -28,6 +28,9 @@
 #include <functional>
 #include <string>
 #include <unordered_set>
+
+#include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
+
 #include "player.h"
 #include "world/creaturectrl.h"
 #include "world/worldinterface.h"
@@ -73,6 +76,8 @@ class PlayerCtrl : public CreatureCtrl
   void sendTextMessage(const std::string& message);
   void sendCancel(const std::string& message);
 
+  boost::posix_time::ptime getNextWalkTime() const;
+
  private:
   bool canSee(const Position& position) const;
 
@@ -88,6 +93,8 @@ class PlayerCtrl : public CreatureCtrl
   std::function<void(const OutgoingPacket&)> sendPacket_;
 
   std::unordered_set<CreatureId> knownCreatures_;
+
+  boost::posix_time::ptime nextWalkTime_;
 };
 
 #endif  // WORLDSERVER_PLAYERCTRL_H_

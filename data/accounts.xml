@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <accounts>
   <account number="1" password="1" paid_days="90">
-    <character name="Alice" world_name="Default" world_ip="10.0.0.1" world_port="7172" />
-    <character name="Bob" world_name="Default" world_ip="10.0.0.1" world_port="7172" />
+    <character name="Alice" world_name="Default" world_ip="192.168.0.4" world_port="7172" />
+    <character name="Bob" world_name="Default" world_ip="192.168.0.4" world_port="7172" />
   </account>
   <account number="2" password="2" paid_days="1337">
-    <character name="Gamemaster" world_name="Default" world_ip="10.0.0.1" world_port="7172" />
+    <character name="Gamemaster" world_name="Default" world_ip="192.168.0.4" world_port="7172" />
   </account>
 </accounts>
