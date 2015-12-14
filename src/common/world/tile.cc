@@ -47,6 +47,18 @@ bool Tile::removeCreature(CreatureId creatureId)
   }
 }
 
+CreatureId Tile::getCreatureId(int stackPosition) const
+{
+  // Calculate position in creatureIds_
+  auto position = stackPosition - 1 - topItems_.size();
+  if (position < 0 || position >= creatureIds_.size())
+  {
+    LOG_ERROR("%s: No Creature found at stackPosition: %d", __func__, stackPosition);
+    return Creature::INVALID_ID;
+  }
+  return creatureIds_[position];
+}
+
 uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
 {
   // Find where in creatureIds_ the creatureId is
@@ -54,7 +66,7 @@ uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
   if (it == creatureIds_.cend())
   {
     LOG_ERROR("getCreatureStackPos(): No creature %d at this Tile", creatureId);
-    return 255;
+    return 255;  // TODO(gurka): Invalid stackPosition constant?
   }
   return 1 + topItems_.size() + std::distance(creatureIds_.cbegin(), it);
 }

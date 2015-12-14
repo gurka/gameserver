@@ -411,12 +411,6 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     return ReturnCode::INVALID_POSITION;
   }
 
-  if (itemId == 99)
-  {
-    LOG_DEBUG("moveItem(): Item is a Creature");
-    return ReturnCode::CANNOT_MOVE_THAT_OBJECT;
-  }
-
   // Only allow move if the player is standing at or 1 sqm near the item
   const auto& position = getCreaturePosition(creatureId);
   if (std::abs(position.getX() - fromPosition.getX()) > 1 ||
@@ -427,46 +421,72 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     return ReturnCode::CANNOT_REACH_THAT_OBJECT;
   }
 
-  auto item = itemFactory_->createItem(itemId);
-
-  // Try to remove Item from fromTile
-  auto& fromTile = getTile(fromPosition);
-  if (!fromTile.removeItem(item, fromStackPos))
+  if (itemId == 99)  // Item moved is a Creature
   {
-    LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, fromPosition.toString().c_str());
-    return ReturnCode::ITEM_NOT_FOUND;
+    // We need to get the Creature that is being moved
+    // It's not neccessarily the Creature that is doing the move
+
+    if (count != 1)
+    {
+      LOG_ERROR("%s: Trying to move a Creature, but count is not 1", __func__);
+      return ReturnCode::ITEM_NOT_FOUND;
+    }
+
+    auto& fromTile = getTile(fromPosition);
+    auto movedCreatureId = fromTile.getCreatureId(fromStackPos);
+    if (movedCreatureId == Creature::INVALID_ID)
+    {
+      LOG_ERROR("%s: Trying to move a Creature, but there is no Creature at the given position");
+      return ReturnCode::ITEM_NOT_FOUND;
+    }
+
+    creatureMove(movedCreatureId, toPosition);
+
+    return ReturnCode::OK;
   }
-
-  // Add Item to toTile
-  auto& toTile = getTile(toPosition);
-  toTile.addItem(item);
-
-  // Call onItemRemoved on all creatures that can see fromPosition
-  auto nearCreatureIds = getNearCreatureIds(fromPosition);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  else  // Item moved is a regular Item
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
-  }
+    auto item = itemFactory_->createItem(itemId);
 
-  // Call onItemAdded on all creatures that can see toPosition
-  nearCreatureIds = getNearCreatureIds(toPosition);
-  for (const auto& nearCreatureId : nearCreatureIds)
-  {
-    getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
-  }
+    // Try to remove Item from fromTile
+    auto& fromTile = getTile(fromPosition);
+    if (!fromTile.removeItem(item, fromStackPos))
+    {
+      LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, fromPosition.toString().c_str());
+      return ReturnCode::ITEM_NOT_FOUND;
+    }
 
-  // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
-  // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
-  if (fromTile.getNumberOfThings() >= 10)
-  {
-    std::list<CreatureId> nearCreatureIds = getNearCreatureIds(fromPosition);
+    // Add Item to toTile
+    auto& toTile = getTile(toPosition);
+    toTile.addItem(item);
+
+    // Call onItemRemoved on all creatures that can see fromPosition
+    auto nearCreatureIds = getNearCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
     }
-  }
 
-  return ReturnCode::OK;
+    // Call onItemAdded on all creatures that can see toPosition
+    nearCreatureIds = getNearCreatureIds(toPosition);
+    for (const auto& nearCreatureId : nearCreatureIds)
+    {
+      getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
+    }
+
+    // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
+    // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
+    if (fromTile.getNumberOfThings() >= 10)
+    {
+      std::list<CreatureId> nearCreatureIds = getNearCreatureIds(fromPosition);
+      for (const auto& nearCreatureId : nearCreatureIds)
+      {
+        getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      }
+    }
+
+    return ReturnCode::OK;
+  }
 }
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const

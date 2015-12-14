@@ -82,6 +82,7 @@ void PlayerCtrl::onCreatureMove(const Creature& creature,
     if (oldPosition.getX() != newPosition.getX() &&
         oldPosition.getY() != newPosition.getY())
     {
+      // Or is it times 3?
       duration *= 2;
     }
 

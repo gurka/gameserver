@@ -42,6 +42,7 @@ class Tile
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);
   const std::deque<CreatureId>& getCreatureIds() const { return creatureIds_; }
+  CreatureId getCreatureId(int stackPosition) const;
   uint8_t getCreatureStackPos(CreatureId creatureId) const;
 
   void addItem(const Item& item);
