@@ -1,6 +1,5 @@
 1. Multiple clients not working. Container debug if logging in near already logged in player. OK if logging in away from logged in area but still buggy.
    Does not happen all the time...
 
-2. Possible to drag players (and self?) into walls, etc. Probably is possible to walk into walls if not prohibited by client.
-
-3. Killing server with ^C doesn't disconnect all players (just one?). Hangs if more than one player is connected.
+2. Killing server with ^C doesn't disconnect all players (just one?). Hangs if more than one player is connected.
+   Happens when only one player is connected as well.

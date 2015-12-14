@@ -26,6 +26,7 @@
 #define COMMON_WORLD_TILE_H_
 
 #include <deque>
+#include <vector>
 #include "item.h"
 #include "creature.h"
 
@@ -47,12 +48,14 @@ class Tile
 
   void addItem(const Item& item);
   bool removeItem(const Item& item, uint8_t stackPosition);
+  std::vector<Item> getItems() const;
   const std::deque<Item>& getTopItems() const { return topItems_; }
   const std::deque<Item>& getBottomItems() const { return bottomItems_; }
 
   std::size_t getNumberOfThings() const;
 
  private:
+  // TODO(gurka): Store all items in a single container, to optimize getItems() ?
   Item groundItem_;
   std::deque<Item> topItems_;
   std::deque<CreatureId> creatureIds_;

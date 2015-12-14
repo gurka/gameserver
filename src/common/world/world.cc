@@ -220,7 +220,7 @@ void World::creatureMove(CreatureId creatureId, Direction direction)
   creatureMove(creatureId, getCreaturePosition(creatureId).addDirection(direction));
 }
 
-void World::creatureMove(CreatureId creatureId, const Position& newPosition)
+void World::creatureMove(CreatureId creatureId, const Position& toPosition)
 {
   if (!creatureExists(creatureId))
   {
@@ -228,49 +228,62 @@ void World::creatureMove(CreatureId creatureId, const Position& newPosition)
     return;
   }
 
-  if (!positionIsValid(newPosition))
+  if (!positionIsValid(toPosition))
   {
     LOG_ERROR("moveCreature: Invalid position: %s",
-                newPosition.toString().c_str());
+              toPosition.toString().c_str());
     return;
+  }
+
+  // Check if toTile is blocking or not
+  auto& toTile = getTile(toPosition);
+  for (const auto& item : toTile.getItems())
+  {
+    if (item.isBlocking())
+    {
+      // TODO(gurka): Return World::ReturnCode to send "There is no room." to player?
+      LOG_DEBUG("%s: Item on toTile is blocking", __func__);
+      return;
+    }
   }
 
   auto& creature = getCreature(creatureId);
 
   // Move the actual creature
-  auto oldPosition = getCreaturePosition(creatureId);
-  auto oldStackPos = getTile(oldPosition).getCreatureStackPos(creatureId);
-  getTile(oldPosition).removeCreature(creatureId);
+  auto fromPosition = getCreaturePosition(creatureId);  // Need to create a new Position here (i.e. not auto&)
+  auto& fromTile = getTile(fromPosition);
+  auto fromStackPos = fromTile.getCreatureStackPos(creatureId);
+  fromTile.removeCreature(creatureId);
 
-  getTile(newPosition).addCreature(creatureId);
-  auto newStackPos = getTile(newPosition).getCreatureStackPos(creatureId);
-  creaturePositions_.at(creatureId) = newPosition;
+  toTile.addCreature(creatureId);
+  auto toStackPos = toTile.getCreatureStackPos(creatureId);
+  creaturePositions_.at(creatureId) = toPosition;
 
 
   // Update direction
-  if (oldPosition.getY() > newPosition.getY())
+  if (fromPosition.getY() > toPosition.getY())
   {
     creature.setDirection(Direction::NORTH);
   }
-  else if (oldPosition.getY() < newPosition.getY())
+  else if (fromPosition.getY() < toPosition.getY())
   {
     creature.setDirection(Direction::SOUTH);
   }
-  if (oldPosition.getX() > newPosition.getX())
+  if (fromPosition.getX() > toPosition.getX())
   {
     creature.setDirection(Direction::WEST);
   }
-  else if (oldPosition.getX() < newPosition.getX())
+  else if (fromPosition.getX() < toPosition.getX())
   {
     creature.setDirection(Direction::EAST);
   }
 
   // Call onCreatureMove on all creatures that can see the movement
   // including the moving creature itself
-  auto x_min = std::min(oldPosition.getX(), newPosition.getX());
-  auto x_max = std::min(oldPosition.getX(), newPosition.getX());
-  auto y_min = std::min(oldPosition.getY(), newPosition.getY());
-  auto y_max = std::max(oldPosition.getY(), newPosition.getY());
+  auto x_min = std::min(fromPosition.getX(), toPosition.getX());
+  auto x_max = std::min(fromPosition.getX(), toPosition.getX());
+  auto y_min = std::min(fromPosition.getY(), toPosition.getY());
+  auto y_max = std::max(fromPosition.getY(), toPosition.getY());
   for (auto x = x_min - 9; x <= x_max + 9; x++)
   {
     for (auto y = y_min - 7; y <= y_max + 7; y++)
@@ -280,7 +293,7 @@ void World::creatureMove(CreatureId creatureId, const Position& newPosition)
       const std::deque<CreatureId>& nearCreatureIds = tile.getCreatureIds();
       for (const auto nearCreatureId : nearCreatureIds)
       {
-        getCreatureCtrl(nearCreatureId).onCreatureMove(creature, oldPosition, oldStackPos, newPosition, newStackPos);
+        getCreatureCtrl(nearCreatureId).onCreatureMove(creature, fromPosition, fromStackPos, toPosition, toStackPos);
       }
     }
   }

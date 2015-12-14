@@ -132,6 +132,18 @@ bool Tile::removeItem(const Item& item, uint8_t stackPosition)
   LOG_ERROR("removeItem(): Stackposition is invalid");
   return false;
 }
+
+std::vector<Item> Tile::getItems() const
+{
+  std::vector<Item> items;
+
+  items.push_back(groundItem_);
+  items.insert(items.end(), topItems_.cbegin(), topItems_.cend());
+  items.insert(items.end(), bottomItems_.cbegin(), bottomItems_.cend());
+
+  return items;
+}
+
 /*
 const Item* Tile::getItem(uint8_t stackPos) const
 {
