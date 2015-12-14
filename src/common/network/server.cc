@@ -63,9 +63,12 @@ bool Server::start()
 void Server::stop()
 {
   acceptor_.stop();
-  for (auto& connPair : connections_)
+
+  // Closing a Connection will erase it from connections_ due to the onConnectionClosed callback
+  // Hence this ugly hack
+  while (connections_.begin() != connections_.end())
   {
-    connPair.second->close(false);
+    connections_.begin()->second->close(false);
   }
 }
 

@@ -58,14 +58,21 @@ void Connection::close(bool gracefully)
     LOG_DEBUG("close() wait until all packets have been sent, setting state to CLOSING");
     state_ = CLOSING;
   }
-  else
+  else if (state_ != CLOSED)
   {
     // Close the socket
     boost::system::error_code error;
+
+    socket_.shutdown(BIP::tcp::socket::shutdown_both, error);
+    if (error)
+    {
+      LOG_ERROR("%s: Could not shutdown socket: %s", __func__, error.message().c_str());
+    }
+
     socket_.close(error);
     if (error)
     {
-      LOG_ERROR("Could not close socket: %s", error.message().c_str());
+      LOG_ERROR("%s: Could not close socket: %s", __func__, error.message().c_str());
     }
 
     // Set state and call OnCloseHandler
