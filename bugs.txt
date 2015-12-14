@@ -1,5 +1,4 @@
-1. Multiple clients not working. Container debug if logging in near already logged in player. OK if logging in away from logged in area but still buggy.
-   Does not happen all the time...
-
-2. Killing server with ^C doesn't disconnect all players (just one?). Hangs if more than one player is connected.
-   Happens when only one player is connected as well.
+1. Multiple players connected is buggy.
+   * Logging in at the same spot as an already logged in player stands causes debug assertion in client (line 418, MapWindow)
+   * Having a player move away from another player and then moving back to the player causes the moving player to get stuck at the edge.
+   * Random debug assertions when moving away / back to a player.
