@@ -426,10 +426,19 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     // We need to get the Creature that is being moved
     // It's not neccessarily the Creature that is doing the move
 
+    // Check that count is correct (may only be 1)
     if (count != 1)
     {
       LOG_ERROR("%s: Trying to move a Creature, but count is not 1", __func__);
       return ReturnCode::ITEM_NOT_FOUND;
+    }
+
+    // Check if trying to move more than 1 tile
+    if (std::abs(fromPosition.getX() - toPosition.getX()) > 1 ||
+        std::abs(fromPosition.getY() - toPosition.getY()) > 1)
+    {
+      LOG_ERROR("%s: Trying to move a Creature more than 1 tile", __func__);
+      return ReturnCode::OTHER_ERROR;
     }
 
     auto& fromTile = getTile(fromPosition);
@@ -440,6 +449,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
       return ReturnCode::ITEM_NOT_FOUND;
     }
 
+    // Move the Creature as a regular Creature move
     creatureMove(movedCreatureId, toPosition);
 
     return ReturnCode::OK;
