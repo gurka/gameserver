@@ -1,8 +1,3 @@
 1. Multiple clients not working. Container debug if logging in near already logged in player. OK if logging in away from logged in area but still buggy.
 
 2. Possible to drag players (and self?) into walls, etc. Probably is possible to walk into walls if not prohibited by client.
-
-3. Seg fault if trying to move creature that is not there (via bug 1):
-  [2015-12-14 13:42:53][gameengine.cc:226] INFO: playerMoveItem(): Move Item from Tile to Tile, creature id: 18197, from: (222, 228, 7), stackPos: 1, itemId: 99, count: 1, to: (223, 229, 7)
-  [2015-12-14 13:42:53][tile.cc:56] ERROR: getCreatureId: No Creature found at stackPosition: 1
-  Segmentation fault

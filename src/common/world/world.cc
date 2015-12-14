@@ -436,7 +436,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     auto movedCreatureId = fromTile.getCreatureId(fromStackPos);
     if (movedCreatureId == Creature::INVALID_ID)
     {
-      LOG_ERROR("%s: Trying to move a Creature, but there is no Creature at the given position");
+      LOG_ERROR("%s: Trying to move a Creature, but there is no Creature at the given position", __func__);
       return ReturnCode::ITEM_NOT_FOUND;
     }
 
