@@ -48,7 +48,8 @@ class PlayerCtrl : public CreatureCtrl
              std::function<void(const OutgoingPacket&)> sendPacket)
     : worldInterface_(worldInterface),
       creatureId_(creatureId),
-      sendPacket_(sendPacket)
+      sendPacket_(sendPacket),
+      nextWalkTime_(boost::posix_time::microsec_clock::local_time())
   {
   }
 
