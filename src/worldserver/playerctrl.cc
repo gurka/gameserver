@@ -353,10 +353,10 @@ boost::posix_time::ptime PlayerCtrl::getNextWalkTime() const
 bool PlayerCtrl::canSee(const Position& position) const
 {
   const Position& playerPosition = worldInterface_->getCreaturePosition(creatureId_);
-  return position.getX() >= playerPosition.getX() - 8 &&
-         position.getX() < playerPosition.getX() + 8 &&
-         position.getY() >= playerPosition.getY() - 6 &&
-         position.getY() < playerPosition.getY() + 6;
+  return position.getX() >  playerPosition.getX() - 9 &&
+         position.getX() <= playerPosition.getX() + 9 &&
+         position.getY() >  playerPosition.getY() - 7 &&
+         position.getY() <= playerPosition.getY() + 7;
 }
 
 void PlayerCtrl::addPosition(const Position& position, OutgoingPacket* packet) const
