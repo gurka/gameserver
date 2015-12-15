@@ -1,4 +1,3 @@
 1. Multiple players connected is buggy.
    * Logging in at the same spot as an already logged in player stands causes debug assertion in client (line 418, MapWindow)
-   * Having a player move away from another player and then moving back to the player causes the moving player to get stuck at the edge.
-   * Random debug assertions when moving away / back to a player.
+   * Players disappear one tile too early when moving out of view either down or to the right (PlayerCtrl::canSee()-bug?)

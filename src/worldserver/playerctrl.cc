@@ -102,28 +102,20 @@ void PlayerCtrl::onCreatureMove(const Creature& creature,
   if (canSeeOldPos && canSeeNewPos)
   {
     packet.addU8(0x6D);
-    packet.addU16(oldPosition.getX());
-    packet.addU16(oldPosition.getY());
-    packet.addU8(oldPosition.getZ());
+    addPosition(oldPosition, &packet);
     packet.addU8(oldStackPos);
-    packet.addU16(newPosition.getX());
-    packet.addU16(newPosition.getY());
-    packet.addU8(newPosition.getZ());
+    addPosition(newPosition, &packet);
   }
   else if (canSeeOldPos)
   {
     packet.addU8(0x6C);
-    packet.addU16(oldPosition.getX());
-    packet.addU16(oldPosition.getY());
-    packet.addU8(oldPosition.getZ());
+    addPosition(oldPosition, &packet);
     packet.addU8(oldStackPos);
   }
   else if (canSeeNewPos)
   {
     packet.addU8(0x6A);
-    packet.addU16(oldPosition.getX());
-    packet.addU16(oldPosition.getY());
-    packet.addU8(oldPosition.getZ());
+    addPosition(newPosition, &packet);
     addCreature(creature, &packet);
   }
 
@@ -246,9 +238,7 @@ void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position, c
   packet.addU8(0x00);
 
   packet.addU8(0x64);  // Full (near) map
-  packet.addU16(position.getX());  // Position
-  packet.addU16(position.getY());
-  packet.addU8(position.getZ());
+  addPosition(position, &packet);  // Position
 
   addMapData(Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
 
