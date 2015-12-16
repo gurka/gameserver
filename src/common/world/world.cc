@@ -26,119 +26,20 @@
 
 #include <algorithm>
 #include <deque>
-#include <fstream>
 #include <sstream>
 
 #include "npcctrl.h"
 #include "logger.h"
-#include "rapidxml.hpp"
 
-World::World(const ItemFactory* itemFactory, const std::string& worldFilename)
+World::World(const ItemFactory* itemFactory,
+             int worldSizeX,
+             int worldSizeY,
+             const std::unordered_map<Position, Tile, Position::Hash>& tiles)
   : itemFactory_(itemFactory),
-    worldFilename_(worldFilename)
+    worldSizeX_(worldSizeX),
+    worldSizeY_(worldSizeY),
+    tiles_(tiles)
 {
-}
-
-bool World::initialize()
-{
-  // Open world.xml and read it into a string
-  LOG_INFO("Loading world file: \"%s\"", worldFilename_.c_str());
-  std::ifstream xmlFile(worldFilename_);
-  if (!xmlFile.is_open())
-  {
-    LOG_ERROR("initialize(): Could not open file: \"%s\"", worldFilename_.c_str());
-    return false;
-  }
-
-  std::string tempString;
-  std::ostringstream xmlStringStream;
-  while (std::getline(xmlFile, tempString))
-  {
-    xmlStringStream << tempString << "\n";
-  }
-
-  // Convert the std::string to a char*
-  char* xmlString = strdup(xmlStringStream.str().c_str());
-
-  // Parse the XML string with Rapidxml
-  rapidxml::xml_document<> worldXml;
-  worldXml.parse<0>(xmlString);
-
-  // Get top node (<map>)
-  auto* mapNode = worldXml.first_node();
-
-  // Read width and height
-  auto* widthAttr = mapNode->first_attribute("width");
-  auto* heightAttr = mapNode->first_attribute("height");
-  if (widthAttr == nullptr || heightAttr == nullptr)
-  {
-    LOG_ERROR("initialize(): Invalid file, missing attributes width or height in <map>-node");
-    free(xmlString);
-    return false;
-  }
-
-  worldSizeX_ = std::stoi(widthAttr->value());
-  worldSizeY_ = std::stoi(heightAttr->value());
-
-  auto* tileNode = mapNode->first_node();
-  for (int y = worldSizeStart_; y < worldSizeStart_ + worldSizeY_; y++)
-  {
-    for (int x = worldSizeStart_; x < worldSizeStart_ + worldSizeX_; x++)
-    {
-      Position position(x, y, 7);
-
-      if (tileNode == nullptr)
-      {
-        LOG_ERROR("initialize(): Invalid file, missing <tile>-node");
-        free(xmlString);
-        return false;
-      }
-
-      // Read the first <item> (there must be at least one, the ground item)
-      auto* groundItemNode = tileNode->first_node();
-      if (groundItemNode == nullptr)
-      {
-        LOG_ERROR("initialize(): Invalid file, <tile>-node is missing <item>-node");
-        free(xmlString);
-        return false;
-      }
-      auto* groundItemAttr = groundItemNode->first_attribute("id");
-      if (groundItemAttr == nullptr)
-      {
-        LOG_ERROR("initialize(): Invalid file, missing attribute id in <item>-node");
-        free(xmlString);
-        return false;
-      }
-
-      auto groundItemId = std::stoi(groundItemAttr->value());
-      auto groundItem = itemFactory_->createItem(groundItemId);
-      tiles_.insert(std::make_pair(position, Tile(groundItem)));
-
-      // Read more items to put in this tile
-      // But due to the way otserv-3.0 made world.xml, do it backwards
-      for (auto* itemNode = tileNode->last_node(); itemNode != groundItemNode; itemNode = itemNode->previous_sibling())
-      {
-        auto* itemIdAttr = itemNode->first_attribute("id");
-        if (itemIdAttr == nullptr)
-        {
-          LOG_ERROR("initialize(): Invalid file, missing attribute id in <item>-node");
-          free(xmlString);
-          return false;
-        }
-
-        auto itemId = std::stoi(itemIdAttr->value());
-        internalGetTile(position).addItem(itemFactory_->createItem(itemId));
-      }
-
-      // Go to next <tile> in XML
-      tileNode = tileNode->next_sibling();
-    }
-  }
-
-  LOG_INFO("World loaded, size: %d x %d", worldSizeX_, worldSizeY_);
-
-  free(xmlString);
-  return true;
 }
 
 void World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)

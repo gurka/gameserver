@@ -45,10 +45,16 @@ class OutgoingPacket;
 class GameEngine
 {
  public:
-  GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename,
-             const std::string& worldFilename, const std::string& itemsFilename);
+  GameEngine(boost::asio::io_service* io_service,
+             const std::string& loginMessage,
+             const std::string& dataFilename,
+             const std::string& worldFilename,
+             const std::string& itemsFilename);
+
+  // Not copyable
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
+
   ~GameEngine();
 
   bool start();
@@ -95,11 +101,8 @@ class GameEngine
 
   std::string loginMessage_;
 
-  std::string dataFilename_;
-  std::string itemsFilename_;
   ItemFactory itemFactory_;
-
-  World world_;
+  std::unique_ptr<World> world_;
 };
 
 #endif  // WORLDSERVER_GAMEENGINE_H_

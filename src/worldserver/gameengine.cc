@@ -38,17 +38,29 @@
 #include "world/npcctrl.h"
 #include "world/position.h"
 #include "world/world.h"
+#include "world/worldfactory.h"
 #include "logger.h"
 
-GameEngine::GameEngine(boost::asio::io_service* io_service, const std::string& loginMessage, const std::string& dataFilename,
-                       const std::string& worldFilename, const std::string& itemsFilename)
+GameEngine::GameEngine(boost::asio::io_service* io_service,
+                       const std::string& loginMessage,
+                       const std::string& dataFilename,
+                       const std::string& worldFilename,
+                       const std::string& itemsFilename)
   : state_(INITIALIZED),
     taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
-    loginMessage_(loginMessage),
-    dataFilename_(dataFilename),
-    itemsFilename_(itemsFilename),
-    world_(&itemFactory_, worldFilename)
+    loginMessage_(loginMessage)
 {
+  // Load data file
+  LOG_INFO("Loading data files");
+  if (!itemFactory_.initialize(dataFilename, itemsFilename))
+  {
+    // ItemFactory::initialize logs error on failure
+    // Return here so that we don't try to load the world with an uninitialized ItemFactory
+    return;
+  }
+
+  // Load world
+  world_ = WorldFactory::createWorld(&itemFactory_, worldFilename);
 }
 
 GameEngine::~GameEngine()
@@ -63,26 +75,18 @@ bool GameEngine::start()
 {
   if (state_ == RUNNING)
   {
-    LOG_ERROR("GameEngine is already running");
+    LOG_ERROR("%s: GameEngine is already running", __func__);
     return false;
   }
 
-  // Load data file
-  LOG_INFO("Loading data files");
-  if (!itemFactory_.initialize(dataFilename_, itemsFilename_))
+  // Check so that world was created successfully
+  if (!world_)
   {
-    // ItemFactory::initialize logs error on failure
-    return false;
-  }
-
-  if (!world_.initialize())
-  {
-    LOG_ERROR("Could not initialize World");
+    LOG_DEBUG("%s: World could not be loaded", __func__);
     return false;
   }
 
   state_ = RUNNING;
-
   return true;
 }
 
@@ -95,7 +99,7 @@ bool GameEngine::stop()
   }
   else
   {
-    LOG_ERROR("GameEngine is already stopped");
+    LOG_ERROR("%s: GameEngine is already stopped", __func__);
     return false;
   }
 }
@@ -104,7 +108,7 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
 {
   // Create Player and PlayerCtrl here
   std::unique_ptr<Player> player(new Player(name));
-  std::unique_ptr<PlayerCtrl> playerCtrl(new PlayerCtrl(&world_, player->getCreatureId(), sendPacket));
+  std::unique_ptr<PlayerCtrl> playerCtrl(new PlayerCtrl(world_.get(), player->getCreatureId(), sendPacket));
 
   auto creatureId = player->getCreatureId();
 
@@ -119,7 +123,7 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
     LOG_INFO("playerSpawn(): Spawn player: %s", player.getName().c_str());
 
     Position position(222, 222, 7);
-    world_.addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
+    world_->addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
 
     playerCtrl.onPlayerSpawn(player, position, loginMessage_);
   };
@@ -134,7 +138,7 @@ bool GameEngine::playerDespawn(CreatureId creatureId)
   auto playerDespawnFunc = [this, creatureId]()
   {
     LOG_INFO("playerDespawn(): Despawn player, creature id: %d", creatureId);
-    world_.removeCreature(creatureId);
+    world_->removeCreature(creatureId);
 
     // Remove Player and PlayerCtrl
     players_.erase(creatureId);
@@ -158,14 +162,14 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
     if (nextWalkTime <= now)
     {
       LOG_DEBUG("%s: Player move now, creature id: %d", __func__, creatureId);
-      world_.creatureMove(creatureId, direction);
+      world_->creatureMove(creatureId, direction);
     }
     else
     {
       LOG_DEBUG("%s: Player move delayed, creature id: %d", __func__, creatureId);
       auto creatureMoveFunc = [this, creatureId, direction]
       {
-        world_.creatureMove(creatureId, direction);
+        world_->creatureMove(creatureId, direction);
       };
       taskQueue_.addTask(creatureMoveFunc, nextWalkTime);
     }
@@ -180,7 +184,7 @@ void GameEngine::playerMove(CreatureId creatureId, const std::list<Direction>& p
   auto playerMoveFunc = [this, creatureId, path]()
   {
     LOG_INFO("playerMove(): Player move path, creature id: %d, moves left: %d", creatureId, path.size());
-    world_.creatureMove(creatureId, path.front());
+    world_->creatureMove(creatureId, path.front());
 
     if (path.size() > 1)
     {
@@ -200,7 +204,7 @@ void GameEngine::playerTurn(CreatureId creatureId, Direction direction)
   auto playerTurnFunc = [this, creatureId, direction]()
   {
     LOG_INFO("playerTurn(): Player turn, creature id: %d", creatureId);
-    world_.creatureTurn(creatureId, direction);
+    world_->creatureTurn(creatureId, direction);
   };
 
   taskQueue_.addTask(playerTurnFunc);
@@ -229,16 +233,16 @@ void GameEngine::playerSay(CreatureId creatureId, uint8_t type, const std::strin
         if (command == "debug")
         {
           // Show debug information on player tile
-          position = world_.getCreaturePosition(creatureId);
+          position = world_->getCreaturePosition(creatureId);
         }
         else if (command == "debugf")
         {
           // Show debug information on tile in front of player
           const auto& player = getPlayer(creatureId);
-          position = world_.getCreaturePosition(creatureId).addDirection(player.getDirection());
+          position = world_->getCreaturePosition(creatureId).addDirection(player.getDirection());
         }
 
-        const auto& tile = world_.getTile(position);
+        const auto& tile = world_->getTile(position);
 
         std::ostringstream oss;
         oss << "Position: " << position.toString() << "\n";
@@ -270,7 +274,7 @@ void GameEngine::playerSay(CreatureId creatureId, uint8_t type, const std::strin
     }
     else
     {
-      world_.creatureSay(creatureId, message);
+      world_->creatureSay(creatureId, message);
     }
   };
 
@@ -285,7 +289,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
     LOG_INFO("playerMoveItem(): Move Item from Tile to Tile, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
                creatureId, fromPosition.toString().c_str(), fromStackPos, itemId, count, toPosition.toString().c_str());
 
-    World::ReturnCode rc = world_.moveItem(creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
+    World::ReturnCode rc = world_->moveItem(creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
 
     switch (rc)
     {
@@ -330,7 +334,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
     auto item = itemFactory_.createItem(itemId);
 
     // Check if the player can reach the fromPosition
-    if (!world_.creatureCanReach(creatureId, fromPosition))
+    if (!world_->creatureCanReach(creatureId, fromPosition))
     {
       playerCtrl.sendCancel("You cannot move that object.");
       return;
@@ -345,7 +349,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, const Position& fromPosit
     }
 
     // Try to remove the Item from the fromTile
-    World::ReturnCode rc = world_.removeItem(itemId, count, fromPosition, fromStackPos);
+    World::ReturnCode rc = world_->removeItem(itemId, count, fromPosition, fromStackPos);
     if (rc != World::ReturnCode::OK)
     {
       LOG_ERROR("playerMoveItem(): Could not remove item %d (count %d) from %s (stackpos: %d)",
@@ -375,7 +379,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
     auto item = itemFactory_.createItem(itemId);
 
     // First check if the player can throw the Item to the toPosition
-    if (!world_.creatureCanThrowTo(creatureId, toPosition))
+    if (!world_->creatureCanThrowTo(creatureId, toPosition))
     {
       playerCtrl.sendCancel("There is no room.");
       return;
@@ -392,7 +396,7 @@ void GameEngine::playerMoveItem(CreatureId creatureId, int fromInventoryId, int 
     playerCtrl.onEquipmentUpdated(player, fromInventoryId);
 
     // Add the Item to the toPosition
-    world_.addItem(itemId, count, toPosition);
+    world_->addItem(itemId, count, toPosition);
   };
 
   taskQueue_.addTask(playerMoveItemFunc);
@@ -442,7 +446,7 @@ void GameEngine::playerUseItem(CreatureId creatureId, int itemId, int inventoryI
   {
     LOG_INFO("playerUseItem(): Use Item in inventory, creature id: %d, itemId: %d, inventoryIndex: %d",
                creatureId, itemId, inventoryIndex);
-    //  world_.useItem(creatureId, itemId, inventoryIndex);
+    //  world_->useItem(creatureId, itemId, inventoryIndex);
   };
 
   taskQueue_.addTask(playerUseItemFunc);
@@ -454,7 +458,7 @@ void GameEngine::playerUseItem(CreatureId creatureId, int itemId, const Position
   {
     LOG_INFO("playerUseItem(): Use Item at position, creature id: %d, itemId: %d, position: %s, stackPos: %d",
                creatureId, itemId, position.toString().c_str(), stackPos);
-    //  world_.useItem(creatureId, itemId, position, stackPos);
+    //  world_->useItem(creatureId, itemId, position, stackPos);
   };
 
   taskQueue_.addTask(playerUseItemFunc);
@@ -499,7 +503,7 @@ void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, I
     }
   }
 
-  //  world_.sendTextMessage(creatureId, ss.str());
+  //  world_->sendTextMessage(creatureId, ss.str());
 }
 
 void GameEngine::onTask(const TaskFunction& task)

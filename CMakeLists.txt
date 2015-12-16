@@ -114,6 +114,8 @@ set(common_world_src
   "src/common/world/tile.h"
   "src/common/world/world.cc"
   "src/common/world/world.h"
+  "src/common/world/worldfactory.cc"
+  "src/common/world/worldfactory.h"
   "src/common/world/worldinterface.h"
 )
 set(common_world_inc

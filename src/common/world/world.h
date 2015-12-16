@@ -51,9 +51,10 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(const ItemFactory* itemFactory, const std::string& worldFilename);
-
-  bool initialize();
+  World(const ItemFactory* itemFactory,
+        int worldSizeX,
+        int worldSizeY,
+        const std::unordered_map<Position, Tile, Position::Hash>& tiles);
 
   // Creature management
   void addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
@@ -94,9 +95,6 @@ class World : public WorldInterface
 
   // Item factory
   const ItemFactory* itemFactory_;
-
-  // Configuration stuff
-  std::string worldFilename_;
 
   // World size
   int worldSizeX_ = 0;
