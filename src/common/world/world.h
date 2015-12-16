@@ -88,8 +88,8 @@ class World : public WorldInterface
   std::list<CreatureId> getNearCreatureIds(const Position& position) const;
 
   // Functions to use instead of accessing the unordered_maps directly
-  Tile& getTile(const Position& position);
-  Creature& getCreature(CreatureId creatureId);
+  Tile& internalGetTile(const Position& position);
+  Creature& internalGetCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
 
   // Item factory

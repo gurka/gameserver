@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <sstream>
 #include <utility>
 
 #include "player.h"
@@ -210,8 +211,67 @@ void GameEngine::playerSay(CreatureId creatureId, uint8_t type, const std::strin
 {
   auto playerSayFunc = [this, creatureId, message]()
   {
-    LOG_INFO("playerSay(): Player say, creature id: %d, message: %s", creatureId, message.c_str());
-    world_.creatureSay(creatureId, message);
+    LOG_INFO("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
+
+    // Check if message is a command
+    if (message.size() > 0 && message[0] == '/')
+    {
+      // Extract everything after '/'
+      auto command = message.substr(1, std::string::npos);
+
+      // Check commands
+      if (command == "debug" || command == "debugf")
+      {
+        // Different position for debug / debugf
+        Position position;
+
+        // Show debug info for a tile
+        if (command == "debug")
+        {
+          // Show debug information on player tile
+          position = world_.getCreaturePosition(creatureId);
+        }
+        else if (command == "debugf")
+        {
+          // Show debug information on tile in front of player
+          const auto& player = getPlayer(creatureId);
+          position = world_.getCreaturePosition(creatureId).addDirection(player.getDirection());
+        }
+
+        const auto& tile = world_.getTile(position);
+
+        std::ostringstream oss;
+        oss << "Position: " << position.toString() << "\n";
+
+        const auto& groundItem = tile.getGroundItem();
+        oss << "Ground item: " << groundItem.getItemId() << " (" << groundItem.getName() << ")\n";
+
+        for (const auto& item : tile.getBottomItems())
+        {
+          oss << "Bottom item: " << item.getItemId() << " (" << item.getName() << ")\n";
+        }
+
+        for (const auto& creatureId : tile.getCreatureIds())
+        {
+          oss << "Creature: " << creatureId << "\n";
+        }
+
+        for (const auto& item : tile.getTopItems())
+        {
+          oss << "Top item: " << item.getItemId() << " (" << item.getName() << ")\n";
+        }
+
+        getPlayerCtrl(creatureId).sendTextMessage(oss.str());
+      }
+      else
+      {
+        getPlayerCtrl(creatureId).sendTextMessage("Invalid command");
+      }
+    }
+    else
+    {
+      world_.creatureSay(creatureId, message);
+    }
   };
 
   taskQueue_.addTask(playerSayFunc);

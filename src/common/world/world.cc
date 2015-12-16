@@ -127,7 +127,7 @@ bool World::initialize()
         }
 
         auto itemId = std::stoi(itemIdAttr->value());
-        getTile(position).addItem(itemFactory_->createItem(itemId));
+        internalGetTile(position).addItem(itemFactory_->createItem(itemId));
       }
 
       // Go to next <tile> in XML
@@ -160,7 +160,7 @@ void World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Po
     return;
   }
 
-  auto& tile = getTile(position);
+  auto& tile = internalGetTile(position);
   if (tile.getCreatureIds().size() != 0)
   {
     LOG_ERROR("addCreature: Already a creature at position: %s",
@@ -195,7 +195,7 @@ void World::removeCreature(CreatureId creatureId)
 
   const auto& creature = getCreature(creatureId);
   const auto& position = getCreaturePosition(creatureId);
-  auto& tile = getTile(position);
+  auto& tile = internalGetTile(position);
   auto stackPos = tile.getCreatureStackPos(creatureId);
 
   // Tell near creatures that a creature has despawned
@@ -236,7 +236,7 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
   }
 
   // Check if toTile is blocking or not
-  auto& toTile = getTile(toPosition);
+  auto& toTile = internalGetTile(toPosition);
   for (const auto& item : toTile.getItems())
   {
     if (item.isBlocking())
@@ -247,11 +247,11 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
     }
   }
 
-  auto& creature = getCreature(creatureId);
+  auto& creature = internalGetCreature(creatureId);
 
   // Move the actual creature
   auto fromPosition = getCreaturePosition(creatureId);  // Need to create a new Position here (i.e. not auto&)
-  auto& fromTile = getTile(fromPosition);
+  auto& fromTile = internalGetTile(fromPosition);
   auto fromStackPos = fromTile.getCreatureStackPos(creatureId);
   fromTile.removeCreature(creatureId);
 
@@ -288,9 +288,9 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
   {
     for (auto y = y_min - 7; y <= y_max + 7; y++)
     {
-      const Tile& tile = getTile(Position(x, y, 7));
+      const auto& tile = getTile(Position(x, y, 7));
 
-      const std::deque<CreatureId>& nearCreatureIds = tile.getCreatureIds();
+      const auto& nearCreatureIds = tile.getCreatureIds();
       for (const auto nearCreatureId : nearCreatureIds)
       {
         getCreatureCtrl(nearCreatureId).onCreatureMove(creature, fromPosition, fromStackPos, toPosition, toStackPos);
@@ -307,14 +307,14 @@ void World::creatureTurn(CreatureId creatureId, Direction direction)
     return;
   }
 
-  Creature& creature = getCreature(creatureId);
+  auto& creature = internalGetCreature(creatureId);
   creature.setDirection(direction);
 
   // Call onCreatureTurn on all creatures that can see the turn
   // including the turning creature itself
-  Position position = getCreaturePosition(creatureId);
+  const auto& position = getCreaturePosition(creatureId);
   auto stackPos = getTile(position).getCreatureStackPos(creatureId);
-  std::list<CreatureId> nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getNearCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onCreatureTurn(creature, position, stackPos);
@@ -331,7 +331,7 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
 
   const auto& creature = getCreature(creatureId);
   const auto& position = getCreaturePosition(creatureId);
-  std::list<CreatureId> nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getNearCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onCreatureSay(creature, position, message);
@@ -349,7 +349,7 @@ World::ReturnCode World::addItem(int itemId, int count, const Position& position
   auto item = itemFactory_->createItem(itemId);
 
   // Add Item to toTile
-  auto& toTile = getTile(position);
+  auto& toTile = internalGetTile(position);
   toTile.addItem(item);
 
   // Call onItemAdded on all creatures that can see position
@@ -373,7 +373,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
   auto item = itemFactory_->createItem(itemId);
 
   // Try to remove Item from fromTile
-  auto& fromTile = getTile(position);
+  auto& fromTile = internalGetTile(position);
   if (!fromTile.removeItem(item, stackPos))
   {
     LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, position.toString().c_str());
@@ -391,7 +391,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (fromTile.getNumberOfThings() >= 10)
   {
-    std::list<CreatureId> nearCreatureIds = getNearCreatureIds(position);
+    auto nearCreatureIds = getNearCreatureIds(position);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onTileUpdate(position);
@@ -454,7 +454,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
       return ReturnCode::OTHER_ERROR;
     }
 
-    auto& fromTile = getTile(fromPosition);
+    auto& fromTile = internalGetTile(fromPosition);
     auto movedCreatureId = fromTile.getCreatureId(fromStackPos);
     if (movedCreatureId == Creature::INVALID_ID)
     {
@@ -472,7 +472,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     auto item = itemFactory_->createItem(itemId);
 
     // Try to remove Item from fromTile
-    auto& fromTile = getTile(fromPosition);
+    auto& fromTile = internalGetTile(fromPosition);
     if (!fromTile.removeItem(item, fromStackPos))
     {
       LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, fromPosition.toString().c_str());
@@ -480,7 +480,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     }
 
     // Add Item to toTile
-    auto& toTile = getTile(toPosition);
+    auto& toTile = internalGetTile(toPosition);
     toTile.addItem(item);
 
     // Call onItemRemoved on all creatures that can see fromPosition
@@ -501,7 +501,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
     if (fromTile.getNumberOfThings() >= 10)
     {
-      std::list<CreatureId> nearCreatureIds = getNearCreatureIds(fromPosition);
+      auto nearCreatureIds = getNearCreatureIds(fromPosition);
       for (const auto& nearCreatureId : nearCreatureIds)
       {
         getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
@@ -576,7 +576,7 @@ std::list<CreatureId> World::getNearCreatureIds(const Position& position) const
   return creatureIds;
 }
 
-Tile& World::getTile(const Position& position)
+Tile& World::internalGetTile(const Position& position)
 {
   if (!positionIsValid(position))
   {
@@ -594,7 +594,7 @@ const Tile& World::getTile(const Position& position) const
   return tiles_.at(position);
 }
 
-Creature& World::getCreature(CreatureId creatureId)
+Creature& World::internalGetCreature(CreatureId creatureId)
 {
   if (!creatureExists(creatureId))
   {
