@@ -1,4 +1,2 @@
 1. Multiple players connected is buggy.
    * Logging in at the same spot as an already logged in player stands causes debug assertion in client (line 418, MapWindow)
-
-2. Item on tile does not appear again after getting hidden if a creature walks away from the tile. Works if an item is being removed from the tile.

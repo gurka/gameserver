@@ -297,6 +297,17 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
       }
     }
   }
+
+  // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
+  // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
+  if (fromTile.getNumberOfThings() >= 10)
+  {
+    auto nearCreatureIds = getNearCreatureIds(fromPosition);
+    for (const auto& nearCreatureId : nearCreatureIds)
+    {
+      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+    }
+  }
 }
 
 void World::creatureTurn(CreatureId creatureId, Direction direction)
