@@ -43,6 +43,9 @@ struct Outfit
 class Creature
 {
  public:
+  static const Creature INVALID;
+
+  Creature();
   explicit Creature(const std::string& name);
   virtual ~Creature() = default;
 

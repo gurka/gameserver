@@ -26,7 +26,7 @@
 
 #include <sstream>
 
-Position Position::INVALID = Position();
+const Position Position::INVALID = Position();
 
 Position::Position()
   : x_(0),

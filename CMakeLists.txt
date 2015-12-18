@@ -6,7 +6,7 @@ project(gameserver)
 
 ## Settings
 # Common compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11 -pedantic -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 # Required libraries (Boost)
@@ -133,6 +133,7 @@ if (gameserver_test)
     "test/common/world/creature_test.cc"
     "test/common/world/item_test.cc"
     "test/common/world/tile_test.cc"
+    "test/common/world/world_test.cc"
   )
 
   set(unittest_inc
@@ -153,12 +154,14 @@ if (gameserver_test)
   add_subdirectory(lib/googletest)
 
   enable_testing()
-  
+
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 
   add_executable(unittest ${unittest_src})
   target_include_directories(unittest PUBLIC ${unittest_inc})
 
   target_link_libraries(unittest gtest_main)
+  target_link_libraries(unittest gmock_main)
   target_link_libraries(unittest ${unittest_lib})
 endif()

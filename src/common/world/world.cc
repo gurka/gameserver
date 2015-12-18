@@ -116,6 +116,12 @@ void World::removeCreature(CreatureId creatureId)
   tile.removeCreature(creatureId);
 }
 
+bool World::creatureExists(CreatureId creatureId) const
+{
+  return creatureId != Creature::INVALID_ID && creatures_.count(creatureId) == 1;
+}
+
+
 void World::creatureMove(CreatureId creatureId, Direction direction)
 {
   creatureMove(creatureId, getCreaturePosition(creatureId).addDirection(direction));
@@ -451,11 +457,6 @@ const std::list<const Tile*> World::getMapBlock(const Position& position, int wi
   return tiles;
 }
 
-bool World::creatureExists(CreatureId creatureId) const
-{
-  return creatureId != Creature::INVALID_ID && creatures_.count(creatureId) == 1;
-}
-
 bool World::positionIsValid(const Position& position) const
 {
   return position.getX() >= worldSizeStart_ &&
@@ -520,6 +521,7 @@ const Creature& World::getCreature(CreatureId creatureId) const
   if (!creatureExists(creatureId))
   {
     LOG_ERROR("getCreature called with non-existent CreatureId");
+    return Creature::INVALID;
   }
   return *(creatures_.at(creatureId));
 }
@@ -538,6 +540,7 @@ const Position& World::getCreaturePosition(CreatureId creatureId) const
   if (!creatureExists(creatureId))
   {
     LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
+    return Position::INVALID;
   }
   return creaturePositions_.at(creatureId);
 }

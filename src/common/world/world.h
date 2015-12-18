@@ -59,6 +59,7 @@ class World : public WorldInterface
   // Creature management
   void addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
   void removeCreature(CreatureId creatureId);
+  bool creatureExists(CreatureId creatureId) const;
   void creatureMove(CreatureId creatureId, Direction direction);
   void creatureMove(CreatureId creatureId, const Position& newPosition);
   void creatureTurn(CreatureId creatureId, Direction direction);
@@ -82,7 +83,6 @@ class World : public WorldInterface
 
  private:
   // Validation functions
-  bool creatureExists(CreatureId creatureId) const;
   bool positionIsValid(const Position& position) const;
 
   // Helper functions

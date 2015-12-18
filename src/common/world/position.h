@@ -31,7 +31,7 @@
 class Position
 {
  public:
-  static Position INVALID;
+  static const Position INVALID;
 
   Position();
   Position(uint16_t x, uint16_t y, uint8_t z);

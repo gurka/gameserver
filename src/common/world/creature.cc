@@ -24,8 +24,21 @@
 
 #include "creature.h"
 
+const Creature Creature::INVALID = Creature();
 const CreatureId Creature::INVALID_ID = 0;
 CreatureId Creature::nextCreatureId_ = 0x4713;
+
+Creature::Creature()
+  : creatureId_(Creature::INVALID_ID),
+    direction_(SOUTH),
+    maxHealth_(0),
+    health_(0),
+    speed_(0),
+    outfit_({0, 0, 0, 0, 0}),
+    lightColor_(0),
+    lightLevel_(0)
+{
+}
 
 Creature::Creature(const std::string& name)
   : creatureId_(Creature::getFreeCreatureId()),
@@ -34,14 +47,10 @@ Creature::Creature(const std::string& name)
     maxHealth_(100),
     health_(100),
     speed_(110),
+    outfit_({ 128, 20, 30, 40, 50 }),
     lightColor_(0),
     lightLevel_(0)
 {
-  outfit_.type = 128;
-  outfit_.head = 20;
-  outfit_.body = 30;
-  outfit_.legs = 40;
-  outfit_.feet = 50;
 }
 
 bool Creature::operator==(const Creature& other) const
