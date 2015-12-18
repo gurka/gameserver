@@ -28,6 +28,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include "mocks/itemfactory_mock.h"
 #include "mocks/creaturectrl_mock.h"
 #include "world.h"
 #include "creature.h"
@@ -58,9 +59,10 @@ class WorldTest : public ::testing::Test
     }
 
     // TODO(gurka): MockItemFactory
-    world.reset(new World(nullptr, 16, 16, tiles));
+    world.reset(new World(&itemFactory, 16, 16, tiles));
   }
 
+  MockItemFactory itemFactory;
   std::unique_ptr<World> world;
 };
 
@@ -189,4 +191,24 @@ TEST_F(WorldTest, RemoveCreature)
   EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _)).Times(0);
   world->removeCreature(creatureFour.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureFour.getCreatureId()));
+}
+
+TEST_F(WorldTest, CreatureMoveSingleCreature)
+{
+  /*
+  Creature creatureOne("TestCreatureOne");
+  MockCreatureCtrl creatureCtrlOne;
+  Position creaturePositionOne(192, 192, 7);
+  world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
+
+  // Test with Direction
+  Direction direction(Direction::EAST);
+  world->creatureMove(creatureOne.getCreatureId(), direction);
+  EXPECT_EQ(creaturePositionOne.addDirection(direction), world->getCreaturePosition(creatureOne.getCreatureId()));
+
+  // Test with Position, from (193, 192, 7) to (193, 193, 7)
+  Position position(193, 193, 7);
+  world->creatureMove(creatureOne.getCreatureId(), position);
+  EXPECT_EQ(position, world->getCreaturePosition(creatureOne.getCreatureId()));
+  */
 }

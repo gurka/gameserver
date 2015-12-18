@@ -22,29 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_ITEMFACTORY_H_
-#define COMMON_WORLD_ITEMFACTORY_H_
+#ifndef COMMON_WORLD_MOCKS_ITEMFACTORY_MOCK_H_
+#define COMMON_WORLD_MOCKS_ITEMFACTORY_MOCK_H_
 
 #include <string>
-#include <unordered_map>
 
+#include "gmock/gmock.h"
+
+#include "itemfactory.h"
 #include "item.h"
 
-class ItemFactory
+class MockItemFactory : public ItemFactory
 {
  public:
-  virtual ~ItemFactory() = default;
-
-  virtual bool initialize(const std::string& dataFilename, const std::string& itemsFilename);
-
-  virtual Item createItem(ItemId itemId) const;
-
- private:
-  bool loadFromDat(const std::string& dataFilename);
-  bool loadFromXml(const std::string& itemsFilename);
-
-  std::unordered_map<ItemId, ItemData> itemData_;
+  MOCK_METHOD2(initialize, bool(const std::string& dataFilename, const std::string& itemsFilename));
+  MOCK_CONST_METHOD1(createItem, Item(ItemId itemId));
 };
 
-#endif  // COMMON_WORLD_ITEMFACTORY_H_
+#endif  // COMMON_WORLD_MOCKS_ITEMFACTORY_MOCK_H_
 
