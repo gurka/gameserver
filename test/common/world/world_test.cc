@@ -43,6 +43,9 @@ class WorldTest : public ::testing::Test
  protected:
   WorldTest()
   {
+    // We need to build a small simple map, currently with invalid ground items
+    // TODO(gurka): MockItem
+    // Valid positions are (192, 192, 7) to (207, 207, 7)
     std::unordered_map<Position, Tile, Position::Hash> tiles;
     for (auto x = 0; x < 16; x++)
     {
@@ -54,6 +57,7 @@ class WorldTest : public ::testing::Test
       }
     }
 
+    // TODO(gurka): MockItemFactory
     world.reset(new World(nullptr, 16, 16, tiles));
   }
 
@@ -62,12 +66,12 @@ class WorldTest : public ::testing::Test
 
 TEST_F(WorldTest, AddCreature)
 {
-  // Add first Creature
+  // Add first Creature at (192, 192, 7)
+  // Should not call its own CreatureCtrl::onCreatureSpawn
   Creature creatureOne("TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
   Position creaturePositionOne(192, 192, 7);
 
-  // Adding creatureOne should not call creatureOne's CreatureCtrl::onCreatureSpawn
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(0);
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
 
@@ -75,46 +79,114 @@ TEST_F(WorldTest, AddCreature)
   EXPECT_EQ(creatureOne, world->getCreature(creatureOne.getCreatureId()));
   EXPECT_EQ(creaturePositionOne, world->getCreaturePosition(creatureOne.getCreatureId()));
 
-  // Add second Creature
+
+  // Add second Creature at (193, 193, 7)
+  // Should call creatureOne's CreatureCtrl::onCreatureSpawn but not its own
   Creature creatureTwo("TestCreatureTwo");
   MockCreatureCtrl creatureCtrlTwo;
-  Position creaturePositionTwo(193, 192, 7);
+  Position creaturePositionTwo(193, 193, 7);
 
-  // Addding creatureTwo should call creatureOne's CreatureCtrl::onCreatureSpawn
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(creatureTwo, creaturePositionTwo)).Times(1);
+  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(_,_)).Times(0);
   world->addCreature(&creatureTwo, &creatureCtrlTwo, creaturePositionTwo);
 
   EXPECT_TRUE(world->creatureExists(creatureTwo.getCreatureId()));
   EXPECT_EQ(creatureTwo, world->getCreature(creatureTwo.getCreatureId()));
   EXPECT_EQ(creaturePositionTwo, world->getCreaturePosition(creatureTwo.getCreatureId()));
+
+
+  // Add third Creature at (202, 193, 7)
+  // Should call creatureTwo's CreatureCtrl::onCreatureSpawn but neither its own nor creatureOne's
+  // due to being outside creatureOne's vision (on x axis)
+  Creature creatureThree("TestCreatureThree");
+  MockCreatureCtrl creatureCtrlThree;
+  Position creaturePositionThree(202, 193, 7);
+
+  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(0);
+  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(creatureThree, creaturePositionThree)).Times(1);
+  EXPECT_CALL(creatureCtrlThree, onCreatureSpawn(_, _)).Times(0);
+  world->addCreature(&creatureThree, &creatureCtrlThree, creaturePositionThree);
+
+  EXPECT_TRUE(world->creatureExists(creatureThree.getCreatureId()));
+  EXPECT_EQ(creatureThree, world->getCreature(creatureThree.getCreatureId()));
+  EXPECT_EQ(creaturePositionThree, world->getCreaturePosition(creatureThree.getCreatureId()));
+
+
+  // Add fourth Creature at (195, 200, 7)
+  // Should call creatureTwo's and creatureThree's CreatureCtrl::onCreatureSpawn but neither
+  // its own nor creatureOne's due to being outside creatureOne's vision (on y axis)
+  Creature creatureFour("TestCreatureFour");
+  MockCreatureCtrl creatureCtrlFour;
+  Position creaturePositionFour(195, 200, 7);
+
+  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(0);
+  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(creatureFour, creaturePositionFour)).Times(1);
+  EXPECT_CALL(creatureCtrlThree, onCreatureSpawn(creatureFour, creaturePositionFour)).Times(1);
+  EXPECT_CALL(creatureCtrlFour, onCreatureSpawn(_, _)).Times(0);
+  world->addCreature(&creatureFour, &creatureCtrlFour, creaturePositionFour);
+
+  EXPECT_TRUE(world->creatureExists(creatureFour.getCreatureId()));
+  EXPECT_EQ(creatureFour, world->getCreature(creatureFour.getCreatureId()));
+  EXPECT_EQ(creaturePositionFour, world->getCreaturePosition(creatureFour.getCreatureId()));
 }
 
 TEST_F(WorldTest, RemoveCreature)
 {
-  // Add first Creature
+  // Add same Creatures as in AddCreature-test with same positions, i.e:
+  // creatureOne can only see creatureTwo
+  // creatureTwo can see all Creatures
+  // creatureThree can only see creatureTwo and creatureFour
+  // creatureFour can only see creatureTwo and creatureThree
+
   Creature creatureOne("TestCreatureOne");
+  Creature creatureTwo("TestCreatureTwo");
+  Creature creatureThree("TestCreatureThree");
+  Creature creatureFour("TestCreatureFour");
+
   MockCreatureCtrl creatureCtrlOne;
+  MockCreatureCtrl creatureCtrlTwo;
+  MockCreatureCtrl creatureCtrlThree;
+  MockCreatureCtrl creatureCtrlFour;
+
   Position creaturePositionOne(192, 192, 7);
+  Position creaturePositionTwo(193, 193, 7);
+  Position creaturePositionThree(202, 193, 7);
+  Position creaturePositionFour(195, 200, 7);
+
+  // We don't actually care about these since they are tested in AddCreature
+  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(AtLeast(0));
+  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(_, _)).Times(AtLeast(0));
+  EXPECT_CALL(creatureCtrlThree, onCreatureSpawn(_, _)).Times(AtLeast(0));
+  EXPECT_CALL(creatureCtrlFour, onCreatureSpawn(_, _)).Times(AtLeast(0));
 
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
-
-  // Add second Creature
-  Creature creatureTwo("TestCreatureTwo");
-  MockCreatureCtrl creatureCtrlTwo;
-  Position creaturePositionTwo(193, 192, 7);
-
-  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(creatureTwo, creaturePositionTwo)).Times(1);
   world->addCreature(&creatureTwo, &creatureCtrlTwo, creaturePositionTwo);
+  world->addCreature(&creatureThree, &creatureCtrlThree, creaturePositionThree);
+  world->addCreature(&creatureFour, &creatureCtrlFour, creaturePositionFour);
 
-  // Remove first Creature
-  // Removing creatureOne should call creatureTwo's CreatureCtrl::onCreatureDespawn
+  // Remove creatureOne
+  EXPECT_CALL(creatureCtrlOne, onCreatureDespawn(_, _, _)).Times(0);
   EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(creatureOne, creaturePositionOne, _)).Times(1);
+  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _)).Times(0);
   world->removeCreature(creatureOne.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureOne.getCreatureId()));
 
-  // Remove second Creature
-  // Should not call creatureTwo's CreatureCtrl::onCreatureDespawn
-  EXPECT_CALL(creatureCtrlOne, onCreatureDespawn(_, _, _)).Times(0);
+  // Remove creatureTwo
+  EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(creatureTwo, creaturePositionTwo, _)).Times(1);
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(creatureTwo, creaturePositionTwo, _)).Times(1);
   world->removeCreature(creatureTwo.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureTwo.getCreatureId()));
+
+  // Remove creatureThree
+  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(creatureThree, creaturePositionThree, _)).Times(1);
+  world->removeCreature(creatureThree.getCreatureId());
+  EXPECT_FALSE(world->creatureExists(creatureThree.getCreatureId()));
+
+  // Remove creatureFour
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _)).Times(0);
+  world->removeCreature(creatureFour.getCreatureId());
+  EXPECT_FALSE(world->creatureExists(creatureFour.getCreatureId()));
 }

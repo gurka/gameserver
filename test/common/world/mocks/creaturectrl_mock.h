@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef TEST_COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
-#define TEST_COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
+#ifndef COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
+#define COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
 
 #include "gmock/gmock.h"
 
@@ -47,4 +47,4 @@ class MockCreatureCtrl : public CreatureCtrl
   MOCK_METHOD1(onTileUpdate, void(const Position& position));
 };
 
-#endif  // TEST_COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
+#endif  // COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
