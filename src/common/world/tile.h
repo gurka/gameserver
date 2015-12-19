@@ -38,14 +38,17 @@ class Tile
   {
   }
 
+  // Ground Item
   const Item& getGroundItem() const { return groundItem_; }
 
+  // Creatures
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);
   const std::deque<CreatureId>& getCreatureIds() const { return creatureIds_; }
   CreatureId getCreatureId(int stackPosition) const;
   uint8_t getCreatureStackPos(CreatureId creatureId) const;
 
+  // Other Items
   void addItem(const Item& item);
   bool removeItem(const Item& item, uint8_t stackPosition);
   std::vector<Item> getItems() const;

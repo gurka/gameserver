@@ -86,6 +86,7 @@ class World : public WorldInterface
   bool positionIsValid(const Position& position) const;
 
   // Helper functions
+  // TODO(gurka): Rename to getVisibleCreatureIds and return std::vector<CreatureId>
   std::list<CreatureId> getNearCreatureIds(const Position& position) const;
 
   // Functions to use instead of accessing the unordered_maps directly

@@ -468,13 +468,42 @@ void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, I
 {
   std::ostringstream ss;
 
+  const auto& tile = world_->getTile(position);
+
   if (itemId == 99)
   {
-    ss << "You are looking at a creature.";
+    const auto& creatureIds = tile.getCreatureIds();
+    if (!creatureIds.empty())
+    {
+      const auto& creatureId = creatureIds.front();
+      const auto& creature = world_->getCreature(creatureId);
+      ss << "You see " << creature.getName() << ".";
+    }
+    else
+    {
+      LOG_DEBUG("%s: No Creatures at given position: %s", __func__, position.toString().c_str());
+      return;
+    }
   }
   else
   {
-    auto item = itemFactory_.createItem(itemId);
+    Item item;
+
+    for (const auto& tileItem : tile.getItems())
+    {
+      if (tileItem.getItemId() == itemId)
+      {
+        item = tileItem;
+        break;
+      }
+    }
+
+    if (!item.isValid())
+    {
+      LOG_DEBUG("%s: No Item with itemId %d at given position: %s", __func__, itemId, position.toString().c_str());
+      return;
+    }
+
     if (item.getName().size() > 0)
     {
       if (item.isStackable() && item.getCount() > 1)
@@ -503,7 +532,7 @@ void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, I
     }
   }
 
-  //  world_->sendTextMessage(creatureId, ss.str());
+  getPlayerCtrl(creatureId).sendTextMessage(ss.str());
 }
 
 void GameEngine::onTask(const TaskFunction& task)

@@ -67,6 +67,8 @@ class Item
   {
   }
 
+  virtual ~Item() = default;
+
   static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
 
   bool isValid() const { return itemData_ != nullptr; }
