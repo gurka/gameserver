@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_ACCOUNTMANAGER_ACCOUNTMGR_H_
-#define COMMON_ACCOUNTMANAGER_ACCOUNTMGR_H_
+#ifndef COMMON_ACCOUNT_ACCOUNT_H_
+#define COMMON_ACCOUNT_ACCOUNT_H_
 
 #include <cstdint>
 #include <vector>
@@ -40,46 +40,33 @@ struct Character
 
 struct Account
 {
-  enum Status
-  {
-    NOT_FOUND,
-    INVALID_PASSWORD,
-    OK,
-  };
-
-  Account(Status status, int premiumDays, const std::vector<Character>& characters)
-    : status(status),
-      premiumDays(premiumDays),
+  Account(int premiumDays, const std::vector<Character>& characters)
+    : premiumDays(premiumDays),
       characters(characters)
   {
   }
 
-  Status status;
   int premiumDays;
   std::vector<Character> characters;
 };
 
-class AccountManager
+class AccountReader
 {
  public:
-  // Not instantiable
-  AccountManager() = delete;
-  AccountManager(const AccountManager&) = delete;
-  AccountManager& operator=(const AccountManager&) = delete;
+  bool loadFile(const std::string& accountsFilename);
 
-  static bool initialize(const std::string& accountsFilename);
-  static const Account& getAccount(uint32_t account_name, const std::string& password);
-  static bool verifyPassword(const std::string& character_name, const std::string& password);
+  bool accountExists(uint32_t accountNumber) const;
+  bool verifyPassword(uint32_t accountNumber, const std::string& password) const;
+  const Account* getAccount(uint32_t accountNumber) const;
+
+  bool characterExists(const std::string& characterName) const;
+  bool verifyPassword(const std::string& characterName, const std::string& password) const;
+  const Character* getCharacter(const std::string& characterName) const;
 
  private:
-  static bool loadAccounts(const std::string& accountsFilename);
-
-  static const Account ACCOUNT_NOT_FOUND;
-  static const Account ACCOUNT_INVALID_PASSWORD;
-
-  static std::unordered_map<uint32_t, Account> accounts_;
-  static std::unordered_map<uint32_t, std::string> passwords_;
-  static std::unordered_map<std::string, uint32_t> characterToAccountNumber_;
+  std::unordered_map<uint32_t, Account> accounts_;
+  std::unordered_map<uint32_t, std::string> passwords_;
+  std::unordered_map<std::string, uint32_t> characterToAccountNumber_;
 };
 
-#endif  // COMMON_ACCOUNTMANAGER_ACCOUNTMGR_H_
+#endif  // COMMON_ACCOUNT_ACCOUNT_H_

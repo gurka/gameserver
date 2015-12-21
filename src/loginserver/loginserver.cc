@@ -28,7 +28,7 @@
 
 #include "configparser.h"
 #include "logger.h"
-#include "accountmanager/accountmgr.h"
+#include "account/account.h"
 #include "network/server.h"
 #include "network/incomingpacket.h"
 #include "network/outgoingpacket.h"
@@ -38,6 +38,7 @@ void onClientDisconnected(ConnectionId connectionId);
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
 void parseLogin(ConnectionId connectionId, IncomingPacket* packet);
 
+AccountReader accountReader;
 std::unique_ptr<Server> server;
 std::string motd;
 
@@ -99,47 +100,34 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
   response.addU8(0x14);  // MOTD
   response.addString("0\n" + motd);
 
-  // Get account
-  const Account& account = AccountManager::getAccount(accountNumber, password);
-  switch (account.status)
+  // Check if account exists
+  if (!accountReader.accountExists(accountNumber))
   {
-    case Account::Status::NOT_FOUND:
+    LOG_DEBUG("%s: Account (%d) not found", __func__, accountNumber);
+    response.addU8(0x0A);
+    response.addString("Invalid account number");
+  }
+  // Check if password is correct
+  else if (!accountReader.verifyPassword(accountNumber, password))
+  {
+    LOG_DEBUG("%s: Invalid password (%s) for account (%d)", __func__, password.c_str(), accountNumber);
+    response.addU8(0x0A);
+    response.addString("Invalid password");
+  }
+  else
+  {
+    const auto* account = accountReader.getAccount(accountNumber);
+    LOG_DEBUG("%s: Account number (%d) and password (%s) OK", __func__, accountNumber, password.c_str());
+    response.addU8(0x64);
+    response.addU8(account->characters.size());
+    for (const auto& character : account->characters)
     {
-      LOG_DEBUG("Account number: %d Password: %s Status: NOT_FOUND",
-                  accountNumber,
-                  password.c_str());
-      response.addU8(0x0A);
-      response.addString("Account not found.");
-      break;
+      response.addString(character.name);
+      response.addString(character.worldName);
+      response.addU32(character.worldIp);
+      response.addU16(character.worldPort);
     }
-
-    case Account::Status::INVALID_PASSWORD:
-    {
-      LOG_DEBUG("Account number: %d Password: %s Status: INVALID_PASSWORD",
-                  accountNumber,
-                  password.c_str());
-      response.addU8(0x0A);
-      response.addString("Password not correct.");
-      break;
-    }
-
-    case Account::Status::OK:
-    {
-      LOG_DEBUG("Account number: %d Password: %s Status: OK",
-                  accountNumber,
-                  password.c_str());
-      response.addU8(0x64);
-      response.addU8(account.characters.size());
-      for (auto character : account.characters)
-      {
-        response.addString(character.name);
-        response.addString(character.worldName);
-        response.addU32(character.worldIp);
-        response.addU16(character.worldPort);
-      }
-      response.addU16(account.premiumDays);
-      break;
-    }
+    response.addU16(account->premiumDays);
   }
 
   LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
@@ -179,7 +167,11 @@ int main(int argc, char* argv[])
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
 
-  AccountManager::initialize(accountsFilename);
+  if (!accountReader.loadFile(accountsFilename))
+  {
+    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
+    return 1;
+  }
 
   Server::Callbacks callbacks =
   {

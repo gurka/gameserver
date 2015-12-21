@@ -28,7 +28,7 @@
 
 #include "configparser.h"
 #include "logger.h"
-#include "accountmanager/accountmgr.h"
+#include "account/account.h"
 #include "network/server.h"
 #include "network/incomingpacket.h"
 #include "network/outgoingpacket.h"
@@ -36,6 +36,7 @@
 #include "gameengine.h"
 
 // Globals
+AccountReader accountReader;
 std::unique_ptr<Server> server;
 std::unique_ptr<GameEngine> gameEngine;
 std::unordered_map<ConnectionId, CreatureId> players;
@@ -195,11 +196,22 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
               character_name.c_str(),
               password.c_str());
 
-  if (!AccountManager::verifyPassword(character_name, password))
+  // Check if character exists
+  if (!accountReader.characterExists(character_name.c_str()))
   {
     OutgoingPacket response;
     response.addU8(0x14);
-    response.addString("Invalid password");
+    response.addString("Invalid character.");
+    server->sendPacket(connectionId, response);
+    server->closeConnection(connectionId);
+    return;
+  }
+  // Check if password is correct
+  else if (!accountReader.verifyPassword(character_name, password))
+  {
+    OutgoingPacket response;
+    response.addU8(0x14);
+    response.addString("Invalid password.");
     server->sendPacket(connectionId, response);
     server->closeConnection(connectionId);
     return;
@@ -426,7 +438,11 @@ int main(int argc, char* argv[])
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
   gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, dataFilename,
                                                           worldFilename, itemsFilename));
-  AccountManager::initialize(accountsFilename);
+  if (!accountReader.loadFile(accountsFilename))
+  {
+    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
+    return 1;
+  }
 
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));

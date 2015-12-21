@@ -24,7 +24,7 @@ set(loginserver_inc
 )
 set(loginserver_lib
   "utils"
-  "common_accmgr"
+  "common_account"
   "common_network"
 )
 add_executable(loginserver ${loginserver_src})
@@ -48,7 +48,7 @@ set(worldserver_inc
 )
 set(worldserver_lib
   "utils"
-  "common_accmgr"
+  "common_account"
   "common_network"
   "common_world"
 )
@@ -66,17 +66,17 @@ set(utils_src
 )
 add_library(utils ${utils_src})
 
-# Accountmanager
-set(common_accmgr_src
-  "src/common/accountmanager/accountmgr.cc"
-  "src/common/accountmanager/accountmgr.h"
+# Account
+set(common_account_src
+  "src/common/account/account.cc"
+  "src/common/account/account.h"
 )
-set(common_accmgr_inc
+set(common_account_inc
   "src/utils"
   "lib/rapidxml"
 )
-add_library(common_accmgr ${common_accmgr_src})
-target_include_directories(common_accmgr PUBLIC ${common_accmgr_inc})
+add_library(common_account ${common_account_src})
+target_include_directories(common_account PUBLIC ${common_account_inc})
 
 # Network
 set(common_network_src
@@ -138,7 +138,7 @@ if (gameserver_test)
 
   set(unittest_inc
     "src/utils"
-    "src/common/accountmanager"
+    "src/common/account"
     "src/common/network"
     "src/common/world"
     "lib/rapidxml"
@@ -146,7 +146,7 @@ if (gameserver_test)
 
   set(unittest_lib
     "utils"
-    "common_accmgr"
+    "common_account"
     "common_network"
     "common_world"
   )

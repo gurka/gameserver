@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "accountmgr.h"
+#include "account.h"
 
 #include <fstream>
 #include <sstream>
@@ -30,13 +30,6 @@
 
 #include "logger.h"
 #include "rapidxml.hpp"
-
-const Account AccountManager::ACCOUNT_NOT_FOUND(Account::NOT_FOUND, 0, {});
-const Account AccountManager::ACCOUNT_INVALID_PASSWORD(Account::INVALID_PASSWORD, 0, {});
-
-std::unordered_map<uint32_t, Account> AccountManager::accounts_;
-std::unordered_map<uint32_t, std::string> AccountManager::passwords_;
-std::unordered_map<std::string, uint32_t> AccountManager::characterToAccountNumber_;
 
 namespace
 {
@@ -67,57 +60,13 @@ namespace
   }
 }  // namespace
 
-bool AccountManager::initialize(const std::string& accountsFilename)
-{
-  return loadAccounts(accountsFilename);
-}
-
-const Account& AccountManager::getAccount(uint32_t account_name,
-                                          const std::string& password)
-{
-  auto account_cit = accounts_.find(account_name);
-  auto password_cit = passwords_.find(account_name);
-
-  // Check if both account and password exist
-  if (account_cit == accounts_.end() || password_cit == passwords_.end())
-  {
-    return ACCOUNT_NOT_FOUND;
-  }
-
-  // Check if password matches
-  if (password_cit->second != password)
-  {
-    return ACCOUNT_INVALID_PASSWORD;
-  }
-
-  return account_cit->second;
-}
-
-bool AccountManager::verifyPassword(const std::string& character_name,
-                                    const std::string& password)
-{
-  auto character_cit = characterToAccountNumber_.find(character_name);
-  if (character_cit == characterToAccountNumber_.end())
-  {
-    return false;  // Character not found
-  }
-
-  auto password_cit = passwords_.find(character_cit->second);
-  if (password_cit == passwords_.end())
-  {
-    return false;  // Error (account without password)
-  }
-
-  return password_cit->second == password;
-}
-
-bool AccountManager::loadAccounts(const std::string& accountsFilename)
+bool AccountReader::loadFile(const std::string& accountsFilename)
 {
   // Open XML and read into string
   std::ifstream xmlFile(accountsFilename);
   if (!xmlFile.is_open())
   {
-    LOG_ERROR("loadAccounts(): Could not open file %s", accountsFilename.c_str());
+    LOG_ERROR("%s: Could not open file %s", __func__, accountsFilename.c_str());
     return false;
   }
 
@@ -139,7 +88,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
   rapidxml::xml_node<>* accountsNode = accountsXml.first_node("accounts");
   if (accountsNode == nullptr)
   {
-    LOG_ERROR("loadAccounts(): Invalid file: Could not find node <accounts>");
+    LOG_ERROR("%s: Invalid file: Could not find node <accounts>", __func__);
     free(xmlString);
     return false;
   }
@@ -153,7 +102,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
     auto* numberAttr = accountNode->first_attribute("number");
     if (numberAttr == nullptr)
     {
-      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"number\"");
+      LOG_ERROR("%s: Invalid file: <account> has no attribute \"number\"", __func__);
       free(xmlString);
       return false;
     }
@@ -163,7 +112,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
     auto* passwordAttr = accountNode->first_attribute("password");
     if (passwordAttr == nullptr)
     {
-      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"password\"");
+      LOG_ERROR("%s: Invalid file: <account> has no attribute \"password\"", __func__);
       free(xmlString);
       return false;
     }
@@ -173,14 +122,14 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
     auto* paidDaysAttr = accountNode->first_attribute("paid_days");
     if (paidDaysAttr == nullptr)
     {
-      LOG_ERROR("loadAccounts(): Invalid file: <account> has no attribute \"paid_days\"");
+      LOG_ERROR("%s: Invalid file: <account> has no attribute \"paid_days\"", __func__);
       free(xmlString);
       return false;
     }
     auto paidDays = std::stoi(paidDaysAttr->value());
 
     // Create Account object
-    Account account(Account::Status::OK, paidDays, {});
+    Account account(paidDays, {});
 
     // Iterate over all <character> nodes
     for (auto* characterNode = accountNode->first_node("character");
@@ -193,7 +142,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
       auto* charNameAttr = characterNode->first_attribute("name");
       if (charNameAttr == nullptr)
       {
-        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"name\"");
+        LOG_ERROR("%s: Invalid file: <character> has no attribute \"name\"", __func__);
         free(xmlString);
         return false;
       }
@@ -203,7 +152,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
       auto* worldNameAttr = characterNode->first_attribute("world_name");
       if (worldNameAttr == nullptr)
       {
-        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_name\"");
+        LOG_ERROR("%s: Invalid file: <character> has no attribute \"world_name\"", __func__);
         free(xmlString);
         return false;
       }
@@ -213,7 +162,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
       auto* worldIpAttr = characterNode->first_attribute("world_ip");
       if (worldIpAttr == nullptr)
       {
-        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_ip\"");
+        LOG_ERROR("%s: Invalid file: <character> has no attribute \"world_ip\"", __func__);
         free(xmlString);
         return false;
       }
@@ -223,7 +172,7 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
       auto* worldPortAttr = characterNode->first_attribute("world_port");
       if (worldPortAttr == nullptr)
       {
-        LOG_ERROR("loadAccounts(): Invalid file: <character> has no attribute \"world_port\"");
+        LOG_ERROR("%s: Invalid file: <character> has no attribute \"world_port\"", __func__);
         free(xmlString);
         return false;
       }
@@ -239,9 +188,66 @@ bool AccountManager::loadAccounts(const std::string& accountsFilename)
     passwords_.insert(std::make_pair(number, password));
   }
 
-  LOG_INFO("loadAccounts(): Successfully loaded %zu accounts with a total of %zu characters",
-           accounts_.size(), characterToAccountNumber_.size());
+  LOG_INFO("%s: Successfully loaded %zu accounts with a total of %zu characters",
+           __func__, accounts_.size(), characterToAccountNumber_.size());
 
   free(xmlString);
   return true;
+}
+
+bool AccountReader::accountExists(uint32_t accountNumber) const
+{
+  return accounts_.count(accountNumber) == 1;
+}
+
+bool AccountReader::verifyPassword(uint32_t accountNumber, const std::string& password) const
+{
+  if (passwords_.count(accountNumber) == 1)
+  {
+    return passwords_.at(accountNumber) == password;
+  }
+  return false;
+}
+
+const Account* AccountReader::getAccount(uint32_t accountNumber) const
+{
+  if (accountExists(accountNumber))
+  {
+    return &accounts_.at(accountNumber);
+  }
+  return nullptr;
+}
+
+bool AccountReader::characterExists(const std::string& characterName) const
+{
+  return characterToAccountNumber_.count(characterName) == 1;
+}
+
+bool AccountReader::verifyPassword(const std::string& characterName, const std::string& password) const
+{
+  if (characterToAccountNumber_.count(characterName) == 1)
+  {
+    return verifyPassword(characterToAccountNumber_.at(characterName), password);
+  }
+  return false;
+}
+
+const Character* AccountReader::getCharacter(const std::string& characterName) const
+{
+  if (characterExists(characterName))
+  {
+    const auto* account = getAccount(characterToAccountNumber_.at(characterName));
+    for (const auto& character : account->characters)
+    {
+      if (character.name == characterName)
+      {
+        return &character;
+      }
+    }
+
+    LOG_DEBUG("%s: Character: %s not found in accounts, but exists in characterToAccountNumber map",
+              __func__, characterName.c_str());
+  }
+
+  return nullptr;
 }
