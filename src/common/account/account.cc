@@ -63,16 +63,21 @@ namespace
 bool AccountReader::loadFile(const std::string& accountsFilename)
 {
   // Open XML and read into string
-  std::ifstream xmlFile(accountsFilename);
-  if (!xmlFile.is_open())
+  std::ifstream xmlFileStream(accountsFilename);
+  if (!xmlFileStream.is_open())
   {
     LOG_ERROR("%s: Could not open file %s", __func__, accountsFilename.c_str());
     return false;
   }
 
+  return loadFile(&xmlFileStream);
+}
+
+bool AccountReader::loadFile(std::istream* accountsFileStream)
+{
   std::string tempString;
   std::ostringstream xmlStringStream;
-  while (std::getline(xmlFile, tempString))
+  while (std::getline(*accountsFileStream, tempString))
   {
     xmlStringStream << tempString << "\n";
   }
@@ -248,6 +253,14 @@ const Character* AccountReader::getCharacter(const std::string& characterName) c
     LOG_DEBUG("%s: Character: %s not found in accounts, but exists in characterToAccountNumber map",
               __func__, characterName.c_str());
   }
+  return nullptr;
+}
 
+const Account* AccountReader::getAccount(const std::string& characterName) const
+{
+  if (characterExists(characterName))
+  {
+    return getAccount(characterToAccountNumber_.at(characterName));
+  }
   return nullptr;
 }

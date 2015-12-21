@@ -54,6 +54,7 @@ class AccountReader
 {
  public:
   bool loadFile(const std::string& accountsFilename);
+  bool loadFile(std::istream* accountsFileStream);
 
   bool accountExists(uint32_t accountNumber) const;
   bool verifyPassword(uint32_t accountNumber, const std::string& password) const;
@@ -62,6 +63,7 @@ class AccountReader
   bool characterExists(const std::string& characterName) const;
   bool verifyPassword(const std::string& characterName, const std::string& password) const;
   const Character* getCharacter(const std::string& characterName) const;
+  const Account* getAccount(const std::string& characterName) const;
 
  private:
   std::unordered_map<uint32_t, Account> accounts_;

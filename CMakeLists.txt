@@ -129,6 +129,7 @@ target_include_directories(common_world PUBLIC ${common_world_inc})
 if (gameserver_test)
   set(unittest_src
     "test/utils/configparser_test.cc"
+    "test/common/account/account_test.cc"
     "test/common/world/position_test.cc"
     "test/common/world/creature_test.cc"
     "test/common/world/item_test.cc"
