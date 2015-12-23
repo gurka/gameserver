@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <boost/asio.hpp>  //NOLINT
@@ -53,6 +54,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet);
 void parseUseItem(CreatureId playerId, IncomingPacket* packet);
 void parseLookAt(CreatureId playerId, IncomingPacket* packet);
 void parseSay(CreatureId playerId, IncomingPacket* packet);
+void parseCancelMove(CreatureId playerId, IncomingPacket* packet);
 
 // Callback for GameEngine (PlayerCtrl)
 void sendPacket(ConnectionId connectionId, const OutgoingPacket& packet);
@@ -73,11 +75,8 @@ void onClientDisconnected(ConnectionId connectionId)
   auto playerIt = players.find(connectionId);
   if (playerIt != players.end())
   {
-    if (gameEngine->playerDespawn(playerIt->second))
-    {
-      // Disconnect
-      players.erase(connectionId);
-    }
+    gameEngine->playerDespawn(playerIt->second);
+    players.erase(connectionId);
   }
 }
 
@@ -112,14 +111,10 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
     {
       case 0x14:  // Logout
       {
-        if (gameEngine->playerDespawn(playerId))
-        {
-          // Disconnect
-          players.erase(connectionId);
-          server->closeConnection(connectionId);
-          return;
-        }
-        break;
+        gameEngine->playerDespawn(playerId);
+        players.erase(connectionId);
+        server->closeConnection(connectionId);
+        return;
       }
 
       case 0x64:  // Player move with mouse
@@ -167,6 +162,12 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       case 0x96:
       {
         parseSay(playerId, packet);
+        break;
+      }
+
+      case 0xBE:
+      {
+        parseCancelMove(playerId, packet);
         break;
       }
 
@@ -227,14 +228,14 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 
 void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
 {
-  std::list<Direction> path;
+  std::deque<Direction> moves;
   uint8_t pathLength = packet->getU8();
   for (auto i = 0; i < pathLength; i++)
   {
-    path.push_back(static_cast<Direction>(packet->getU8()));
+    moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine->playerMovePath(playerId, path);
+  gameEngine->playerMovePath(playerId, moves);
 }
 
 void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
@@ -266,7 +267,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                   itemId, countOrSubType, fromInventoryId, toInventoryId, unknown, unknown2, unknown3);
 
 
-      gameEngine->playerMoveItem(playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
+      gameEngine->playerMoveItemFromInvToInv(playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -278,7 +279,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                   itemId, countOrSubType, fromInventoryId, toPosition.toString().c_str(), unknown, unknown2);
 
 
-      gameEngine->playerMoveItem(playerId, fromInventoryId, itemId, countOrSubType, toPosition);
+      gameEngine->playerMoveItemFromInvToPos(playerId, fromInventoryId, itemId, countOrSubType, toPosition);
     }
   }
   else
@@ -300,7 +301,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from %s (stackpos: %d) to inventoryId %d (unknown: %d)",
                   itemId, countOrSubType, fromPosition.toString().c_str(), fromStackPos, toInventoryId, unknown);
 
-      gameEngine->playerMoveItem(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
+      gameEngine->playerMoveItemFromPosToInv(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -311,7 +312,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from %s (stackpos: %d) to %s (unknown: %d)",
                   itemId, countOrSubType, fromPosition.toString().c_str(), fromStackPos, toPosition.toString().c_str());
 
-      gameEngine->playerMoveItem(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
+      gameEngine->playerMoveItemFromPosToPos(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
   }
 }
@@ -331,7 +332,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
     LOG_DEBUG("parseUseItem(): Using Item %d at inventory index: %d (unknown: %d, unknown2: %d)",
                 itemId, inventoryIndex, unknown, unknown2);
 
-    gameEngine->playerUseItem(playerId, itemId, inventoryIndex);
+    gameEngine->playerUseInvItem(playerId, itemId, inventoryIndex);
   }
   else
   {
@@ -344,7 +345,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
     LOG_DEBUG("parseUseItem(): Using Item %d at Tile: %s stackPos: %d (unknown: %d)",
                 itemId, position.toString().c_str(), stackPosition, unknown);
 
-    gameEngine->playerUseItem(playerId, itemId, position, stackPosition);
+    gameEngine->playerUsePosItem(playerId, itemId, position, stackPosition);
   }
 }
 
@@ -381,6 +382,11 @@ void parseSay(CreatureId playerId, IncomingPacket* packet)
   std::string message = packet->getString();
 
   gameEngine->playerSay(playerId, type, message, receiver, channelId);
+}
+
+void parseCancelMove(CreatureId playerId, IncomingPacket* packet)
+{
+  gameEngine->playerCancelMove(playerId);
 }
 
 void sendPacket(int connectionId, const OutgoingPacket& packet)

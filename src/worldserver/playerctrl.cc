@@ -345,6 +345,19 @@ void PlayerCtrl::sendCancel(const std::string& message)
   sendPacket_(packet);
 }
 
+void PlayerCtrl::queueMoves(const std::deque<Direction>& moves)
+{
+  // Append or replace? Assume replace for now...
+  queuedMoves_ = moves;
+}
+
+Direction PlayerCtrl::getNextQueuedMove()
+{
+  Direction direction = queuedMoves_.front();
+  queuedMoves_.pop_front();
+  return direction;
+}
+
 boost::posix_time::ptime PlayerCtrl::getNextWalkTime() const
 {
   return nextWalkTime_;

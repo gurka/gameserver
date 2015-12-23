@@ -25,6 +25,7 @@
 #ifndef WORLDSERVER_PLAYERCTRL_H_
 #define WORLDSERVER_PLAYERCTRL_H_
 
+#include <deque>
 #include <functional>
 #include <string>
 #include <unordered_set>
@@ -77,6 +78,11 @@ class PlayerCtrl : public CreatureCtrl
   void sendTextMessage(const std::string& message);
   void sendCancel(const std::string& message);
 
+  void queueMoves(const std::deque<Direction>& moves);
+  bool hasQueuedMove() const { return !queuedMoves_.empty(); }
+  Direction getNextQueuedMove();
+  void cancelMove() { queuedMoves_.clear(); }
+
   boost::posix_time::ptime getNextWalkTime() const;
 
  private:
@@ -96,6 +102,7 @@ class PlayerCtrl : public CreatureCtrl
   std::unordered_set<CreatureId> knownCreatures_;
 
   boost::posix_time::ptime nextWalkTime_;
+  std::deque<Direction> queuedMoves_;
 };
 
 #endif  // WORLDSERVER_PLAYERCTRL_H_
