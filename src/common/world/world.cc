@@ -28,6 +28,7 @@
 #include <array>
 #include <deque>
 #include <sstream>
+#include <tuple>
 #include <utility>
 
 #include "npcctrl.h"
@@ -67,15 +68,15 @@ Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, cons
   // (0, 0) MUST be the first element
   static std::array<std::tuple<int, int>, 9> positionOffsets
   {{
-    { std::make_tuple( 0,  0) },
-    { std::make_tuple(-1, -1) },
-    { std::make_tuple(-1,  0) },
-    { std::make_tuple(-1,  1) },
-    { std::make_tuple( 0, -1) },
-    { std::make_tuple( 0,  1) },
-    { std::make_tuple( 1, -1) },
-    { std::make_tuple( 1,  0) },
-    { std::make_tuple( 1,  1) }
+    { std::make_tuple( 0,  0) },  //NOLINT
+    { std::make_tuple(-1, -1) },  //NOLINT
+    { std::make_tuple(-1,  0) },  //NOLINT
+    { std::make_tuple(-1,  1) },  //NOLINT
+    { std::make_tuple( 0, -1) },  //NOLINT
+    { std::make_tuple( 0,  1) },  //NOLINT
+    { std::make_tuple( 1, -1) },  //NOLINT
+    { std::make_tuple( 1,  0) },  //NOLINT
+    { std::make_tuple( 1,  1) }   //NOLINT
   }};
 
   // Shuffle the offsets (keep first element at its position)
