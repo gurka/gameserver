@@ -25,8 +25,10 @@
 #include "world.h"
 
 #include <algorithm>
+#include <array>
 #include <deque>
 #include <sstream>
+#include <utility>
 
 #include "npcctrl.h"
 #include "logger.h"
@@ -42,7 +44,7 @@ World::World(const ItemFactory* itemFactory,
 {
 }
 
-void World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)
+Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)
 {
   auto creatureId = creature->getCreatureId();
 
@@ -51,38 +53,76 @@ void World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Po
     LOG_ERROR("addCreature: Creature already exists: %s (%d)",
                 creature->getName().c_str(),
                 creature->getCreatureId());
-    return;
+    return Position::INVALID;
   }
 
   if (!positionIsValid(position))
   {
     LOG_ERROR("addCreature: Invalid position: %s",
                 position.toString().c_str());
-    return;
+    return Position::INVALID;
   }
 
-  auto& tile = internalGetTile(position);
-  if (tile.getCreatureIds().size() != 0)
-  {
-    LOG_ERROR("addCreature: Already a creature at position: %s",
-                position.toString().c_str());
-    return;
-  }
-  tile.addCreature(creatureId);
+  // Offsets for other possible positions
+  // (0, 0) MUST be the first element
+  static std::array<std::tuple<int, int>, 9> positionOffsets
+  {{
+    { std::make_tuple( 0,  0) },
+    { std::make_tuple(-1, -1) },
+    { std::make_tuple(-1,  0) },
+    { std::make_tuple(-1,  1) },
+    { std::make_tuple( 0, -1) },
+    { std::make_tuple( 0,  1) },
+    { std::make_tuple( 1, -1) },
+    { std::make_tuple( 1,  0) },
+    { std::make_tuple( 1,  1) }
+  }};
 
-  creatures_.insert(std::make_pair(creatureId, creature));
-  creatureCtrls_.insert(std::make_pair(creatureId, creatureCtrl));
-  creaturePositions_.insert(std::make_pair(creatureId, position));
+  // Shuffle the offsets (keep first element at its position)
+  std::random_shuffle(positionOffsets.begin() + 1, positionOffsets.end());
 
-  // Tell near creatures that a creature has spawned
-  // Except the spawned creature itself
-  std::list<CreatureId> nearCreatureIds = getNearCreatureIds(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  auto adjustedPosition = position;
+  auto found = false;
+  for (const auto& offsets : positionOffsets)
   {
-    if (nearCreatureId != creatureId)
+    adjustedPosition = Position(position.getX() + std::get<0>(offsets),
+                                position.getY() + std::get<1>(offsets),
+                                position.getZ());
+
+    // TODO(gurka): Need to check more stuff (blocking, etc)
+    if (internalGetTile(adjustedPosition).getCreatureIds().size() == 0)
     {
-      getCreatureCtrl(nearCreatureId).onCreatureSpawn(*creature, position);
+      found = true;
+      break;
     }
+  }
+
+  if (found)
+  {
+    LOG_INFO("%s: Spawning Creature: %d at Position: %s", __func__, creatureId, adjustedPosition.toString().c_str());
+    internalGetTile(adjustedPosition).addCreature(creatureId);
+
+    creatures_.insert(std::make_pair(creatureId, creature));
+    creatureCtrls_.insert(std::make_pair(creatureId, creatureCtrl));
+    creaturePositions_.insert(std::make_pair(creatureId, adjustedPosition));
+
+    // Tell near creatures that a creature has spawned
+    // Except the spawned creature itself
+    std::list<CreatureId> nearCreatureIds = getNearCreatureIds(adjustedPosition);
+    for (const auto& nearCreatureId : nearCreatureIds)
+    {
+      if (nearCreatureId != creatureId)
+      {
+        getCreatureCtrl(nearCreatureId).onCreatureSpawn(*creature, adjustedPosition);
+      }
+    }
+
+    return adjustedPosition;
+  }
+  else
+  {
+    LOG_DEBUG("%s: Could not find a Tile to spawn Creature: %d", __func__, creatureId);
+    return Position::INVALID;
   }
 }
 

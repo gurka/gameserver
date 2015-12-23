@@ -122,10 +122,17 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
 
     LOG_INFO("playerSpawn(): Spawn player: %s", player.getName().c_str());
 
+    // adjustedPosition is the position where the creature actually spawned
+    // i.e., if there is a creature already at the given position
     Position position(222, 222, 7);
-    world_->addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
-
-    playerCtrl.onPlayerSpawn(player, position, loginMessage_);
+    auto adjustedPosition = world_->addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
+    if (adjustedPosition == Position::INVALID)
+    {
+      LOG_DEBUG("%s: Could not spawn player", __func__);
+      // TODO(gurka): playerCtrl.disconnectPlayer();
+      return;
+    }
+    playerCtrl.onPlayerSpawn(player, adjustedPosition, loginMessage_);
   };
 
   taskQueue_.addTask(playerSpawnFunc);

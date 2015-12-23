@@ -57,7 +57,7 @@ class World : public WorldInterface
         const std::unordered_map<Position, Tile, Position::Hash>& tiles);
 
   // Creature management
-  void addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
+  Position addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
   void removeCreature(CreatureId creatureId);
   bool creatureExists(CreatureId creatureId) const;
   void creatureMove(CreatureId creatureId, Direction direction);
