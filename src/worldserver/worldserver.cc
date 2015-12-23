@@ -234,7 +234,7 @@ void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
     path.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine->playerMove(playerId, path);
+  gameEngine->playerMovePath(playerId, path);
 }
 
 void parseMoveItem(CreatureId playerId, IncomingPacket* packet)

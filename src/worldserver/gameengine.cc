@@ -185,25 +185,33 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
   taskQueue_.addTask(playerMoveFunc);
 }
 
-void GameEngine::playerMove(CreatureId creatureId, const std::list<Direction>& path)
+void GameEngine::playerMovePath(CreatureId creatureId, const std::list<Direction>& path)
 {
-  /*
-  auto playerMoveFunc = [this, creatureId, path]()
+  auto playerMovePathFunc = [this, creatureId, path]()
   {
-    LOG_INFO("playerMove(): Player move path, creature id: %d, moves left: %d", creatureId, path.size());
+    LOG_INFO("%s: Player move path, creature id: %d, moves left: %d", __func__, creatureId, path.size());
     world_->creatureMove(creatureId, path.front());
 
     if (path.size() > 1)
     {
       std::list<Direction> newPath(path);
       newPath.erase(newPath.cbegin());
-      playerMove(creatureId, newPath);
+      playerMovePath(creatureId, newPath);
     }
   };
 
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-  taskQueue_.addTask(playerMoveFunc, expire);
-  */
+  auto& playerCtrl = getPlayerCtrl(creatureId);
+  auto nextWalkTime = playerCtrl.getNextWalkTime();
+  auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
+
+  if (nextWalkTime <= now)
+  {
+    taskQueue_.addTask(playerMovePathFunc, now);
+  }
+  else
+  {
+    taskQueue_.addTask(playerMovePathFunc, nextWalkTime);
+  }
 }
 
 void GameEngine::playerTurn(CreatureId creatureId, Direction direction)

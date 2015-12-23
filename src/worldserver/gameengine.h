@@ -63,7 +63,7 @@ class GameEngine
   CreatureId playerSpawn(const std::string& name, const std::function<void(const OutgoingPacket&)>& sendPacket);
   bool playerDespawn(CreatureId creatureId);
   void playerMove(CreatureId creatureId, Direction direction);
-  void playerMove(CreatureId creatureId, const std::list<Direction>& path);
+  void playerMovePath(CreatureId creatureId, const std::list<Direction>& path);
   void playerTurn(CreatureId creatureId, Direction direction);
   void playerSay(CreatureId creatureId, uint8_t type, const std::string& message,
                  const std::string& receiver, uint16_t channelId);
