@@ -89,6 +89,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
       }
 
       // Read the first <item> (there must be at least one, the ground item)
+      // TODO(gurka): Must there be one? What about "void", or is it also an Item?
       auto* groundItemNode = tileNode->first_node();
       if (groundItemNode == nullptr)
       {
@@ -115,9 +116,8 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
         auto* itemIdAttr = itemNode->first_attribute("id");
         if (itemIdAttr == nullptr)
         {
-          LOG_ERROR("initialize(): Invalid file, missing attribute id in <item>-node");
-          free(xmlString);
-          return std::unique_ptr<World>();
+          LOG_DEBUG("initialize(): Missing attribute id in <item>-node, skipping Item");
+          continue;
         }
 
         auto itemId = std::stoi(itemIdAttr->value());

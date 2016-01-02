@@ -25,6 +25,7 @@
 #include "tile.h"
 
 #include <algorithm>
+#include <iterator>
 
 #include "logger.h"
 
@@ -50,13 +51,16 @@ bool Tile::removeCreature(CreatureId creatureId)
 CreatureId Tile::getCreatureId(int stackPosition) const
 {
   // Calculate position in creatureIds_
-  auto position = stackPosition - 1 - topItems_.size();
-  if (position < 0 || position >= creatureIds_.size())
+  std::size_t index = stackPosition - 1 - numberOfTopItems;
+  if (index < 0 || index >= creatureIds_.size())
   {
     LOG_ERROR("%s: No Creature found at stackPosition: %d", __func__, stackPosition);
     return Creature::INVALID_ID;
   }
-  return creatureIds_[position];
+
+  auto creatureIt = creatureIds_.cbegin();
+  std::advance(creatureIt, index);
+  return *creatureIt;
 }
 
 uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
@@ -68,114 +72,113 @@ uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
     LOG_ERROR("getCreatureStackPos(): No creature %d at this Tile", creatureId);
     return 255;  // TODO(gurka): Invalid stackPosition constant?
   }
-  return 1 + topItems_.size() + std::distance(creatureIds_.cbegin(), it);
+  return 1 + numberOfTopItems + std::distance(creatureIds_.cbegin(), it);
 }
 
 void Tile::addItem(const Item& item)
 {
+  auto itemIt = items_.cbegin();
+
   if (item.alwaysOnTop())
   {
-    topItems_.push_front(item);
+    std::advance(itemIt, 1);
+    numberOfTopItems++;
   }
   else
   {
-    bottomItems_.push_front(item);
+    std::advance(itemIt, 1 + numberOfTopItems);
   }
+
+  items_.insert(itemIt, item);
 }
 
 bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
 {
-  auto index = stackPosition;
-  if (index == 0)
+  if (stackPosition == 0)
   {
-    LOG_ERROR("removeItem(): Stackposition is ground item, cannot remove");
-    return false;
+    // Ground Item
+    LOG_ERROR("%s: Stackposition is ground Item, cannot remove", __func__);
   }
-
-  index -= 1;
-  if (index < topItems_.size())
+  else if (stackPosition < 1 + numberOfTopItems)
   {
-    auto it = topItems_.cbegin() + index;
-    if (it->getItemId() == itemId)
+    // Top Item
+    auto itemIt = items_.cbegin();
+    std::advance(itemIt, stackPosition);
+    if (itemIt->getItemId() == itemId)
     {
-      topItems_.erase(it);
+      items_.erase(itemIt);
       return true;
     }
     else
     {
-      return false;
+      LOG_ERROR("%s: Given ItemId does not match Item at given stackpos", __func__);
     }
   }
-
-  index -= topItems_.size();
-  if (index < creatureIds_.size())
+  else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
   {
-    LOG_ERROR("removeItem(): Stackposition is Creature, cannot remove");
-    return false;
+    // Creature
+    LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
   }
-
-  index -= creatureIds_.size();
-  if (index < bottomItems_.size())
+  else if (stackPosition < 1 + items_.size() + creatureIds_.size())
   {
-    auto it = bottomItems_.cbegin() + index;
-    if (it->getItemId() == itemId)
+    // Bottom Item
+    auto itemIt = items_.cbegin();
+    std::advance(itemIt, stackPosition - creatureIds_.size());
+    if (itemIt->getItemId() == itemId)
     {
-      bottomItems_.erase(it);
+      items_.erase(itemIt);
       return true;
     }
     else
     {
-      return false;
+      LOG_ERROR("%s: Given ItemId does not match Item at given stackpos", __func__);
     }
   }
+  else
+  {
+    // Invalid stackpos
+    LOG_ERROR("%s: Stackposition is invalid", __func__);
+  }
 
-  LOG_ERROR("removeItem(): Stackposition is invalid");
   return false;
 }
 
-Item Tile::getItem(uint8_t stackPos) const
+Item Tile::getItem(uint8_t stackPosition) const
 {
-  auto index = stackPos;
-  if (index == 0)
+  if (stackPosition == 0)
   {
-    return groundItem_;
+    // Ground Item
+    return items_.front();
+  }
+  else if (stackPosition < 1 + numberOfTopItems)
+  {
+    // Top Item
+    auto itemIt = items_.cbegin();
+    std::advance(itemIt, stackPosition);
+    return *itemIt;
+  }
+  else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
+  {
+    // Creature
+    LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
+  }
+  else if (stackPosition < 1 + items_.size() + creatureIds_.size())
+  {
+    // Bottom Item
+    auto itemIt = items_.cbegin();
+    std::advance(itemIt, stackPosition - creatureIds_.size());
+    return *itemIt;
+  }
+  else
+  {
+    // Invalid stackpos
+    LOG_ERROR("%s: Stackposition is invalid", __func__);
   }
 
-  index -= 1;
-  if (index < topItems_.size())
-  {
-    return topItems_.at(index);
-  }
-
-  index -= topItems_.size();
-  if (index < creatureIds_.size())
-  {
-    LOG_ERROR("getItem(): Stackposition is a Creature");
-    return Item();
-  }
-
-  index -= creatureIds_.size();
-  if (index < bottomItems_.size())
-  {
-    return bottomItems_.at(index);
-  }
-
-  LOG_ERROR("getItem(): Stackposition is invalid");
   return Item();
-}
-
-std::vector<Item> Tile::getItems() const
-{
-  std::vector<Item> items;
-
-  items.insert(items.end(), topItems_.cbegin(), topItems_.cend());
-  items.insert(items.end(), bottomItems_.cbegin(), bottomItems_.cend());
-  items.push_back(groundItem_);
-
-  return items;
 }
 
 std::size_t Tile::getNumberOfThings() const
 {
-  return 1 + topItems_.size() + creatureIds_.size() + bottomItems_.size();
+  return items_.size() + creatureIds_.size();
 }

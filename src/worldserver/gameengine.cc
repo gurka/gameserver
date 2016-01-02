@@ -325,22 +325,14 @@ void GameEngine::playerSayInternal(CreatureId creatureId, uint8_t type, const st
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      const auto& groundItem = tile.getGroundItem();
-      oss << "Ground item: " << groundItem.getItemId() << " (" << groundItem.getName() << ")\n";
-
-      for (const auto& item : tile.getBottomItems())
+      for (const auto& item : tile.getItems())
       {
-        oss << "Bottom item: " << item.getItemId() << " (" << item.getName() << ")\n";
+        oss << "Item: " << item.getItemId() << " (" << item.getName() << ")\n";
       }
 
       for (const auto& creatureId : tile.getCreatureIds())
       {
         oss << "Creature: " << creatureId << "\n";
-      }
-
-      for (const auto& item : tile.getTopItems())
-      {
-        oss << "Top item: " << item.getItemId() << " (" << item.getName() << ")\n";
       }
 
       getPlayerCtrl(creatureId).sendTextMessage(oss.str());

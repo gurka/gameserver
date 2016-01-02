@@ -76,7 +76,7 @@ class Item
   // Loaded from data file
   ItemId getItemId() const { return itemData_->id; }
   bool isGround() const { return itemData_->ground; }
-  int speed() const { return itemData_->speed; }
+  int getSpeed() const { return itemData_->speed; }
   bool isBlocking() const { return itemData_->isBlocking; }
   bool alwaysOnTop() const { return itemData_->alwaysOnTop; }
   bool isContainer() const { return itemData_->isContainer; }

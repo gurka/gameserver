@@ -74,7 +74,7 @@ void PlayerCtrl::onCreatureMove(const Creature& creature,
     // Set next walk time
     const auto& tile = worldInterface_->getTile(newPosition);
 
-    auto groundSpeed = tile.getGroundItem().speed();
+    auto groundSpeed = tile.getGroundSpeed();
     auto creatureSpeed = creature.getSpeed();
     auto duration = (1000 * groundSpeed) / creatureSpeed;
 
@@ -388,37 +388,52 @@ void PlayerCtrl::addMapData(const Position& position, int width, int height, Out
   {
     for (auto y = 0; y < height; y++)
     {
-      const Tile* tile = *it;
+      const auto* tile = *it;
       if (tile != nullptr)
       {
+        const auto& items = tile->getItems();
+        const auto& creatureIds = tile->getCreatureIds();
+        auto itemIt = items.cbegin();
+        auto creatureIt = creatureIds.cbegin();
+
         // Client can only handle ground + 9 items/creatures at most
         auto count = 0;
 
-        packet->addU16(tile->getGroundItem().getItemId());
+        // Add ground Item
+        addItem(*itemIt, packet);
         count++;
+        ++itemIt;
 
         // if splash; add; count++
 
-        const std::deque<Item>& topItems = tile->getTopItems();
-        for (auto it = topItems.cbegin(); it != topItems.cend() && count < 10; ++it)
+        // Add top Items
+        while (count < 10 && itemIt != items.cend())
         {
-          addItem(*it, packet);
+          if (!itemIt->alwaysOnTop())
+          {
+            break;
+          }
+
+          addItem(*itemIt, packet);
           count++;
+          ++itemIt;
         }
 
-        const std::deque<CreatureId>& creatureIds = tile->getCreatureIds();
-        for (auto it = creatureIds.cbegin(); it != creatureIds.cend() && count < 10; ++it)
+        // Add Creatures
+        while (count < 10 && creatureIt != creatureIds.cend())
         {
-          const Creature& creature = worldInterface_->getCreature(*it);
+          const Creature& creature = worldInterface_->getCreature(*creatureIt);
           addCreature(creature, packet);
           count++;
+          ++creatureIt;
         }
 
-        const std::deque<Item>& bottomItems = tile->getBottomItems();
-        for (auto it = bottomItems.cbegin(); it != bottomItems.cend() && count < 10; ++it)
+        // Add bottom Items
+        while (count < 10 && itemIt != items.cend())
         {
-          addItem(*it, packet);
+          addItem(*itemIt, packet);
           count++;
+          ++itemIt;
         }
       }
 

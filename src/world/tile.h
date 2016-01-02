@@ -25,8 +25,7 @@
 #ifndef WORLD_TILE_H_
 #define WORLD_TILE_H_
 
-#include <deque>
-#include <vector>
+#include <list>
 #include "item.h"
 #include "creature.h"
 
@@ -34,36 +33,32 @@ class Tile
 {
  public:
   explicit Tile(const Item& groundItem)
-    : groundItem_(groundItem)
+    : numberOfTopItems(0)
   {
+    items_.push_front(groundItem);
   }
-
-  // Ground Item
-  const Item& getGroundItem() const { return groundItem_; }
 
   // Creatures
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);
   CreatureId getCreatureId(int stackPosition) const;
-  const std::deque<CreatureId>& getCreatureIds() const { return creatureIds_; }
+  const std::list<CreatureId>& getCreatureIds() const { return creatureIds_; }
   uint8_t getCreatureStackPos(CreatureId creatureId) const;
 
-  // Other Items
+  // Items
   void addItem(const Item& item);
   bool removeItem(ItemId itemId, uint8_t stackPosition);
-  Item getItem(uint8_t stackPos) const;
-  std::vector<Item> getItems() const;
-  const std::deque<Item>& getTopItems() const { return topItems_; }
-  const std::deque<Item>& getBottomItems() const { return bottomItems_; }
+  Item getItem(uint8_t stackPosition) const;
+  const std::list<Item>& getItems() const { return items_; }
 
+  // Other
   std::size_t getNumberOfThings() const;
+  int getGroundSpeed() const { return items_.front().getSpeed(); }
 
  private:
-  // TODO(gurka): Store all items in a single container, to optimize getItems() ?
-  Item groundItem_;
-  std::deque<Item> topItems_;
-  std::deque<CreatureId> creatureIds_;
-  std::deque<Item> bottomItems_;
+  int numberOfTopItems;
+  std::list<Item> items_;
+  std::list<CreatureId> creatureIds_;
 };
 
 #endif  // WORLD_TILE_H_
