@@ -32,13 +32,13 @@
 
 #include "player.h"
 #include "playerctrl.h"
-#include "world/creature.h"
-#include "world/creaturectrl.h"
-#include "world/item.h"
-#include "world/npcctrl.h"
-#include "world/position.h"
-#include "world/world.h"
-#include "world/worldfactory.h"
+#include "creature.h"
+#include "creaturectrl.h"
+#include "item.h"
+#include "npcctrl.h"
+#include "position.h"
+#include "world.h"
+#include "worldfactory.h"
 #include "logger.h"
 
 GameEngine::GameEngine(boost::asio::io_service* io_service,

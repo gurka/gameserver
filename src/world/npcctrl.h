@@ -22,15 +22,30 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_DIRECTION_H_
-#define COMMON_WORLD_DIRECTION_H_
+#ifndef WORLD_NPCCTRL_H_
+#define WORLD_NPCCTRL_H_
 
-enum Direction
+#include <string>
+#include "creaturectrl.h"
+#include "creature.h"
+#include "position.h"
+#include "item.h"
+
+class NpcCtrl : public CreatureCtrl
 {
-  NORTH = 0,
-  EAST  = 1,
-  SOUTH = 2,
-  WEST  = 3
+ public:
+  void onCreatureSpawn(const Creature& creature, const Position& position) {}
+  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) {}
+  void onCreatureMove(const Creature& creature,
+                      const Position& oldPosition, uint8_t oldStackPos,
+                      const Position& newPosition, uint8_t newStackPos) {}
+  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) {}
+  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) {}
+
+  void onItemRemoved(const Position& position, uint8_t stackPos) {}
+  void onItemAdded(const Item& item, const Position& position) {}
+
+  void onTileUpdate(const Position& position) {}
 };
 
-#endif  // COMMON_WORLD_DIRECTION_H_
+#endif  // WORLD_NPCCTRL_H_

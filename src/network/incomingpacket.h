@@ -22,38 +22,46 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_NETWORK_OUTGOINGPACKET_H_
-#define COMMON_NETWORK_OUTGOINGPACKET_H_
+#ifndef NETWORK_INCOMINGPACKET_H_
+#define NETWORK_INCOMINGPACKET_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <array>
 #include <string>
-#include <stack>
-#include <memory>
 #include <vector>
 
-class OutgoingPacket
+class IncomingPacket
 {
  public:
-  OutgoingPacket();
-  virtual ~OutgoingPacket();
+  IncomingPacket();
+  virtual ~IncomingPacket() = default;
 
   // Delete copy constructors
-  OutgoingPacket(const OutgoingPacket&) = delete;
-  OutgoingPacket& operator=(const OutgoingPacket&) = delete;
+  IncomingPacket(const IncomingPacket&) = delete;
+  IncomingPacket& operator=(const IncomingPacket&) = delete;
 
-  std::vector<uint8_t> getBuffer() const;
-  void skipBytes(std::size_t num_bytes);
-  void addU8(uint8_t val);
-  void addU16(uint16_t val);
-  void addU32(uint32_t val);
-  void addString(const std::string& string);
+  // Should only be used by Connection
+  std::size_t getLength() const { return length_; }
+  void setLength(std::size_t length) { length_ = length; }
+  std::array<uint8_t, 8192>::pointer getBuffer() { return buffer_.data(); }
+  void resetPosition() { position_ = 0; }
+
+  bool isEmpty() const { return position_ >= length_; }
+  std::size_t bytesLeft() const { return length_ - position_; }
+  uint8_t peekU8() const;
+  uint8_t getU8();
+  uint16_t peekU16() const;
+  uint16_t getU16();
+  uint32_t peekU32() const;
+  uint32_t getU32();
+  std::string getString();
+  std::vector<uint8_t> getBytes(int numBytes);
 
  private:
-  std::unique_ptr<std::array<uint8_t, 8192>> buffer_;
-  std::size_t position_;
+  std::array<uint8_t, 8192> buffer_;
   std::size_t length_;
-
-  static std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> buffer_pool_;
+  std::size_t position_;
 };
 
-#endif  // COMMON_NETWORK_OUTGOINGPACKET_H_
+#endif  // NETWORK_INCOMINGPACKET_H_

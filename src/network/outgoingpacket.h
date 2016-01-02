@@ -22,47 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_TILE_H_
-#define COMMON_WORLD_TILE_H_
+#ifndef NETWORK_OUTGOINGPACKET_H_
+#define NETWORK_OUTGOINGPACKET_H_
 
-#include <deque>
+#include <cstdint>
+#include <string>
+#include <stack>
+#include <memory>
 #include <vector>
-#include "item.h"
-#include "creature.h"
 
-class Tile
+class OutgoingPacket
 {
  public:
-  explicit Tile(const Item& groundItem)
-    : groundItem_(groundItem)
-  {
-  }
+  OutgoingPacket();
+  virtual ~OutgoingPacket();
 
-  // Ground Item
-  const Item& getGroundItem() const { return groundItem_; }
+  // Delete copy constructors
+  OutgoingPacket(const OutgoingPacket&) = delete;
+  OutgoingPacket& operator=(const OutgoingPacket&) = delete;
 
-  // Creatures
-  void addCreature(CreatureId creatureId);
-  bool removeCreature(CreatureId creatureId);
-  const std::deque<CreatureId>& getCreatureIds() const { return creatureIds_; }
-  CreatureId getCreatureId(int stackPosition) const;
-  uint8_t getCreatureStackPos(CreatureId creatureId) const;
-
-  // Other Items
-  void addItem(const Item& item);
-  bool removeItem(const Item& item, uint8_t stackPosition);
-  std::vector<Item> getItems() const;
-  const std::deque<Item>& getTopItems() const { return topItems_; }
-  const std::deque<Item>& getBottomItems() const { return bottomItems_; }
-
-  std::size_t getNumberOfThings() const;
+  std::vector<uint8_t> getBuffer() const;
+  void skipBytes(std::size_t num_bytes);
+  void addU8(uint8_t val);
+  void addU16(uint16_t val);
+  void addU32(uint32_t val);
+  void addString(const std::string& string);
 
  private:
-  // TODO(gurka): Store all items in a single container, to optimize getItems() ?
-  Item groundItem_;
-  std::deque<Item> topItems_;
-  std::deque<CreatureId> creatureIds_;
-  std::deque<Item> bottomItems_;
+  std::unique_ptr<std::array<uint8_t, 8192>> buffer_;
+  std::size_t position_;
+  std::size_t length_;
+
+  static std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> buffer_pool_;
 };
 
-#endif  // COMMON_WORLD_TILE_H_
+#endif  // NETWORK_OUTGOINGPACKET_H_

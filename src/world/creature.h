@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_CREATURE_H_
-#define COMMON_WORLD_CREATURE_H_
+#ifndef WORLD_CREATURE_H_
+#define WORLD_CREATURE_H_
 
 #include <string>
 #include "direction.h"
@@ -93,4 +93,4 @@ class Creature
   static CreatureId nextCreatureId_;
 };
 
-#endif  // COMMON_WORLD_CREATURE_H_
+#endif  // WORLD_CREATURE_H_

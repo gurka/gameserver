@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_ACCOUNT_ACCOUNT_H_
-#define COMMON_ACCOUNT_ACCOUNT_H_
+#ifndef ACCOUNT_ACCOUNT_H_
+#define ACCOUNT_ACCOUNT_H_
 
 #include <cstdint>
 #include <vector>
@@ -71,4 +71,4 @@ class AccountReader
   std::unordered_map<std::string, uint32_t> characterToAccountNumber_;
 };
 
-#endif  // COMMON_ACCOUNT_ACCOUNT_H_
+#endif  // ACCOUNT_ACCOUNT_H_

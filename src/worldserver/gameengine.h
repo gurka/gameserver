@@ -33,10 +33,10 @@
 
 #include <boost/asio.hpp>  //NOLINT
 
-#include "world/world.h"
+#include "world.h"
 #include "playerctrl.h"
 #include "taskqueue.h"
-#include "world/itemfactory.h"
+#include "itemfactory.h"
 
 class OutgoingPacket;
 

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_ITEMFACTORY_H_
-#define COMMON_WORLD_ITEMFACTORY_H_
+#ifndef WORLD_ITEMFACTORY_H_
+#define WORLD_ITEMFACTORY_H_
 
 #include <string>
 #include <unordered_map>
@@ -46,5 +46,5 @@ class ItemFactory
   std::unordered_map<ItemId, ItemData> itemData_;
 };
 
-#endif  // COMMON_WORLD_ITEMFACTORY_H_
+#endif  // WORLD_ITEMFACTORY_H_
 

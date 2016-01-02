@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_CREATURECTRL_H_
-#define COMMON_WORLD_CREATURECTRL_H_
+#ifndef WORLD_CREATURECTRL_H_
+#define WORLD_CREATURECTRL_H_
 
 #include <string>
 
@@ -67,4 +67,4 @@ class CreatureCtrl
   virtual void onTileUpdate(const Position& position) = 0;
 };
 
-#endif  // COMMON_WORLD_CREATURECTRL_H_
+#endif  // WORLD_CREATURECTRL_H_

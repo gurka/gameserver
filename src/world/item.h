@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_ITEM_H_
-#define COMMON_WORLD_ITEM_H_
+#ifndef WORLD_ITEM_H_
+#define WORLD_ITEM_H_
 
 #include <string>
 #include <unordered_map>
@@ -108,5 +108,5 @@ class Item
   uint8_t count_;
 };
 
-#endif  // COMMON_WORLD_ITEM_H_
+#endif  // WORLD_ITEM_H_
 

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_NETWORK_SERVER_H_
-#define COMMON_NETWORK_SERVER_H_
+#ifndef NETWORK_SERVER_H_
+#define NETWORK_SERVER_H_
 
 #include <memory>
 #include <unordered_map>
@@ -77,4 +77,4 @@ class Server
   std::unordered_map<ConnectionId, std::unique_ptr<Connection>> connections_;
 };
 
-#endif  // COMMON_NETWORK_SERVER_H_
+#endif  // NETWORK_SERVER_H_

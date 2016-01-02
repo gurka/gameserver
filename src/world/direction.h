@@ -22,27 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_WORLDFACTORY_H_
-#define COMMON_WORLD_WORLDFACTORY_H_
+#ifndef WORLD_DIRECTION_H_
+#define WORLD_DIRECTION_H_
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-
-#include "world.h"
-#include "itemfactory.h"
-#include "position.h"
-#include "tile.h"
-
-class WorldFactory
+enum Direction
 {
- public:
-  static std::unique_ptr<World> createWorld(const ItemFactory* itemFactory, const std::string& worldFilename);
-
- private:
-  // Offset for world size, since the client doesn't like too low positions
-  // TODO(gurka): This constant is both in WorldFactory and in World
-  static const int worldSizeStart_ = 192;
+  NORTH = 0,
+  EAST  = 1,
+  SOUTH = 2,
+  WEST  = 3
 };
 
-#endif  // COMMON_WORLD_WORLDFACTORY_H_
+#endif  // WORLD_DIRECTION_H_

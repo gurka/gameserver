@@ -22,25 +22,58 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_WORLDINTERFACE_H_
-#define COMMON_WORLD_WORLDINTERFACE_H_
+#ifndef NETWORK_CONNECTION_H_
+#define NETWORK_CONNECTION_H_
 
-#include <list>
-#include <string>
-#include "creature.h"
+#include <deque>
+#include <memory>
+#include <vector>
+#include <boost/asio.hpp>  //NOLINT
+#include "incomingpacket.h"
 
-class Tile;
-class Position;
+// Forward declarations
+class OutgoingPacket;
 
-class WorldInterface
+class Connection
 {
  public:
-  virtual ~WorldInterface() = default;
+  struct Callbacks
+  {
+    std::function<void(void)> onConnectionClosed;
+    std::function<void(IncomingPacket*)> onPacketReceived;
+  };
 
-  virtual const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
-  virtual const Tile& getTile(const Position& position) const = 0;
-  virtual const Creature& getCreature(CreatureId creatureId) const = 0;
-  virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
+  Connection(boost::asio::ip::tcp::socket socket, const Callbacks& callbacks);
+  virtual ~Connection();
+
+  // Delete copy constructors
+  Connection(const Connection&) = delete;
+  Connection& operator=(const Connection&) = delete;
+
+  void close(bool gracefully);
+  void sendPacket(const OutgoingPacket& packet);
+
+ private:
+  void sendPacketInternal();
+  void receivePacket();
+
+  boost::asio::ip::tcp::socket socket_;
+  Callbacks callbacks_;
+
+  enum State
+  {
+    CONNECTED,
+    CLOSING,
+    CLOSED,
+  };
+  State state_;
+
+  // I/O Buffers
+  std::array<uint8_t, 2> incomingHeaderBuffer_;
+  IncomingPacket incomingPacket_;
+
+  std::array<uint8_t, 2> outgoingHeaderBuffer_;
+  std::deque<std::vector<uint8_t>> outgoingPacketBuffers_;
 };
 
-#endif  // COMMON_WORLD_WORLDINTERFACE_H_
+#endif  // NETWORK_CONNECTION_H_

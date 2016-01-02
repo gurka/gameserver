@@ -29,11 +29,11 @@
 
 #include "configparser.h"
 #include "logger.h"
-#include "account/account.h"
-#include "network/server.h"
-#include "network/incomingpacket.h"
-#include "network/outgoingpacket.h"
-#include "world/direction.h"
+#include "account.h"
+#include "server.h"
+#include "incomingpacket.h"
+#include "outgoingpacket.h"
+#include "direction.h"
 #include "gameengine.h"
 
 // Globals

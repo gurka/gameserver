@@ -22,58 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_NETWORK_CONNECTION_H_
-#define COMMON_NETWORK_CONNECTION_H_
+#ifndef WORLD_TILE_H_
+#define WORLD_TILE_H_
 
 #include <deque>
-#include <memory>
 #include <vector>
-#include <boost/asio.hpp>  //NOLINT
-#include "incomingpacket.h"
+#include "item.h"
+#include "creature.h"
 
-// Forward declarations
-class OutgoingPacket;
-
-class Connection
+class Tile
 {
  public:
-  struct Callbacks
+  explicit Tile(const Item& groundItem)
+    : groundItem_(groundItem)
   {
-    std::function<void(void)> onConnectionClosed;
-    std::function<void(IncomingPacket*)> onPacketReceived;
-  };
+  }
 
-  Connection(boost::asio::ip::tcp::socket socket, const Callbacks& callbacks);
-  virtual ~Connection();
+  // Ground Item
+  const Item& getGroundItem() const { return groundItem_; }
 
-  // Delete copy constructors
-  Connection(const Connection&) = delete;
-  Connection& operator=(const Connection&) = delete;
+  // Creatures
+  void addCreature(CreatureId creatureId);
+  bool removeCreature(CreatureId creatureId);
+  const std::deque<CreatureId>& getCreatureIds() const { return creatureIds_; }
+  CreatureId getCreatureId(int stackPosition) const;
+  uint8_t getCreatureStackPos(CreatureId creatureId) const;
 
-  void close(bool gracefully);
-  void sendPacket(const OutgoingPacket& packet);
+  // Other Items
+  void addItem(const Item& item);
+  bool removeItem(const Item& item, uint8_t stackPosition);
+  std::vector<Item> getItems() const;
+  const std::deque<Item>& getTopItems() const { return topItems_; }
+  const std::deque<Item>& getBottomItems() const { return bottomItems_; }
+
+  std::size_t getNumberOfThings() const;
 
  private:
-  void sendPacketInternal();
-  void receivePacket();
-
-  boost::asio::ip::tcp::socket socket_;
-  Callbacks callbacks_;
-
-  enum State
-  {
-    CONNECTED,
-    CLOSING,
-    CLOSED,
-  };
-  State state_;
-
-  // I/O Buffers
-  std::array<uint8_t, 2> incomingHeaderBuffer_;
-  IncomingPacket incomingPacket_;
-
-  std::array<uint8_t, 2> outgoingHeaderBuffer_;
-  std::deque<std::vector<uint8_t>> outgoingPacketBuffers_;
+  // TODO(gurka): Store all items in a single container, to optimize getItems() ?
+  Item groundItem_;
+  std::deque<Item> topItems_;
+  std::deque<CreatureId> creatureIds_;
+  std::deque<Item> bottomItems_;
 };
 
-#endif  // COMMON_NETWORK_CONNECTION_H_
+#endif  // WORLD_TILE_H_

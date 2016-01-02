@@ -5,7 +5,7 @@ project(gameserver)
 
 
 ## Settings
-# Common compiler flags
+# modules compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11 -pedantic -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
@@ -19,13 +19,14 @@ set(loginserver_src
   "src/loginserver/loginserver.cc"
 )
 set(loginserver_inc
+  "src/account"
+  "src/network"
   "src/utils"
-  "src/common"
 )
 set(loginserver_lib
+  "account"
+  "network"
   "utils"
-  "common_account"
-  "common_network"
 )
 add_executable(loginserver ${loginserver_src})
 target_include_directories(loginserver PUBLIC ${loginserver_inc})
@@ -43,21 +44,23 @@ set(worldserver_src
   "src/worldserver/worldserver.cc"
 )
 set(worldserver_inc
+  "src/account"
+  "src/network"
   "src/utils"
-  "src/common"
+  "src/world"
 )
 set(worldserver_lib
+  "account"
+  "network"
   "utils"
-  "common_account"
-  "common_network"
-  "common_world"
+  "world"
 )
 add_executable(worldserver ${worldserver_src})
 target_include_directories(worldserver PUBLIC ${worldserver_inc})
 target_link_libraries(worldserver ${worldserver_lib} ${LIBRARIES})
 
 
-## Modules
+## Libraries
 # Utils
 set(utils_src
   "src/utils/configparser.h"
@@ -67,89 +70,89 @@ set(utils_src
 add_library(utils ${utils_src})
 
 # Account
-set(common_account_src
-  "src/common/account/account.cc"
-  "src/common/account/account.h"
+set(account_src
+  "src/account/account.cc"
+  "src/account/account.h"
 )
-set(common_account_inc
+set(account_inc
   "src/utils"
   "lib/rapidxml"
 )
-add_library(common_account ${common_account_src})
-target_include_directories(common_account PUBLIC ${common_account_inc})
+add_library(account ${account_src})
+target_include_directories(account PUBLIC ${account_inc})
 
 # Network
-set(common_network_src
-  "src/common/network/acceptor.cc"
-  "src/common/network/acceptor.h"
-  "src/common/network/connection.cc"
-  "src/common/network/connection.h"
-  "src/common/network/incomingpacket.cc"
-  "src/common/network/incomingpacket.h"
-  "src/common/network/outgoingpacket.cc"
-  "src/common/network/outgoingpacket.h"
-  "src/common/network/server.cc"
-  "src/common/network/server.h"
+set(network_src
+  "src/network/acceptor.cc"
+  "src/network/acceptor.h"
+  "src/network/connection.cc"
+  "src/network/connection.h"
+  "src/network/incomingpacket.cc"
+  "src/network/incomingpacket.h"
+  "src/network/outgoingpacket.cc"
+  "src/network/outgoingpacket.h"
+  "src/network/server.cc"
+  "src/network/server.h"
 )
-set(common_network_inc
+set(network_inc
   "src/utils"
 )
-add_library(common_network ${common_network_src})
-target_include_directories(common_network PUBLIC ${common_network_inc})
+add_library(network ${network_src})
+target_include_directories(network PUBLIC ${network_inc})
 
 # World
-set(common_world_src
-  "src/common/world/creature.cc"
-  "src/common/world/creaturectrl.h"
-  "src/common/world/creature.h"
-  "src/common/world/direction.h"
-  "src/common/world/item.cc"
-  "src/common/world/item.h"
-  "src/common/world/itemfactory.cc"
-  "src/common/world/itemfactory.h"
-  "src/common/world/npcctrl.h"
-  "src/common/world/position.cc"
-  "src/common/world/position.h"
-  "src/common/world/tile.cc"
-  "src/common/world/tile.h"
-  "src/common/world/world.cc"
-  "src/common/world/world.h"
-  "src/common/world/worldfactory.cc"
-  "src/common/world/worldfactory.h"
-  "src/common/world/worldinterface.h"
+set(world_src
+  "src/world/creature.cc"
+  "src/world/creaturectrl.h"
+  "src/world/creature.h"
+  "src/world/direction.h"
+  "src/world/item.cc"
+  "src/world/item.h"
+  "src/world/itemfactory.cc"
+  "src/world/itemfactory.h"
+  "src/world/npcctrl.h"
+  "src/world/position.cc"
+  "src/world/position.h"
+  "src/world/tile.cc"
+  "src/world/tile.h"
+  "src/world/world.cc"
+  "src/world/world.h"
+  "src/world/worldfactory.cc"
+  "src/world/worldfactory.h"
+  "src/world/worldinterface.h"
 )
-set(common_world_inc
+set(world_inc
   "src/utils"
   "lib/rapidxml"
 )
-add_library(common_world ${common_world_src})
-target_include_directories(common_world PUBLIC ${common_world_inc})
+add_library(world ${world_src})
+target_include_directories(world PUBLIC ${world_inc})
 
 ## Unit tests
 if (gameserver_test)
   set(unittest_src
     "test/utils/configparser_test.cc"
-    "test/common/account/account_test.cc"
-    "test/common/world/position_test.cc"
-    "test/common/world/creature_test.cc"
-    "test/common/world/item_test.cc"
-    "test/common/world/tile_test.cc"
-    "test/common/world/world_test.cc"
+    "test/account/account_test.cc"
+    "test/world/position_test.cc"
+    "test/world/creature_test.cc"
+    "test/world/item_test.cc"
+    "test/world/tile_test.cc"
+    "test/world/world_test.cc"
   )
 
   set(unittest_inc
+    "src/account"
+    "src/network"
     "src/utils"
-    "src/common/account"
-    "src/common/network"
-    "src/common/world"
+    "src/world"
     "lib/rapidxml"
   )
 
   set(unittest_lib
+    "account"
+    "network"
     "utils"
-    "common_account"
-    "common_network"
-    "common_world"
+    "world"
   )
 
   add_subdirectory(lib/googletest)

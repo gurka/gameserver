@@ -27,9 +27,9 @@
 
 #include <unordered_map>
 #include <string>
-#include "world/creature.h"
-#include "world/direction.h"
-#include "world/item.h"
+#include "creature.h"
+#include "direction.h"
+#include "item.h"
 
 class Equipment
 {

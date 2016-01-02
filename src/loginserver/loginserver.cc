@@ -28,10 +28,10 @@
 
 #include "configparser.h"
 #include "logger.h"
-#include "account/account.h"
-#include "network/server.h"
-#include "network/incomingpacket.h"
-#include "network/outgoingpacket.h"
+#include "account.h"
+#include "server.h"
+#include "incomingpacket.h"
+#include "outgoingpacket.h"
 
 void onClientConnected(ConnectionId connectionId);
 void onClientDisconnected(ConnectionId connectionId);

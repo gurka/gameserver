@@ -22,39 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_POSITION_H_
-#define COMMON_WORLD_POSITION_H_
+#ifndef WORLD_WORLDINTERFACE_H_
+#define WORLD_WORLDINTERFACE_H_
 
+#include <list>
 #include <string>
-#include "direction.h"
+#include "creature.h"
 
-class Position
+class Tile;
+class Position;
+
+class WorldInterface
 {
  public:
-  static const Position INVALID;
+  virtual ~WorldInterface() = default;
 
-  Position();
-  Position(uint16_t x, uint16_t y, uint8_t z);
-
-  bool operator==(const Position& other) const;
-  bool operator!=(const Position& other) const;
-
-  std::string toString() const;
-  Position addDirection(const Direction& direction) const;
-
-  uint16_t getX() const { return x_; }
-  uint16_t getY() const { return y_; }
-  uint8_t getZ() const { return z_; }
-
-  struct Hash
-  {
-    std::size_t operator()(const Position& position) const;
-  };
-
- private:
-  uint16_t x_;
-  uint16_t y_;
-  uint8_t  z_;
+  virtual const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
+  virtual const Tile& getTile(const Position& position) const = 0;
+  virtual const Creature& getCreature(CreatureId creatureId) const = 0;
+  virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
 };
 
-#endif  // COMMON_WORLD_POSITION_H_
+#endif  // WORLD_WORLDINTERFACE_H_

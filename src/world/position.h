@@ -22,48 +22,39 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_NETWORK_ACCEPTOR_H_
-#define COMMON_NETWORK_ACCEPTOR_H_
+#ifndef WORLD_POSITION_H_
+#define WORLD_POSITION_H_
 
-#include <functional>
-#include <memory>
-#include <boost/asio.hpp>  //NOLINT
+#include <string>
+#include "direction.h"
 
-class Acceptor
+class Position
 {
  public:
-  struct Callbacks
+  static const Position INVALID;
+
+  Position();
+  Position(uint16_t x, uint16_t y, uint8_t z);
+
+  bool operator==(const Position& other) const;
+  bool operator!=(const Position& other) const;
+
+  std::string toString() const;
+  Position addDirection(const Direction& direction) const;
+
+  uint16_t getX() const { return x_; }
+  uint16_t getY() const { return y_; }
+  uint8_t getZ() const { return z_; }
+
+  struct Hash
   {
-    std::function<void(boost::asio::ip::tcp::socket socket)> onAccept;
+    std::size_t operator()(const Position& position) const;
   };
-
-  Acceptor(boost::asio::io_service* io_service,
-           unsigned short port,
-           const Callbacks& callbacks);
-  virtual ~Acceptor();
-
-  // Delete copy constructors
-  Acceptor(const Acceptor&) = delete;
-  Acceptor& operator=(const Acceptor&) = delete;
-
-  bool start();
-  void stop();
-  bool isListening() const { return state_ == LISTENING; }
 
  private:
-  void asyncAccept();
-
-  boost::asio::ip::tcp::acceptor acceptor_;
-  boost::asio::ip::tcp::socket socket_;
-  Callbacks callbacks_;
-
-  enum State
-  {
-    CLOSED,
-    LISTENING,
-    CLOSING,
-  };
-  State state_;
+  uint16_t x_;
+  uint16_t y_;
+  uint8_t  z_;
 };
 
-#endif  // COMMON_NETWORK_ACCEPTOR_H_
+#endif  // WORLD_POSITION_H_

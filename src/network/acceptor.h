@@ -22,30 +22,48 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_NPCCTRL_H_
-#define COMMON_WORLD_NPCCTRL_H_
+#ifndef NETWORK_ACCEPTOR_H_
+#define NETWORK_ACCEPTOR_H_
 
-#include <string>
-#include "creaturectrl.h"
-#include "creature.h"
-#include "position.h"
-#include "item.h"
+#include <functional>
+#include <memory>
+#include <boost/asio.hpp>  //NOLINT
 
-class NpcCtrl : public CreatureCtrl
+class Acceptor
 {
  public:
-  void onCreatureSpawn(const Creature& creature, const Position& position) {}
-  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) {}
-  void onCreatureMove(const Creature& creature,
-                      const Position& oldPosition, uint8_t oldStackPos,
-                      const Position& newPosition, uint8_t newStackPos) {}
-  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) {}
-  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) {}
+  struct Callbacks
+  {
+    std::function<void(boost::asio::ip::tcp::socket socket)> onAccept;
+  };
 
-  void onItemRemoved(const Position& position, uint8_t stackPos) {}
-  void onItemAdded(const Item& item, const Position& position) {}
+  Acceptor(boost::asio::io_service* io_service,
+           unsigned short port,
+           const Callbacks& callbacks);
+  virtual ~Acceptor();
 
-  void onTileUpdate(const Position& position) {}
+  // Delete copy constructors
+  Acceptor(const Acceptor&) = delete;
+  Acceptor& operator=(const Acceptor&) = delete;
+
+  bool start();
+  void stop();
+  bool isListening() const { return state_ == LISTENING; }
+
+ private:
+  void asyncAccept();
+
+  boost::asio::ip::tcp::acceptor acceptor_;
+  boost::asio::ip::tcp::socket socket_;
+  Callbacks callbacks_;
+
+  enum State
+  {
+    CLOSED,
+    LISTENING,
+    CLOSING,
+  };
+  State state_;
 };
 
-#endif  // COMMON_WORLD_NPCCTRL_H_
+#endif  // NETWORK_ACCEPTOR_H_

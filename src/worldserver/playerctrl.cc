@@ -29,9 +29,9 @@
 #include <list>
 
 #include "logger.h"
-#include "world/position.h"
-#include "world/tile.h"
-#include "network/outgoingpacket.h"
+#include "position.h"
+#include "tile.h"
+#include "outgoingpacket.h"
 
 void PlayerCtrl::onCreatureSpawn(const Creature& creature, const Position& position)
 {

@@ -33,11 +33,11 @@
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
 
 #include "player.h"
-#include "world/creaturectrl.h"
-#include "world/worldinterface.h"
-#include "world/creature.h"
-#include "world/position.h"
-#include "world/item.h"
+#include "creaturectrl.h"
+#include "worldinterface.h"
+#include "creature.h"
+#include "position.h"
+#include "item.h"
 
 class OutgoingPacket;
 
