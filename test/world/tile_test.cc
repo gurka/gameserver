@@ -111,7 +111,7 @@ TEST_F(TileTest, AddRemoveItems)
   tile.addItem(itemA);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);  // Ground item + item
 
-  auto result = tile.removeItem(itemA, 1);  // Only item => stackpos = 1
+  auto result = tile.removeItem(itemA.getItemId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 
@@ -122,18 +122,18 @@ TEST_F(TileTest, AddRemoveItems)
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 3u);
 
   // Remove itemA and itemC
-  result = tile.removeItem(itemA, 3);  // Two items were added after itemA => stackpos = 3
+  result = tile.removeItem(itemA.getItemId(), 3);  // Two items were added after itemA => stackpos = 3
   ASSERT_TRUE(result);
-  result = tile.removeItem(itemC, 1);  // itemC was added last => stackpos = 1
+  result = tile.removeItem(itemC.getItemId(), 1);  // itemC was added last => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);
 
   // Try to remove itemA again
-  result = tile.removeItem(itemA, 1);
+  result = tile.removeItem(itemA.getItemId(), 1);
   ASSERT_FALSE(result);
 
   // Remove last item
-  result = tile.removeItem(itemB, 1);  // Only item => stackpos = 1
+  result = tile.removeItem(itemB.getItemId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 }

@@ -37,7 +37,7 @@
 class WorldFactory
 {
  public:
-  static std::unique_ptr<World> createWorld(const ItemFactory* itemFactory, const std::string& worldFilename);
+  static std::unique_ptr<World> createWorld(const ItemFactory& itemFactory, const std::string& worldFilename);
 
  private:
   // Offset for world size, since the client doesn't like too low positions

@@ -34,12 +34,10 @@
 #include "npcctrl.h"
 #include "logger.h"
 
-World::World(const ItemFactory* itemFactory,
-             int worldSizeX,
+World::World(int worldSizeX,
              int worldSizeY,
              const std::unordered_map<Position, Tile, Position::Hash>& tiles)
-  : itemFactory_(itemFactory),
-    worldSizeX_(worldSizeX),
+  : worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
     tiles_(tiles)
 {
@@ -298,15 +296,13 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
   }
 }
 
-World::ReturnCode World::addItem(int itemId, int count, const Position& position)
+World::ReturnCode World::addItem(const Item& item, const Position& position)
 {
   if (!positionIsValid(position))
   {
     LOG_ERROR("moveItem(): Invalid position: %s", position.toString().c_str());
     return ReturnCode::INVALID_POSITION;
   }
-
-  auto item = itemFactory_->createItem(itemId);
 
   // Add Item to toTile
   auto& toTile = internalGetTile(position);
@@ -330,11 +326,9 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
     return ReturnCode::INVALID_POSITION;
   }
 
-  auto item = itemFactory_->createItem(itemId);
-
   // Try to remove Item from fromTile
   auto& fromTile = internalGetTile(position);
-  if (!fromTile.removeItem(item, stackPos))
+  if (!fromTile.removeItem(itemId, stackPos))
   {
     LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, position.toString().c_str());
     return ReturnCode::ITEM_NOT_FOUND;
@@ -427,12 +421,17 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   }
   else  // Item moved is a regular Item
   {
-    // TODO(gurka): We shouldn't create a new Item here... (we need Tile::getItem(stackPos))
-    auto item = itemFactory_->createItem(itemId);
-
     // Get tiles
     auto& fromTile = internalGetTile(fromPosition);
     auto& toTile = internalGetTile(toPosition);
+
+    // Check if Item exists in fromTile
+    auto item = fromTile.getItem(fromStackPos);
+    if (!item.isValid())
+    {
+      LOG_DEBUG("%s: Could not find item %d at %s", __func__, itemId, fromPosition.toString().c_str());
+      return ReturnCode::ITEM_NOT_FOUND;
+    }
 
     // Check if we can add Item to toTile
     for (const auto& item : toTile.getItems())
@@ -445,9 +444,9 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     }
 
     // Try to remove Item from fromTile
-    if (!fromTile.removeItem(item, fromStackPos))
+    if (!fromTile.removeItem(itemId, fromStackPos))
     {
-      LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, fromPosition.toString().c_str());
+      LOG_DEBUG("%s: Could not remove item %d from %s", __func__, itemId, fromPosition.toString().c_str());
       return ReturnCode::ITEM_NOT_FOUND;
     }
 

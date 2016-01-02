@@ -83,7 +83,7 @@ void Tile::addItem(const Item& item)
   }
 }
 
-bool Tile::removeItem(const Item& item, uint8_t stackPosition)
+bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
 {
   auto index = stackPosition;
   if (index == 0)
@@ -96,7 +96,7 @@ bool Tile::removeItem(const Item& item, uint8_t stackPosition)
   if (index < topItems_.size())
   {
     auto it = topItems_.cbegin() + index;
-    if (it->getItemId() == item.getItemId())
+    if (it->getItemId() == itemId)
     {
       topItems_.erase(it);
       return true;
@@ -118,7 +118,7 @@ bool Tile::removeItem(const Item& item, uint8_t stackPosition)
   if (index < bottomItems_.size())
   {
     auto it = bottomItems_.cbegin() + index;
-    if (it->getItemId() == item.getItemId())
+    if (it->getItemId() == itemId)
     {
       bottomItems_.erase(it);
       return true;
@@ -133,6 +133,37 @@ bool Tile::removeItem(const Item& item, uint8_t stackPosition)
   return false;
 }
 
+Item Tile::getItem(uint8_t stackPos) const
+{
+  auto index = stackPos;
+  if (index == 0)
+  {
+    return groundItem_;
+  }
+
+  index -= 1;
+  if (index < topItems_.size())
+  {
+    return topItems_.at(index);
+  }
+
+  index -= topItems_.size();
+  if (index < creatureIds_.size())
+  {
+    LOG_ERROR("getItem(): Stackposition is a Creature");
+    return Item();
+  }
+
+  index -= creatureIds_.size();
+  if (index < bottomItems_.size())
+  {
+    return bottomItems_.at(index);
+  }
+
+  LOG_ERROR("getItem(): Stackposition is invalid");
+  return Item();
+}
+
 std::vector<Item> Tile::getItems() const
 {
   std::vector<Item> items;
@@ -144,71 +175,6 @@ std::vector<Item> Tile::getItems() const
   return items;
 }
 
-/*
-const Item* Tile::getItem(uint8_t stackPos) const
-{
-  auto index = stackPos;
-  if (index == 0)
-  {
-    return &groundItem_;
-  }
-
-  index -= 1;
-  if (index < topItems_.size())
-  {
-    return &topItems_.at(index);
-  }
-
-  index -= topItems_.size();
-  if (index < creatureIds_.size())
-  {
-    LOG_ERROR("getItem(): Stackposition is a Creature");
-    return nullptr;
-  }
-
-  index -= creatureIds_.size();
-  if (index < bottomItems_.size())
-  {
-    return &bottomItems_.at(index);
-  }
-
-  LOG_ERROR("getItem(): Stackposition is invalid");
-  return nullptr;
-}
-
-CreatureId Tile::getCreature(uint8_t stackPos) const
-{
-  auto index = stackPos;
-  if (index == 0)  // Ground
-  {
-    LOG_ERROR("getItem(): Stackposition is an Item");
-    return Creature::INVALID_ID;
-  }
-
-  index -= 1;
-  if (index < topItems_.size())
-  {
-    LOG_ERROR("getItem(): Stackposition is an Item");
-    return Creature::INVALID_ID;
-  }
-
-  index -= topItems_.size();
-  if (index < creatureIds_.size())
-  {
-    return creatureIds_.at(index);
-  }
-
-  index -= creatureIds_.size();
-  if (index < bottomItems_.size())
-  {
-    LOG_ERROR("getItem(): Stackposition is an Item");
-    return Creature::INVALID_ID;
-  }
-
-  LOG_ERROR("getItem(): Stackposition is invalid");
-  return Creature::INVALID_ID;
-}
-*/
 std::size_t Tile::getNumberOfThings() const
 {
   return 1 + topItems_.size() + creatureIds_.size() + bottomItems_.size();

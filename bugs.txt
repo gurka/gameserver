@@ -1,1 +1,0 @@
-1. Possible to throw Items into blocking Tiles (i.e. walls, etc)

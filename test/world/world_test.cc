@@ -59,7 +59,7 @@ class WorldTest : public ::testing::Test
     }
 
     // TODO(gurka): MockItemFactory
-    world.reset(new World(&itemFactory, 16, 16, tiles));
+    world.reset(new World(16, 16, tiles));
   }
 
   MockItemFactory itemFactory;

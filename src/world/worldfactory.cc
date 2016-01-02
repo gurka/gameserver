@@ -31,7 +31,7 @@
 #include "logger.h"
 #include "rapidxml.hpp"
 
-std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory* itemFactory, const std::string& worldFilename)
+std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory, const std::string& worldFilename)
 {
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
@@ -105,7 +105,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory* itemFactory,
       }
 
       auto groundItemId = std::stoi(groundItemAttr->value());
-      auto groundItem = itemFactory->createItem(groundItemId);
+      auto groundItem = itemFactory.createItem(groundItemId);
       tiles.insert(std::make_pair(position, Tile(groundItem)));
 
       // Read more items to put in this tile
@@ -121,7 +121,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory* itemFactory,
         }
 
         auto itemId = std::stoi(itemIdAttr->value());
-        tiles.at(position).addItem(itemFactory->createItem(itemId));
+        tiles.at(position).addItem(itemFactory.createItem(itemId));
       }
 
       // Go to next <tile> in XML
@@ -132,5 +132,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory* itemFactory,
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::unique_ptr<World>(new World(itemFactory, worldSizeX, worldSizeY, tiles));
+  return std::unique_ptr<World>(new World(worldSizeX, worldSizeY, tiles));
 }

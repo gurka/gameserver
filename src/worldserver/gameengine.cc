@@ -60,7 +60,7 @@ GameEngine::GameEngine(boost::asio::io_service* io_service,
   }
 
   // Load world
-  world_ = WorldFactory::createWorld(&itemFactory_, worldFilename);
+  world_ = WorldFactory::createWorld(itemFactory_, worldFilename);
 }
 
 GameEngine::~GameEngine()
@@ -465,7 +465,7 @@ void GameEngine::playerMoveItemFromInvToPosInternal(CreatureId creatureId, int f
   playerCtrl.onEquipmentUpdated(player, fromInventoryId);
 
   // Add the Item to the toPosition
-  world_->addItem(itemId, count, toPosition);
+  world_->addItem(item, toPosition);
 }
 
 void GameEngine::playerMoveItemFromInvToInvInternal(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)

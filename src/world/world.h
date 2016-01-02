@@ -35,7 +35,6 @@
 #include "creaturectrl.h"
 #include "tile.h"
 #include "position.h"
-#include "itemfactory.h"
 
 class World : public WorldInterface
 {
@@ -52,8 +51,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(const ItemFactory* itemFactory,
-        int worldSizeX,
+  World(int worldSizeX,
         int worldSizeY,
         const std::unordered_map<Position, Tile, Position::Hash>& tiles);
 
@@ -67,7 +65,7 @@ class World : public WorldInterface
   void creatureSay(CreatureId creatureId, const std::string& message);
 
   // Item management
-  ReturnCode addItem(int itemId, int count, const Position& position);
+  ReturnCode addItem(const Item& item, const Position& position);
   ReturnCode removeItem(int itemId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
                       int itemId, int count, const Position& toPosition);
@@ -94,9 +92,6 @@ class World : public WorldInterface
   Tile& internalGetTile(const Position& position);
   Creature& internalGetCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
-
-  // Item factory
-  const ItemFactory* itemFactory_;
 
   // World size
   int worldSizeX_ = 0;
