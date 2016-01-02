@@ -227,14 +227,22 @@ void GameEngine::playerMoveInternal(CreatureId creatureId, Direction direction)
   if (nextWalkTime <= now)
   {
     LOG_DEBUG("%s: Player move now, creature id: %d", __func__, creatureId);
-    world_->creatureMove(creatureId, direction);
+    World::ReturnCode rc = world_->creatureMove(creatureId, direction);
+    if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+    {
+      getPlayerCtrl(creatureId).sendCancel("There is no room.");
+    }
   }
   else
   {
     LOG_DEBUG("%s: Player move delayed, creature id: %d", __func__, creatureId);
     auto creatureMoveFunc = [this, creatureId, direction]
     {
-      world_->creatureMove(creatureId, direction);
+      World::ReturnCode rc = world_->creatureMove(creatureId, direction);
+      if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+      {
+        getPlayerCtrl(creatureId).sendCancel("There is no room.");
+      }
     };
     taskQueue_.addTask(creatureMoveFunc, nextWalkTime);
   }
@@ -375,6 +383,12 @@ void GameEngine::playerMoveItemFromPosToPosInternal(CreatureId creatureId, const
       break;
     }
 
+    case World::ReturnCode::THERE_IS_NO_ROOM:
+    {
+      getPlayerCtrl(creatureId).sendCancel("There is no room.");
+      break;
+    }
+
     default:
     {
       // TODO(gurka): Disconnect player?
@@ -413,7 +427,7 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
   if (rc != World::ReturnCode::OK)
   {
     LOG_ERROR("playerMoveItem(): Could not remove item %d (count %d) from %s (stackpos: %d)",
-                itemId, count, fromPosition.toString().c_str(), fromStackPos);
+              itemId, count, fromPosition.toString().c_str(), fromStackPos);
     // TODO(gurka): Disconnect player?
     return;
   }

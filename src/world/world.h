@@ -48,6 +48,7 @@ class World : public WorldInterface
     ITEM_NOT_FOUND,
     CANNOT_MOVE_THAT_OBJECT,
     CANNOT_REACH_THAT_OBJECT,
+    THERE_IS_NO_ROOM,
     OTHER_ERROR,
   };
 
@@ -60,8 +61,8 @@ class World : public WorldInterface
   Position addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
   void removeCreature(CreatureId creatureId);
   bool creatureExists(CreatureId creatureId) const;
-  void creatureMove(CreatureId creatureId, Direction direction);
-  void creatureMove(CreatureId creatureId, const Position& newPosition);
+  ReturnCode creatureMove(CreatureId creatureId, Direction direction);
+  ReturnCode creatureMove(CreatureId creatureId, const Position& newPosition);
   void creatureTurn(CreatureId creatureId, Direction direction);
   void creatureSay(CreatureId creatureId, const std::string& message);
 

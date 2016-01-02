@@ -163,24 +163,24 @@ bool World::creatureExists(CreatureId creatureId) const
 }
 
 
-void World::creatureMove(CreatureId creatureId, Direction direction)
+World::ReturnCode World::creatureMove(CreatureId creatureId, Direction direction)
 {
-  creatureMove(creatureId, getCreaturePosition(creatureId).addDirection(direction));
+  return creatureMove(creatureId, getCreaturePosition(creatureId).addDirection(direction));
 }
 
-void World::creatureMove(CreatureId creatureId, const Position& toPosition)
+World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toPosition)
 {
   if (!creatureExists(creatureId))
   {
     LOG_ERROR("creatureMove called with non-existent CreatureId");
-    return;
+    return ReturnCode::INVALID_CREATURE;
   }
 
   if (!positionIsValid(toPosition))
   {
     LOG_ERROR("moveCreature: Invalid position: %s",
               toPosition.toString().c_str());
-    return;
+    return ReturnCode::INVALID_POSITION;
   }
 
   // Check if toTile is blocking or not
@@ -189,9 +189,8 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
   {
     if (item.isBlocking())
     {
-      // TODO(gurka): Return World::ReturnCode to send "There is no room." to player?
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
-      return;
+      return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
 
@@ -256,6 +255,8 @@ void World::creatureMove(CreatureId creatureId, const Position& toPosition)
       getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
     }
   }
+
+  return ReturnCode::OK;
 }
 
 void World::creatureTurn(CreatureId creatureId, Direction direction)
@@ -422,16 +423,28 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     }
 
     // Move the Creature as a regular Creature move
-    creatureMove(movedCreatureId, toPosition);
-
-    return ReturnCode::OK;
+    return creatureMove(movedCreatureId, toPosition);
   }
   else  // Item moved is a regular Item
   {
+    // TODO(gurka): We shouldn't create a new Item here... (we need Tile::getItem(stackPos))
     auto item = itemFactory_->createItem(itemId);
 
-    // Try to remove Item from fromTile
+    // Get tiles
     auto& fromTile = internalGetTile(fromPosition);
+    auto& toTile = internalGetTile(toPosition);
+
+    // Check if we can add Item to toTile
+    for (const auto& item : toTile.getItems())
+    {
+      if (item.isBlocking())
+      {
+        LOG_DEBUG("%s: Item on toTile is blocking", __func__);
+        return ReturnCode::THERE_IS_NO_ROOM;
+      }
+    }
+
+    // Try to remove Item from fromTile
     if (!fromTile.removeItem(item, fromStackPos))
     {
       LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, fromPosition.toString().c_str());
@@ -439,7 +452,6 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     }
 
     // Add Item to toTile
-    auto& toTile = internalGetTile(toPosition);
     toTile.addItem(item);
 
     // Call onItemRemoved on all creatures that can see fromPosition
