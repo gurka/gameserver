@@ -36,19 +36,17 @@
 #include "world.h"
 #include "playerctrl.h"
 #include "taskqueue.h"
-#include "itemfactory.h"
 
 class OutgoingPacket;
 
-// TODO(gurka): Separate GameEngine::x and GameEngine:xInternal to make sure that Tasks are always used
 class GameEngine
 {
  public:
   GameEngine(boost::asio::io_service* io_service,
              const std::string& loginMessage,
              const std::string& dataFilename,
-             const std::string& worldFilename,
-             const std::string& itemsFilename);
+             const std::string& itemsFilename,
+             const std::string& worldFilename);
 
   // Not copyable
   GameEngine(const GameEngine&) = delete;
@@ -136,7 +134,6 @@ class GameEngine
 
   std::string loginMessage_;
 
-  ItemFactory itemFactory_;
   std::unique_ptr<World> world_;
 };
 

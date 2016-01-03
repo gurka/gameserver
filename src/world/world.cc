@@ -31,13 +31,16 @@
 #include <tuple>
 #include <utility>
 
+#include "itemfactory.h"
 #include "npcctrl.h"
 #include "logger.h"
 
-World::World(int worldSizeX,
+World::World(std::unique_ptr<ItemFactory> itemFactory,
+             int worldSizeX,
              int worldSizeY,
              const std::unordered_map<Position, Tile, Position::Hash>& tiles)
-  : worldSizeX_(worldSizeX),
+  : itemFactory_(std::move(itemFactory)),
+    worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
     tiles_(tiles)
 {

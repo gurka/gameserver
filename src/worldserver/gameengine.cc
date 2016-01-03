@@ -44,23 +44,13 @@
 GameEngine::GameEngine(boost::asio::io_service* io_service,
                        const std::string& loginMessage,
                        const std::string& dataFilename,
-                       const std::string& worldFilename,
-                       const std::string& itemsFilename)
+                       const std::string& itemsFilename,
+                       const std::string& worldFilename)
   : state_(INITIALIZED),
     taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
-    loginMessage_(loginMessage)
+    loginMessage_(loginMessage),
+    world_(WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename))
 {
-  // Load data file
-  LOG_INFO("Loading data files");
-  if (!itemFactory_.initialize(dataFilename, itemsFilename))
-  {
-    // ItemFactory::initialize logs error on failure
-    // Return here so that we don't try to load the world with an uninitialized ItemFactory
-    return;
-  }
-
-  // Load world
-  world_ = WorldFactory::createWorld(itemFactory_, worldFilename);
 }
 
 GameEngine::~GameEngine()
@@ -397,12 +387,19 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
-  auto item = itemFactory_.createItem(itemId);
 
   // Check if the player can reach the fromPosition
   if (!world_->creatureCanReach(creatureId, fromPosition))
   {
-    playerCtrl.sendCancel("You cannot move that object.");
+    playerCtrl.sendCancel("You are too far away.");
+    return;
+  }
+
+  // Get the Item from the position
+  auto item = world_->getTile(fromPosition).getItem(fromStackPos);
+  if (!item.isValid() || item.getItemId() != itemId)
+  {
+    LOG_ERROR("%s: Could not find Item with given itemId at fromPosition", __func__);
     return;
   }
 
@@ -414,7 +411,7 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
     return;
   }
 
-  // Try to remove the Item from the fromTile
+  // Remove the Item from the fromTile
   World::ReturnCode rc = world_->removeItem(itemId, count, fromPosition, fromStackPos);
   if (rc != World::ReturnCode::OK)
   {
@@ -426,7 +423,6 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
 
   // Add the Item to the inventory
   equipment.addItem(item, toInventoryId);
-
   playerCtrl.onEquipmentUpdated(player, toInventoryId);
 }
 
@@ -437,17 +433,24 @@ void GameEngine::playerMoveItemFromInvToPosInternal(CreatureId creatureId, int f
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
-  auto item = itemFactory_.createItem(itemId);
+  auto& equipment = player.getEquipment();
 
-  // First check if the player can throw the Item to the toPosition
+  // Check if there is an Item with correct itemId at the fromInventoryId
+  auto item = equipment.getItem(fromInventoryId);
+  if (!item.isValid() || item.getItemId() != itemId)
+  {
+    LOG_ERROR("%s: Could not find Item with given itemId at fromInventoryId", __func__);
+    return;
+  }
+
+  // Check if the player can throw the Item to the toPosition
   if (!world_->creatureCanThrowTo(creatureId, toPosition))
   {
     playerCtrl.sendCancel("There is no room.");
     return;
   }
 
-  // Try to remove the Item from the inventory slot
-  auto& equipment = player.getEquipment();
+  // Remove the Item from the inventory slot
   if (!equipment.removeItem(item, fromInventoryId))
   {
     LOG_ERROR("playerMoveItem(): Could not remove item %d from inventory slot %d", itemId, fromInventoryId);
@@ -467,19 +470,26 @@ void GameEngine::playerMoveItemFromInvToInvInternal(CreatureId creatureId, int f
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
-  auto item = itemFactory_.createItem(itemId);
+  auto& equipment = player.getEquipment();
 
   // TODO(gurka): Count
 
-  // Check if we can add the Item to the to-inventory slot
-  auto& equipment = player.getEquipment();
+  // Check if there is an Item with correct itemId at the fromInventoryId
+  auto item = equipment.getItem(fromInventoryId);
+  if (!item.isValid() || item.getItemId() != itemId)
+  {
+    LOG_ERROR("%s: Could not find Item with given itemId at fromInventoryId", __func__);
+    return;
+  }
+
+  // Check if we can add the Item to the toInventoryId
   if (!equipment.canAddItem(item, toInventoryId))
   {
     playerCtrl.sendCancel("You cannot equip that object.");
     return;
   }
 
-  // Try to remove the Item from the from-inventory slot
+  // Remove the Item from the fromInventoryId
   if (!equipment.removeItem(item, fromInventoryId))
   {
     LOG_ERROR("playerMoveItem(): Could not remove item %d from inventory slot %d", itemId, fromInventoryId);

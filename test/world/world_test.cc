@@ -44,6 +44,7 @@ class WorldTest : public ::testing::Test
  protected:
   WorldTest()
   {
+
     // We need to build a small simple map, currently with invalid ground items
     // TODO(gurka): MockItem
     // Valid positions are (192, 192, 7) to (207, 207, 7)
@@ -58,11 +59,9 @@ class WorldTest : public ::testing::Test
       }
     }
 
-    // TODO(gurka): MockItemFactory
-    world.reset(new World(16, 16, tiles));
+    world.reset(new World(std::unique_ptr<ItemFactory>(new MockItemFactory()), 16, 16, tiles));
   }
 
-  MockItemFactory itemFactory;
   std::unique_ptr<World> world;
 };
 

@@ -442,8 +442,11 @@ int main(int argc, char* argv[])
     &onPacketReceived,
   };
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
-  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, dataFilename,
-                                                          worldFilename, itemsFilename));
+  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service,
+                                                          loginMessage,
+                                                          dataFilename,
+                                                          itemsFilename,
+                                                          worldFilename));
   if (!accountReader.loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());

@@ -27,17 +27,15 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 
-#include "world.h"
-#include "itemfactory.h"
-#include "position.h"
-#include "tile.h"
+class World;
 
 class WorldFactory
 {
  public:
-  static std::unique_ptr<World> createWorld(const ItemFactory& itemFactory, const std::string& worldFilename);
+  static std::unique_ptr<World> createWorld(const std::string& dataFilename,
+                                            const std::string& itemsFilename,
+                                            const std::string& worldFilename);
 
  private:
   // Offset for world size, since the client doesn't like too low positions

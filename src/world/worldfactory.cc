@@ -28,17 +28,31 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "position.h"
+#include "tile.h"
+#include "itemfactory.h"
+#include "world.h"
 #include "logger.h"
 #include "rapidxml.hpp"
 
-std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory, const std::string& worldFilename)
+std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename,
+                                                 const std::string& itemsFilename,
+                                                 const std::string& worldFilename)
 {
+  // Load ItemFactory
+  auto itemFactory = std::unique_ptr<ItemFactory>(new ItemFactory());
+  if (!itemFactory->initialize(dataFilename, itemsFilename))
+  {
+    LOG_ERROR("%s: Could not initialize ItemFactory", __func__);
+    return std::unique_ptr<World>();
+  }
+
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
   std::ifstream xmlFile(worldFilename);
   if (!xmlFile.is_open())
   {
-    LOG_ERROR("initialize(): Could not open file: \"%s\"", worldFilename.c_str());
+    LOG_ERROR("%s: Could not open file: \"%s\"", __func__, worldFilename.c_str());
     return std::unique_ptr<World>();
   }
 
@@ -64,7 +78,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
   auto* heightAttr = mapNode->first_attribute("height");
   if (widthAttr == nullptr || heightAttr == nullptr)
   {
-    LOG_ERROR("initialize(): Invalid file, missing attributes width or height in <map>-node");
+    LOG_ERROR("%s: Invalid file, missing attributes width or height in <map>-node", __func__);
     free(xmlString);
     return std::unique_ptr<World>();
   }
@@ -83,7 +97,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
 
       if (tileNode == nullptr)
       {
-        LOG_ERROR("initialize(): Invalid file, missing <tile>-node");
+        LOG_ERROR("%s: Invalid file, missing <tile>-node", __func__);
         free(xmlString);
         return std::unique_ptr<World>();
       }
@@ -93,20 +107,20 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
       auto* groundItemNode = tileNode->first_node();
       if (groundItemNode == nullptr)
       {
-        LOG_ERROR("initialize(): Invalid file, <tile>-node is missing <item>-node");
+        LOG_ERROR("%s: Invalid file, <tile>-node is missing <item>-node", __func__);
         free(xmlString);
         return std::unique_ptr<World>();
       }
       auto* groundItemAttr = groundItemNode->first_attribute("id");
       if (groundItemAttr == nullptr)
       {
-        LOG_ERROR("initialize(): Invalid file, missing attribute id in <item>-node");
+        LOG_ERROR("%s: Invalid file, missing attribute id in <item>-node", __func__);
         free(xmlString);
         return std::unique_ptr<World>();
       }
 
       auto groundItemId = std::stoi(groundItemAttr->value());
-      auto groundItem = itemFactory.createItem(groundItemId);
+      auto groundItem = itemFactory->createItem(groundItemId);
       tiles.insert(std::make_pair(position, Tile(groundItem)));
 
       // Read more items to put in this tile
@@ -116,12 +130,12 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
         auto* itemIdAttr = itemNode->first_attribute("id");
         if (itemIdAttr == nullptr)
         {
-          LOG_DEBUG("initialize(): Missing attribute id in <item>-node, skipping Item");
+          LOG_DEBUG("%s: Missing attribute id in <item>-node, skipping Item", __func__);
           continue;
         }
 
         auto itemId = std::stoi(itemIdAttr->value());
-        tiles.at(position).addItem(itemFactory.createItem(itemId));
+        tiles.at(position).addItem(itemFactory->createItem(itemId));
       }
 
       // Go to next <tile> in XML
@@ -132,5 +146,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const ItemFactory& itemFactory,
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::unique_ptr<World>(new World(worldSizeX, worldSizeY, tiles));
+  return std::unique_ptr<World>(new World(std::move(itemFactory), worldSizeX, worldSizeY, tiles));
 }
