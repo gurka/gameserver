@@ -299,6 +299,12 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
   }
 }
 
+World::ReturnCode World::addItem(ItemId itemId, const Position& position)
+{
+  auto item = itemFactory_->createItem(itemId);
+  return addItem(item, position);
+}
+
 World::ReturnCode World::addItem(const Item& item, const Position& position)
 {
   if (!positionIsValid(position))

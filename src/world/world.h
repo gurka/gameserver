@@ -67,6 +67,7 @@ class World : public WorldInterface
   void creatureSay(CreatureId creatureId, const std::string& message);
 
   // Item management
+  ReturnCode addItem(ItemId itemId, const Position& position);
   ReturnCode addItem(const Item& item, const Position& position);
   ReturnCode removeItem(int itemId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,

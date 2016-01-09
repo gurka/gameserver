@@ -289,7 +289,22 @@ void GameEngine::playerSayInternal(CreatureId creatureId, uint8_t type, const st
   if (message.size() > 0 && message[0] == '/')
   {
     // Extract everything after '/'
-    auto command = message.substr(1, std::string::npos);
+    auto fullCommand = message.substr(1, std::string::npos);
+
+    // Check if there is arguments
+    auto space = fullCommand.find_first_of(' ');
+    std::string command;
+    std::string option;
+    if (space == std::string::npos)
+    {
+      command = fullCommand;
+      option = "";
+    }
+    else
+    {
+      command = fullCommand.substr(0, space);
+      option = fullCommand.substr(space + 1);
+    }
 
     // Check commands
     if (command == "debug" || command == "debugf")
@@ -326,6 +341,23 @@ void GameEngine::playerSayInternal(CreatureId creatureId, uint8_t type, const st
       }
 
       getPlayerCtrl(creatureId).sendTextMessage(oss.str());
+    }
+    else if (command == "put")
+    {
+      std::istringstream iss(option);
+      int itemId = 0;
+      iss >> itemId;
+
+      if (itemId < 100 || itemId > 2381)
+      {
+        getPlayerCtrl(creatureId).sendTextMessage("Invalid itemId");
+      }
+      else
+      {
+        const auto& player = getPlayer(creatureId);
+        auto position = world_->getCreaturePosition(creatureId).addDirection(player.getDirection());
+        world_->addItem(itemId, position);
+      }
     }
     else
     {
