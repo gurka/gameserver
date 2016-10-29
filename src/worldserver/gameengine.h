@@ -105,8 +105,8 @@ class GameEngine
   void playerLookAtInternal(CreatureId creatureId, const Position& position, ItemId itemId);
 
   // Use these instead of the unordered_maps directly
-  Player& getPlayer(CreatureId creatureId) { return *(players_.at(creatureId).get()); }
-  PlayerCtrl& getPlayerCtrl(CreatureId creatureId) { return *(playerCtrls_.at(creatureId).get()); }
+  Player& getPlayer(CreatureId creatureId) { return players_.at(creatureId); }
+  PlayerCtrl& getPlayerCtrl(CreatureId creatureId) { return playerCtrls_.at(creatureId); }
 
   // Task stuff
   using TaskFunction = std::function<void(void)>;
@@ -129,8 +129,8 @@ class GameEngine
 
   TaskQueue<TaskFunction> taskQueue_;
 
-  std::unordered_map<CreatureId, std::unique_ptr<Player>> players_;
-  std::unordered_map<CreatureId, std::unique_ptr<PlayerCtrl>> playerCtrls_;
+  std::unordered_map<CreatureId, Player> players_;
+  std::unordered_map<CreatureId, PlayerCtrl> playerCtrls_;
 
   std::string loginMessage_;
 

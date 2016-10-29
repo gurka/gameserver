@@ -97,13 +97,13 @@ bool GameEngine::stop()
 CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<void(const OutgoingPacket&)>& sendPacket)
 {
   // Create Player and PlayerCtrl here
-  std::unique_ptr<Player> player(new Player(name));
-  std::unique_ptr<PlayerCtrl> playerCtrl(new PlayerCtrl(world_.get(), player->getCreatureId(), sendPacket));
+  Player player{name};
+  PlayerCtrl playerCtrl{world_.get(), player.getCreatureId(), sendPacket};
 
-  auto creatureId = player->getCreatureId();
+  auto creatureId = player.getCreatureId();
 
-  players_.insert(std::make_pair(creatureId, std::move(player)));
-  playerCtrls_.insert(std::make_pair(creatureId, std::move(playerCtrl)));
+  players_.insert({creatureId, std::move(player)});
+  playerCtrls_.insert({creatureId, std::move(playerCtrl)});
 
   addTask(&GameEngine::playerSpawnInternal, creatureId);
 
@@ -188,7 +188,7 @@ void GameEngine::playerSpawnInternal(CreatureId creatureId)
   // adjustedPosition is the position where the creature actually spawned
   // i.e., if there is a creature already at the given position
   Position position(222, 222, 7);
-  auto adjustedPosition = world_->addCreature(players_.at(creatureId).get(), playerCtrls_.at(creatureId).get(), position);
+  auto adjustedPosition = world_->addCreature(&player, &playerCtrl, position);
   if (adjustedPosition == Position::INVALID)
   {
     LOG_DEBUG("%s: Could not spawn player", __func__);
