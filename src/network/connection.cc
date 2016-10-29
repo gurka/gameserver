@@ -51,7 +51,7 @@ Connection::~Connection()
 
 void Connection::close(bool gracefully)
 {
-  if (gracefully && !outgoingPacketBuffers_.empty())
+  if (gracefully && !outgoingPackets_.empty())
   {
     // If we should close the connection gracefully and there are packets to send
     // just set the state and close the connection when all packets have been sent
@@ -81,12 +81,12 @@ void Connection::close(bool gracefully)
   }
 }
 
-void Connection::sendPacket(const OutgoingPacket& packet)
+void Connection::sendPacket(OutgoingPacket&& packet)
 {
-  outgoingPacketBuffers_.push_back(packet.getBuffer());
+  outgoingPackets_.push_back(std::move(packet));
 
   // Start to send packet if this is the only packet in the queue
-  if (outgoingPacketBuffers_.size() == 1)
+  if (outgoingPackets_.size() == 1)
   {
     sendPacketInternal();
   }
@@ -94,7 +94,7 @@ void Connection::sendPacket(const OutgoingPacket& packet)
 
 void Connection::sendPacketInternal()
 {
-  if (outgoingPacketBuffers_.empty())
+  if (outgoingPackets_.empty())
   {
     LOG_ERROR("There are no packets to send");
     return;
@@ -110,12 +110,12 @@ void Connection::sendPacketInternal()
       return;
     }
 
-    outgoingPacketBuffers_.pop_front();
-    if (!outgoingPacketBuffers_.empty())
+    outgoingPackets_.pop_front();
+    if (!outgoingPackets_.empty())
     {
       // More packet(s) to send
-      LOG_DEBUG("Sending next packet in queue, number of packets now in queue: %d",
-                  outgoingPacketBuffers_.size());
+      LOG_DEBUG("Sending next packet in queue, number of packets now in queue: %u",
+                outgoingPackets_.size());
       sendPacketInternal();
     }
     else if (state_ == CLOSING)
@@ -136,13 +136,15 @@ void Connection::sendPacketInternal()
     }
 
     LOG_DEBUG("Packet header sent, sending data");
+    const auto& packet = outgoingPackets_.front();
     boost::asio::async_write(socket_,
-                             boost::asio::buffer(outgoingPacketBuffers_.front(),
-                                                 outgoingPacketBuffers_.front().size()),
+                             boost::asio::buffer(packet.getBuffer(),
+                                                 packet.getLength()),
                              onPacketDataSent);
   };
 
-  int packet_length = outgoingPacketBuffers_.front().size();
+  const auto& packet = outgoingPackets_.front();
+  auto packet_length = packet.getLength();
   LOG_DEBUG("Sending packet header, data length: %d", packet_length);
   outgoingHeaderBuffer_[0] = packet_length & 0xFF;
   outgoingHeaderBuffer_[1] = (packet_length >> 8) & 0xFF;

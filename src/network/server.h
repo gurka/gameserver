@@ -25,7 +25,6 @@
 #ifndef NETWORK_SERVER_H_
 #define NETWORK_SERVER_H_
 
-#include <memory>
 #include <unordered_map>
 #include <boost/asio.hpp>  //NOLINT
 #include "acceptor.h"
@@ -59,7 +58,7 @@ class Server
   bool start();
   void stop();
 
-  void sendPacket(ConnectionId connectionId, const OutgoingPacket& packet);
+  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
   void closeConnection(ConnectionId connectionId);
 
   // Handler for Acceptor
@@ -74,7 +73,7 @@ class Server
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;
-  std::unordered_map<ConnectionId, std::unique_ptr<Connection>> connections_;
+  std::unordered_map<ConnectionId, Connection> connections_;
 };
 
 #endif  // NETWORK_SERVER_H_

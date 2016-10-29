@@ -67,20 +67,20 @@ void Server::stop()
   // Closing a Connection will erase it from connections_ due to the onConnectionClosed callback
   while (!connections_.empty())
   {
-    connections_.begin()->second->close(false);
+    connections_.begin()->second.close(false);
   }
 }
 
-void Server::sendPacket(ConnectionId connectionId, const OutgoingPacket& packet)
+void Server::sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
 {
   LOG_DEBUG("sendPacket() connectionId: %d", connectionId);
-  connections_.at(connectionId)->sendPacket(packet);
+  connections_.at(connectionId).sendPacket(std::move(packet));
 }
 
 void Server::closeConnection(ConnectionId connectionId)
 {
   LOG_DEBUG("closeConnection() connectionId: %d", connectionId);
-  connections_.at(connectionId)->close(true);
+  connections_.at(connectionId).close(true);
 }
 
 // Handler for Acceptor
@@ -94,11 +94,13 @@ void Server::onAccept(BIP::tcp::socket socket)
     std::bind(&Server::onConnectionClosed, this, connectionId),
     std::bind(&Server::onPacketReceived, this, connectionId, std::placeholders::_1)
   };
-  auto connection = std::unique_ptr<Connection>(new Connection(std::move(socket), callbacks));
-  connections_.insert(std::make_pair(connectionId, std::move(connection)));
+  connections_.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(connectionId),
+                       std::forward_as_tuple(std::move(socket), callbacks));
 
   LOG_DEBUG("onServerAccept() new connectionId: %d no connections: %lu",
-              connectionId, connections_.size());
+            connectionId,
+            connections_.size());
 
   callbacks_.onClientConnected(connectionId);
 }
@@ -108,7 +110,8 @@ void Server::onConnectionClosed(ConnectionId connectionId)
 {
   connections_.erase(connectionId);
   LOG_DEBUG("onConnectionClosed() connectionId: %d no connections: %lu",
-              connectionId, connections_.size());
+            connectionId,
+            connections_.size());
   callbacks_.onClientDisconnected(connectionId);
 }
 

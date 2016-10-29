@@ -37,11 +37,16 @@ class OutgoingPacket
   OutgoingPacket();
   virtual ~OutgoingPacket();
 
+  OutgoingPacket(OutgoingPacket&&) = default;
+  OutgoingPacket& operator=(OutgoingPacket&&) = default;
+
   // Delete copy constructors
   OutgoingPacket(const OutgoingPacket&) = delete;
   OutgoingPacket& operator=(const OutgoingPacket&) = delete;
 
-  std::vector<uint8_t> getBuffer() const;
+  const uint8_t* getBuffer() const { return buffer_->data(); }
+  std::size_t getLength() const { return position_; }
+
   void skipBytes(std::size_t num_bytes);
   void addU8(uint8_t val);
   void addU16(uint16_t val);
@@ -51,7 +56,6 @@ class OutgoingPacket
  private:
   std::unique_ptr<std::array<uint8_t, 8192>> buffer_;
   std::size_t position_;
-  std::size_t length_;
 
   static std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> buffer_pool_;
 };

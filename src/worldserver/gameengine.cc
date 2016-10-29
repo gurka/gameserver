@@ -94,7 +94,7 @@ bool GameEngine::stop()
   }
 }
 
-CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<void(const OutgoingPacket&)>& sendPacket)
+CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket)
 {
   // Create Player and PlayerCtrl here
   Player player{name};
@@ -217,7 +217,7 @@ void GameEngine::playerMoveInternal(CreatureId creatureId, Direction direction)
   if (nextWalkTime <= now)
   {
     LOG_DEBUG("%s: Player move now, creature id: %d", __func__, creatureId);
-    World::ReturnCode rc = world_->creatureMove(creatureId, direction);
+    auto rc = world_->creatureMove(creatureId, direction);
     if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
     {
       getPlayerCtrl(creatureId).sendCancel("There is no room.");
@@ -228,7 +228,7 @@ void GameEngine::playerMoveInternal(CreatureId creatureId, Direction direction)
     LOG_DEBUG("%s: Player move delayed, creature id: %d", __func__, creatureId);
     auto creatureMoveFunc = [this, creatureId, direction]
     {
-      World::ReturnCode rc = world_->creatureMove(creatureId, direction);
+      auto rc = world_->creatureMove(creatureId, direction);
       if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
       {
         getPlayerCtrl(creatureId).sendCancel("There is no room.");

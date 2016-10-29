@@ -57,7 +57,7 @@ void parseSay(CreatureId playerId, IncomingPacket* packet);
 void parseCancelMove(CreatureId playerId, IncomingPacket* packet);
 
 // Callback for GameEngine (PlayerCtrl)
-void sendPacket(ConnectionId connectionId, const OutgoingPacket& packet);
+void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
 
 // Helper functions
 Position getPosition(IncomingPacket* packet);
@@ -203,7 +203,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
     OutgoingPacket response;
     response.addU8(0x14);
     response.addString("Invalid character.");
-    server->sendPacket(connectionId, response);
+    server->sendPacket(connectionId, std::move(response));
     server->closeConnection(connectionId);
     return;
   }
@@ -213,7 +213,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
     OutgoingPacket response;
     response.addU8(0x14);
     response.addString("Invalid password.");
-    server->sendPacket(connectionId, response);
+    server->sendPacket(connectionId, std::move(response));
     server->closeConnection(connectionId);
     return;
   }
@@ -389,9 +389,9 @@ void parseCancelMove(CreatureId playerId, IncomingPacket* packet)
   gameEngine->playerCancelMove(playerId);
 }
 
-void sendPacket(int connectionId, const OutgoingPacket& packet)
+void sendPacket(int connectionId, OutgoingPacket&& packet)
 {
-  server->sendPacket(connectionId, packet);
+  server->sendPacket(connectionId, std::move(packet));
 }
 
 Position getPosition(IncomingPacket* packet)

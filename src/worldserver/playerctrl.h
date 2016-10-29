@@ -46,7 +46,7 @@ class PlayerCtrl : public CreatureCtrl
  public:
   PlayerCtrl(WorldInterface* worldInterface,
              CreatureId creatureId,
-             std::function<void(const OutgoingPacket&)> sendPacket)
+             std::function<void(OutgoingPacket&&)> sendPacket)
     : worldInterface_(worldInterface),
       creatureId_(creatureId),
       sendPacket_(sendPacket),
@@ -97,7 +97,7 @@ class PlayerCtrl : public CreatureCtrl
 
   WorldInterface* worldInterface_;
   CreatureId creatureId_;
-  std::function<void(const OutgoingPacket&)> sendPacket_;
+  std::function<void(OutgoingPacket&&)> sendPacket_;
 
   std::unordered_set<CreatureId> knownCreatures_;
 

@@ -57,7 +57,7 @@ class GameEngine
   bool start();
   bool stop();
 
-  CreatureId playerSpawn(const std::string& name, const std::function<void(const OutgoingPacket&)>& sendPacket);
+  CreatureId playerSpawn(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket);
   void playerDespawn(CreatureId creatureId);
 
   void playerMove(CreatureId creatureId, Direction direction);

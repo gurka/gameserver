@@ -51,7 +51,7 @@ class Connection
   Connection& operator=(const Connection&) = delete;
 
   void close(bool gracefully);
-  void sendPacket(const OutgoingPacket& packet);
+  void sendPacket(OutgoingPacket&& packet);
 
  private:
   void sendPacketInternal();
@@ -73,7 +73,7 @@ class Connection
   IncomingPacket incomingPacket_;
 
   std::array<uint8_t, 2> outgoingHeaderBuffer_;
-  std::deque<std::vector<uint8_t>> outgoingPacketBuffers_;
+  std::deque<OutgoingPacket> outgoingPackets_;
 };
 
 #endif  // NETWORK_CONNECTION_H_

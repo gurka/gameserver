@@ -131,7 +131,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
   }
 
   LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
-  server->sendPacket(connectionId, response);
+  server->sendPacket(connectionId, std::move(response));
 
   LOG_DEBUG("Closing connection id: %d", connectionId);
   server->closeConnection(connectionId);

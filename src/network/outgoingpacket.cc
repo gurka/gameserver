@@ -32,8 +32,7 @@
 std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> OutgoingPacket::buffer_pool_;
 
 OutgoingPacket::OutgoingPacket()
-  : position_(0),
-    length_(0)
+  : position_(0)
 {
   if (buffer_pool_.empty())
   {
@@ -51,15 +50,12 @@ OutgoingPacket::OutgoingPacket()
 
 OutgoingPacket::~OutgoingPacket()
 {
-  buffer_pool_.push(std::move(buffer_));
-  LOG_DEBUG("Returned buffer to pool, buffers now in pool: %lu",
+  if (buffer_)
+  {
+    buffer_pool_.push(std::move(buffer_));
+    LOG_DEBUG("Returned buffer to pool, buffers now in pool: %lu",
               buffer_pool_.size());
-}
-
-std::vector<uint8_t> OutgoingPacket::getBuffer() const
-{
-  return std::vector<uint8_t>(buffer_->cbegin(),
-                              buffer_->cbegin() + position_);
+  }
 }
 
 void OutgoingPacket::skipBytes(std::size_t num_bytes)

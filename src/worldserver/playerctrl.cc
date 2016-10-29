@@ -46,7 +46,7 @@ void PlayerCtrl::onCreatureSpawn(const Creature& creature, const Position& posit
   addPosition(position, &packet);
   packet.addU8(0x0A);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos)
@@ -62,7 +62,7 @@ void PlayerCtrl::onCreatureDespawn(const Creature& creature, const Position& pos
   addPosition(position, &packet);
   packet.addU8(stackPos);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onCreatureMove(const Creature& creature,
@@ -157,7 +157,7 @@ void PlayerCtrl::onCreatureMove(const Creature& creature,
     }
   }
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos)
@@ -173,7 +173,7 @@ void PlayerCtrl::onCreatureTurn(const Creature& creature, const Position& positi
   packet.addU32(creature.getCreatureId());
   packet.addU8(creature.getDirection());
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onCreatureSay(const Creature& creature, const Position& position, const std::string& message)
@@ -189,7 +189,7 @@ void PlayerCtrl::onCreatureSay(const Creature& creature, const Position& positio
 
   packet.addString(message);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onItemRemoved(const Position& position, uint8_t stackPos)
@@ -200,7 +200,7 @@ void PlayerCtrl::onItemRemoved(const Position& position, uint8_t stackPos)
   addPosition(position, &packet);
   packet.addU8(stackPos);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onItemAdded(const Item& item, const Position& position)
@@ -211,7 +211,7 @@ void PlayerCtrl::onItemAdded(const Item& item, const Position& position)
   addPosition(position, &packet);
   addItem(item, &packet);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onTileUpdate(const Position& position)
@@ -224,7 +224,7 @@ void PlayerCtrl::onTileUpdate(const Position& position)
   packet.addU8(0x00);
   packet.addU8(0xFF);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage)
@@ -289,7 +289,7 @@ void PlayerCtrl::onPlayerSpawn(const Player& player, const Position& position, c
   packet.addU8(0x11);  // Message type
   packet.addString(loginMessage);  // Message text
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onEquipmentUpdated(const Player& player, int inventoryIndex)
@@ -298,7 +298,7 @@ void PlayerCtrl::onEquipmentUpdated(const Player& player, int inventoryIndex)
 
   addEquipment(player, inventoryIndex, &packet);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::onUseItem(const Item& item)
@@ -320,7 +320,7 @@ void PlayerCtrl::onUseItem(const Item& item)
 
   packet.addU8(0x00);  // Number of items
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::sendTextMessage(const std::string& message)
@@ -331,7 +331,7 @@ void PlayerCtrl::sendTextMessage(const std::string& message)
   packet.addU8(0x13);
   packet.addString(message);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::sendCancel(const std::string& message)
@@ -342,7 +342,7 @@ void PlayerCtrl::sendCancel(const std::string& message)
   packet.addU8(0x14);
   packet.addString(message);
 
-  sendPacket_(packet);
+  sendPacket_(std::move(packet));
 }
 
 void PlayerCtrl::queueMoves(const std::deque<Direction>& moves)
@@ -381,8 +381,8 @@ void PlayerCtrl::addPosition(const Position& position, OutgoingPacket* packet) c
 
 void PlayerCtrl::addMapData(const Position& position, int width, int height, OutgoingPacket* packet)
 {
-  std::list<const Tile*> tiles = worldInterface_->getMapBlock(position, width, height);
-  std::list<const Tile*>::const_iterator it = tiles.begin();
+  auto tiles = worldInterface_->getMapBlock(position, width, height);
+  decltype(tiles)::const_iterator it = tiles.begin();
 
   for (auto x = 0; x < width; x++)
   {
