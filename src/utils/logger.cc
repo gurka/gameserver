@@ -63,7 +63,7 @@ std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::mo
   // Default settings
   { Module::ACCOUNT,     Level::ERROR },
   { Module::LOGINSERVER, Level::ERROR },
-  { Module::NETWORK,     Level::ERROR },
+  { Module::NETWORK,     Level::DEBUG },
   { Module::UTILS,       Level::ERROR },
   { Module::WORLD,       Level::DEBUG },
   { Module::WORLDSERVER, Level::DEBUG },

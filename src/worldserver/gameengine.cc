@@ -183,7 +183,7 @@ void GameEngine::playerSpawnInternal(CreatureId creatureId)
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
 
-  LOG_INFO("playerSpawn(): Spawn player: %s", player.getName().c_str());
+  LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
 
   // adjustedPosition is the position where the creature actually spawned
   // i.e., if there is a creature already at the given position
@@ -200,7 +200,7 @@ void GameEngine::playerSpawnInternal(CreatureId creatureId)
 
 void GameEngine::playerDespawnInternal(CreatureId creatureId)
 {
-  LOG_INFO("playerDespawn(): Despawn player, creature id: %d", creatureId);
+  LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
   world_->removeCreature(creatureId);
 
   // Remove Player and PlayerCtrl
@@ -253,7 +253,7 @@ void GameEngine::playerMovePathStepInternal(CreatureId creatureId)
   // Make sure that the queued moves hasn't been canceled
   if (playerCtrl.hasQueuedMove())
   {
-    LOG_INFO("%s: Player move, creature id: %d", __func__, creatureId);
+    LOG_DEBUG("%s: Player move, creature id: %d", __func__, creatureId);
     world_->creatureMove(creatureId, playerCtrl.getNextQueuedMove());
   }
 
@@ -266,19 +266,20 @@ void GameEngine::playerMovePathStepInternal(CreatureId creatureId)
 
 void GameEngine::playerCancelMoveInternal(CreatureId creatureId)
 {
+  LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
   getPlayerCtrl(creatureId).cancelMove();
 }
 
 void GameEngine::playerTurnInternal(CreatureId creatureId, Direction direction)
 {
-  LOG_INFO("playerTurn(): Player turn, creature id: %d", creatureId);
+  LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creatureId);
   world_->creatureTurn(creatureId, direction);
 }
 
 void GameEngine::playerSayInternal(CreatureId creatureId, uint8_t type, const std::string& message,
                                    const std::string& receiver, uint16_t channelId)
 {
-  LOG_INFO("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
+  LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
 
   // Check if message is a command
   if (message.size() > 0 && message[0] == '/')
@@ -368,8 +369,14 @@ void GameEngine::playerSayInternal(CreatureId creatureId, uint8_t type, const st
 void GameEngine::playerMoveItemFromPosToPosInternal(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
                                                     int itemId, int count, const Position& toPosition)
 {
-  LOG_INFO("playerMoveItem(): Move Item from Tile to Tile, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
-             creatureId, fromPosition.toString().c_str(), fromStackPos, itemId, count, toPosition.toString().c_str());
+  LOG_DEBUG("%s: Move Item from Tile to Tile, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
+            __func__,
+            creatureId,
+            fromPosition.toString().c_str(),
+            fromStackPos,
+            itemId,
+            count,
+            toPosition.toString().c_str());
 
   World::ReturnCode rc = world_->moveItem(creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
 
@@ -409,8 +416,14 @@ void GameEngine::playerMoveItemFromPosToPosInternal(CreatureId creatureId, const
 void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
                                                     int itemId, int count, int toInventoryId)
 {
-  LOG_INFO("playerMoveItem(): Move Item from Tile to Inventory, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, toInventoryId: %d",
-             creatureId, fromPosition.toString().c_str(), fromStackPos, itemId, count, toInventoryId);
+  LOG_DEBUG("%s: Move Item from Tile to Inventory, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, toInventoryId: %d",
+            __func__,
+            creatureId,
+            fromPosition.toString().c_str(),
+            fromStackPos,
+            itemId,
+            count,
+            toInventoryId);
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
@@ -442,8 +455,12 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
   World::ReturnCode rc = world_->removeItem(itemId, count, fromPosition, fromStackPos);
   if (rc != World::ReturnCode::OK)
   {
-    LOG_ERROR("playerMoveItem(): Could not remove item %d (count %d) from %s (stackpos: %d)",
-              itemId, count, fromPosition.toString().c_str(), fromStackPos);
+    LOG_ERROR("%s: Could not remove item %d (count %d) from %s (stackpos: %d)",
+              __func__,
+              itemId,
+              count,
+              fromPosition.toString().c_str(),
+              fromStackPos);
     // TODO(gurka): Disconnect player?
     return;
   }
@@ -455,8 +472,13 @@ void GameEngine::playerMoveItemFromPosToInvInternal(CreatureId creatureId, const
 
 void GameEngine::playerMoveItemFromInvToPosInternal(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition)
 {
-  LOG_INFO("playerMoveItem(): Move Item from Inventory to Tile, creature id: %d, from: %d, itemId: %d, count: %d, to: %s",
-             creatureId, fromInventoryId, itemId, count, toPosition.toString().c_str());
+  LOG_DEBUG("%s: Move Item from Inventory to Tile, creature id: %d, from: %d, itemId: %d, count: %d, to: %s",
+            __func__,
+            creatureId,
+            fromInventoryId,
+            itemId,
+            count,
+            toPosition.toString().c_str());
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
@@ -480,7 +502,7 @@ void GameEngine::playerMoveItemFromInvToPosInternal(CreatureId creatureId, int f
   // Remove the Item from the inventory slot
   if (!equipment.removeItem(item, fromInventoryId))
   {
-    LOG_ERROR("playerMoveItem(): Could not remove item %d from inventory slot %d", itemId, fromInventoryId);
+    LOG_ERROR("%s: Could not remove item %d from inventory slot %d", __func__, itemId, fromInventoryId);
     return;
   }
 
@@ -492,8 +514,13 @@ void GameEngine::playerMoveItemFromInvToPosInternal(CreatureId creatureId, int f
 
 void GameEngine::playerMoveItemFromInvToInvInternal(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)
 {
-  LOG_INFO("playerMoveItem(): Move Item from Inventory to Inventory, creature id: %d, from: %d, itemId: %d, count: %d, to: %d",
-             creatureId, fromInventoryId, itemId, count, toInventoryId);
+  LOG_DEBUG("%s: Move Item from Inventory to Inventory, creature id: %d, from: %d, itemId: %d, count: %d, to: %d",
+            __func__,
+            creatureId,
+            fromInventoryId,
+            itemId,
+            count,
+            toInventoryId);
 
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
@@ -519,7 +546,10 @@ void GameEngine::playerMoveItemFromInvToInvInternal(CreatureId creatureId, int f
   // Remove the Item from the fromInventoryId
   if (!equipment.removeItem(item, fromInventoryId))
   {
-    LOG_ERROR("playerMoveItem(): Could not remove item %d from inventory slot %d", itemId, fromInventoryId);
+    LOG_ERROR("%s: Could not remove item %d from inventory slot %d",
+              __func__,
+              itemId,
+              fromInventoryId);
     return;
   }
 
@@ -532,15 +562,24 @@ void GameEngine::playerMoveItemFromInvToInvInternal(CreatureId creatureId, int f
 
 void GameEngine::playerUseInvItemInternal(CreatureId creatureId, int itemId, int inventoryIndex)
 {
-  LOG_INFO("playerUseItem(): Use Item in inventory, creature id: %d, itemId: %d, inventoryIndex: %d",
-             creatureId, itemId, inventoryIndex);
+  LOG_DEBUG("%s: Use Item in inventory, creature id: %d, itemId: %d, inventoryIndex: %d",
+            __func__,
+            creatureId,
+            itemId,
+            inventoryIndex);
+
+  // TODO(gurka): Fix
   //  world_->useItem(creatureId, itemId, inventoryIndex);
 }
 
 void GameEngine::playerUsePosItemInternal(CreatureId creatureId, int itemId, const Position& position, int stackPos)
 {
-  LOG_INFO("playerUseItem(): Use Item at position, creature id: %d, itemId: %d, position: %s, stackPos: %d",
-             creatureId, itemId, position.toString().c_str(), stackPos);
+  LOG_DEBUG("%s: Use Item at position, creature id: %d, itemId: %d, position: %s, stackPos: %d",
+            __func__,
+            creatureId,
+            itemId,
+            position.toString().c_str(),
+            stackPos);
   //  world_->useItem(creatureId, itemId, position, stackPos);
 }
 
@@ -621,14 +660,13 @@ void GameEngine::onTask(const TaskFunction& task)
   {
     case RUNNING:
     {
-      LOG_INFO("onTask(): Calling TaskFunction!");
       task();
       break;
     }
 
     case CLOSING:
     {
-      LOG_INFO("onTask(): State is CLOSING, not executing task.");
+      LOG_DEBUG("%s: State is CLOSING, not executing task.", __func__);
       // TODO(gurka): taskQueue_.stop();
       state_ = CLOSED;
       break;
@@ -636,13 +674,13 @@ void GameEngine::onTask(const TaskFunction& task)
 
     case CLOSED:
     {
-      LOG_INFO("onTask(): State is CLOSED, not executing task.");
+      LOG_DEBUG("%s: State is CLOSED, not executing task.", __func__);
       break;
     }
 
     default:
     {
-      LOG_ERROR("onTask(): Unknown state: %d", state_);
+      LOG_ERROR("%s: Unknown state: %d", state_, __func__);
       break;
     }
   }

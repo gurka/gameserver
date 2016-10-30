@@ -132,6 +132,12 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
         break;
       }
 
+      case 0x69:
+      {
+        gameEngine->playerCancelMove(playerId);
+        break;
+      }
+
       case 0x6F:  // Player turn, North = 0
       case 0x70:  // East  = 1
       case 0x71:  // South = 2
@@ -167,6 +173,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 
       case 0xBE:
       {
+        // TODO(gurka): This packet more likely means "stop all actions", not only moving
         parseCancelMove(playerId, packet);
         break;
       }
