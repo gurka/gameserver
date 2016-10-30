@@ -42,6 +42,12 @@ class OutgoingPacket;
 class GameEngine
 {
  public:
+  class Token
+  {
+    Token() = default;
+    friend class GameEngine;
+  };
+
   GameEngine(boost::asio::io_service* io_service,
              const std::string& loginMessage,
              const std::string& dataFilename,
@@ -57,71 +63,74 @@ class GameEngine
   bool start();
   bool stop();
 
+  template<class F, class... Args>
+  void addTask(F&& f, Args&&... args)
+  {
+    taskQueue_.addTask(std::bind(f, this, token_, args...));
+  }
+
   CreatureId createPlayer(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket);
 
-  void playerSpawn(CreatureId creatureId);
-  void playerDespawn(CreatureId creatureId);
+  void playerSpawn(Token t, CreatureId creatureId);
+  void playerDespawn(Token t, CreatureId creatureId);
 
-  void playerMove(CreatureId creatureId, Direction direction);
-  void playerMovePath(CreatureId creatureId, const std::deque<Direction>& path);
-  void playerCancelMove(CreatureId creatureId);
-  void playerTurn(CreatureId creatureId, Direction direction);
+  void playerMove(Token t, CreatureId creatureId, Direction direction);
+  void playerMovePath(Token t, CreatureId creatureId, const std::deque<Direction>& path);
+  void playerMovePathStep(Token t, CreatureId creatureId);  // can be private
+  void playerCancelMove(Token t, CreatureId creatureId);
+  void playerTurn(Token t, CreatureId creatureId, Direction direction);
 
-  void playerSay(CreatureId creatureId, uint8_t type, const std::string& message,
-                 const std::string& receiver, uint16_t channelId);
+  void playerSay(Token t,
+                 CreatureId creatureId,
+                 uint8_t type,
+                 const std::string& message,
+                 const std::string& receiver,
+                 uint16_t channelId);
 
-  void playerMoveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                  int itemId, int count, const Position& toPosition);
-  void playerMoveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                  int itemId, int count, int inventoryId);
-  void playerMoveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition);
-  void playerMoveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId);
+  void playerMoveItemFromPosToPos(Token t,
+                                  CreatureId creatureId,
+                                  const Position& fromPosition,
+                                  int fromStackPos,
+                                  int itemId,
+                                  int count,
+                                  const Position& toPosition);
+  void playerMoveItemFromPosToInv(Token t,
+                                  CreatureId creatureId,
+                                  const Position& fromPosition,
+                                  int fromStackPos,
+                                  int itemId,
+                                  int count,
+                                  int inventoryId);
+  void playerMoveItemFromInvToPos(Token t,
+                                  CreatureId creatureId,
+                                  int fromInventoryId,
+                                  int itemId,
+                                  int count,
+                                  const Position& toPosition);
+  void playerMoveItemFromInvToInv(Token t,
+                                  CreatureId creatureId,
+                                  int fromInventoryId,
+                                  int itemId,
+                                  int count,
+                                  int toInventoryId);
 
-  void playerUseInvItem(CreatureId creatureId, int itemId, int inventoryIndex);
-  void playerUsePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos);
+  void playerUseInvItem(Token t, CreatureId creatureId, int itemId, int inventoryIndex);
+  void playerUsePosItem(Token t, CreatureId creatureId, int itemId, const Position& position, int stackPos);
 
-  void playerLookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId);
-  void playerLookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
+  void playerLookAtInvItem(Token t, CreatureId creatureId, int inventoryIndex, ItemId itemId);
+  void playerLookAtPosItem(Token t, CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
  private:
-  void playerSpawnInternal(CreatureId creatureId);
-  void playerDespawnInternal(CreatureId creatureId);
-
-  void playerMoveInternal(CreatureId creatureId, Direction direction);
-  void playerMovePathInternal(CreatureId creatureId, const std::deque<Direction>& path);
-  void playerMovePathStepInternal(CreatureId creatureId);
-  void playerCancelMoveInternal(CreatureId creatureId);
-  void playerTurnInternal(CreatureId creatureId, Direction direction);
-
-  void playerSayInternal(CreatureId creatureId, uint8_t type, const std::string& message,
-                         const std::string& receiver, uint16_t channelId);
-
-  void playerMoveItemFromPosToPosInternal(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                          int itemId, int count, const Position& toPosition);
-  void playerMoveItemFromPosToInvInternal(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                          int itemId, int count, int toInventoryId);
-  void playerMoveItemFromInvToPosInternal(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition);
-  void playerMoveItemFromInvToInvInternal(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId);
-
-  void playerUseInvItemInternal(CreatureId creatureId, int itemId, int inventoryIndex);
-  void playerUsePosItemInternal(CreatureId creatureId, int itemId, const Position& position, int stackPos);
-
-  void playerLookAtInvItemInternal(CreatureId creatureId, int inventoryIndex, ItemId itemId);
-  void playerLookAtPosItemInternal(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
-
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return players_.at(creatureId); }
   PlayerCtrl& getPlayerCtrl(CreatureId creatureId) { return playerCtrls_.at(creatureId); }
 
   // Task stuff
   using TaskFunction = std::function<void(void)>;
-
-  template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
-  {
-    taskQueue_.addTask(std::bind(f, this, args...));
-  }
   void onTask(const TaskFunction& task);
+
+  TaskQueue<TaskFunction> taskQueue_;
+  Token token_;
 
   enum State
   {
@@ -129,10 +138,7 @@ class GameEngine
     RUNNING,
     CLOSING,
     CLOSED,
-  };
-  State state_;
-
-  TaskQueue<TaskFunction> taskQueue_;
+  } state_;
 
   std::unordered_map<CreatureId, Player> players_;
   std::unordered_map<CreatureId, PlayerCtrl> playerCtrls_;

@@ -75,7 +75,7 @@ void onClientDisconnected(ConnectionId connectionId)
   auto playerIt = players.find(connectionId);
   if (playerIt != players.end())
   {
-    gameEngine->playerDespawn(playerIt->second);
+    gameEngine->addTask(&GameEngine::playerDespawn, playerIt->second);
     players.erase(connectionId);
   }
 }
@@ -111,7 +111,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
     {
       case 0x14:  // Logout
       {
-        gameEngine->playerDespawn(playerId);
+        gameEngine->addTask(&GameEngine::playerDespawn, playerId);
         players.erase(connectionId);
         server->closeConnection(connectionId);
         return;
@@ -128,13 +128,13 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        gameEngine->playerMove(playerId, static_cast<Direction>(packetId - 0x65));
+        gameEngine->addTask(&GameEngine::playerMove, playerId, static_cast<Direction>(packetId - 0x65));
         break;
       }
 
       case 0x69:
       {
-        gameEngine->playerCancelMove(playerId);
+        gameEngine->addTask(&GameEngine::playerCancelMove, playerId);
         break;
       }
 
@@ -143,7 +143,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        gameEngine->playerTurn(playerId, static_cast<Direction>(packetId - 0x6F));
+        gameEngine->addTask(&GameEngine::playerTurn, playerId, static_cast<Direction>(packetId - 0x6F));
         break;
       }
 
@@ -230,7 +230,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 
   // Create and spawn player
   CreatureId playerId = gameEngine->createPlayer(character_name, sendPacketFunc);
-  gameEngine->playerSpawn(playerId);
+  gameEngine->addTask(&GameEngine::playerSpawn, playerId);
 
   // Store the playerId
   players.insert(std::make_pair(connectionId, playerId));
@@ -252,7 +252,7 @@ void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine->playerMovePath(playerId, moves);
+  gameEngine->addTask(&GameEngine::playerMovePath, playerId, moves);
 }
 
 void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
@@ -290,7 +290,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 unknown2,
                 unknown3);
 
-      gameEngine->playerMoveItemFromInvToInv(playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
+      gameEngine->addTask(&GameEngine::playerMoveItemFromInvToInv, playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -307,7 +307,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 unknown,
                 unknown2);
 
-      gameEngine->playerMoveItemFromInvToPos(playerId, fromInventoryId, itemId, countOrSubType, toPosition);
+      gameEngine->addTask(&GameEngine::playerMoveItemFromInvToPos, playerId, fromInventoryId, itemId, countOrSubType, toPosition);
     }
   }
   else
@@ -335,7 +335,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 toInventoryId,
                 unknown);
 
-      gameEngine->playerMoveItemFromPosToInv(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
+      gameEngine->addTask(&GameEngine::playerMoveItemFromPosToInv, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -351,7 +351,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 fromStackPos,
                 toPosition.toString().c_str());
 
-      gameEngine->playerMoveItemFromPosToPos(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
+      gameEngine->addTask(&GameEngine::playerMoveItemFromPosToPos, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
   }
 }
@@ -375,7 +375,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine->playerUseInvItem(playerId, itemId, inventoryIndex);
+    gameEngine->addTask(&GameEngine::playerUseInvItem, playerId, itemId, inventoryIndex);
   }
   else
   {
@@ -392,7 +392,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
               stackPosition,
               unknown);
 
-    gameEngine->playerUsePosItem(playerId, itemId, position, stackPosition);
+    gameEngine->addTask(&GameEngine::playerUsePosItem, playerId, itemId, position, stackPosition);
   }
 }
 
@@ -415,7 +415,7 @@ void parseLookAt(CreatureId playerId, IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine->playerLookAtInvItem(playerId, inventoryIndex, itemId);
+    gameEngine->addTask(&GameEngine::playerLookAtInvItem, playerId, inventoryIndex, itemId);
   }
   else
   {
@@ -430,7 +430,7 @@ void parseLookAt(CreatureId playerId, IncomingPacket* packet)
               position.toString().c_str(),
               stackPos);
 
-    gameEngine->playerLookAtPosItem(playerId, position, itemId, stackPos);
+    gameEngine->addTask(&GameEngine::playerLookAtPosItem, playerId, position, itemId, stackPos);
   }
 }
 
@@ -457,12 +457,12 @@ void parseSay(CreatureId playerId, IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  gameEngine->playerSay(playerId, type, message, receiver, channelId);
+  gameEngine->addTask(&GameEngine::playerSay, playerId, type, message, receiver, channelId);
 }
 
 void parseCancelMove(CreatureId playerId, IncomingPacket* packet)
 {
-  gameEngine->playerCancelMove(playerId);
+  gameEngine->addTask(&GameEngine::playerCancelMove, playerId);
 }
 
 void sendPacket(int connectionId, OutgoingPacket&& packet)
