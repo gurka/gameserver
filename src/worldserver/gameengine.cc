@@ -580,6 +580,8 @@ void GameEngine::playerUsePosItemInternal(CreatureId creatureId, int itemId, con
             itemId,
             position.toString().c_str(),
             stackPos);
+
+  // TODO(gurka): Fix
   //  world_->useItem(creatureId, itemId, position, stackPos);
 }
 

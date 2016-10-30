@@ -147,19 +147,55 @@ int main(int argc, char* argv[])
     LOG_INFO("Will continue with default values");
   }
 
+  // Read [server] settings
   auto serverPort = config.getInteger("server", "port", 7171);
 
+  // Read [login] settings
   motd = config.getString("login", "motd", "Welcome to LoginServer!");
   auto accountsFilename = config.getString("login", "accounts_file", "data/accounts.xml");
 
+  // Read [logger] settings
+  auto logger_account     = config.getString("logger", "account", "ERROR");
+  auto logger_loginserver = config.getString("logger", "loginserver", "ERROR");
+  auto logger_network     = config.getString("logger", "network", "ERROR");
+  auto logger_utils       = config.getString("logger", "utils", "ERROR");
+
+  auto levelStringToEnum = [](const std::string& level)
+  {
+    if (level == "INFO")
+    {
+      return Logger::Level::INFO;
+    }
+    else if (level == "DEBUG")
+    {
+      return Logger::Level::DEBUG;
+    }
+    else  // "ERROR" or anything else
+    {
+      return Logger::Level::ERROR;
+    }
+  };
+
+  // Set logger settings
+  Logger::setLevel(Logger::Module::ACCOUNT,     levelStringToEnum(logger_account));
+  Logger::setLevel(Logger::Module::LOGINSERVER, levelStringToEnum(logger_loginserver));
+  Logger::setLevel(Logger::Module::NETWORK,     levelStringToEnum(logger_network));
+  Logger::setLevel(Logger::Module::UTILS,       levelStringToEnum(logger_utils));
+
   // Print configuration values
-  LOG_INFO("                            LoginServer configuration                           ");
-  LOG_INFO("================================================================================");
-  LOG_INFO("Server port:               %d", serverPort);
-  LOG_INFO("");
-  LOG_INFO("Message of the day:        %s", motd.c_str());
-  LOG_INFO("Accounts filename:         %s", accountsFilename.c_str());
-  LOG_INFO("================================================================================");
+  printf("--------------------------------------------------------------------------------\n");
+  printf("LoginServer configuration\n");
+  printf("--------------------------------------------------------------------------------\n");
+  printf("Server port:               %d\n", serverPort);
+  printf("\n");
+  printf("Accounts filename:         %s\n", accountsFilename.c_str());
+  printf("Message of the day:        %s\n", motd.c_str());
+  printf("\n");
+  printf("Account logging:           %s\n", logger_account.c_str());
+  printf("Loginserver logging:       %s\n", logger_loginserver.c_str());
+  printf("Network logging:           %s\n", logger_network.c_str());
+  printf("Utils logging:             %s\n", logger_utils.c_str());
+  printf("--------------------------------------------------------------------------------\n");
 
   // Setup io_service, AccountManager and Server
   boost::asio::io_service io_service;

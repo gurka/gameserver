@@ -422,29 +422,68 @@ int main(int argc, char* argv[])
   auto config = ConfigParser::parseFile("data/worldserver.cfg");
   if (!config.parsedOk())
   {
-    LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());
-    LOG_INFO("Will continue with default values");
+    printf("Could not parse config file: %s\n", config.getErrorMessage().c_str());
+    printf("Will continue with default values\n");
   }
 
+  // Read [server] settings
   auto serverPort = config.getInteger("server", "port", 7172);
 
-  auto loginMessage = config.getString("world", "login_message", "Welcome to LoginServer!");
+  // Read [world] settings
+  auto loginMessage     = config.getString("world", "login_message", "Welcome to LoginServer!");
   auto accountsFilename = config.getString("world", "accounts_file", "data/accounts.xml");
-  auto dataFilename = config.getString("world", "data_file", "data/data.dat");
-  auto itemsFilename = config.getString("world", "item_file", "data/items.xml");
-  auto worldFilename = config.getString("world", "world_file", "data/world.xml");
+  auto dataFilename     = config.getString("world", "data_file", "data/data.dat");
+  auto itemsFilename    = config.getString("world", "item_file", "data/items.xml");
+  auto worldFilename    = config.getString("world", "world_file", "data/world.xml");
+
+  // Read [logger] settings
+  auto logger_account     = config.getString("logger", "account", "ERROR");
+  auto logger_network     = config.getString("logger", "network", "ERROR");
+  auto logger_utils       = config.getString("logger", "utils", "ERROR");
+  auto logger_world       = config.getString("logger", "world", "ERROR");
+  auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
+
+  auto levelStringToEnum = [](const std::string& level)
+  {
+    if (level == "INFO")
+    {
+      return Logger::Level::INFO;
+    }
+    else if (level == "DEBUG")
+    {
+      return Logger::Level::DEBUG;
+    }
+    else  // "ERROR" or anything else
+    {
+      return Logger::Level::ERROR;
+    }
+  };
+
+  // Set logger settings
+  Logger::setLevel(Logger::Module::ACCOUNT,     levelStringToEnum(logger_account));
+  Logger::setLevel(Logger::Module::NETWORK,     levelStringToEnum(logger_network));
+  Logger::setLevel(Logger::Module::UTILS,       levelStringToEnum(logger_utils));
+  Logger::setLevel(Logger::Module::WORLD,       levelStringToEnum(logger_world));
+  Logger::setLevel(Logger::Module::WORLDSERVER, levelStringToEnum(logger_worldserver));
 
   // Print configuration values
-  LOG_INFO("                            WorldServer configuration                           ");
-  LOG_INFO("================================================================================");
-  LOG_INFO("Server port:               %d", serverPort);
-  LOG_INFO("");
-  LOG_INFO("Login message:             %s", loginMessage.c_str());
-  LOG_INFO("Accounts filename:         %s", accountsFilename.c_str());
-  LOG_INFO("Data filename:             %s", dataFilename.c_str());
-  LOG_INFO("Items filename:            %s", itemsFilename.c_str());
-  LOG_INFO("World filename:            %s", worldFilename.c_str());
-  LOG_INFO("================================================================================");
+  printf("--------------------------------------------------------------------------------\n");
+  printf("WorldServer configuration\n");
+  printf("--------------------------------------------------------------------------------\n");
+  printf("Server port:               %d\n", serverPort);
+  printf("\n");
+  printf("Login message:             %s\n", loginMessage.c_str());
+  printf("Accounts filename:         %s\n", accountsFilename.c_str());
+  printf("Data filename:             %s\n", dataFilename.c_str());
+  printf("Items filename:            %s\n", itemsFilename.c_str());
+  printf("World filename:            %s\n", worldFilename.c_str());
+  printf("\n");
+  printf("Account logging:           %s\n", logger_account.c_str());
+  printf("Network logging:           %s\n", logger_network.c_str());
+  printf("Utils logging:             %s\n", logger_utils.c_str());
+  printf("World logging:             %s\n", logger_world.c_str());
+  printf("Worldserver logging:       %s\n", logger_worldserver.c_str());
+  printf("--------------------------------------------------------------------------------\n");
 
   // Setup io_service, AccountManager, GameEngine and Server
   boost::asio::io_service io_service;
