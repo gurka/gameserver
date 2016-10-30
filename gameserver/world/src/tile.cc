@@ -51,8 +51,8 @@ bool Tile::removeCreature(CreatureId creatureId)
 CreatureId Tile::getCreatureId(int stackPosition) const
 {
   // Calculate position in creatureIds_
-  std::size_t index = stackPosition - 1 - numberOfTopItems;
-  if (index < 0 || index >= creatureIds_.size())
+  int index = stackPosition - 1 - numberOfTopItems;
+  if (index < 0 || index >= static_cast<int>(creatureIds_.size()))
   {
     LOG_ERROR("%s: No Creature found at stackPosition: %d", __func__, stackPosition);
     return Creature::INVALID_ID;
