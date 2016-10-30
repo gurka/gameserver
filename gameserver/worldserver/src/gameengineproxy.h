@@ -26,13 +26,13 @@
 #define WORLDSERVER_GAMEENGINEPROXY_H_
 
 #include <memory>
+#include <string>
 
 #include "gameengine.h"
 
 class GameEngineProxy
 {
  public:
-
   bool start() { return gameEngine_->start(); }
   bool stop() { return gameEngine_->stop(); }
   CreatureId createPlayer(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket)

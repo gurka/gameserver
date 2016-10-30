@@ -363,10 +363,7 @@ void PlayerCtrl::cancelMove()
   queuedMoves_.clear();
 
   OutgoingPacket packet;
-
   packet.addU8(0xB5);
-  //packet.addU8(static_cast<uint8_t>(worldInterface_->getCreature(creatureId_).getDirection()));
-
   sendPacket_(std::move(packet));
 }
 
