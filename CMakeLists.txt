@@ -3,25 +3,23 @@ cmake_minimum_required(VERSION 3.0)
 option(gameserver_test "Unit tests" OFF)
 project(gameserver)
 
-
-## Settings
-# modules compiler flags
+# Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11 -pedantic -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+
 
 # Required libraries (Boost)
 set(LIBRARIES boost_system pthread)
 
 
-## Executables
 # Loginserver
 set(loginserver_src
-  "src/loginserver/loginserver.cc"
+  "gameserver/loginserver/src/loginserver.cc"
 )
 set(loginserver_inc
-  "src/account"
-  "src/network"
-  "src/utils"
+  "gameserver/account/export"
+  "gameserver/network/export"
+  "gameserver/utils/export"
 )
 set(loginserver_lib
   "account"
@@ -32,22 +30,23 @@ add_executable(loginserver ${loginserver_src})
 target_include_directories(loginserver PUBLIC ${loginserver_inc})
 target_link_libraries(loginserver ${loginserver_lib} ${LIBRARIES})
 
+
 # Worldserver
 set(worldserver_src
-  "src/worldserver/gameengine.cc"
-  "src/worldserver/gameengine.h"
-  "src/worldserver/player.cc"
-  "src/worldserver/playerctrl.cc"
-  "src/worldserver/playerctrl.h"
-  "src/worldserver/player.h"
-  "src/worldserver/taskqueue.h"
-  "src/worldserver/worldserver.cc"
+  "gameserver/worldserver/src/gameengine.cc"
+  "gameserver/worldserver/src/gameengine.h"
+  "gameserver/worldserver/src/player.cc"
+  "gameserver/worldserver/src/playerctrl.cc"
+  "gameserver/worldserver/src/playerctrl.h"
+  "gameserver/worldserver/src/player.h"
+  "gameserver/worldserver/src/taskqueue.h"
+  "gameserver/worldserver/src/worldserver.cc"
 )
 set(worldserver_inc
-  "src/account"
-  "src/network"
-  "src/utils"
-  "src/world"
+  "gameserver/account/export"
+  "gameserver/network/export"
+  "gameserver/utils/export"
+  "gameserver/world/export"
 )
 set(worldserver_lib
   "account"
@@ -60,75 +59,87 @@ target_include_directories(worldserver PUBLIC ${worldserver_inc})
 target_link_libraries(worldserver ${worldserver_lib} ${LIBRARIES})
 
 
-## Libraries
 # Utils
 set(utils_src
-  "src/utils/configparser.h"
-  "src/utils/logger.cc"
-  "src/utils/logger.h"
+  "gameserver/utils/src/logger.cc"
+  "gameserver/utils/export/configparser.h"
+  "gameserver/utils/export/logger.h"
+)
+set(utils_inc
+  "gameserver/utils/export"
 )
 add_library(utils ${utils_src})
+target_include_directories(utils PUBLIC ${utils_inc})
+
 
 # Account
 set(account_src
-  "src/account/account.cc"
-  "src/account/account.h"
+  "gameserver/account/src/account.cc"
+  "gameserver/account/export/account.h"
 )
 set(account_inc
-  "src/utils"
+  "gameserver/account/export"
+  "gameserver/utils/export"
   "lib/rapidxml"
 )
 add_library(account ${account_src})
 target_include_directories(account PUBLIC ${account_inc})
 
+
 # Network
 set(network_src
-  "src/network/acceptor.cc"
-  "src/network/acceptor.h"
-  "src/network/connection.cc"
-  "src/network/connection.h"
-  "src/network/incomingpacket.cc"
-  "src/network/incomingpacket.h"
-  "src/network/outgoingpacket.cc"
-  "src/network/outgoingpacket.h"
-  "src/network/server.cc"
-  "src/network/server.h"
+  "gameserver/network/src/acceptor.cc"
+  "gameserver/network/src/acceptor.h"
+  "gameserver/network/src/connection.cc"
+  "gameserver/network/src/connection.h"
+  "gameserver/network/src/incomingpacket.cc"
+  "gameserver/network/src/outgoingpacket.cc"
+  "gameserver/network/src/server.cc"
+  "gameserver/network/export/incomingpacket.h"
+  "gameserver/network/export/outgoingpacket.h"
+  "gameserver/network/export/server.h"
 )
 set(network_inc
-  "src/utils"
+  "gameserver/network/src"
+  "gameserver/network/export"
+  "gameserver/utils/export"
 )
 add_library(network ${network_src})
 target_include_directories(network PUBLIC ${network_inc})
 
+
 # World
 set(world_src
-  "src/world/creature.cc"
-  "src/world/creaturectrl.h"
-  "src/world/creature.h"
-  "src/world/direction.h"
-  "src/world/item.cc"
-  "src/world/item.h"
-  "src/world/itemfactory.cc"
-  "src/world/itemfactory.h"
-  "src/world/npcctrl.h"
-  "src/world/position.cc"
-  "src/world/position.h"
-  "src/world/tile.cc"
-  "src/world/tile.h"
-  "src/world/world.cc"
-  "src/world/world.h"
-  "src/world/worldfactory.cc"
-  "src/world/worldfactory.h"
-  "src/world/worldinterface.h"
+  "gameserver/world/src/creature.cc"
+  "gameserver/world/src/item.cc"
+  "gameserver/world/src/itemfactory.cc"
+  "gameserver/world/src/position.cc"
+  "gameserver/world/src/tile.cc"
+  "gameserver/world/src/world.cc"
+  "gameserver/world/src/worldfactory.cc"
+  "gameserver/world/export/creaturectrl.h"
+  "gameserver/world/export/creature.h"
+  "gameserver/world/export/direction.h"
+  "gameserver/world/export/item.h"
+  "gameserver/world/export/itemfactory.h"
+  "gameserver/world/export/npcctrl.h"
+  "gameserver/world/export/position.h"
+  "gameserver/world/export/tile.h"
+  "gameserver/world/export/world.h"
+  "gameserver/world/export/worldfactory.h"
+  "gameserver/world/export/worldinterface.h"
 )
 set(world_inc
-  "src/utils"
+  "gameserver/world/src"
+  "gameserver/world/export"
+  "gameserver/utils/export"
   "lib/rapidxml"
 )
 add_library(world ${world_src})
 target_include_directories(world PUBLIC ${world_inc})
 
-## Unit tests
+
+# Unit tests
 if (gameserver_test)
   set(unittest_src
     "test/utils/configparser_test.cc"
@@ -141,10 +152,10 @@ if (gameserver_test)
   )
 
   set(unittest_inc
-    "src/account"
-    "src/network"
-    "src/utils"
-    "src/world"
+    "gameserver/account/export"
+    "gameserver/network/export"
+    "gameserver/utils/export"
+    "gameserver/world/export"
     "lib/rapidxml"
   )
 
