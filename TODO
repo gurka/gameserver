@@ -1,0 +1,4 @@
+* Rename GameEngine to PlayerManager (it manages player <-> world interaction)
+* Add NPCManager (it manages npc <-> world interaction, spawns NPCs, adds OnThink tasks periodically?)
+* Add simple NPC that responds on talk, walk around spawn point with max radius
+* Implement combat
