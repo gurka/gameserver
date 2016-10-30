@@ -230,6 +230,13 @@ void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
 {
   std::deque<Direction> moves;
   uint8_t pathLength = packet->getU8();
+
+  if (pathLength == 0)
+  {
+    LOG_ERROR("%s: Path length is zero!", __func__);
+    return;
+  }
+
   for (auto i = 0; i < pathLength; i++)
   {
     moves.push_back(static_cast<Direction>(packet->getU8()));

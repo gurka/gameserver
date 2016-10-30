@@ -240,33 +240,28 @@ void GameEngine::playerMoveInternal(CreatureId creatureId, Direction direction)
 
 void GameEngine::playerMovePathInternal(CreatureId creatureId, const std::deque<Direction>& path)
 {
-  // TODO(gurka): This is garbage. We need to be able to cancel tasks, in case this function is called twice
-  // This probably true for many more functions that isn't implemented yet
+  auto& playerCtrl = getPlayerCtrl(creatureId);
+  playerCtrl.queueMoves(path);
 
-  /*
-  if (!path.empty())
-  {
-    getPlayerCtrl(creatureId).queueMoves(path);
-  }
+  taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStepInternal, this, creatureId), playerCtrl.getNextWalkTime());
+}
 
+void GameEngine::playerMovePathStepInternal(CreatureId creatureId)
+{
   auto& playerCtrl = getPlayerCtrl(creatureId);
 
-  if (!playerCtrl.hasQueuedMove())
-  {
-    return;
-  }
-
-  auto nextWalkTime = playerCtrl.getNextWalkTime();
-  auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
-
-  if (nextWalkTime <= now)
+  // Make sure that the queued moves hasn't been canceled
+  if (playerCtrl.hasQueuedMove())
   {
     LOG_INFO("%s: Player move, creature id: %d", __func__, creatureId);
     world_->creatureMove(creatureId, playerCtrl.getNextQueuedMove());
   }
 
-  taskQueue_.addTask(std::bind(&GameEngine::playerMovePathInternal, this, creatureId, std::deque<Direction>{}), playerCtrl.getNextWalkTime());
-  */
+  // Add a new task if there are more queued moves
+  if (playerCtrl.hasQueuedMove())
+  {
+    taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStepInternal, this, creatureId), playerCtrl.getNextWalkTime());
+  }
 }
 
 void GameEngine::playerCancelMoveInternal(CreatureId creatureId)

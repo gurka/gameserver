@@ -86,6 +86,7 @@ class GameEngine
 
   void playerMoveInternal(CreatureId creatureId, Direction direction);
   void playerMovePathInternal(CreatureId creatureId, const std::deque<Direction>& path);
+  void playerMovePathStepInternal(CreatureId creatureId);
   void playerCancelMoveInternal(CreatureId creatureId);
   void playerTurnInternal(CreatureId creatureId, Direction direction);
 
