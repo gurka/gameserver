@@ -24,6 +24,8 @@
 
 #include "player.h"
 
+#include <utility>
+
 #include "logger.h"
 
 Equipment::Equipment()

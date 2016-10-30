@@ -24,7 +24,9 @@
 
 #include "connection.h"
 
-#include <boost/bind.hpp>
+#include <utility>
+
+#include <boost/bind.hpp>  //NOLINT
 
 #include "incomingpacket.h"
 #include "outgoingpacket.h"

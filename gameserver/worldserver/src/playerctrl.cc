@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <deque>
 #include <list>
+#include <utility>
 
 #include "logger.h"
 #include "position.h"

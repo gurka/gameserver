@@ -40,7 +40,12 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet);
 
 AccountReader accountReader;
 std::unique_ptr<Server> server;
-std::string motd;
+
+// Due to "Static/global string variables are not permitted."
+struct
+{
+  std::string motd;
+} motd;
 
 void onClientConnected(ConnectionId connectionId)
 {
@@ -98,7 +103,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 
     // Add MOTD
   response.addU8(0x14);  // MOTD
-  response.addString("0\n" + motd);
+  response.addString("0\n" + motd.motd);
 
   // Check if account exists
   if (!accountReader.accountExists(accountNumber))
@@ -151,7 +156,7 @@ int main(int argc, char* argv[])
   auto serverPort = config.getInteger("server", "port", 7171);
 
   // Read [login] settings
-  motd = config.getString("login", "motd", "Welcome to LoginServer!");
+  motd.motd = config.getString("login", "motd", "Welcome to LoginServer!");
   auto accountsFilename = config.getString("login", "accounts_file", "data/accounts.xml");
 
   // Read [logger] settings
@@ -189,7 +194,7 @@ int main(int argc, char* argv[])
   printf("Server port:               %d\n", serverPort);
   printf("\n");
   printf("Accounts filename:         %s\n", accountsFilename.c_str());
-  printf("Message of the day:        %s\n", motd.c_str());
+  printf("Message of the day:        %s\n", motd.motd.c_str());
   printf("\n");
   printf("Account logging:           %s\n", logger_account.c_str());
   printf("Loginserver logging:       %s\n", logger_loginserver.c_str());
