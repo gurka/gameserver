@@ -25,10 +25,10 @@
 #ifndef WORLD_WORLD_H_
 #define WORLD_WORLD_H_
 
-#include <list>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "worldinterface.h"
 #include "creature.h"
@@ -78,7 +78,7 @@ class World : public WorldInterface
   bool creatureCanReach(CreatureId creatureId, const Position& position) const;
 
   // WorldInterface
-  const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const;
+  const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const;
   const Tile& getTile(const Position& position) const;
   const Creature& getCreature(CreatureId creatureId) const;
   const Position& getCreaturePosition(CreatureId creatureId) const;
@@ -88,8 +88,7 @@ class World : public WorldInterface
   bool positionIsValid(const Position& position) const;
 
   // Helper functions
-  // TODO(gurka): Rename to getVisibleCreatureIds and return std::vector<CreatureId>
-  std::list<CreatureId> getNearCreatureIds(const Position& position) const;
+  std::vector<CreatureId> getVisibleCreatureIds(const Position& position) const;
 
   // Functions to use instead of accessing the unordered_maps directly
   Tile& internalGetTile(const Position& position);

@@ -25,7 +25,8 @@
 #ifndef WORLD_TILE_H_
 #define WORLD_TILE_H_
 
-#include <list>
+#include <vector>
+
 #include "item.h"
 #include "creature.h"
 
@@ -33,23 +34,23 @@ class Tile
 {
  public:
   explicit Tile(const Item& groundItem)
-    : numberOfTopItems(0)
+    : numberOfTopItems(0),
+      items_({groundItem})
   {
-    items_.push_front(groundItem);
   }
 
   // Creatures
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);
   CreatureId getCreatureId(int stackPosition) const;
-  const std::list<CreatureId>& getCreatureIds() const { return creatureIds_; }
+  const std::vector<CreatureId>& getCreatureIds() const { return creatureIds_; }
   uint8_t getCreatureStackPos(CreatureId creatureId) const;
 
   // Items
   void addItem(const Item& item);
   bool removeItem(ItemId itemId, uint8_t stackPosition);
   Item getItem(uint8_t stackPosition) const;
-  const std::list<Item>& getItems() const { return items_; }
+  const std::vector<Item>& getItems() const { return items_; }
 
   // Other
   std::size_t getNumberOfThings() const;
@@ -57,8 +58,8 @@ class Tile
 
  private:
   int numberOfTopItems;
-  std::list<Item> items_;
-  std::list<CreatureId> creatureIds_;
+  std::vector<Item> items_;
+  std::vector<CreatureId> creatureIds_;
 };
 
 #endif  // WORLD_TILE_H_

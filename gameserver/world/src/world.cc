@@ -110,7 +110,7 @@ Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, cons
 
     // Tell near creatures that a creature has spawned
     // Except the spawned creature itself
-    std::list<CreatureId> nearCreatureIds = getNearCreatureIds(adjustedPosition);
+    auto nearCreatureIds = getVisibleCreatureIds(adjustedPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       if (nearCreatureId != creatureId)
@@ -143,7 +143,7 @@ void World::removeCreature(CreatureId creatureId)
 
   // Tell near creatures that a creature has despawned
   // Except the despawning creature
-  std::list<CreatureId> nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     if (nearCreatureId != creatureId)
@@ -162,7 +162,6 @@ bool World::creatureExists(CreatureId creatureId) const
 {
   return creatureId != Creature::INVALID_ID && creatures_.count(creatureId) == 1;
 }
-
 
 World::ReturnCode World::creatureMove(CreatureId creatureId, Direction direction)
 {
@@ -250,7 +249,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (fromTile.getNumberOfThings() >= 10)
   {
-    auto nearCreatureIds = getNearCreatureIds(fromPosition);
+    auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
@@ -275,7 +274,7 @@ void World::creatureTurn(CreatureId creatureId, Direction direction)
   // including the turning creature itself
   const auto& position = getCreaturePosition(creatureId);
   auto stackPos = getTile(position).getCreatureStackPos(creatureId);
-  auto nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onCreatureTurn(creature, position, stackPos);
@@ -292,7 +291,7 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
 
   const auto& creature = getCreature(creatureId);
   const auto& position = getCreaturePosition(creatureId);
-  auto nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onCreatureSay(creature, position, message);
@@ -318,7 +317,7 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
   toTile.addItem(item);
 
   // Call onItemAdded on all creatures that can see position
-  auto nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onItemAdded(item, position);
@@ -344,7 +343,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
   }
 
   // Call onItemRemoved on all creatures that can see fromPosition
-  auto nearCreatureIds = getNearCreatureIds(position);
+  auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
     getCreatureCtrl(nearCreatureId).onItemRemoved(position, stackPos);
@@ -354,7 +353,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (fromTile.getNumberOfThings() >= 10)
   {
-    auto nearCreatureIds = getNearCreatureIds(position);
+    auto nearCreatureIds = getVisibleCreatureIds(position);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onTileUpdate(position);
@@ -463,14 +462,14 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     toTile.addItem(item);
 
     // Call onItemRemoved on all creatures that can see fromPosition
-    auto nearCreatureIds = getNearCreatureIds(fromPosition);
+    auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
     }
 
     // Call onItemAdded on all creatures that can see toPosition
-    nearCreatureIds = getNearCreatureIds(toPosition);
+    nearCreatureIds = getVisibleCreatureIds(toPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
@@ -480,7 +479,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
     if (fromTile.getNumberOfThings() >= 10)
     {
-      auto nearCreatureIds = getNearCreatureIds(fromPosition);
+      auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
       for (const auto& nearCreatureId : nearCreatureIds)
       {
         getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
@@ -504,9 +503,9 @@ bool World::creatureCanReach(CreatureId creatureId, const Position& position) co
            creaturePosition.getZ() != position.getZ());
 }
 
-const std::list<const Tile*> World::getMapBlock(const Position& position, int width, int height) const
+const std::vector<const Tile*> World::getMapBlock(const Position& position, int width, int height) const
 {
-  std::list<const Tile*> tiles;
+  std::vector<const Tile*> tiles;
   for (auto x = 0; x < width; x++)
   {
     for (auto y = 0; y < height; y++)
@@ -527,9 +526,9 @@ bool World::positionIsValid(const Position& position) const
          position.getZ() == 7;
 }
 
-std::list<CreatureId> World::getNearCreatureIds(const Position& position) const
+std::vector<CreatureId> World::getVisibleCreatureIds(const Position& position) const
 {
-  std::list<CreatureId> creatureIds;
+  std::vector<CreatureId> creatureIds;
 
   for (int x = position.getX() - 9; x <= position.getX() + 9; ++x)
   {

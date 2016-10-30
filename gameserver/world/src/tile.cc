@@ -31,7 +31,7 @@
 
 void Tile::addCreature(CreatureId creatureId)
 {
-  creatureIds_.push_front(creatureId);
+  creatureIds_.insert(creatureIds_.begin(), creatureId);
 }
 
 bool Tile::removeCreature(CreatureId creatureId)

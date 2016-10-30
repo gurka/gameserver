@@ -25,8 +25,9 @@
 #ifndef WORLD_WORLDINTERFACE_H_
 #define WORLD_WORLDINTERFACE_H_
 
-#include <list>
 #include <string>
+#include <vector>
+
 #include "creature.h"
 
 class Tile;
@@ -37,7 +38,7 @@ class WorldInterface
  public:
   virtual ~WorldInterface() = default;
 
-  virtual const std::list<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
+  virtual const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
   virtual const Tile& getTile(const Position& position) const = 0;
   virtual const Creature& getCreature(CreatureId creatureId) const = 0;
   virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
