@@ -24,34 +24,47 @@
 
 #include "logger.h"
 
-const std::unordered_map<std::string, Logger::Level> Logger::levels_ =
+const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
 {
-  // src/utils/
-  { "configparser.h",     Level::LEVEL_INFO  },
+  // src/utils
+  { "configparser.h",     Module::UTILS       },
 
-  // src/common/accountmanager
-  { "accountmgr.cc",      Level::LEVEL_DEBUG },
+  // src/account
+  { "account.cc",         Module::ACCOUNT     },
 
-  // src/common/network
-  { "connection.cc",      Level::LEVEL_DEBUG },
-  { "server.cc",          Level::LEVEL_DEBUG },
-  { "incomingpacket.cc",  Level::LEVEL_DEBUG },
-  { "outgoingpacket.cc",  Level::LEVEL_DEBUG },
-  { "acceptor.cc",        Level::LEVEL_DEBUG },
+  // src/network
+  { "connection.cc",      Module::NETWORK     },
+  { "server.cc",          Module::NETWORK     },
+  { "incomingpacket.cc",  Module::NETWORK     },
+  { "outgoingpacket.cc",  Module::NETWORK     },
+  { "acceptor.cc",        Module::NETWORK     },
 
-  // src/common/world
-  { "item.cc",            Level::LEVEL_DEBUG },
-  { "tile.cc",            Level::LEVEL_DEBUG },
-  { "world.cc",           Level::LEVEL_DEBUG },
-  { "creature.cc",        Level::LEVEL_DEBUG },
-  { "position.cc",        Level::LEVEL_DEBUG },
+  // src/world
+  { "item.cc",            Module::WORLD       },
+  { "tile.cc",            Module::WORLD       },
+  { "world.cc",           Module::WORLD       },
+  { "creature.cc",        Module::WORLD       },
+  { "position.cc",        Module::WORLD       },
+  { "itemfactory.cc",     Module::WORLD       },
+  { "worldfactory.cc",    Module::WORLD       },
 
   // src/loginserver
-  { "loginserver.cc",     Level::LEVEL_DEBUG },
+  { "loginserver.cc",     Module::LOGINSERVER },
 
   // src/worldserver
-  { "playerctrl.cc",      Level::LEVEL_DEBUG },
-  { "gameengine.cc",      Level::LEVEL_DEBUG },
-  { "worldserver.cc",     Level::LEVEL_DEBUG },
-  { "player.cc",          Level::LEVEL_DEBUG },
+  { "playerctrl.cc",      Module::WORLDSERVER },
+  { "gameengine.cc",      Module::WORLDSERVER },
+  { "worldserver.cc",     Module::WORLDSERVER },
+  { "player.cc",          Module::WORLDSERVER },
+};
+
+std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_ =
+{
+  // Default settings
+  { Module::ACCOUNT,     Level::ERROR },
+  { Module::LOGINSERVER, Level::ERROR },
+  { Module::NETWORK,     Level::ERROR },
+  { Module::UTILS,       Level::ERROR },
+  { Module::WORLD,       Level::DEBUG },
+  { Module::WORLDSERVER, Level::DEBUG },
 };

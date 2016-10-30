@@ -1,5 +1,5 @@
 /**
- * The MIT License (MIT)
+p * The MIT License (MIT)
  *
  * Copyright (c) 2015 Simon Sandström
  *
@@ -40,34 +40,25 @@ class Logger
   // INFO : can be good to have enabled to see basic information
   // DEBUG: is very verbose and should only be enabled for troubleshooting
   //        specific classes
-  enum class Level
+  enum class Level : std::size_t
   {
-    LEVEL_ERROR,
-    LEVEL_INFO,
-    LEVEL_DEBUG,  // LEVEL_ to avoid conflict with DEBUG-macro
+    ERROR = 0,
+    INFO = 1,
+    DEBUG = 2,
+  };
+
+  enum class Module : std::size_t
+  {
+    ACCOUNT,
+    LOGINSERVER,
+    NETWORK,
+    UTILS,
+    WORLD,
+    WORLDSERVER,
   };
 
   static void log(const char* fileFullPath, int line, Level level, ...)
   {
-    // Get current date and time
-    time_t now = time(0);
-    struct tm tstruct{};
-    char time_str[32];
-    localtime_r(&now, &tstruct);
-    strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
-
-    // Extract variadic function arguments
-    va_list args;
-    va_start(args, level);  // Start to extract after the "level"-argument
-                            // Which also must be a non-reference according to CppCheck
-                            // otherwise va_start invokes undefined behaviour
-    const char* format = va_arg(args, const char*);
-    char message[256];
-    // Use the rest of the arguments together with the
-    // format string to construct the actual log message
-    vsnprintf(message, sizeof(message), format, args);
-    va_end(args);
-
     // Remove directories in fileFullPath ("network/server.cc" => "server.cc")
     const char* filename;
     if (strrchr(fileFullPath, '/'))
@@ -79,24 +70,61 @@ class Logger
       filename = fileFullPath;
     }
 
-    // Check if the log level is enabled for this file
-    if (levels_.count(filename) == 0)
+    // Get the Module for this filename
+    if (file_to_module_.count(filename) == 0)
     {
       // Not in levels map, always print it
-      printf("[%s][%s:%d] (Filename not in Logger::levels_) %s: %s\n",
-             time_str, filename, line, levelToString(level).c_str(), message);
+      printf("Logger::log: ERROR: Filename not in Logger::file_to_module_: %s\n", filename);
+      return;
     }
-    else
-    {
-      const auto& currentLevel = levels_.at(filename);
 
-      // Only print if given level is less than or equal to currentLevel
-      // If INFO is enabled we print ERROR and INFO, and so on
-      if (level <= currentLevel)
-      {
-        printf("[%s][%s:%d] %s: %s\n", time_str, filename, line, levelToString(level).c_str(), message);
-      }
+    const auto& module = file_to_module_.at(filename);
+
+    // Get the current level for this module
+    if (module_to_level_.count(module) == 0)
+    {
+      printf("Logger::log: ERROR: Module not in Logger::module_to_level_: %d\n", static_cast<int>(module));
+      return;
     }
+
+    const auto& moduleLevel = module_to_level_.at(module);
+
+    // Only print if given level is less than or equal to moduleLevel
+    // e.g. if INFO is enabled we print ERROR and INFO
+    if (level <= moduleLevel)
+    {
+      // Get current date and time
+      time_t now = time(0);
+      struct tm tstruct{};
+      char time_str[32];
+      localtime_r(&now, &tstruct);
+      strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
+
+      // Extract variadic function arguments
+      va_list args;
+      va_start(args, level);  // Start to extract after the "level"-argument
+                              // Which also must be a non-reference according to CppCheck
+                              // otherwise va_start invokes undefined behaviour
+      const char* format = va_arg(args, const char*);
+      char message[256];
+      // Use the rest of the arguments together with the
+      // format string to construct the actual log message
+      vsnprintf(message, sizeof(message), format, args);
+      va_end(args);
+
+      printf("[%s][%s:%d] %s: %s\n", time_str, filename, line, levelToString(level).c_str(), message);
+    }
+  }
+
+  static void setLevel(Module m, Level l)
+  {
+    if (module_to_level_.count(m) == 0)
+    {
+      printf("Logger::setLevel: ERROR: Module %d does not exist in module_to_level_!\n", static_cast<int>(m));
+      return;
+    }
+
+    module_to_level_[m] = l;
   }
 
  private:
@@ -109,25 +137,35 @@ class Logger
 
     switch (level)
     {
-      case Level::LEVEL_ERROR:
+      case Level::ERROR:
         return error;
-      case Level::LEVEL_INFO:
+      case Level::INFO:
         return info;
-      case Level::LEVEL_DEBUG:
+      case Level::DEBUG:
         return debug;
       default:
         return invalid;
     }
   }
 
-  // Maps a filename to enabled log level
-  // TODO(gurka): Be able to change this at runtime or in config file
-  static const std::unordered_map<std::string, Level> levels_;
+  struct ModuleHash
+  {
+    std::size_t operator()(Module m) const
+    {
+      return static_cast<std::size_t>(m);
+    }
+  };
+
+  // Maps filename to module
+  static const std::unordered_map<std::string, Module> file_to_module_;
+
+  // Maps module to level
+  static std::unordered_map<Module, Level, ModuleHash> module_to_level_;
 };
 
 // Log macros
-#define LOG_ERROR(...) Logger::log(__FILE__, __LINE__, Logger::Level::LEVEL_ERROR, __VA_ARGS__)
-#define LOG_INFO(...) Logger::log(__FILE__, __LINE__, Logger::Level::LEVEL_INFO, __VA_ARGS__)
-#define LOG_DEBUG(...) Logger::log(__FILE__, __LINE__, Logger::Level::LEVEL_DEBUG, __VA_ARGS__)
+#define LOG_ERROR(...) Logger::log(__FILE__, __LINE__, Logger::Level::ERROR, __VA_ARGS__)
+#define LOG_INFO(...) Logger::log(__FILE__, __LINE__, Logger::Level::INFO, __VA_ARGS__)
+#define LOG_DEBUG(...) Logger::log(__FILE__, __LINE__, Logger::Level::DEBUG, __VA_ARGS__)
 
 #endif  // UTILS_LOGGER_H_
