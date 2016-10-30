@@ -94,7 +94,7 @@ bool GameEngine::stop()
   }
 }
 
-CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket)
+CreatureId GameEngine::createPlayer(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket)
 {
   // Create Player and PlayerCtrl here
   Player player{name};
@@ -108,6 +108,11 @@ CreatureId GameEngine::playerSpawn(const std::string& name, const std::function<
   addTask(&GameEngine::playerSpawnInternal, creatureId);
 
   return creatureId;
+}
+
+void GameEngine::playerSpawn(CreatureId creatureId)
+{
+  addTask(&GameEngine::playerSpawnInternal, creatureId);
 }
 
 void GameEngine::playerDespawn(CreatureId creatureId)

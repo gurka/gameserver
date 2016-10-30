@@ -227,7 +227,10 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
 
   // Login OK
   auto sendPacketFunc = std::bind(&sendPacket, connectionId, std::placeholders::_1);
-  CreatureId playerId = gameEngine->playerSpawn(character_name, sendPacketFunc);
+
+  // Create and spawn player
+  CreatureId playerId = gameEngine->createPlayer(character_name, sendPacketFunc);
+  gameEngine->playerSpawn(playerId);
 
   // Store the playerId
   players.insert(std::make_pair(connectionId, playerId));
