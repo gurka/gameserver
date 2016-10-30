@@ -171,7 +171,7 @@ void PlayerCtrl::onCreatureTurn(const Creature& creature, const Position& positi
   packet.addU8(0x63);
   packet.addU8(0x00);
   packet.addU32(creature.getCreatureId());
-  packet.addU8(creature.getDirection());
+  packet.addU8(static_cast<uint8_t>(creature.getDirection()));
 
   sendPacket_(std::move(packet));
 }

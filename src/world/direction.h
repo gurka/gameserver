@@ -25,7 +25,9 @@
 #ifndef WORLD_DIRECTION_H_
 #define WORLD_DIRECTION_H_
 
-enum Direction
+#include <cstdint>
+
+enum class Direction : uint8_t
 {
   NORTH = 0,
   EAST  = 1,

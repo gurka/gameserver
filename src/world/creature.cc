@@ -30,7 +30,7 @@ CreatureId Creature::nextCreatureId_ = 0x4713;
 
 Creature::Creature()
   : creatureId_(Creature::INVALID_ID),
-    direction_(SOUTH),
+    direction_(Direction::SOUTH),
     maxHealth_(0),
     health_(0),
     speed_(0),
@@ -43,7 +43,7 @@ Creature::Creature()
 Creature::Creature(const std::string& name)
   : creatureId_(Creature::getFreeCreatureId()),
     name_(name),
-    direction_(SOUTH),
+    direction_(Direction::SOUTH),
     maxHealth_(100),
     health_(100),
     speed_(110),
