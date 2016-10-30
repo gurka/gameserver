@@ -81,7 +81,7 @@ class PlayerCtrl : public CreatureCtrl
   void queueMoves(const std::deque<Direction>& moves);
   bool hasQueuedMove() const { return !queuedMoves_.empty(); }
   Direction getNextQueuedMove();
-  void cancelMove() { queuedMoves_.clear(); }
+  void cancelMove();
 
   boost::posix_time::ptime getNextWalkTime() const;
 

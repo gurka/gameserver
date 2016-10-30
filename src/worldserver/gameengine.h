@@ -78,7 +78,8 @@ class GameEngine
   void playerUseInvItem(CreatureId creatureId, int itemId, int inventoryIndex);
   void playerUsePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos);
 
-  void playerLookAt(CreatureId creatureId, const Position& position, ItemId itemId);
+  void playerLookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId);
+  void playerLookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
  private:
   void playerSpawnInternal(CreatureId creatureId);
@@ -103,7 +104,8 @@ class GameEngine
   void playerUseInvItemInternal(CreatureId creatureId, int itemId, int inventoryIndex);
   void playerUsePosItemInternal(CreatureId creatureId, int itemId, const Position& position, int stackPos);
 
-  void playerLookAtInternal(CreatureId creatureId, const Position& position, ItemId itemId);
+  void playerLookAtInvItemInternal(CreatureId creatureId, int inventoryIndex, ItemId itemId);
+  void playerLookAtPosItemInternal(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return players_.at(creatureId); }

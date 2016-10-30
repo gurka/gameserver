@@ -50,6 +50,16 @@ class Equipment
 
   Equipment();
 
+  bool hasItem(uint8_t inventoryIndex) const
+  {
+    return hasItem(static_cast<Slot>(inventoryIndex));
+  }
+
+  bool hasItem(Slot slot) const
+  {
+    return items_.count(slot) == 1;
+  }
+
   const Item& getItem(uint8_t inventoryIndex) const
   {
     return getItem(static_cast<Slot>(inventoryIndex));

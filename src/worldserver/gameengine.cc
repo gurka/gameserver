@@ -173,9 +173,14 @@ void GameEngine::playerUsePosItem(CreatureId creatureId, int itemId, const Posit
   addTask(&GameEngine::playerUsePosItemInternal, creatureId, itemId, position, stackPos);
 }
 
-void GameEngine::playerLookAt(CreatureId creatureId, const Position& position, ItemId itemId)
+void GameEngine::playerLookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)
 {
-  addTask(&GameEngine::playerLookAtInternal, creatureId, position, itemId);
+  addTask(&GameEngine::playerLookAtInvItemInternal, creatureId, inventoryIndex, itemId);
+}
+
+void GameEngine::playerLookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
+{
+  addTask(&GameEngine::playerLookAtPosItemInternal, creatureId, position, itemId, stackPos);
 }
 
 void GameEngine::playerSpawnInternal(CreatureId creatureId)
@@ -267,7 +272,12 @@ void GameEngine::playerMovePathStepInternal(CreatureId creatureId)
 void GameEngine::playerCancelMoveInternal(CreatureId creatureId)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
-  getPlayerCtrl(creatureId).cancelMove();
+
+  auto& playerCtrl = getPlayerCtrl(creatureId);
+  if (playerCtrl.hasQueuedMove())
+  {
+    playerCtrl.cancelMove();
+  }
 }
 
 void GameEngine::playerTurnInternal(CreatureId creatureId, Direction direction)
@@ -585,7 +595,68 @@ void GameEngine::playerUsePosItemInternal(CreatureId creatureId, int itemId, con
   //  world_->useItem(creatureId, itemId, position, stackPos);
 }
 
-void GameEngine::playerLookAtInternal(CreatureId creatureId, const Position& position, ItemId itemId)
+void GameEngine::playerLookAtInvItemInternal(CreatureId creatureId, int inventoryIndex, ItemId itemId)
+{
+  auto& player = getPlayer(creatureId);
+  const auto& playerEquipment = player.getEquipment();
+
+  if (!playerEquipment.hasItem(inventoryIndex))
+  {
+    LOG_DEBUG("%s: There is no item in inventoryIndex %u",
+              __func__,
+              inventoryIndex);
+    return;
+  }
+
+  const auto& item = playerEquipment.getItem(inventoryIndex);
+
+  if (item.getItemId() != itemId)
+  {
+    LOG_DEBUG("%s: Item at given inventoryIndex does not match given itemId, given itemId: %u inventory itemId: %u",
+              __func__,
+              itemId,
+              item.getItemId());
+    return;
+  }
+
+  if (!item.isValid())
+  {
+    LOG_DEBUG("%s: Item at given inventoryIndex is not valid", __func__);
+    return;
+  }
+
+  std::ostringstream ss;
+
+  if (!item.getName().empty())
+  {
+    if (item.isStackable() && item.getCount() > 1)
+    {
+      ss << "You see " << item.getCount() << " " << item.getName() << "s.";
+    }
+    else
+    {
+      ss << "You see a " << item.getName() << ".";
+    }
+  }
+  else
+  {
+    ss << "You see an item with id " << itemId << ".";
+  }
+
+  if (item.hasAttribute("weight"))
+  {
+    ss << "\nIt weights " << item.getAttribute<float>("weight")<< " oz.";
+  }
+
+  if (item.hasAttribute("description"))
+  {
+    ss << "\n" << item.getAttribute<std::string>("description");
+  }
+
+  getPlayerCtrl(creatureId).sendTextMessage(ss.str());
+}
+
+void GameEngine::playerLookAtPosItemInternal(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
 {
   std::ostringstream ss;
 
@@ -625,7 +696,7 @@ void GameEngine::playerLookAtInternal(CreatureId creatureId, const Position& pos
       return;
     }
 
-    if (item.getName().size() > 0)
+    if (!item.getName().empty())
     {
       if (item.isStackable() && item.getCount() > 1)
       {

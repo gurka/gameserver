@@ -277,9 +277,15 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       auto unknown3 = packet->getU16();
       auto countOrSubType = packet->getU8();
 
-      LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from inventoryId %d to iventoryId %d (unknown %d, %d, %d)",
-                  itemId, countOrSubType, fromInventoryId, toInventoryId, unknown, unknown2, unknown3);
-
+      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to iventoryId %u (unknown: %u, unknown2: %u, unknown3: %u)",
+                __func__,
+                itemId,
+                countOrSubType,
+                fromInventoryId,
+                toInventoryId,
+                unknown,
+                unknown2,
+                unknown3);
 
       gameEngine->playerMoveItemFromInvToInv(playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
@@ -289,9 +295,14 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       auto toPosition = getPosition(packet);
       auto countOrSubType = packet->getU8();
 
-      LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from inventoryId %d to %s (unknown %d, %d)",
-                  itemId, countOrSubType, fromInventoryId, toPosition.toString().c_str(), unknown, unknown2);
-
+      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to %s (unknown: %u, unknown2: %u)",
+                __func__,
+                itemId,
+                countOrSubType,
+                fromInventoryId,
+                toPosition.toString().c_str(),
+                unknown,
+                unknown2);
 
       gameEngine->playerMoveItemFromInvToPos(playerId, fromInventoryId, itemId, countOrSubType, toPosition);
     }
@@ -312,8 +323,14 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       auto unknown = packet->getU16();
       auto countOrSubType = packet->getU8();
 
-      LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from %s (stackpos: %d) to inventoryId %d (unknown: %d)",
-                  itemId, countOrSubType, fromPosition.toString().c_str(), fromStackPos, toInventoryId, unknown);
+      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to inventoryId %u (unknown: %u)",
+                __func__,
+                itemId,
+                countOrSubType,
+                fromPosition.toString().c_str(),
+                fromStackPos,
+                toInventoryId,
+                unknown);
 
       gameEngine->playerMoveItemFromPosToInv(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
@@ -323,8 +340,13 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
       auto toPosition = getPosition(packet);
       auto countOrSubType = packet->getU8();
 
-      LOG_DEBUG("parseMoveItem(): Moving %d (countOrSubType %d) from %s (stackpos: %d) to %s (unknown: %d)",
-                  itemId, countOrSubType, fromPosition.toString().c_str(), fromStackPos, toPosition.toString().c_str());
+      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to %s (unknown: %u)",
+                __func__,
+                itemId,
+                countOrSubType,
+                fromPosition.toString().c_str(),
+                fromStackPos,
+                toPosition.toString().c_str());
 
       gameEngine->playerMoveItemFromPosToPos(playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
@@ -343,8 +365,12 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
     auto itemId = packet->getU16();
     auto unknown2 = packet->getU16();
 
-    LOG_DEBUG("parseUseItem(): Using Item %d at inventory index: %d (unknown: %d, unknown2: %d)",
-                itemId, inventoryIndex, unknown, unknown2);
+    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
+              __func__,
+              itemId,
+              inventoryIndex,
+              unknown,
+              unknown2);
 
     gameEngine->playerUseInvItem(playerId, itemId, inventoryIndex);
   }
@@ -356,8 +382,12 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
     auto stackPosition = packet->getU8();
     auto unknown = packet->getU8();
 
-    LOG_DEBUG("parseUseItem(): Using Item %d at Tile: %s stackPos: %d (unknown: %d)",
-                itemId, position.toString().c_str(), stackPosition, unknown);
+    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u (unknown: %u)",
+              __func__,
+              itemId,
+              position.toString().c_str(),
+              stackPosition,
+              unknown);
 
     gameEngine->playerUsePosItem(playerId, itemId, position, stackPosition);
   }
@@ -365,11 +395,40 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
 
 void parseLookAt(CreatureId playerId, IncomingPacket* packet)
 {
-  // TODO(gurka): Look at inventory / container?
-  Position position = getPosition(packet);
-  uint16_t itemId = packet->getU16();
+  // There are two options here:
+  if (packet->peekU16() == 0xFFFF)
+  {
+    // Look at Item in inventory
+    packet->getU16();
+    auto inventoryIndex = packet->getU8();
+    auto unknown = packet->getU16();
+    auto itemId = packet->getU16();
+    auto unknown2 = packet->getU8();
 
-  gameEngine->playerLookAt(playerId, position, itemId);
+    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
+              __func__,
+              itemId,
+              inventoryIndex,
+              unknown,
+              unknown2);
+
+    gameEngine->playerLookAtInvItem(playerId, inventoryIndex, itemId);
+  }
+  else
+  {
+    // Look at Item on Tile
+    auto position = getPosition(packet);
+    auto itemId = packet->getU16();
+    auto stackPos = packet->getU8();
+
+    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u",
+              __func__,
+              itemId,
+              position.toString().c_str(),
+              stackPos);
+
+    gameEngine->playerLookAtPosItem(playerId, position, itemId, stackPos);
+  }
 }
 
 void parseSay(CreatureId playerId, IncomingPacket* packet)
