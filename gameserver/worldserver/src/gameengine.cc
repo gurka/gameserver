@@ -178,6 +178,14 @@ void GameEngine::playerMovePath(CreatureId creatureId, const std::deque<Directio
 
 void GameEngine::playerMovePathStep(CreatureId creatureId)
 {
+  if (players_.count(creatureId) == 0)
+  {
+    // TODO(gurka): We might want to be able to tag all tasks, so that we can
+    //              throw away all tasks that belongs to a player when the player disconnects
+    LOG_DEBUG("%s: Player not found (disconnected while walking?)", __func__);
+    return;
+  }
+
   auto& playerCtrl = getPlayerCtrl(creatureId);
 
   // Make sure that the queued moves hasn't been canceled

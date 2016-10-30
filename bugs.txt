@@ -1,1 +1,0 @@
-* Worldserver crashes if player disconnects during autowalk (because next move task fires when Player is deleted)
