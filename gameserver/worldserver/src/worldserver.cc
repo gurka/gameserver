@@ -35,11 +35,12 @@
 #include "outgoingpacket.h"
 #include "direction.h"
 #include "gameengine.h"
+#include "gameengineproxy.h"
 
 // Globals
 AccountReader accountReader;
 std::unique_ptr<Server> server;
-std::unique_ptr<GameEngine> gameEngine;
+GameEngineProxy gameEngineProxy;
 std::unordered_map<ConnectionId, CreatureId> players;
 
 // Handlers for Server
@@ -75,7 +76,7 @@ void onClientDisconnected(ConnectionId connectionId)
   auto playerIt = players.find(connectionId);
   if (playerIt != players.end())
   {
-    gameEngine->addTask(&GameEngine::playerDespawn, playerIt->second);
+    gameEngineProxy.addTask(&GameEngine::playerDespawn, playerIt->second);
     players.erase(connectionId);
   }
 }
@@ -111,7 +112,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
     {
       case 0x14:  // Logout
       {
-        gameEngine->addTask(&GameEngine::playerDespawn, playerId);
+        gameEngineProxy.addTask(&GameEngine::playerDespawn, playerId);
         players.erase(connectionId);
         server->closeConnection(connectionId);
         return;
@@ -128,13 +129,13 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        gameEngine->addTask(&GameEngine::playerMove, playerId, static_cast<Direction>(packetId - 0x65));
+        gameEngineProxy.addTask(&GameEngine::playerMove, playerId, static_cast<Direction>(packetId - 0x65));
         break;
       }
 
       case 0x69:
       {
-        gameEngine->addTask(&GameEngine::playerCancelMove, playerId);
+        gameEngineProxy.addTask(&GameEngine::playerCancelMove, playerId);
         break;
       }
 
@@ -143,7 +144,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        gameEngine->addTask(&GameEngine::playerTurn, playerId, static_cast<Direction>(packetId - 0x6F));
+        gameEngineProxy.addTask(&GameEngine::playerTurn, playerId, static_cast<Direction>(packetId - 0x6F));
         break;
       }
 
@@ -229,8 +230,8 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
   auto sendPacketFunc = std::bind(&sendPacket, connectionId, std::placeholders::_1);
 
   // Create and spawn player
-  CreatureId playerId = gameEngine->createPlayer(character_name, sendPacketFunc);
-  gameEngine->addTask(&GameEngine::playerSpawn, playerId);
+  CreatureId playerId = gameEngineProxy.createPlayer(character_name, sendPacketFunc);
+  gameEngineProxy.addTask(&GameEngine::playerSpawn, playerId);
 
   // Store the playerId
   players.insert(std::make_pair(connectionId, playerId));
@@ -252,7 +253,7 @@ void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine->addTask(&GameEngine::playerMovePath, playerId, moves);
+  gameEngineProxy.addTask(&GameEngine::playerMovePath, playerId, moves);
 }
 
 void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
@@ -290,7 +291,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 unknown2,
                 unknown3);
 
-      gameEngine->addTask(&GameEngine::playerMoveItemFromInvToInv, playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
+      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromInvToInv, playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -307,7 +308,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 unknown,
                 unknown2);
 
-      gameEngine->addTask(&GameEngine::playerMoveItemFromInvToPos, playerId, fromInventoryId, itemId, countOrSubType, toPosition);
+      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromInvToPos, playerId, fromInventoryId, itemId, countOrSubType, toPosition);
     }
   }
   else
@@ -335,7 +336,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 toInventoryId,
                 unknown);
 
-      gameEngine->addTask(&GameEngine::playerMoveItemFromPosToInv, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
+      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromPosToInv, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -351,7 +352,7 @@ void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
                 fromStackPos,
                 toPosition.toString().c_str());
 
-      gameEngine->addTask(&GameEngine::playerMoveItemFromPosToPos, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
+      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromPosToPos, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
   }
 }
@@ -375,7 +376,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine->addTask(&GameEngine::playerUseInvItem, playerId, itemId, inventoryIndex);
+    gameEngineProxy.addTask(&GameEngine::playerUseInvItem, playerId, itemId, inventoryIndex);
   }
   else
   {
@@ -392,7 +393,7 @@ void parseUseItem(CreatureId playerId, IncomingPacket* packet)
               stackPosition,
               unknown);
 
-    gameEngine->addTask(&GameEngine::playerUsePosItem, playerId, itemId, position, stackPosition);
+    gameEngineProxy.addTask(&GameEngine::playerUsePosItem, playerId, itemId, position, stackPosition);
   }
 }
 
@@ -415,7 +416,7 @@ void parseLookAt(CreatureId playerId, IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine->addTask(&GameEngine::playerLookAtInvItem, playerId, inventoryIndex, itemId);
+    gameEngineProxy.addTask(&GameEngine::playerLookAtInvItem, playerId, inventoryIndex, itemId);
   }
   else
   {
@@ -430,7 +431,7 @@ void parseLookAt(CreatureId playerId, IncomingPacket* packet)
               position.toString().c_str(),
               stackPos);
 
-    gameEngine->addTask(&GameEngine::playerLookAtPosItem, playerId, position, itemId, stackPos);
+    gameEngineProxy.addTask(&GameEngine::playerLookAtPosItem, playerId, position, itemId, stackPos);
   }
 }
 
@@ -457,12 +458,12 @@ void parseSay(CreatureId playerId, IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  gameEngine->addTask(&GameEngine::playerSay, playerId, type, message, receiver, channelId);
+  gameEngineProxy.addTask(&GameEngine::playerSay, playerId, type, message, receiver, channelId);
 }
 
 void parseCancelMove(CreatureId playerId, IncomingPacket* packet)
 {
-  gameEngine->addTask(&GameEngine::playerCancelMove, playerId);
+  gameEngineProxy.addTask(&GameEngine::playerCancelMove, playerId);
 }
 
 void sendPacket(int connectionId, OutgoingPacket&& packet)
@@ -557,11 +558,13 @@ int main(int argc, char* argv[])
     &onPacketReceived,
   };
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
-  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service,
-                                                          loginMessage,
-                                                          dataFilename,
-                                                          itemsFilename,
-                                                          worldFilename));
+  auto gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service,
+                                                               loginMessage,
+                                                               dataFilename,
+                                                               itemsFilename,
+                                                               worldFilename));
+  gameEngineProxy.setGameEngine(std::move(gameEngine));
+
   if (!accountReader.loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
@@ -578,7 +581,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  if (!gameEngine->start())
+  if (!gameEngineProxy.start())
   {
     LOG_ERROR("Could not start GameEngine");
     return -2;
@@ -588,7 +591,7 @@ int main(int argc, char* argv[])
   io_service.run();
 
   LOG_INFO("Stopping GameEngine");
-  gameEngine->stop();
+  gameEngineProxy.stop();
 
   LOG_INFO("Stopping Server");
   server->stop();

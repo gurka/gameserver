@@ -47,12 +47,10 @@ GameEngine::GameEngine(boost::asio::io_service* io_service,
                        const std::string& itemsFilename,
                        const std::string& worldFilename)
   : taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
-    token_(),
     state_(INITIALIZED),
     loginMessage_(loginMessage),
     world_(WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename))
 {
-  Token t;
 }
 
 GameEngine::~GameEngine()
@@ -110,7 +108,7 @@ CreatureId GameEngine::createPlayer(const std::string& name, const std::function
   return creatureId;
 }
 
-void GameEngine::playerSpawn(Token t, CreatureId creatureId)
+void GameEngine::playerSpawn(CreatureId creatureId)
 {
   auto& player = getPlayer(creatureId);
   auto& playerCtrl = getPlayerCtrl(creatureId);
@@ -130,7 +128,7 @@ void GameEngine::playerSpawn(Token t, CreatureId creatureId)
   playerCtrl.onPlayerSpawn(player, adjustedPosition, loginMessage_);
 }
 
-void GameEngine::playerDespawn(Token t, CreatureId creatureId)
+void GameEngine::playerDespawn(CreatureId creatureId)
 {
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
   world_->removeCreature(creatureId);
@@ -140,7 +138,7 @@ void GameEngine::playerDespawn(Token t, CreatureId creatureId)
   playerCtrls_.erase(creatureId);
 }
 
-void GameEngine::playerMove(Token t, CreatureId creatureId, Direction direction)
+void GameEngine::playerMove(CreatureId creatureId, Direction direction)
 {
   auto& playerCtrl = getPlayerCtrl(creatureId);
   auto nextWalkTime = playerCtrl.getNextWalkTime();
@@ -170,15 +168,15 @@ void GameEngine::playerMove(Token t, CreatureId creatureId, Direction direction)
   }
 }
 
-void GameEngine::playerMovePath(Token t, CreatureId creatureId, const std::deque<Direction>& path)
+void GameEngine::playerMovePath(CreatureId creatureId, const std::deque<Direction>& path)
 {
   auto& playerCtrl = getPlayerCtrl(creatureId);
   playerCtrl.queueMoves(path);
 
-  taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, token_, creatureId), playerCtrl.getNextWalkTime());
+  taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), playerCtrl.getNextWalkTime());
 }
 
-void GameEngine::playerMovePathStep(Token t, CreatureId creatureId)
+void GameEngine::playerMovePathStep(CreatureId creatureId)
 {
   auto& playerCtrl = getPlayerCtrl(creatureId);
 
@@ -192,11 +190,11 @@ void GameEngine::playerMovePathStep(Token t, CreatureId creatureId)
   // Add a new task if there are more queued moves
   if (playerCtrl.hasQueuedMove())
   {
-    taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, token_, creatureId), playerCtrl.getNextWalkTime());
+    taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), playerCtrl.getNextWalkTime());
   }
 }
 
-void GameEngine::playerCancelMove(Token t, CreatureId creatureId)
+void GameEngine::playerCancelMove(CreatureId creatureId)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
@@ -207,14 +205,13 @@ void GameEngine::playerCancelMove(Token t, CreatureId creatureId)
   }
 }
 
-void GameEngine::playerTurn(Token t, CreatureId creatureId, Direction direction)
+void GameEngine::playerTurn(CreatureId creatureId, Direction direction)
 {
   LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creatureId);
   world_->creatureTurn(creatureId, direction);
 }
 
-void GameEngine::playerSay(Token t,
-                           CreatureId creatureId,
+void GameEngine::playerSay(CreatureId creatureId,
                            uint8_t type,
                            const std::string& message,
                            const std::string& receiver,
@@ -307,8 +304,7 @@ void GameEngine::playerSay(Token t,
   }
 }
 
-void GameEngine::playerMoveItemFromPosToPos(Token t,
-                                            CreatureId creatureId,
+void GameEngine::playerMoveItemFromPosToPos(CreatureId creatureId,
                                             const Position& fromPosition,
                                             int fromStackPos,
                                             int itemId,
@@ -359,8 +355,7 @@ void GameEngine::playerMoveItemFromPosToPos(Token t,
   }
 }
 
-void GameEngine::playerMoveItemFromPosToInv(Token t,
-                                            CreatureId creatureId,
+void GameEngine::playerMoveItemFromPosToInv(CreatureId creatureId,
                                             const Position& fromPosition,
                                             int fromStackPos,
                                             int itemId,
@@ -421,8 +416,7 @@ void GameEngine::playerMoveItemFromPosToInv(Token t,
   playerCtrl.onEquipmentUpdated(player, toInventoryId);
 }
 
-void GameEngine::playerMoveItemFromInvToPos(Token t,
-                                            CreatureId creatureId,
+void GameEngine::playerMoveItemFromInvToPos(CreatureId creatureId,
                                             int fromInventoryId,
                                             int itemId,
                                             int count,
@@ -468,8 +462,7 @@ void GameEngine::playerMoveItemFromInvToPos(Token t,
   world_->addItem(item, toPosition);
 }
 
-void GameEngine::playerMoveItemFromInvToInv(Token t,
-                                            CreatureId creatureId,
+void GameEngine::playerMoveItemFromInvToInv(CreatureId creatureId,
                                             int fromInventoryId,
                                             int itemId,
                                             int count,
@@ -521,8 +514,7 @@ void GameEngine::playerMoveItemFromInvToInv(Token t,
   playerCtrl.onEquipmentUpdated(player, toInventoryId);
 }
 
-void GameEngine::playerUseInvItem(Token t,
-                                  CreatureId creatureId,
+void GameEngine::playerUseInvItem(CreatureId creatureId,
                                   int itemId,
                                   int inventoryIndex)
 {
@@ -536,8 +528,7 @@ void GameEngine::playerUseInvItem(Token t,
   //  world_->useItem(creatureId, itemId, inventoryIndex);
 }
 
-void GameEngine::playerUsePosItem(Token t,
-                                  CreatureId creatureId,
+void GameEngine::playerUsePosItem(CreatureId creatureId,
                                   int itemId,
                                   const Position& position,
                                   int stackPos)
@@ -553,7 +544,7 @@ void GameEngine::playerUsePosItem(Token t,
   //  world_->useItem(creatureId, itemId, position, stackPos);
 }
 
-void GameEngine::playerLookAtInvItem(Token t, CreatureId creatureId, int inventoryIndex, ItemId itemId)
+void GameEngine::playerLookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)
 {
   auto& player = getPlayer(creatureId);
   const auto& playerEquipment = player.getEquipment();
@@ -614,7 +605,7 @@ void GameEngine::playerLookAtInvItem(Token t, CreatureId creatureId, int invento
   getPlayerCtrl(creatureId).sendTextMessage(ss.str());
 }
 
-void GameEngine::playerLookAtPosItem(Token t, CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
+void GameEngine::playerLookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
 {
   std::ostringstream ss;
 
