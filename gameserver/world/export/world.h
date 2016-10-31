@@ -105,6 +105,17 @@ class World : public WorldInterface
   // Offset for world size, since the client doesn't like too low positions
   const int worldSizeStart_ = 192;
 
+  // TODO(gurka): Use std::vector or std::array since pointer access is slow,
+  //              and contiguous memory is cache friendly.
+  //              Changing tiles_ to vector/array is not easy:
+  //                Make sure access is always done in same order, e.g.
+  //                for each z:
+  //                  for each y:
+  //                    for each x:
+  //                Figure out limits (should be easy, given worldSizeX/Y_ & worldSizeStart_)
+  //              Profile!
+  //              Add profiler test case that does lots of actions in the world?
+  //                (Moves around creatures / items, non-randomly)
   std::unordered_map<Position, Tile, Position::Hash> tiles_;
   std::unordered_map<int, Creature*> creatures_;
   std::unordered_map<int, CreatureCtrl*> creatureCtrls_;

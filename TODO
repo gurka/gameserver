@@ -6,3 +6,6 @@
   * Item should represent an unique item in the world. It only know its id and count.
   * ItemData has information for each item (using its id), loaded via .dat/.xml-files.
   * ItemFactory create Item objects given item id.
+* TODO in world.h
+* Figure out exactly, and document in README.md, what each module should and should not do.
+  Especially World and Worldserver. How much logic and knowledge should World have?
