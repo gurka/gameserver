@@ -142,14 +142,11 @@ void World::removeCreature(CreatureId creatureId)
   auto stackPos = tile.getCreatureStackPos(creatureId);
 
   // Tell near creatures that a creature has despawned
-  // Except the despawning creature
+  // Including the despawning creature!
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    if (nearCreatureId != creatureId)
-    {
-      getCreatureCtrl(nearCreatureId).onCreatureDespawn(creature, position, stackPos);
-    }
+    getCreatureCtrl(nearCreatureId).onCreatureDespawn(creature, position, stackPos);
   }
 
   creatures_.erase(creatureId);

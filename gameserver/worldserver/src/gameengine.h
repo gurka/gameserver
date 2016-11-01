@@ -35,20 +35,20 @@
 
 #include <boost/asio.hpp>  //NOLINT
 
-#include "world.h"
-#include "playerctrl.h"
 #include "taskqueue.h"
+#include "player.h"
+#include "position.h"
 
 class OutgoingPacket;
+class Protocol;
+class World;
 
 class GameEngine
 {
  public:
   GameEngine(boost::asio::io_service* io_service,
              const std::string& loginMessage,
-             const std::string& dataFilename,
-             const std::string& itemsFilename,
-             const std::string& worldFilename);
+             World* world);
 
   // Not copyable
   GameEngine(const GameEngine&) = delete;
@@ -66,7 +66,7 @@ class GameEngine
     taskQueue_.addTask(std::bind(f, this, args...));
   }
 
-  CreatureId createPlayer(const std::string& name, const std::function<void(OutgoingPacket&&)>& sendPacket);
+  void addPlayer(const std::string& name, Protocol* protocol);
 
   // These functions should only be called via addTask
   void playerSpawn(CreatureId creatureId);
@@ -116,8 +116,8 @@ class GameEngine
   void playerMovePathStep(CreatureId creatureId);
 
   // Use these instead of the unordered_maps directly
-  Player& getPlayer(CreatureId creatureId) { return players_.at(creatureId); }
-  PlayerCtrl& getPlayerCtrl(CreatureId creatureId) { return playerCtrls_.at(creatureId); }
+  Player& getPlayer(CreatureId creatureId) { return playerProtocol_.at(creatureId).player; }
+  Protocol* getProtocol(CreatureId creatureId) { return playerProtocol_.at(creatureId).protocol; }
 
   // Task stuff
   using TaskFunction = std::function<void(void)>;
@@ -132,12 +132,16 @@ class GameEngine
     CLOSED,
   } state_;
 
-  std::unordered_map<CreatureId, Player> players_;
-  std::unordered_map<CreatureId, PlayerCtrl> playerCtrls_;
+  struct PlayerProtocol
+  {
+    Player player;
+    Protocol* protocol;
+  };
+  std::unordered_map<CreatureId, PlayerProtocol> playerProtocol_;
 
   std::string loginMessage_;
 
-  std::unique_ptr<World> world_;
+  World* world_;
 };
 
 #endif  // WORLDSERVER_GAMEENGINE_H_

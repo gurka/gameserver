@@ -22,44 +22,48 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PLAYERCTRL_H_
-#define WORLDSERVER_PLAYERCTRL_H_
+#ifndef WORLDSERVER_PROTOCOL71_H_
+#define WORLDSERVER_PROTOCOL71_H_
 
-#include <deque>
-#include <functional>
+#include "protocol.h"
+
+#include <cstdint>
+#include <array>
 #include <string>
-#include <unordered_set>
 
-#include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
-
-#include "player.h"
-#include "creaturectrl.h"
+#include "gameengineproxy.h"
 #include "worldinterface.h"
+#include "outgoingpacket.h"
+#include "player.h"
 #include "creature.h"
 #include "position.h"
 #include "item.h"
+#include "server.h"
 
-class OutgoingPacket;
+class GameEngineProxy;
+class WorldInterface;
+class AccountReader;
 
-class PlayerCtrl : public CreatureCtrl
+class Protocol71 : public Protocol
 {
  public:
-  PlayerCtrl(WorldInterface* worldInterface,
-             CreatureId creatureId,
-             std::function<void(OutgoingPacket&&)> sendPacket)
-    : worldInterface_(worldInterface),
-      creatureId_(creatureId),
-      sendPacket_(sendPacket),
-      nextWalkTime_(boost::posix_time::microsec_clock::local_time())
-  {
-  }
+  Protocol71(GameEngineProxy* gameEngineProxy,
+             WorldInterface* worldInterface,
+             ConnectionId connectionId,
+             Server* server,
+             AccountReader* accountReader);
 
-  // From CreatureCtrl
+  // Called by Server (from Protocol)
+  void parsePacket(IncomingPacket* packet);
+
+  // Called by World (from CreatureCtrl)
   void onCreatureSpawn(const Creature& creature, const Position& position);
   void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos);
   void onCreatureMove(const Creature& creature,
-                      const Position& oldPosition, uint8_t oldStackPos,
-                      const Position& newPosition, uint8_t newStackPos);
+                      const Position& oldPosition,
+                      uint8_t oldStackPos,
+                      const Position& newPosition,
+                      uint8_t newStackPos);
   void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos);
   void onCreatureSay(const Creature& creature, const Position& position, const std::string& message);
 
@@ -68,41 +72,42 @@ class PlayerCtrl : public CreatureCtrl
 
   void onTileUpdate(const Position& position);
 
-  // Player specific ctrl
+  // Called by GameEngine (from Protocol)
   void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage);
-
   void onEquipmentUpdated(const Player& player, int inventoryIndex);
-
   void onUseItem(const Item& item);
-
   void sendTextMessage(const std::string& message);
   void sendCancel(const std::string& message);
 
-  void queueMoves(const std::deque<Direction>& moves);
-  bool hasQueuedMove() const { return !queuedMoves_.empty(); }
-  Direction getNextQueuedMove();
-  void cancelMove();
-
-  boost::posix_time::ptime getNextWalkTime() const;
-
  private:
+  // Helper functions for creating OutgoingPackets
   bool canSee(const Position& position) const;
-
-  // Packet functions
   void addPosition(const Position& position, OutgoingPacket* packet) const;
   void addMapData(const Position& position, int width, int height, OutgoingPacket* packet);
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
   void addEquipment(const Player& player, int inventoryIndex, OutgoingPacket* packet) const;
 
+  // Functions to parse IncomingPackets
+  void parseLogin(IncomingPacket* packet);
+  void parseMoveClick(IncomingPacket* packet);
+  void parseMoveItem(IncomingPacket* packet);
+  void parseUseItem(IncomingPacket* packet);
+  void parseLookAt(IncomingPacket* packet);
+  void parseSay(IncomingPacket* packet);
+  void parseCancelMove(IncomingPacket* packet);
+
+  // Helper functions when parsing IncomingPackets
+  Position getPosition(IncomingPacket* packet) const;
+
+  CreatureId playerId_;
+  GameEngineProxy* gameEngineProxy_;
   WorldInterface* worldInterface_;
-  CreatureId creatureId_;
-  std::function<void(OutgoingPacket&&)> sendPacket_;
+  ConnectionId connectionId_;
+  Server* server_;
+  AccountReader* accountReader_;
 
-  std::unordered_set<CreatureId> knownCreatures_;
-
-  boost::posix_time::ptime nextWalkTime_;
-  std::deque<Direction> queuedMoves_;
+  std::array<CreatureId, 64> knownCreatures_;
 };
 
-#endif  // WORLDSERVER_PLAYERCTRL_H_
+#endif  // WORLDSERVER_PROTOCOL71_H_

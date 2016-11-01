@@ -33,450 +33,51 @@
 #include "server.h"
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
-#include "direction.h"
 #include "gameengine.h"
 #include "gameengineproxy.h"
+#include "protocol.h"
+#include "protocol_71.h"
+#include "world.h"
+#include "worldfactory.h"
 
-// Globals
-AccountReader accountReader;
-std::unique_ptr<Server> server;
-GameEngineProxy gameEngineProxy;
-std::unordered_map<ConnectionId, CreatureId> players;
+static AccountReader accountReader;
+static GameEngineProxy gameEngineProxy;
+static std::unique_ptr<Server> server;
+static std::unique_ptr<World> world;
 
-// Handlers for Server
-void onClientConnected(ConnectionId connectionId);
-void onClientDisconnected(ConnectionId connectionId);
-void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
-
-// Parse functions
-void parseLogin(ConnectionId connectionId, IncomingPacket* packet);
-void parseMoveClick(CreatureId playerId, IncomingPacket* packet);
-void parseMoveItem(CreatureId playerId, IncomingPacket* packet);
-void parseUseItem(CreatureId playerId, IncomingPacket* packet);
-void parseLookAt(CreatureId playerId, IncomingPacket* packet);
-void parseSay(CreatureId playerId, IncomingPacket* packet);
-void parseCancelMove(CreatureId playerId, IncomingPacket* packet);
-
-// Callback for GameEngine (PlayerCtrl)
-void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
-
-// Helper functions
-Position getPosition(IncomingPacket* packet);
+static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(gurka): Maybe change to array?
 
 void onClientConnected(ConnectionId connectionId)
 {
-  LOG_DEBUG("Client connected, id: %d", connectionId);
+  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
+
+  // Create and store Protocol for this Connection
+  // TODO(gurka): Need a different solution if we want to support different protocol versions
+  // (We need to parse the login packet before we create a specific Protocol implementation)
+  auto protocol = std::unique_ptr<Protocol>(new Protocol71(&gameEngineProxy,
+                                                           world.get(),
+                                                           connectionId,
+                                                           server.get(),
+                                                           &accountReader));
+
+  protocols.emplace(std::piecewise_construct,
+                    std::forward_as_tuple(connectionId),
+                    std::forward_as_tuple(std::move(protocol)));
 }
 
 void onClientDisconnected(ConnectionId connectionId)
 {
-  LOG_DEBUG("Client disconnected, id: %d", connectionId);
+  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
 
-  // Check if the connection is logged in to the game engine
-  auto playerIt = players.find(connectionId);
-  if (playerIt != players.end())
-  {
-    gameEngineProxy.addTask(&GameEngine::playerDespawn, playerIt->second);
-    players.erase(connectionId);
-  }
+  // Delete Protocol
+  protocols.erase(connectionId);
 }
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
-  LOG_DEBUG("Parsing packet from connection id: %d, packet size: %d", connectionId, packet->getLength());
+  LOG_DEBUG("%s: ConnectionId: %d Length: %u", __func__, connectionId, packet->getLength());
 
-  // Check if the connection is logged in to the game engine
-  auto playerIt = players.find(connectionId);
-  if (playerIt == players.end())
-  {
-    // Not logged in, we only accept the login packet (0x0A) here
-    uint8_t packetId = packet->getU8();
-    if (packetId != 0x0A)
-    {
-      LOG_ERROR("Unexpected packet from connection id: %d. Expected login packet, not: 0x%X", connectionId, packetId);
-      server->closeConnection(connectionId);
-      return;
-    }
-
-    // Login packet
-    parseLogin(connectionId, packet);
-    return;
-  }
-
-  // The connection is logged in, handle the packet
-  CreatureId playerId = playerIt->second;
-  while (!packet->isEmpty())
-  {
-    uint8_t packetId = packet->getU8();
-    switch (packetId)
-    {
-      case 0x14:  // Logout
-      {
-        gameEngineProxy.addTask(&GameEngine::playerDespawn, playerId);
-        players.erase(connectionId);
-        server->closeConnection(connectionId);
-        return;
-      }
-
-      case 0x64:  // Player move with mouse
-      {
-        parseMoveClick(playerId, packet);
-        break;
-      }
-
-      case 0x65:  // Player move, North = 0
-      case 0x66:  // East  = 1
-      case 0x67:  // South = 2
-      case 0x68:  // West  = 3
-      {
-        gameEngineProxy.addTask(&GameEngine::playerMove, playerId, static_cast<Direction>(packetId - 0x65));
-        break;
-      }
-
-      case 0x69:
-      {
-        gameEngineProxy.addTask(&GameEngine::playerCancelMove, playerId);
-        break;
-      }
-
-      case 0x6F:  // Player turn, North = 0
-      case 0x70:  // East  = 1
-      case 0x71:  // South = 2
-      case 0x72:  // West  = 3
-      {
-        gameEngineProxy.addTask(&GameEngine::playerTurn, playerId, static_cast<Direction>(packetId - 0x6F));
-        break;
-      }
-
-      case 0x78:  // Move item
-      {
-        parseMoveItem(playerId, packet);
-        break;
-      }
-
-      case 0x82:  // Use item
-      {
-        parseUseItem(playerId, packet);
-        break;
-      }
-
-      case 0x8C:  // Look at
-      {
-        parseLookAt(playerId, packet);
-        break;
-      }
-
-      case 0x96:
-      {
-        parseSay(playerId, packet);
-        break;
-      }
-
-      case 0xBE:
-      {
-        // TODO(gurka): This packet more likely means "stop all actions", not only moving
-        parseCancelMove(playerId, packet);
-        break;
-      }
-
-      default:
-      {
-        LOG_ERROR("Unknown packet from connection id: %d, packet id: 0x%X", connectionId, packetId);
-        return;  // Don't read any more, even though there might be more packets that we can parse
-      }
-    }
-  }
-}
-
-void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
-{
-  LOG_DEBUG("Parsing packet from connection id: %d", connectionId);
-
-  packet->getU8();  // Unknown (0x02)
-  uint8_t client_os = packet->getU8();
-  uint16_t client_version = packet->getU16();
-  packet->getU8();  // Unknown
-  std::string character_name = packet->getString();
-  std::string password = packet->getString();
-
-  LOG_DEBUG("Client OS: %d Client version: %d Character: %s Password: %s",
-              client_os,
-              client_version,
-              character_name.c_str(),
-              password.c_str());
-
-  // Check if character exists
-  if (!accountReader.characterExists(character_name.c_str()))
-  {
-    OutgoingPacket response;
-    response.addU8(0x14);
-    response.addString("Invalid character.");
-    server->sendPacket(connectionId, std::move(response));
-    server->closeConnection(connectionId);
-    return;
-  }
-  // Check if password is correct
-  else if (!accountReader.verifyPassword(character_name, password))
-  {
-    OutgoingPacket response;
-    response.addU8(0x14);
-    response.addString("Invalid password.");
-    server->sendPacket(connectionId, std::move(response));
-    server->closeConnection(connectionId);
-    return;
-  }
-
-  // Login OK
-  auto sendPacketFunc = std::bind(&sendPacket, connectionId, std::placeholders::_1);
-
-  // Create and spawn player
-  CreatureId playerId = gameEngineProxy.createPlayer(character_name, sendPacketFunc);
-  gameEngineProxy.addTask(&GameEngine::playerSpawn, playerId);
-
-  // Store the playerId
-  players.insert(std::make_pair(connectionId, playerId));
-}
-
-void parseMoveClick(CreatureId playerId, IncomingPacket* packet)
-{
-  std::deque<Direction> moves;
-  uint8_t pathLength = packet->getU8();
-
-  if (pathLength == 0)
-  {
-    LOG_ERROR("%s: Path length is zero!", __func__);
-    return;
-  }
-
-  for (auto i = 0; i < pathLength; i++)
-  {
-    moves.push_back(static_cast<Direction>(packet->getU8()));
-  }
-
-  gameEngineProxy.addTask(&GameEngine::playerMovePath, playerId, moves);
-}
-
-void parseMoveItem(CreatureId playerId, IncomingPacket* packet)
-{
-  // There are four options here:
-  // Moving from inventory to inventory
-  // Moving from inventory to Tile
-  // Moving from Tile to inventory
-  // Moving from Tile to Tile
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Moving from inventory ...
-    packet->getU16();
-
-    auto fromInventoryId = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU8();
-
-    if (packet->peekU16() == 0xFFFF)
-    {
-      // ... to inventory
-      packet->getU16();
-      auto toInventoryId = packet->getU8();
-      auto unknown3 = packet->getU16();
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to iventoryId %u (unknown: %u, unknown2: %u, unknown3: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromInventoryId,
-                toInventoryId,
-                unknown,
-                unknown2,
-                unknown3);
-
-      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromInvToInv, playerId, fromInventoryId, itemId, countOrSubType, toInventoryId);
-    }
-    else
-    {
-      // ... to Tile
-      auto toPosition = getPosition(packet);
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to %s (unknown: %u, unknown2: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromInventoryId,
-                toPosition.toString().c_str(),
-                unknown,
-                unknown2);
-
-      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromInvToPos, playerId, fromInventoryId, itemId, countOrSubType, toPosition);
-    }
-  }
-  else
-  {
-    // Moving from Tile ...
-    auto fromPosition = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto fromStackPos = packet->getU8();
-
-    if (packet->peekU16() == 0xFFFF)
-    {
-      // ... to inventory
-      packet->getU16();
-
-      auto toInventoryId = packet->getU8();
-      auto unknown = packet->getU16();
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to inventoryId %u (unknown: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromPosition.toString().c_str(),
-                fromStackPos,
-                toInventoryId,
-                unknown);
-
-      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromPosToInv, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
-    }
-    else
-    {
-      // ... to Tile
-      auto toPosition = getPosition(packet);
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to %s (unknown: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromPosition.toString().c_str(),
-                fromStackPos,
-                toPosition.toString().c_str());
-
-      gameEngineProxy.addTask(&GameEngine::playerMoveItemFromPosToPos, playerId, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
-    }
-  }
-}
-
-void parseUseItem(CreatureId playerId, IncomingPacket* packet)
-{
-  // There are two options here:
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Use Item in inventory
-    packet->getU16();
-    auto inventoryIndex = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU16();
-
-    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
-              __func__,
-              itemId,
-              inventoryIndex,
-              unknown,
-              unknown2);
-
-    gameEngineProxy.addTask(&GameEngine::playerUseInvItem, playerId, itemId, inventoryIndex);
-  }
-  else
-  {
-    // Use Item on Tile
-    auto position = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto stackPosition = packet->getU8();
-    auto unknown = packet->getU8();
-
-    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u (unknown: %u)",
-              __func__,
-              itemId,
-              position.toString().c_str(),
-              stackPosition,
-              unknown);
-
-    gameEngineProxy.addTask(&GameEngine::playerUsePosItem, playerId, itemId, position, stackPosition);
-  }
-}
-
-void parseLookAt(CreatureId playerId, IncomingPacket* packet)
-{
-  // There are two options here:
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Look at Item in inventory
-    packet->getU16();
-    auto inventoryIndex = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU8();
-
-    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
-              __func__,
-              itemId,
-              inventoryIndex,
-              unknown,
-              unknown2);
-
-    gameEngineProxy.addTask(&GameEngine::playerLookAtInvItem, playerId, inventoryIndex, itemId);
-  }
-  else
-  {
-    // Look at Item on Tile
-    auto position = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto stackPos = packet->getU8();
-
-    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u",
-              __func__,
-              itemId,
-              position.toString().c_str(),
-              stackPos);
-
-    gameEngineProxy.addTask(&GameEngine::playerLookAtPosItem, playerId, position, itemId, stackPos);
-  }
-}
-
-void parseSay(CreatureId playerId, IncomingPacket* packet)
-{
-  uint8_t type = packet->getU8();
-
-  std::string receiver = "";
-  uint16_t channelId = 0;
-
-  switch (type)
-  {
-    case 0x06:  // PRIVATE
-    case 0x0B:  // PRIVATE RED
-      receiver = packet->getString();
-      break;
-    case 0x07:  // CHANNEL_Y
-    case 0x0A:  // CHANNEL_R1
-      channelId = packet->getU16();
-      break;
-    default:
-      break;
-  }
-
-  std::string message = packet->getString();
-
-  gameEngineProxy.addTask(&GameEngine::playerSay, playerId, type, message, receiver, channelId);
-}
-
-void parseCancelMove(CreatureId playerId, IncomingPacket* packet)
-{
-  gameEngineProxy.addTask(&GameEngine::playerCancelMove, playerId);
-}
-
-void sendPacket(int connectionId, OutgoingPacket&& packet)
-{
-  server->sendPacket(connectionId, std::move(packet));
-}
-
-Position getPosition(IncomingPacket* packet)
-{
-  auto x = packet->getU16();
-  auto y = packet->getU16();
-  auto z = packet->getU8();
-  return Position(x, y, z);
+  protocols.at(connectionId)->parsePacket(packet);
 }
 
 int main(int argc, char* argv[])
@@ -548,9 +149,9 @@ int main(int argc, char* argv[])
   printf("Worldserver logging:       %s\n", logger_worldserver.c_str());
   printf("--------------------------------------------------------------------------------\n");
 
-  // Setup io_service, AccountManager, GameEngine and Server
   boost::asio::io_service io_service;
 
+  // Create Server
   Server::Callbacks callbacks =
   {
     &onClientConnected,
@@ -558,19 +159,29 @@ int main(int argc, char* argv[])
     &onPacketReceived,
   };
   server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
+
+  // Create World
+  world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
+  if (!world)
+  {
+    LOG_ERROR("World could not be loaded");
+    return -1;
+  }
+
+  // Create GameEngine
   auto gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service,
                                                                loginMessage,
-                                                               dataFilename,
-                                                               itemsFilename,
-                                                               worldFilename));
+                                                               world.get()));
   gameEngineProxy.setGameEngine(std::move(gameEngine));
 
+  // Load AccountReader
   if (!accountReader.loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
-    return 1;
+    return -2;
   }
 
+  // Stop on ^C from user
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
 
@@ -578,13 +189,13 @@ int main(int argc, char* argv[])
   if (!server->start())
   {
     LOG_ERROR("Could not start Server");
-    return -1;
+    return -3;
   }
 
   if (!gameEngineProxy.start())
   {
     LOG_ERROR("Could not start GameEngine");
-    return -2;
+    return -4;
   }
 
   // run() will continue to run until ^C from user is catched

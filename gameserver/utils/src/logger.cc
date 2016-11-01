@@ -52,7 +52,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "loginserver.cc",     Module::LOGINSERVER },
 
   // src/worldserver
-  { "playerctrl.cc",      Module::WORLDSERVER },
+  { "protocol_71.cc",     Module::WORLDSERVER },
   { "gameengine.cc",      Module::WORLDSERVER },
   { "worldserver.cc",     Module::WORLDSERVER },
   { "player.cc",          Module::WORLDSERVER },

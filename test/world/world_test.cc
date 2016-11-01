@@ -166,7 +166,7 @@ TEST_F(WorldTest, RemoveCreature)
   world->addCreature(&creatureFour, &creatureCtrlFour, creaturePositionFour);
 
   // Remove creatureOne
-  EXPECT_CALL(creatureCtrlOne, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlOne, onCreatureDespawn(creatureOne, creaturePositionOne, _)).Times(1);
   EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(creatureOne, creaturePositionOne, _)).Times(1);
   EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, _, _)).Times(0);
   EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _)).Times(0);
@@ -174,20 +174,20 @@ TEST_F(WorldTest, RemoveCreature)
   EXPECT_FALSE(world->creatureExists(creatureOne.getCreatureId()));
 
   // Remove creatureTwo
-  EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(creatureTwo, creaturePositionTwo, _)).Times(1);
   EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(creatureTwo, creaturePositionTwo, _)).Times(1);
   EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(creatureTwo, creaturePositionTwo, _)).Times(1);
   world->removeCreature(creatureTwo.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureTwo.getCreatureId()));
 
   // Remove creatureThree
-  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(creatureThree, creaturePositionThree, _)).Times(1);
   EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(creatureThree, creaturePositionThree, _)).Times(1);
   world->removeCreature(creatureThree.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureThree.getCreatureId()));
 
   // Remove creatureFour
-  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(creatureFour, creaturePositionFour, _)).Times(1);
   world->removeCreature(creatureFour.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureFour.getCreatureId()));
 }

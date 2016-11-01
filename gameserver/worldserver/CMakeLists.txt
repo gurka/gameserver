@@ -7,9 +7,10 @@ set(src
   "src/gameengine.h"
   "src/gameengineproxy.h"
   "src/player.cc"
-  "src/playerctrl.cc"
-  "src/playerctrl.h"
   "src/player.h"
+  "src/protocol_71.cc"
+  "src/protocol_71.h"
+  "src/protocol.h"
   "src/taskqueue.h"
   "src/worldserver.cc"
 )

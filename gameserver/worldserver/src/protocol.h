@@ -22,38 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_GAMEENGINEPROXY_H_
-#define WORLDSERVER_GAMEENGINEPROXY_H_
+#ifndef WORLDSERVER_PROTOCOL_H_
+#define WORLDSERVER_PROTOCOL_H_
 
-#include <memory>
 #include <string>
-#include <utility>
 
-#include "gameengine.h"
+#include "creaturectrl.h"
+#include "player.h"
+#include "creature.h"
+#include "position.h"
+#include "item.h"
 
-class GameEngineProxy
+class IncomingPacket;
+
+class Protocol : public CreatureCtrl
 {
  public:
-  bool start() { return gameEngine_->start(); }
-  bool stop() { return gameEngine_->stop(); }
-  void addPlayer(const std::string& name, Protocol* protocol)
-  {
-    return gameEngine_->addPlayer(name, protocol);
-  }
+  virtual ~Protocol() = default;
 
-  template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
-  {
-    gameEngine_->addTask(f, args...);
-  }
+  // Called by Server
+  virtual void parsePacket(IncomingPacket* packet) = 0;
 
-  void setGameEngine(std::unique_ptr<GameEngine> gameEngine)
-  {
-    gameEngine_ = std::move(gameEngine);
-  }
-
- private:
-  std::unique_ptr<GameEngine> gameEngine_;
+  // Called by GameEngine
+  virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
+  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
+  virtual void onUseItem(const Item& item) = 0;
+  virtual void sendTextMessage(const std::string& message) = 0;
+  virtual void sendCancel(const std::string& message) = 0;
 };
 
-#endif  // WORLDSERVER_GAMEENGINEPROXY_H_
+#endif  // WORLDSERVER_PROTOCOL_H_
