@@ -166,27 +166,11 @@ int main(int argc, char* argv[])
   auto logger_network     = config.getString("logger", "network", "ERROR");
   auto logger_utils       = config.getString("logger", "utils", "ERROR");
 
-  auto levelStringToEnum = [](const std::string& level)
-  {
-    if (level == "INFO")
-    {
-      return Logger::Level::INFO;
-    }
-    else if (level == "DEBUG")
-    {
-      return Logger::Level::DEBUG;
-    }
-    else  // "ERROR" or anything else
-    {
-      return Logger::Level::ERROR;
-    }
-  };
-
   // Set logger settings
-  Logger::setLevel(Logger::Module::ACCOUNT,     levelStringToEnum(logger_account));
-  Logger::setLevel(Logger::Module::LOGINSERVER, levelStringToEnum(logger_loginserver));
-  Logger::setLevel(Logger::Module::NETWORK,     levelStringToEnum(logger_network));
-  Logger::setLevel(Logger::Module::UTILS,       levelStringToEnum(logger_utils));
+  Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
+  Logger::setLevel(Logger::Module::LOGINSERVER, logger_loginserver);
+  Logger::setLevel(Logger::Module::NETWORK,     logger_network);
+  Logger::setLevel(Logger::Module::UTILS,       logger_utils);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

@@ -108,28 +108,12 @@ int main(int argc, char* argv[])
   auto logger_world       = config.getString("logger", "world", "ERROR");
   auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
-  auto levelStringToEnum = [](const std::string& level)
-  {
-    if (level == "INFO")
-    {
-      return Logger::Level::INFO;
-    }
-    else if (level == "DEBUG")
-    {
-      return Logger::Level::DEBUG;
-    }
-    else  // "ERROR" or anything else
-    {
-      return Logger::Level::ERROR;
-    }
-  };
-
   // Set logger settings
-  Logger::setLevel(Logger::Module::ACCOUNT,     levelStringToEnum(logger_account));
-  Logger::setLevel(Logger::Module::NETWORK,     levelStringToEnum(logger_network));
-  Logger::setLevel(Logger::Module::UTILS,       levelStringToEnum(logger_utils));
-  Logger::setLevel(Logger::Module::WORLD,       levelStringToEnum(logger_world));
-  Logger::setLevel(Logger::Module::WORLDSERVER, levelStringToEnum(logger_worldserver));
+  Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
+  Logger::setLevel(Logger::Module::NETWORK,     logger_network);
+  Logger::setLevel(Logger::Module::UTILS,       logger_utils);
+  Logger::setLevel(Logger::Module::WORLD,       logger_world);
+  Logger::setLevel(Logger::Module::WORLDSERVER, logger_worldserver);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

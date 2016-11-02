@@ -116,15 +116,39 @@ class Logger
     }
   }
 
-  static void setLevel(Module m, Level l)
+  static void setLevel(Module module, const std::string& level)
   {
-    if (module_to_level_.count(m) == 0)
+    if (level == "INFO")
     {
-      printf("Logger::setLevel: ERROR: Module %d does not exist in module_to_level_!\n", static_cast<int>(m));
+      setLevel(module, Logger::Level::INFO);
+    }
+    else if (level == "DEBUG")
+    {
+      setLevel(module, Logger::Level::DEBUG);
+    }
+    else if (level == "ERROR")
+    {
+      setLevel(module, Logger::Level::ERROR);
+    }
+    else
+    {
+      printf("%s: ERROR: Level %s is invalid!\n",
+             __func__,
+             level.c_str());
+    }
+  }
+
+  static void setLevel(Module module, Level level)
+  {
+    if (module_to_level_.count(module) == 0)
+    {
+      printf("%s: ERROR: Module %d does not exist in module_to_level_!\n",
+             __func__,
+             static_cast<int>(module));
       return;
     }
 
-    module_to_level_[m] = l;
+    module_to_level_[module] = level;
   }
 
  private:
