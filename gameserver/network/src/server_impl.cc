@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "server.h"
+#include "server_impl.h"
 
 #include "connection.h"
 #include "incomingpacket.h"
@@ -31,36 +31,36 @@
 
 namespace BIP = boost::asio::ip;
 
-Server::Server(boost::asio::io_service* io_service,
+ServerImpl::ServerImpl(boost::asio::io_service* io_service,
                unsigned short port,
                const Callbacks& callbacks)
   : acceptor_(io_service,
               port,
               {
-                std::bind(&Server::onAccept, this, std::placeholders::_1)
+                std::bind(&ServerImpl::onAccept, this, std::placeholders::_1)
               }),
     callbacks_(callbacks),
     nextConnectionId_(0)
 
 {
-  LOG_INFO("Starting Server.");
+  LOG_INFO("Starting ServerImpl.");
 }
 
-Server::~Server()
+ServerImpl::~ServerImpl()
 {
-  LOG_INFO("Closing Server.");
+  LOG_INFO("Closing ServerImpl.");
   if (acceptor_.isListening())
   {
     stop();
   }
 }
 
-bool Server::start()
+bool ServerImpl::start()
 {
   return acceptor_.start();
 }
 
-void Server::stop()
+void ServerImpl::stop()
 {
   acceptor_.stop();
 
@@ -71,34 +71,34 @@ void Server::stop()
   }
 }
 
-void Server::sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
+void ServerImpl::sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
 {
   LOG_DEBUG("sendPacket() connectionId: %d", connectionId);
   connections_.at(connectionId).sendPacket(std::move(packet));
 }
 
-void Server::closeConnection(ConnectionId connectionId)
+void ServerImpl::closeConnection(ConnectionId connectionId)
 {
   LOG_DEBUG("closeConnection() connectionId: %d", connectionId);
   connections_.at(connectionId).close(true);
 }
 
 // Handler for Acceptor
-void Server::onAccept(BIP::tcp::socket socket)
+void ServerImpl::onAccept(BIP::tcp::socket socket)
 {
   int connectionId = nextConnectionId_++;
 
   // Create and insert Connection
   Connection::Callbacks callbacks
   {
-    std::bind(&Server::onConnectionClosed, this, connectionId),
-    std::bind(&Server::onPacketReceived, this, connectionId, std::placeholders::_1)
+    std::bind(&ServerImpl::onConnectionClosed, this, connectionId),
+    std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1)
   };
   connections_.emplace(std::piecewise_construct,
                        std::forward_as_tuple(connectionId),
                        std::forward_as_tuple(std::move(socket), callbacks));
 
-  LOG_DEBUG("onServerAccept() new connectionId: %d no connections: %lu",
+  LOG_DEBUG("onServerImplAccept() new connectionId: %d no connections: %lu",
             connectionId,
             connections_.size());
 
@@ -106,7 +106,7 @@ void Server::onAccept(BIP::tcp::socket socket)
 }
 
 // Handler for Connection
-void Server::onConnectionClosed(ConnectionId connectionId)
+void ServerImpl::onConnectionClosed(ConnectionId connectionId)
 {
   connections_.erase(connectionId);
   LOG_DEBUG("onConnectionClosed() connectionId: %d no connections: %lu",
@@ -115,7 +115,7 @@ void Server::onConnectionClosed(ConnectionId connectionId)
   callbacks_.onClientDisconnected(connectionId);
 }
 
-void Server::onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
+void ServerImpl::onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
   LOG_DEBUG("onPacketReceived() connectionId: %d", connectionId);
   callbacks_.onPacketReceived(connectionId, packet);

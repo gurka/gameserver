@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "account.h"
 #include "server.h"
+#include "server_factory.h"
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
 
@@ -220,7 +221,7 @@ int main(int argc, char* argv[])
     &onClientDisconnected,
     &onPacketReceived,
   };
-  server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
+  server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
   // Start Server and io_service
   if (!server->start())

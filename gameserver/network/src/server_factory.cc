@@ -22,37 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SERVER_H_
-#define NETWORK_SERVER_H_
+#include "server_factory.h"
 
-#include <functional>
+#include "server_impl.h"
 
-class IncomingPacket;
-class OutgoingPacket;
-
-using ConnectionId = int;
-
-class Server
+std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_service* io_service,
+                                                    unsigned short port,
+                                                    const Server::Callbacks& callbacks)
 {
- public:
-  struct Callbacks
-  {
-    std::function<void(ConnectionId)> onClientConnected;
-    std::function<void(ConnectionId)> onClientDisconnected;
-    std::function<void(ConnectionId, IncomingPacket*)> onPacketReceived;
-  };
-
-  Server() = default;
-  virtual ~Server() = default;
-
-  Server(const Server&) = delete;
-  Server& operator=(const Server&) = delete;
-
-  virtual bool start() = 0;
-  virtual void stop() = 0;
-
-  virtual void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) = 0;
-  virtual void closeConnection(ConnectionId connectionId) = 0;
-};
-
-#endif  // NETWORK_SERVER_H_
+  return std::unique_ptr<Server>(new ServerImpl(io_service, port, callbacks));
+}

@@ -29,6 +29,8 @@
 
 #include "gameengineproxy.h"
 #include "server.h"
+#include "incomingpacket.h"
+#include "outgoingpacket.h"
 #include "worldinterface.h"
 #include "logger.h"
 #include "tile.h"

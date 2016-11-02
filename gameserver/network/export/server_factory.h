@@ -22,47 +22,27 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_INCOMINGPACKET_H_
-#define NETWORK_INCOMINGPACKET_H_
+#ifndef NETWORK_SERVERFACTORY_H_
+#define NETWORK_SERVERFACTORY_H_
 
-#include <cstddef>
-#include <cstdint>
-#include <array>
-#include <string>
-#include <vector>
+#include <memory>
 
-class IncomingPacket
+#include "server.h"
+
+namespace boost
+{
+  namespace asio
+  {
+    class io_service;
+  }
+}
+
+class ServerFactory
 {
  public:
-  IncomingPacket();
-  virtual ~IncomingPacket() = default;
-
-  // Delete copy constructors
-  IncomingPacket(const IncomingPacket&) = delete;
-  IncomingPacket& operator=(const IncomingPacket&) = delete;
-
-  // Should only be used by Connection
-  // TODO(gurka): fix
-  std::size_t getLength() const { return length_; }
-  void setLength(std::size_t length) { length_ = length; }
-  std::array<uint8_t, 8192>::pointer getBuffer() { return buffer_.data(); }
-  void resetPosition() { position_ = 0; }
-
-  bool isEmpty() const { return position_ >= length_; }
-  std::size_t bytesLeft() const { return length_ - position_; }
-  uint8_t peekU8() const;
-  uint8_t getU8();
-  uint16_t peekU16() const;
-  uint16_t getU16();
-  uint32_t peekU32() const;
-  uint32_t getU32();
-  std::string getString();
-  std::vector<uint8_t> getBytes(int numBytes);
-
- private:
-  std::array<uint8_t, 8192> buffer_;
-  std::size_t length_;
-  std::size_t position_;
+  static std::unique_ptr<Server> createServer(boost::asio::io_service* io_service,
+                                              unsigned short port,
+                                              const Server::Callbacks& callbacks);
 };
 
-#endif  // NETWORK_INCOMINGPACKET_H_
+#endif  // NETWORK_SERVERFACTORY_H_

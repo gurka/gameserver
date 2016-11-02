@@ -31,6 +31,7 @@
 #include "logger.h"
 #include "account.h"
 #include "server.h"
+#include "server_factory.h"
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
 #include "gameengine.h"
@@ -158,7 +159,7 @@ int main(int argc, char* argv[])
     &onClientDisconnected,
     &onPacketReceived,
   };
-  server = std::unique_ptr<Server>(new Server(&io_service, serverPort, callbacks));
+  server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
   // Create World
   world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);

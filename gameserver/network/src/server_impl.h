@@ -22,47 +22,49 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_INCOMINGPACKET_H_
-#define NETWORK_INCOMINGPACKET_H_
+#ifndef NETWORK_SERVERIMPL_H_
+#define NETWORK_SERVERIMPL_H_
 
-#include <cstddef>
-#include <cstdint>
-#include <array>
-#include <string>
-#include <vector>
+#include <unordered_map>
+#include <boost/asio.hpp>  //NOLINT
 
-class IncomingPacket
+#include "server.h"
+#include "acceptor.h"
+#include "connection.h"
+
+// Forward declarations
+class IncomingPacket;
+class OutgoingPacket;
+
+using ConnectionId = int;
+
+class ServerImpl : public Server
 {
  public:
-  IncomingPacket();
-  virtual ~IncomingPacket() = default;
+  ServerImpl(boost::asio::io_service* io_service,
+             unsigned short port,
+             const Callbacks& callbacks);
+  virtual ~ServerImpl();
 
-  // Delete copy constructors
-  IncomingPacket(const IncomingPacket&) = delete;
-  IncomingPacket& operator=(const IncomingPacket&) = delete;
+  bool start();
+  void stop();
 
-  // Should only be used by Connection
-  // TODO(gurka): fix
-  std::size_t getLength() const { return length_; }
-  void setLength(std::size_t length) { length_ = length; }
-  std::array<uint8_t, 8192>::pointer getBuffer() { return buffer_.data(); }
-  void resetPosition() { position_ = 0; }
+  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
+  void closeConnection(ConnectionId connectionId);
 
-  bool isEmpty() const { return position_ >= length_; }
-  std::size_t bytesLeft() const { return length_ - position_; }
-  uint8_t peekU8() const;
-  uint8_t getU8();
-  uint16_t peekU16() const;
-  uint16_t getU16();
-  uint32_t peekU32() const;
-  uint32_t getU32();
-  std::string getString();
-  std::vector<uint8_t> getBytes(int numBytes);
+  // Handler for Acceptor
+  void onAccept(boost::asio::ip::tcp::socket socket);
+
+  // Handler for Connection
+  void onConnectionClosed(ConnectionId connectionId);
+  void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
 
  private:
-  std::array<uint8_t, 8192> buffer_;
-  std::size_t length_;
-  std::size_t position_;
+  Acceptor acceptor_;
+  Callbacks callbacks_;
+
+  ConnectionId nextConnectionId_;
+  std::unordered_map<ConnectionId, Connection> connections_;
 };
 
-#endif  // NETWORK_INCOMINGPACKET_H_
+#endif  // NETWORK_SERVERIMPL_H_
