@@ -76,7 +76,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
       default:
       {
         LOG_DEBUG("Unknown packet from connection id: %d, packet id: %d", connectionId, packetId);
-        server->closeConnection(connectionId);
+        server->closeConnection(connectionId, true);
         break;
       }
     }
@@ -140,7 +140,7 @@ void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
   server->sendPacket(connectionId, std::move(response));
 
   LOG_DEBUG("Closing connection id: %d", connectionId);
-  server->closeConnection(connectionId);
+  server->closeConnection(connectionId, false);
 }
 
 int main(int argc, char* argv[])

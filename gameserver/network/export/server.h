@@ -52,7 +52,7 @@ class Server
   virtual void stop() = 0;
 
   virtual void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) = 0;
-  virtual void closeConnection(ConnectionId connectionId) = 0;
+  virtual void closeConnection(ConnectionId connectionId, bool force) = 0;
 };
 
 #endif  // NETWORK_SERVER_H_

@@ -32,8 +32,8 @@
 namespace BIP = boost::asio::ip;
 
 ServerImpl::ServerImpl(boost::asio::io_service* io_service,
-               unsigned short port,
-               const Callbacks& callbacks)
+                       unsigned short port,
+                       const Callbacks& callbacks)
   : acceptor_(io_service,
               port,
               {
@@ -43,80 +43,97 @@ ServerImpl::ServerImpl(boost::asio::io_service* io_service,
     nextConnectionId_(0)
 
 {
-  LOG_INFO("Starting ServerImpl.");
 }
 
 ServerImpl::~ServerImpl()
 {
-  LOG_INFO("Closing ServerImpl.");
-  if (acceptor_.isListening())
+  // Close all Connections
+  while (!connections_.empty())
   {
-    stop();
+    // Connection will call the onConnectionClosed callback
+    // which erases it from connections_
+    connections_.begin()->second.close(true);
   }
 }
 
 bool ServerImpl::start()
 {
+  LOG_INFO("%s", __func__);
+
   return acceptor_.start();
 }
 
 void ServerImpl::stop()
 {
-  acceptor_.stop();
+  LOG_INFO("%s", __func__);
 
-  // Closing a Connection will erase it from connections_ due to the onConnectionClosed callback
-  while (!connections_.empty())
-  {
-    connections_.begin()->second.close(false);
-  }
+  acceptor_.stop();
+  connections_.clear();
+  nextConnectionId_ = 0;
 }
 
 void ServerImpl::sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
 {
-  LOG_DEBUG("sendPacket() connectionId: %d", connectionId);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
   connections_.at(connectionId).sendPacket(std::move(packet));
 }
 
-void ServerImpl::closeConnection(ConnectionId connectionId)
+void ServerImpl::closeConnection(ConnectionId connectionId, bool force)
 {
-  LOG_DEBUG("closeConnection() connectionId: %d", connectionId);
-  connections_.at(connectionId).close(true);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
+  connections_.at(connectionId).close(force);
 }
 
 // Handler for Acceptor
 void ServerImpl::onAccept(BIP::tcp::socket socket)
 {
-  int connectionId = nextConnectionId_++;
+  LOG_DEBUG("%s: connectionId: %d num connections: %lu",
+            __func__,
+            nextConnectionId_,
+            connections_.size() + 1);
+
+  auto connectionId = nextConnectionId_;
+  nextConnectionId_ += 1;
 
   // Create and insert Connection
   Connection::Callbacks callbacks
   {
+    std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1),
+    std::bind(&ServerImpl::onDisconnected, this, connectionId),
     std::bind(&ServerImpl::onConnectionClosed, this, connectionId),
-    std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1)
   };
   connections_.emplace(std::piecewise_construct,
                        std::forward_as_tuple(connectionId),
                        std::forward_as_tuple(std::move(socket), callbacks));
 
-  LOG_DEBUG("onServerImplAccept() new connectionId: %d no connections: %lu",
-            connectionId,
-            connections_.size());
-
   callbacks_.onClientConnected(connectionId);
 }
 
 // Handler for Connection
-void ServerImpl::onConnectionClosed(ConnectionId connectionId)
-{
-  connections_.erase(connectionId);
-  LOG_DEBUG("onConnectionClosed() connectionId: %d no connections: %lu",
-            connectionId,
-            connections_.size());
-  callbacks_.onClientDisconnected(connectionId);
-}
-
 void ServerImpl::onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
-  LOG_DEBUG("onPacketReceived() connectionId: %d", connectionId);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
   callbacks_.onPacketReceived(connectionId, packet);
+}
+
+void ServerImpl::onDisconnected(ConnectionId connectionId)
+{
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
+  callbacks_.onClientDisconnected(connectionId);
+
+  // The Connection will call the onConnectionClosed callback after this call
+}
+
+void ServerImpl::onConnectionClosed(ConnectionId connectionId)
+{
+  LOG_DEBUG("%s: connectionId: %d num connections: %lu",
+            __func__,
+            connectionId,
+            connections_.size() - 1);
+
+  connections_.erase(connectionId);
 }

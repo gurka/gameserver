@@ -41,12 +41,17 @@
 #include "world.h"
 #include "worldfactory.h"
 
-static AccountReader accountReader;
-static GameEngineProxy gameEngineProxy;
-static std::unique_ptr<Server> server;
+static boost::asio::io_service io_service;
 static std::unique_ptr<World> world;
-
+static GameEngineProxy gameEngineProxy;
+static AccountReader accountReader;
+static std::unique_ptr<Server> server;
 static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(gurka): Maybe change to array?
+
+void onProtocolClosed(ConnectionId connectionId)
+{
+  protocols.erase(connectionId);
+}
 
 void onClientConnected(ConnectionId connectionId)
 {
@@ -55,7 +60,8 @@ void onClientConnected(ConnectionId connectionId)
   // Create and store Protocol for this Connection
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
-  auto protocol = std::unique_ptr<Protocol>(new Protocol71(&gameEngineProxy,
+  auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
+                                                           &gameEngineProxy,
                                                            world.get(),
                                                            connectionId,
                                                            server.get(),
@@ -70,8 +76,7 @@ void onClientDisconnected(ConnectionId connectionId)
 {
   LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
 
-  // Delete Protocol
-  protocols.erase(connectionId);
+  protocols.at(connectionId)->disconnected();
 }
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
@@ -134,7 +139,25 @@ int main(int argc, char* argv[])
   printf("Worldserver logging:       %s\n", logger_worldserver.c_str());
   printf("--------------------------------------------------------------------------------\n");
 
-  boost::asio::io_service io_service;
+  // Create World
+  world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
+  if (!world)
+  {
+    LOG_ERROR("World could not be loaded");
+    return -1;
+  }
+
+  // Create GameEngine
+  gameEngineProxy = GameEngineProxy(std::unique_ptr<GameEngine>(new GameEngine(&io_service,
+                                                                               loginMessage,
+                                                                               world.get())));
+
+  // Load AccountReader
+  if (!accountReader.loadFile(accountsFilename))
+  {
+    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
+    return -2;
+  }
 
   // Create Server
   Server::Callbacks callbacks =
@@ -145,52 +168,31 @@ int main(int argc, char* argv[])
   };
   server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
-  // Create World
-  world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
-  if (!world)
-  {
-    LOG_ERROR("World could not be loaded");
-    return -1;
-  }
-
-  // Create GameEngine
-  auto gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service,
-                                                               loginMessage,
-                                                               world.get()));
-  gameEngineProxy.setGameEngine(std::move(gameEngine));
-
-  // Load AccountReader
-  if (!accountReader.loadFile(accountsFilename))
-  {
-    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
-    return -2;
-  }
-
   // Stop on ^C from user
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
 
   // Start Server, GameEngine and io_service
-  if (!server->start())
-  {
-    LOG_ERROR("Could not start Server");
-    return -3;
-  }
-
   if (!gameEngineProxy.start())
   {
     LOG_ERROR("Could not start GameEngine");
+    return -3;
+  }
+
+  if (!server->start())
+  {
+    LOG_ERROR("Could not start Server");
     return -4;
   }
 
   // run() will continue to run until ^C from user is catched
   io_service.run();
 
-  LOG_INFO("Stopping GameEngine");
-  gameEngineProxy.stop();
-
   LOG_INFO("Stopping Server");
   server->stop();
+
+  LOG_INFO("Stopping GameEngine");
+  gameEngineProxy.stop();
 
   return 0;
 }

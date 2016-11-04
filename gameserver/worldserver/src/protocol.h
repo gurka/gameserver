@@ -40,6 +40,9 @@ class Protocol : public CreatureCtrl
  public:
   virtual ~Protocol() = default;
 
+  // Called by WorldServer
+  virtual void disconnected() = 0;
+
   // Called by Server
   virtual void parsePacket(IncomingPacket* packet) = 0;
 

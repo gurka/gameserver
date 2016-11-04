@@ -36,35 +36,34 @@
 class IncomingPacket;
 class OutgoingPacket;
 
-using ConnectionId = int;
-
 class ServerImpl : public Server
 {
  public:
   ServerImpl(boost::asio::io_service* io_service,
              unsigned short port,
              const Callbacks& callbacks);
-  virtual ~ServerImpl();
+  ~ServerImpl();
 
   bool start();
   void stop();
 
   void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
-  void closeConnection(ConnectionId connectionId);
+  void closeConnection(ConnectionId connectionId, bool force);
 
+ private:
   // Handler for Acceptor
   void onAccept(boost::asio::ip::tcp::socket socket);
 
   // Handler for Connection
-  void onConnectionClosed(ConnectionId connectionId);
   void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
+  void onDisconnected(ConnectionId connectionId);
+  void onConnectionClosed(ConnectionId connectionId);
 
- private:
   Acceptor acceptor_;
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;
-  std::unordered_map<ConnectionId, Connection> connections_;
+  std::unordered_map<ConnectionId, Connection> connections_;  // TODO(gurka): vector/array?
 };
 
 #endif  // NETWORK_SERVERIMPL_H_

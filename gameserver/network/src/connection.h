@@ -39,8 +39,9 @@ class Connection
  public:
   struct Callbacks
   {
-    std::function<void(void)> onConnectionClosed;
     std::function<void(IncomingPacket*)> onPacketReceived;
+    std::function<void(void)> onDisconnected;
+    std::function<void(void)> onConnectionClosed;
   };
 
   Connection(boost::asio::ip::tcp::socket socket, const Callbacks& callbacks);
@@ -50,12 +51,17 @@ class Connection
   Connection(const Connection&) = delete;
   Connection& operator=(const Connection&) = delete;
 
-  void close(bool gracefully);
+  void close(bool force);
   void sendPacket(OutgoingPacket&& packet);
 
  private:
   void sendPacketInternal();
+  void onPacketHeaderSent(const boost::system::error_code& errorCode, std::size_t len);
+  void onPacketDataSent(const boost::system::error_code& errorCode, std::size_t len);
+
   void receivePacket();
+  void onPacketHeaderReceived(const boost::system::error_code& errorCode, std::size_t len);
+  void onPacketDataReceived(const boost::system::error_code& errorCode, std::size_t len);
 
   boost::asio::ip::tcp::socket socket_;
   Callbacks callbacks_;

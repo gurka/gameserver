@@ -57,7 +57,7 @@ bool Acceptor::start()
   }
   else
   {
-    LOG_INFO("Starting server");
+    LOG_INFO("Starting Acceptor");
     state_ = LISTENING;
     asyncAccept();
     return true;
@@ -72,7 +72,7 @@ void Acceptor::stop()
   }
   else
   {
-    LOG_INFO("Stopping server");
+    LOG_INFO("Stopping Acceptor");
     state_ = CLOSING;
     acceptor_.cancel();
   }
@@ -82,14 +82,18 @@ void Acceptor::asyncAccept()
 {
   acceptor_.async_accept(socket_, [this](const boost::system::error_code& errorCode)
   {
-    if (!errorCode)
+    if (errorCode == boost::asio::error::operation_aborted)
     {
-      LOG_INFO("Accepted connection");
-      callbacks_.onAccept(std::move(socket_));
+      return;
+    }
+    else if (errorCode)
+    {
+      LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
     }
     else
     {
-      LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
+      LOG_INFO("Accepted connection");
+      callbacks_.onAccept(std::move(socket_));
     }
 
     if (state_ == LISTENING)

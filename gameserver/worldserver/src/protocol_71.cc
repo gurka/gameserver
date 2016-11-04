@@ -36,12 +36,14 @@
 #include "tile.h"
 #include "account.h"
 
-Protocol71::Protocol71(GameEngineProxy* gameEngineProxy,
+Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
+                       GameEngineProxy* gameEngineProxy,
                        WorldInterface* worldInterface,
                        ConnectionId connectionId,
                        Server* server,
                        AccountReader* accountReader)
-  : playerId_(Creature::INVALID_ID),
+  : closeProtocol_(closeProtocol),
+    playerId_(Creature::INVALID_ID),
     gameEngineProxy_(gameEngineProxy),
     worldInterface_(worldInterface),
     connectionId_(connectionId),
@@ -51,9 +53,32 @@ Protocol71::Protocol71(GameEngineProxy* gameEngineProxy,
   std::fill(knownCreatures_.begin(), knownCreatures_.end(), Creature::INVALID_ID);
 }
 
+void Protocol71::disconnected()
+{
+  // We may not send any more packets now
+  server_ = nullptr;
+
+  if (isLoggedIn())
+  {
+    // We are logged in to the game, add a task to despawn
+    gameEngineProxy_->addTask(&GameEngine::playerDespawn, playerId_);
+  }
+  else
+  {
+    // We are not logged in to the game, close the protocol now
+    closeProtocol_();  // WARNING: This instance is deleted after this call
+  }
+}
+
 void Protocol71::parsePacket(IncomingPacket* packet)
 {
-  if (playerId_ == Creature::INVALID_ID)
+  if (!isConnected())
+  {
+    LOG_ERROR("%s: not connected", __func__);
+    return;
+  }
+
+  if (!isLoggedIn())
   {
     // Not logged in, only allow login packet
     auto packetType = packet->getU8();
@@ -64,7 +89,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     else
     {
       LOG_ERROR("%s: Expected login packet but received packet type: 0x%X", __func__, packetType);
-      server_->closeConnection(connectionId_);
+      server_->closeConnection(connectionId_, true);
     }
 
     return;
@@ -153,6 +178,11 @@ void Protocol71::parsePacket(IncomingPacket* packet)
 
 void Protocol71::onCreatureSpawn(const Creature& creature, const Position& position)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0x6A);
@@ -169,6 +199,16 @@ void Protocol71::onCreatureSpawn(const Creature& creature, const Position& posit
 
 void Protocol71::onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos)
 {
+  if (!isConnected())
+  {
+    if (creature.getCreatureId() == playerId_)
+    {
+      // We are no longer in game and the connection has been closed, close the protocol
+      closeProtocol_();  // WARNING: This instance is deleted after this call
+    }
+    return;
+  }
+
   OutgoingPacket packet;
 
   // Logout poff
@@ -185,7 +225,8 @@ void Protocol71::onCreatureDespawn(const Creature& creature, const Position& pos
   if (creature.getCreatureId() == playerId_)
   {
     // This player despawned!
-    server_->closeConnection(connectionId_);
+    server_->closeConnection(connectionId_, false);
+    closeProtocol_();  // WARNING: This instance is deleted after this call
   }
 }
 
@@ -195,6 +236,11 @@ void Protocol71::onCreatureMove(const Creature& creature,
                                 const Position& newPosition,
                                 uint8_t newStackPos)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   // TODO(gurka): This should be handled by GameEngine...
   // or actually by World (it handles all World logic, and should decide when a creature may move again)
   /*
@@ -292,6 +338,11 @@ void Protocol71::onCreatureMove(const Creature& creature,
 
 void Protocol71::onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0x6B);
@@ -308,6 +359,11 @@ void Protocol71::onCreatureTurn(const Creature& creature, const Position& positi
 
 void Protocol71::onCreatureSay(const Creature& creature, const Position& position, const std::string& message)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0xAA);
@@ -324,6 +380,11 @@ void Protocol71::onCreatureSay(const Creature& creature, const Position& positio
 
 void Protocol71::onItemRemoved(const Position& position, uint8_t stackPos)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0x6C);
@@ -335,6 +396,11 @@ void Protocol71::onItemRemoved(const Position& position, uint8_t stackPos)
 
 void Protocol71::onItemAdded(const Item& item, const Position& position)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0x6A);
@@ -346,6 +412,11 @@ void Protocol71::onItemAdded(const Item& item, const Position& position)
 
 void Protocol71::onTileUpdate(const Position& position)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0x69);
@@ -360,6 +431,11 @@ void Protocol71::onTileUpdate(const Position& position)
 void Protocol71::onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage)
 {
   playerId_ = player.getCreatureId();
+
+  if (!isConnected())
+  {
+    return;
+  }
 
   OutgoingPacket packet;
 
@@ -426,6 +502,11 @@ void Protocol71::onPlayerSpawn(const Player& player, const Position& position, c
 
 void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   addEquipment(player, inventoryIndex, &packet);
@@ -435,6 +516,11 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 
 void Protocol71::onUseItem(const Item& item)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   if (!item.hasAttribute("maxitems"))
   {
     LOG_ERROR("onUseItem(): Container Item: %d missing \"maxitems\" attribute", item.getItemId());
@@ -457,6 +543,11 @@ void Protocol71::onUseItem(const Item& item)
 
 void Protocol71::sendTextMessage(const std::string& message)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0xB4);
@@ -468,6 +559,11 @@ void Protocol71::sendTextMessage(const std::string& message)
 
 void Protocol71::sendCancel(const std::string& message)
 {
+  if (!isConnected())
+  {
+    return;
+  }
+
   OutgoingPacket packet;
 
   packet.addU8(0xB4);
@@ -692,7 +788,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
     response.addU8(0x14);
     response.addString("Invalid character.");
     server_->sendPacket(connectionId_, std::move(response));
-    server_->closeConnection(connectionId_);
+    server_->closeConnection(connectionId_, false);
     return;
   }
   // Check if password is correct
@@ -702,7 +798,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
     response.addU8(0x14);
     response.addString("Invalid password.");
     server_->sendPacket(connectionId_, std::move(response));
-    server_->closeConnection(connectionId_);
+    server_->closeConnection(connectionId_, false);
     return;
   }
 

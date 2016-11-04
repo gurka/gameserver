@@ -47,11 +47,15 @@ class AccountReader;
 class Protocol71 : public Protocol
 {
  public:
-  Protocol71(GameEngineProxy* gameEngineProxy,
+  Protocol71(const std::function<void(void)>& closeProtocol,
+             GameEngineProxy* gameEngineProxy,
              WorldInterface* worldInterface,
              ConnectionId connectionId,
              Server* server,
              AccountReader* accountReader);
+
+  // Called by WorldServer (from Protocol)
+  void disconnected();
 
   // Called by Server (from Protocol)
   void parsePacket(IncomingPacket* packet);
@@ -80,6 +84,9 @@ class Protocol71 : public Protocol
   void sendCancel(const std::string& message);
 
  private:
+  bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
+  bool isConnected() const { return server_ != nullptr; }
+
   // Helper functions for creating OutgoingPackets
   bool canSee(const Position& position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
@@ -100,6 +107,7 @@ class Protocol71 : public Protocol
   // Helper functions when parsing IncomingPackets
   Position getPosition(IncomingPacket* packet) const;
 
+  std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
   GameEngineProxy* gameEngineProxy_;
   WorldInterface* worldInterface_;

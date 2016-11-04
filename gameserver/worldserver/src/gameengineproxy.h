@@ -34,6 +34,16 @@
 class GameEngineProxy
 {
  public:
+  GameEngineProxy()
+    : gameEngine_()
+  {
+  }
+
+  GameEngineProxy(std::unique_ptr<GameEngine> gameEngine)
+    : gameEngine_(std::move(gameEngine))
+  {
+  }
+
   bool start() { return gameEngine_->start(); }
   bool stop() { return gameEngine_->stop(); }
   void addPlayer(const std::string& name, Protocol* protocol)
@@ -45,11 +55,6 @@ class GameEngineProxy
   void addTask(F&& f, Args&&... args)
   {
     gameEngine_->addTask(f, args...);
-  }
-
-  void setGameEngine(std::unique_ptr<GameEngine> gameEngine)
-  {
-    gameEngine_ = std::move(gameEngine);
   }
 
  private:
