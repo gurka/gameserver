@@ -803,7 +803,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, add Player to GameEngine
-  gameEngineProxy_->addPlayer(character_name, this);
+  gameEngineProxy_->addTask(&GameEngine::playerSpawn, character_name, this);
 }
 
 void Protocol71::parseMoveClick(IncomingPacket* packet)

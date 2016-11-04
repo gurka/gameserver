@@ -66,10 +66,8 @@ class GameEngine
     taskQueue_.addTask(std::bind(f, this, args...));
   }
 
-  void addPlayer(const std::string& name, Protocol* protocol);
-
   // These functions should only be called via addTask
-  void playerSpawn(CreatureId creatureId);
+  void playerSpawn(const std::string& name, Protocol* protocol);
   void playerDespawn(CreatureId creatureId);
 
   void playerMove(CreatureId creatureId, Direction direction);

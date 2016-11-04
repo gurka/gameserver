@@ -46,10 +46,6 @@ class GameEngineProxy
 
   bool start() { return gameEngine_->start(); }
   bool stop() { return gameEngine_->stop(); }
-  void addPlayer(const std::string& name, Protocol* protocol)
-  {
-    return gameEngine_->addPlayer(name, protocol);
-  }
 
   template<class F, class... Args>
   void addTask(F&& f, Args&&... args)

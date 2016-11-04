@@ -84,23 +84,17 @@ bool GameEngine::stop()
   }
 }
 
-void GameEngine::addPlayer(const std::string& name, Protocol* protocol)
+void GameEngine::playerSpawn(const std::string& name, Protocol* protocol)
 {
   // Create the Player
-  Player player{name};
-  auto creatureId = player.getCreatureId();
+  Player newPlayer{name};
+  auto playerId = newPlayer.getCreatureId();
 
   // Store the Player and the Protocol
-  playerProtocol_.insert({player.getCreatureId(), {std::move(player), protocol}});
+  playerProtocol_.insert({playerId, {std::move(newPlayer), protocol}});
 
-  // Add a task to spawn the Player
-  addTask(&GameEngine::playerSpawn, creatureId);
-}
-
-void GameEngine::playerSpawn(CreatureId creatureId)
-{
-  auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  // Get the Player, since newPlayer is invalid (moved from)
+  auto& player = getPlayer(playerId);
 
   LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
 
@@ -111,9 +105,13 @@ void GameEngine::playerSpawn(CreatureId creatureId)
   if (adjustedPosition == Position::INVALID)
   {
     LOG_ERROR("%s: Could not spawn player", __func__);
+    // TODO(gurka): Maybe let Protocol know that the player couldn't spawn, instead of time out?
     return;
   }
-  protocol->onPlayerSpawn(player, adjustedPosition, loginMessage_);
+  else
+  {
+    protocol->onPlayerSpawn(player, adjustedPosition, loginMessage_);
+  }
 }
 
 void GameEngine::playerDespawn(CreatureId creatureId)

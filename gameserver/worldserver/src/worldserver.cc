@@ -41,6 +41,7 @@
 #include "world.h"
 #include "worldfactory.h"
 
+// Keep this order!
 static boost::asio::io_service io_service;
 static std::unique_ptr<World> world;
 static GameEngineProxy gameEngineProxy;
