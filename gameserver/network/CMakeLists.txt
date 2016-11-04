@@ -19,3 +19,16 @@ set(src
 )
 
 add_library(network ${src})
+
+if (unittest)
+  #set(test_src
+  #)
+  #
+  #add_executable(test_network ${test_src})
+  #target_link_libraries(test_network
+  #  gtest_main
+  #  gmock_main
+  #)
+  #
+  #set_property(TARGET test_network PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()

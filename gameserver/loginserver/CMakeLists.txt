@@ -13,4 +13,5 @@ target_link_libraries(loginserver
   "utils"
   ${LIBRARIES}
 )
+
 set_property(TARGET loginserver PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -5,7 +5,7 @@ case $1 in
     cd ..
     mkdir -p build_debug && cd build_debug && cmake .. -DCMAKE_BUILD_TYPE=debug
     cd ..
-    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dgameserver_test=ON
+    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dunittest=ON
     ;;
 
   'release')
@@ -17,7 +17,7 @@ case $1 in
     ;;
 
   'test')
-    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dgameserver_test=ON
+    mkdir -p build_test && cd build_test && cmake .. -DCMAKE_BUILD_TYPE=debug -Dunittest=ON
     ;;
 
   *)

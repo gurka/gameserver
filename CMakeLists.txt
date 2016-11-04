@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-option(gameserver_test "Unit tests" OFF)
+option(unittest "Unit tests" OFF)
 project(gameserver)
 
 # Compiler flags
@@ -11,22 +11,24 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 # Required libraries (Boost)
 set(LIBRARIES boost_system pthread)
 
-# Loginserver
-add_subdirectory("gameserver/loginserver")
-target_include_directories(loginserver PUBLIC
-  "gameserver/account/export"
-  "gameserver/network/export"
-  "gameserver/utils/export"
-)
+if (NOT unittest)
+  # Loginserver
+  add_subdirectory("gameserver/loginserver")
+  target_include_directories(loginserver PUBLIC
+    "gameserver/account/export"
+    "gameserver/network/export"
+    "gameserver/utils/export"
+  )
 
-# Worldserver
-add_subdirectory("gameserver/worldserver")
-target_include_directories(worldserver PUBLIC
-  "gameserver/account/export"
-  "gameserver/network/export"
-  "gameserver/utils/export"
-  "gameserver/world/export"
-)
+  # Worldserver
+  add_subdirectory("gameserver/worldserver")
+  target_include_directories(worldserver PUBLIC
+    "gameserver/account/export"
+    "gameserver/network/export"
+    "gameserver/utils/export"
+    "gameserver/world/export"
+  )
+endif()
 
 # Account
 add_subdirectory("gameserver/account")
@@ -60,44 +62,20 @@ target_include_directories(world PUBLIC
 )
 
 # Unit tests
-if (gameserver_test)
-  # TODO: Move to own CMakeLists.txt
-  set(unittest_src
-    "test/utils/configparser_test.cc"
-    "test/account/account_test.cc"
-    "test/world/position_test.cc"
-    "test/world/creature_test.cc"
-    "test/world/item_test.cc"
-    "test/world/tile_test.cc"
-    "test/world/world_test.cc"
-  )
-
-  set(unittest_inc
-    "gameserver/account/export"
-    "gameserver/network/export"
-    "gameserver/utils/export"
-    "gameserver/world/export"
-    "lib/rapidxml"
-  )
-
-  set(unittest_lib
-    "account"
-    "network"
-    "utils"
-    "world"
-  )
-
+if (unittest)
   add_subdirectory(lib/googletest)
 
   enable_testing()
 
-  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+  target_include_directories(test_account PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  target_include_directories(test_account PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 
-  add_executable(unittest ${unittest_src})
-  target_include_directories(unittest PUBLIC ${unittest_inc})
+  target_include_directories(test_utils PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  target_include_directories(test_utils PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 
-  target_link_libraries(unittest gtest_main)
-  target_link_libraries(unittest gmock_main)
-  target_link_libraries(unittest ${unittest_lib})
+  #target_include_directories(test_network PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  #target_include_directories(test_network PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+
+  target_include_directories(test_world PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  target_include_directories(test_world PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 endif()

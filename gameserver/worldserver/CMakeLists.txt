@@ -23,4 +23,5 @@ target_link_libraries(worldserver
   "world"
   ${LIBRARIES}
 )
+
 set_property(TARGET worldserver PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

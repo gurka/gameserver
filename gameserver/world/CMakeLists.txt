@@ -24,3 +24,25 @@ set(src
 )
 
 add_library(world ${src})
+
+if (unittest)
+  set(test_src
+    "test/mocks/creaturectrl_mock.h"
+    "test/mocks/itemfactory_mock.h"
+    "test/position_test.cc"
+    "test/creature_test.cc"
+    "test/item_test.cc"
+    "test/world_test.cc"
+    "test/tile_test.cc"
+  )
+
+  add_executable(test_world ${test_src})
+  target_link_libraries(test_world
+    gtest_main
+    gmock_main
+    world
+    utils
+  )
+
+  set_property(TARGET test_world PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
