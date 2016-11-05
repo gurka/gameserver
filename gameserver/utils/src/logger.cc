@@ -38,7 +38,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "account.cc",         Module::ACCOUNT     },
 
   // src/network
-  { "connection.cc",      Module::NETWORK     },
+  { "connection.h",       Module::NETWORK     },
   { "server_impl.cc",     Module::NETWORK     },
   { "incomingpacket.cc",  Module::NETWORK     },
   { "outgoingpacket.cc",  Module::NETWORK     },

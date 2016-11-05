@@ -100,7 +100,7 @@ void ServerImpl::onAccept(BIP::tcp::socket socket)
   nextConnectionId_ += 1;
 
   // Create and insert Connection
-  Connection::Callbacks callbacks
+  Connection<Backend>::Callbacks callbacks
   {
     std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1),
     std::bind(&ServerImpl::onDisconnected, this, connectionId),

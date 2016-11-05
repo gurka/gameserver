@@ -4,7 +4,6 @@ project(network)
 
 set(src
   "src/acceptor.h"
-  "src/connection.cc"
   "src/connection.h"
   "src/incomingpacket.cc"
   "src/outgoingpacket.cc"

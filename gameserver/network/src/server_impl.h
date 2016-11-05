@@ -61,11 +61,10 @@ class ServerImpl : public Server
 
   // Backend for Acceptor
   // TODO(gurka): Common backend for acceptor and connection + move to loginserver / worldserver
-  struct AcceptorBackend
+  struct Backend
   {
     using Service = boost::asio::io_service;
 
-    //using Acceptor = boost::asio::ip::tcp::acceptor;
     class Acceptor : public boost::asio::ip::tcp::acceptor
     {
      public:
@@ -78,13 +77,30 @@ class ServerImpl : public Server
     using Socket = boost::asio::ip::tcp::socket;
     using ErrorCode = boost::system::error_code;
     using Error = boost::asio::error::basic_errors;
+    using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
+
+    static void async_write(Socket& socket,
+                            const uint8_t* buffer,
+                            std::size_t length,
+                            const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
+    {
+      boost::asio::async_write(socket, boost::asio::buffer(buffer, length), handler);
+    }
+
+    static void async_read(Socket& socket,
+                           uint8_t* buffer,
+                           std::size_t length,
+                           const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
+    {
+      boost::asio::async_read(socket, boost::asio::buffer(buffer, length), handler);
+    }
   };
 
-  Acceptor<AcceptorBackend> acceptor_;
+  Acceptor<Backend> acceptor_;
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;
-  std::unordered_map<ConnectionId, Connection> connections_;  // TODO(gurka): vector/array?
+  std::unordered_map<ConnectionId, Connection<Backend>> connections_;  // TODO(gurka): vector/array?
 };
 
 #endif  // NETWORK_SERVERIMPL_H_
