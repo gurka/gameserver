@@ -24,6 +24,7 @@
 
 #include "worldfactory.h"
 
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>

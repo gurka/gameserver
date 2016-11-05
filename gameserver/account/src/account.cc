@@ -24,6 +24,7 @@
 
 #include "account.h"
 
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <utility>

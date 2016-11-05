@@ -7,7 +7,6 @@ project(gameserver)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++11 -pedantic -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
-
 # Required libraries (Boost)
 set(LIBRARIES boost_system pthread)
 
@@ -67,15 +66,33 @@ if (unittest)
 
   enable_testing()
 
-  target_include_directories(test_account PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  target_include_directories(test_account PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+  # Utils stub
+  target_include_directories(utils_test_stubs PUBLIC
+    "gameserver/utils/export"
+  )
 
-  target_include_directories(test_utils PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  target_include_directories(test_utils PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+  # Account test
+  target_include_directories(account_test PUBLIC
+    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+  )
 
-  #target_include_directories(test_network PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  #target_include_directories(test_network PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+  # Utils test
+  target_include_directories(utils_test PUBLIC
+    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+    "gameserver/utils/export"
+  )
 
-  target_include_directories(test_world PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  target_include_directories(test_world PUBLIC ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+  # Network test
+  #  target_include_directories(network_test PUBLIC
+  #    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+  #    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+  #  )
+
+  # World test
+  target_include_directories(world_test PUBLIC
+    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+  )
 endif()

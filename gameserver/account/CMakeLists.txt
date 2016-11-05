@@ -10,17 +10,17 @@ set(src
 add_library(account ${src})
 
 if (unittest)
-  set(test_src
+  set(src_test
     "test/account_test.cc"
   )
 
-  add_executable(test_account ${test_src})
-  target_link_libraries(test_account
+  add_executable(account_test ${src_test})
+  target_link_libraries(account_test
     gtest_main
     gmock_main
     account
-    utils
+    utils_test_stubs
   )
 
-  set_property(TARGET test_account PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set_property(TARGET account_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

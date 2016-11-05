@@ -25,6 +25,7 @@
 #include "itemfactory.h"
 
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 
