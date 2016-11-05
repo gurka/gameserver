@@ -135,7 +135,7 @@ TEST_F(AcceptorTest, StartStop)
   acceptor_.stop();  // Should not have any side effects
 }
 
-TEST_F(AcceptorTest, AcceptCallback)
+TEST_F(AcceptorTest, AsyncAccept)
 {
   using ::testing::_;
   using ::testing::SaveArg;
@@ -147,8 +147,51 @@ TEST_F(AcceptorTest, AcceptCallback)
 
   // Call callback with non-error errorcode
   EXPECT_CALL(onAcceptMock_, onAccept(_));
-  EXPECT_CALL(service_, async_accept(_, _));  // Acceptor will call async_accept again, to accept next connection
+  EXPECT_CALL(service_, async_accept(_, _));  // Acceptor should call async_accept again, to accept next connection
   callback(0);
+
+  // Stop Acceptor
+  EXPECT_CALL(service_, acceptor_cancel());
+  acceptor_.stop();
+}
+
+TEST_F(AcceptorTest, AsyncAcceptError)
+{
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // Start async accept, save callback
+  std::function<void(Backend::ErrorCode)> callback;
+  EXPECT_CALL(service_, async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
+  EXPECT_TRUE(acceptor_.start());
+
+  // Call callback with any errorcode except operation_aborted (1)
+  EXPECT_CALL(service_, async_accept(_, _));
+  callback(49);
+
+  // Call callback with non-error errorcode to make sure new accepts is handled correctly
+  EXPECT_CALL(onAcceptMock_, onAccept(_));
+  EXPECT_CALL(service_, async_accept(_, _));
+  callback(0);
+
+  // Stop Acceptor
+  EXPECT_CALL(service_, acceptor_cancel());
+  acceptor_.stop();
+}
+
+TEST_F(AcceptorTest, AsyncAcceptAbort)
+{
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // Start async accept, save callback
+  std::function<void(Backend::ErrorCode)> callback;
+  EXPECT_CALL(service_, async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
+  EXPECT_TRUE(acceptor_.start());
+
+  // Call callback with Error::operation_aborted (1)
+  // Acceptor should not call onAccept callback nor start a new async_accept
+  callback(Backend::Error::operation_aborted);
 
   // Stop Acceptor
   EXPECT_CALL(service_, acceptor_cancel());

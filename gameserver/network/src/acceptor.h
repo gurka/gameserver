@@ -128,6 +128,9 @@ class Acceptor
     }
     else  // state == CLOSING || state == CLOSED
     {
+      // We should never really get here
+      // If we cancel the Acceptor this function will be called with
+      // Error::operation_aborted, which is catched earlier in this function
       LOG_INFO("Acceptor stopped");
       state_ = CLOSED;
     }
