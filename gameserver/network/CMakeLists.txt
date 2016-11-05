@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.0)
 project(network)
 
 set(src
-  "src/acceptor.cc"
   "src/acceptor.h"
   "src/connection.cc"
   "src/connection.h"
@@ -21,14 +20,17 @@ set(src
 add_library(network ${src})
 
 if (unittest)
-  #set(test_src
-  #)
-  #
-  #add_executable(test_network ${test_src})
-  #target_link_libraries(test_network
-  #  gtest_main
-  #  gmock_main
-  #)
-  #
-  #set_property(TARGET test_network PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(src_test
+    "test/acceptor_test.cc"
+  )
+
+  add_executable(network_test ${src_test})
+  target_link_libraries(network_test
+    gtest_main
+    gmock_main
+    network
+    utils_test_stubs
+  )
+
+  set_property(TARGET network_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

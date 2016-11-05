@@ -47,13 +47,7 @@ ServerImpl::ServerImpl(boost::asio::io_service* io_service,
 
 ServerImpl::~ServerImpl()
 {
-  // Close all Connections
-  while (!connections_.empty())
-  {
-    // Connection will call the onConnectionClosed callback
-    // which erases it from connections_
-    connections_.begin()->second.close(true);
-  }
+  stop();
 }
 
 bool ServerImpl::start()
@@ -68,7 +62,15 @@ void ServerImpl::stop()
   LOG_INFO("%s", __func__);
 
   acceptor_.stop();
-  connections_.clear();
+
+  // Close all Connections
+  while (!connections_.empty())
+  {
+    // Connection will call the onConnectionClosed callback
+    // which erases it from connections_
+    connections_.begin()->second.close(true);
+  }
+
   nextConnectionId_ = 0;
 }
 

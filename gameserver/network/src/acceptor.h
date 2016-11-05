@@ -27,34 +27,114 @@
 
 #include <functional>
 #include <memory>
-#include <boost/asio.hpp>  //NOLINT
+#include <utility>
 
+#include "logger.h"
+
+template <typename Backend>
 class Acceptor
 {
  public:
+  using BEAcceptor = typename Backend::Acceptor;
+  using Service    = typename Backend::Service;
+  using Socket     = typename Backend::Socket;
+  using ErrorCode  = typename Backend::ErrorCode;
+  using Error      = typename Backend::Error;
+
   struct Callbacks
   {
-    std::function<void(boost::asio::ip::tcp::socket socket)> onAccept;
+    std::function<void(Socket)> onAccept;
   };
 
-  Acceptor(boost::asio::io_service* io_service,
+  Acceptor(Service* io_service,
            unsigned short port,
-           const Callbacks& callbacks);
-  virtual ~Acceptor();
+           const Callbacks& callbacks)
+    : acceptor_(*io_service, port),
+      socket_(*io_service),
+      callbacks_(callbacks),
+      state_(CLOSED)
+  {
+  }
+
+  virtual ~Acceptor()
+  {
+    if (isListening())
+    {
+      stop();
+    }
+  }
 
   // Delete copy constructors
   Acceptor(const Acceptor&) = delete;
   Acceptor& operator=(const Acceptor&) = delete;
 
-  bool start();
-  void stop();
+  bool start()
+  {
+    if (state_ != CLOSED)
+    {
+      LOG_ERROR("Acceptor already starting or currently shutting down");
+      return false;
+    }
+    else
+    {
+      LOG_INFO("Starting Acceptor");
+      state_ = LISTENING;
+      accept();
+      return true;
+    }
+  }
+
+  void stop()
+  {
+    if (state_ != LISTENING)
+    {
+      LOG_ERROR("Acceptor already stopped or currently shutting down");
+    }
+    else
+    {
+      LOG_INFO("Stopping Acceptor");
+      state_ = CLOSING;
+      acceptor_.cancel();
+    }
+  }
+
   bool isListening() const { return state_ == LISTENING; }
 
  private:
-  void asyncAccept();
+  void accept()
+  {
+    acceptor_.async_accept(socket_, std::bind(&Acceptor::onAccept, this, std::placeholders::_1));
+  }
 
-  boost::asio::ip::tcp::acceptor acceptor_;
-  boost::asio::ip::tcp::socket socket_;
+  void onAccept(const ErrorCode& errorCode)
+  {
+    if (errorCode == Error::operation_aborted)
+    {
+      return;
+    }
+    else if (errorCode)
+    {
+      LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
+    }
+    else
+    {
+      LOG_INFO("Accepted connection");
+      callbacks_.onAccept(std::move(socket_));
+    }
+
+    if (state_ == LISTENING)
+    {
+      accept();
+    }
+    else  // state == CLOSING || state == CLOSED
+    {
+      LOG_INFO("Acceptor stopped");
+      state_ = CLOSED;
+    }
+  }
+
+  BEAcceptor acceptor_;
+  Socket socket_;
   Callbacks callbacks_;
 
   enum State

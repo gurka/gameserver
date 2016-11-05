@@ -59,7 +59,28 @@ class ServerImpl : public Server
   void onDisconnected(ConnectionId connectionId);
   void onConnectionClosed(ConnectionId connectionId);
 
-  Acceptor acceptor_;
+  // Backend for Acceptor
+  // TODO(gurka): Common backend for acceptor and connection + move to loginserver / worldserver
+  struct AcceptorBackend
+  {
+    using Service = boost::asio::io_service;
+
+    //using Acceptor = boost::asio::ip::tcp::acceptor;
+    class Acceptor : public boost::asio::ip::tcp::acceptor
+    {
+     public:
+      Acceptor(Service& io_service, int port)
+        : boost::asio::ip::tcp::acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+      {
+      }
+    };
+
+    using Socket = boost::asio::ip::tcp::socket;
+    using ErrorCode = boost::system::error_code;
+    using Error = boost::asio::error::basic_errors;
+  };
+
+  Acceptor<AcceptorBackend> acceptor_;
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;

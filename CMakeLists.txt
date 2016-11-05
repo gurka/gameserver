@@ -81,14 +81,13 @@ if (unittest)
   target_include_directories(utils_test PUBLIC
     ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
     ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-    "gameserver/utils/export"
   )
 
   # Network test
-  #  target_include_directories(network_test PUBLIC
-  #    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  #    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-  #  )
+  target_include_directories(network_test PUBLIC
+    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+    ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+  )
 
   # World test
   target_include_directories(world_test PUBLIC
