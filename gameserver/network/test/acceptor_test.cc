@@ -22,98 +22,33 @@
  * SOFTWARE.
  */
 
-#include <memory>
-
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
 #include "acceptor.h"
+#include "backend_mock.h"
 
 class AcceptorTest : public ::testing::Test
 {
  public:
   AcceptorTest()
     : service_(),
-      callbacks_({std::bind(&OnAcceptMock::onAccept, &onAcceptMock_, std::placeholders::_1)}),
       onAcceptMock_(),
+      callbacks_({std::bind(&OnAcceptMock::onAccept, &onAcceptMock_, std::placeholders::_1)}),
       acceptor_(&service_, 1234, callbacks_)
   {
   }
 
-  struct Backend
-  {
-    class Socket;
-    class ErrorCode;
-
-    struct Service
-    {
-      MOCK_METHOD0(acceptor_cancel, void());
-      MOCK_METHOD2(async_accept, void(Socket&, const std::function<void(const ErrorCode&)>&));
-    };
-
-    class Socket
-    {
-     public:
-      Socket(Service& service)
-        : service_(service)
-      {
-      }
-
-     private:
-      Service& service_;
-    };
-
-    enum Error { operation_aborted = 1 };
-
-    class ErrorCode
-    {
-     public:
-      ErrorCode(int val) : val_(val) {}
-
-      bool operator==(Error e) const { return val_ == e; }
-      operator bool() const { return val_ != 0; }
-      std::string message() const { return ""; }
-
-     private:
-      int val_;
-    };
-
-    class Acceptor
-    {
-     public:
-      Acceptor(Service& service, int port)
-        : service_(service),
-          port_(port)
-      {
-      }
-
-      void cancel()
-      {
-        service_.acceptor_cancel();
-      }
-
-      void async_accept(Socket& s, const std::function<void(const ErrorCode&)>& cb)
-      {
-        service_.async_accept(s, cb);
-      }
-
-     private:
-      Service& service_;
-      int port_;
-    };
-  };
-
   struct OnAcceptMock
   {
-   public:
     MOCK_METHOD1(onAccept, void(Backend::Socket));
   };
 
  protected:
   // Helpers
   Backend::Service service_;
-  Acceptor<Backend>::Callbacks callbacks_;
   OnAcceptMock onAcceptMock_;
+  Acceptor<Backend>::Callbacks callbacks_;
 
   // Under test
   Acceptor<Backend> acceptor_;
@@ -124,7 +59,7 @@ TEST_F(AcceptorTest, StartStop)
   using ::testing::_;
 
   // Start async accept
-  EXPECT_CALL(service_, async_accept(_, _));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _));
   EXPECT_TRUE(acceptor_.start());
   EXPECT_FALSE(acceptor_.start());
 
@@ -142,12 +77,12 @@ TEST_F(AcceptorTest, AsyncAccept)
 
   // Start async accept, save callback
   std::function<void(Backend::ErrorCode)> callback;
-  EXPECT_CALL(service_, async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
   EXPECT_TRUE(acceptor_.start());
 
   // Call callback with non-error errorcode
   EXPECT_CALL(onAcceptMock_, onAccept(_));
-  EXPECT_CALL(service_, async_accept(_, _));  // Acceptor should call async_accept again, to accept next connection
+  EXPECT_CALL(service_, acceptor_async_accept(_, _));  // Acceptor should call async_accept again, to accept next connection
   callback(0);
 
   // Stop Acceptor
@@ -162,16 +97,16 @@ TEST_F(AcceptorTest, AsyncAcceptError)
 
   // Start async accept, save callback
   std::function<void(Backend::ErrorCode)> callback;
-  EXPECT_CALL(service_, async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
   EXPECT_TRUE(acceptor_.start());
 
   // Call callback with any errorcode except operation_aborted (1)
-  EXPECT_CALL(service_, async_accept(_, _));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _));
   callback(49);
 
   // Call callback with non-error errorcode to make sure new accepts is handled correctly
   EXPECT_CALL(onAcceptMock_, onAccept(_));
-  EXPECT_CALL(service_, async_accept(_, _));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _));
   callback(0);
 
   // Stop Acceptor
@@ -186,7 +121,7 @@ TEST_F(AcceptorTest, AsyncAcceptAbort)
 
   // Start async accept, save callback
   std::function<void(Backend::ErrorCode)> callback;
-  EXPECT_CALL(service_, async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
+  EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
   EXPECT_TRUE(acceptor_.start());
 
   // Call callback with Error::operation_aborted (1)

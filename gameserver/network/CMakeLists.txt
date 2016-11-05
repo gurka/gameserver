@@ -21,6 +21,7 @@ add_library(network ${src})
 if (unittest)
   set(src_test
     "test/acceptor_test.cc"
+    "test/connection_test.cc"
   )
 
   add_executable(network_test ${src_test})
