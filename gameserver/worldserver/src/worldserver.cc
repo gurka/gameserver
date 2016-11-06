@@ -144,6 +144,8 @@ int main(int argc, char* argv[])
   printf("Worldserver logging:       %s\n", logger_worldserver.c_str());
   printf("--------------------------------------------------------------------------------\n");
 
+  LOG_INFO("Starting WorldServer!");
+
   // Create World
   world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
   if (!world)
@@ -152,10 +154,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create GameEngine
-  // TODO(gurka): Get rid of double unique_ptr
-  auto gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, world.get()));
-  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(std::move(gameEngine)));
+  // Create GameEngine / GameEngineProxy
+  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(&io_service, loginMessage, world.get()));
 
   // Create and load AccountReader
   accountReader = std::unique_ptr<AccountReader>(new AccountReader());
@@ -174,22 +174,14 @@ int main(int argc, char* argv[])
   };
   server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
-
-  // Start GameEngine
-  // TODO(gurka:) Get rid of start/stop in GameEngine
-  if (!gameEngineProxy->start())
-  {
-    LOG_ERROR("Could not start GameEngine");
-    return -3;
-  }
+  LOG_INFO("WorldServer started!");
 
   // run() will continue to run until ^C from user is catched
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
   io_service.run();
 
-  LOG_INFO("Stopping GameEngine");
-  gameEngineProxy->stop();
+  LOG_INFO("Stopping WorldServer!");
 
   // Deallocate things (in reverse order of construction)
   server.reset();

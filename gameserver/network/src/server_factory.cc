@@ -35,7 +35,7 @@ struct Backend
   class Acceptor : public boost::asio::ip::tcp::acceptor
   {
    public:
-    Acceptor(Service& io_service, int port)
+    Acceptor(Service& io_service, int port)  //NOLINT
       : boost::asio::ip::tcp::acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
     {
     }
@@ -46,7 +46,7 @@ struct Backend
   using Error = boost::asio::error::basic_errors;
   using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
 
-  static void async_write(Socket& socket,
+  static void async_write(Socket& socket,  //NOLINT
                           const uint8_t* buffer,
                           std::size_t length,
                           const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
@@ -54,7 +54,7 @@ struct Backend
     boost::asio::async_write(socket, boost::asio::buffer(buffer, length), handler);
   }
 
-  static void async_read(Socket& socket,
+  static void async_read(Socket& socket,  //NOLINT
                          uint8_t* buffer,
                          std::size_t length,
                          const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)

@@ -25,36 +25,37 @@
 #ifndef WORLDSERVER_GAMEENGINEPROXY_H_
 #define WORLDSERVER_GAMEENGINEPROXY_H_
 
-#include <memory>
 #include <string>
 #include <utility>
 
 #include "gameengine.h"
 
+class World;
+
+namespace boost
+{
+namespace asio
+{
+class io_service;
+}
+}
+
 class GameEngineProxy
 {
  public:
-  GameEngineProxy()
-    : gameEngine_()
+  GameEngineProxy(boost::asio::io_service* io_service, const std::string& loginMessage, World* world)
+    : gameEngine_(io_service, loginMessage, world)
   {
   }
-
-  GameEngineProxy(std::unique_ptr<GameEngine> gameEngine)
-    : gameEngine_(std::move(gameEngine))
-  {
-  }
-
-  bool start() { return gameEngine_->start(); }
-  bool stop() { return gameEngine_->stop(); }
 
   template<class F, class... Args>
   void addTask(F&& f, Args&&... args)
   {
-    gameEngine_->addTask(f, args...);
+    gameEngine_.addTask(f, args...);
   }
 
  private:
-  std::unique_ptr<GameEngine> gameEngine_;
+  GameEngine gameEngine_;
 };
 
 #endif  // WORLDSERVER_GAMEENGINEPROXY_H_

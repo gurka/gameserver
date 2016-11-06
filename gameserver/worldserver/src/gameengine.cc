@@ -43,45 +43,10 @@
 GameEngine::GameEngine(boost::asio::io_service* io_service,
                        const std::string& loginMessage,
                        World* world)
-  : taskQueue_(io_service, std::bind(&GameEngine::onTask, this, std::placeholders::_1)),
-    state_(INITIALIZED),
+  : taskQueue_(io_service),
     loginMessage_(loginMessage),
     world_(world)
 {
-}
-
-GameEngine::~GameEngine()
-{
-  if (state_ == RUNNING)
-  {
-    stop();
-  }
-}
-
-bool GameEngine::start()
-{
-  if (state_ == RUNNING)
-  {
-    LOG_ERROR("%s: GameEngine is already running", __func__);
-    return false;
-  }
-
-  state_ = RUNNING;
-  return true;
-}
-
-bool GameEngine::stop()
-{
-  if (state_ == RUNNING)
-  {
-    state_ = CLOSING;
-    return true;
-  }
-  else
-  {
-    LOG_ERROR("%s: GameEngine is already stopped", __func__);
-    return false;
-  }
 }
 
 void GameEngine::playerSpawn(const std::string& name, Protocol* protocol)
@@ -667,36 +632,4 @@ void GameEngine::playerLookAtPosItem(CreatureId creatureId, const Position& posi
   }
 
   getProtocol(creatureId)->sendTextMessage(ss.str());
-}
-
-void GameEngine::onTask(const TaskFunction& task)
-{
-  switch (state_)
-  {
-    case RUNNING:
-    {
-      task();
-      break;
-    }
-
-    case CLOSING:
-    {
-      LOG_DEBUG("%s: State is CLOSING, not executing task.", __func__);
-      // TODO(gurka): taskQueue_.stop();
-      state_ = CLOSED;
-      break;
-    }
-
-    case CLOSED:
-    {
-      LOG_DEBUG("%s: State is CLOSED, not executing task.", __func__);
-      break;
-    }
-
-    default:
-    {
-      LOG_ERROR("%s: Unknown state: %d", state_, __func__);
-      break;
-    }
-  }
 }

@@ -54,12 +54,6 @@ class GameEngine
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 
-  ~GameEngine();
-
-  // These functions can be called directly
-  bool start();
-  bool stop();
-
   template<class F, class... Args>
   void addTask(F&& f, Args&&... args)
   {
@@ -119,16 +113,7 @@ class GameEngine
 
   // Task stuff
   using TaskFunction = std::function<void(void)>;
-  void onTask(const TaskFunction& task);
   TaskQueue<TaskFunction> taskQueue_;
-
-  enum State
-  {
-    INITIALIZED,
-    RUNNING,
-    CLOSING,
-    CLOSED,
-  } state_;
 
   struct PlayerProtocol
   {

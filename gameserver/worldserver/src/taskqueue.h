@@ -48,10 +48,8 @@ class TaskQueue
   };
 
  public:
-  TaskQueue(boost::asio::io_service* io_service,
-            const std::function<void(const Task&)>& onTask)
-    : onTask_(onTask),
-      timer_(*io_service),
+  explicit TaskQueue(boost::asio::io_service* io_service)
+    : timer_(*io_service),
       timerStarted_(false)
   {
   }
@@ -104,13 +102,13 @@ class TaskQueue
     boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
     while (!queue_.empty())
     {
-      TaskWrapper taskWrapper = queue_.top();
+      auto taskWrapper = queue_.top();
       if (taskWrapper.expire > now)
       {
         break;
       }
       queue_.pop();
-      onTask_(taskWrapper.task);
+      taskWrapper.task();
     }
 
     if (!queue_.empty())
@@ -122,8 +120,6 @@ class TaskQueue
       timerStarted_ = false;
     }
   }
-
-  std::function<void(const Task&)> onTask_;
 
   // We use std::greater to get reverse priority queue (Task with lowest time first)
   std::priority_queue<TaskWrapper, std::deque<TaskWrapper>, std::greater<TaskWrapper>> queue_;

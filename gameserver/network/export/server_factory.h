@@ -31,10 +31,10 @@
 
 namespace boost
 {
-  namespace asio
-  {
-    class io_service;
-  }
+namespace asio
+{
+class io_service;
+}
 }
 
 class ServerFactory
