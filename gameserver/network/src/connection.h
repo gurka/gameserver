@@ -221,7 +221,7 @@ class Connection
   void receivePacket()
   {
     Backend::async_read(socket_,
-                        incomingHeaderBuffer_.data(),
+                        readBuffer_.data(),
                         2,
                         std::bind(&Connection::onPacketHeaderReceived, this, std::placeholders::_1, std::placeholders::_2));
   }
@@ -253,15 +253,13 @@ class Connection
     }
 
     // Receive data
-    incomingPacket_.setLength((incomingHeaderBuffer_[1] << 8) | incomingHeaderBuffer_[0]);
+    uint16_t dataLength = (readBuffer_[1] << 8) | readBuffer_[0];
 
-    LOG_DEBUG("%s: received packet header, data length: %d",
-              __func__,
-              incomingPacket_.getLength());
+    LOG_DEBUG("%s: received packet header, data length: %d", __func__, dataLength);
 
     Backend::async_read(socket_,
-                        incomingPacket_.getBuffer(),
-                        incomingPacket_.getLength(),
+                        readBuffer_.data(),
+                        dataLength,
                         std::bind(&Connection::onPacketDataReceived, this, std::placeholders::_1, std::placeholders::_2));
   }
 
@@ -293,8 +291,10 @@ class Connection
     LOG_DEBUG("%s: received packet data", __func__);
 
     // Call handler
-    incomingPacket_.resetPosition();
-    callbacks_.onPacketReceived(&incomingPacket_);
+    // Maybe it should state somewhere that the IncomingPacket is only valid to read/use
+    // during the onPacketReceived call
+    IncomingPacket packet(readBuffer_.data(), len);
+    callbacks_.onPacketReceived(&packet);
 
     if (state_ == CONNECTED)
     {
@@ -315,8 +315,7 @@ class Connection
   State state_;
 
   // I/O Buffers
-  std::array<uint8_t, 2> incomingHeaderBuffer_;
-  IncomingPacket incomingPacket_;
+  std::array<uint8_t, 8192> readBuffer_;
 
   std::array<uint8_t, 2> outgoingHeaderBuffer_;
   std::deque<OutgoingPacket> outgoingPackets_;

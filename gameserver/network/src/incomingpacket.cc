@@ -27,9 +27,9 @@
 #include <algorithm>
 #include <vector>
 
-IncomingPacket::IncomingPacket()
-  : buffer_(),
-    length_(0),
+IncomingPacket::IncomingPacket(const uint8_t* buffer, std::size_t length)
+  : buffer_(buffer),
+    length_(length),
     position_(0)
 {
 }
@@ -81,16 +81,12 @@ std::string IncomingPacket::getString()
   uint16_t length = getU16();
   int temp = position_;
   position_ += length;
-  return std::string(buffer_.cbegin() + temp,
-                     buffer_.cbegin() + temp + length);
+  return std::string(&buffer_[temp], &buffer_[temp + length]);
 }
 
 std::vector<uint8_t> IncomingPacket::getBytes(int num_bytes)
 {
-  std::vector<uint8_t> bytes(num_bytes);
-  std::copy(buffer_.cbegin() + position_,
-            buffer_.cbegin() + position_ + num_bytes,
-            bytes.begin());
+  std::vector<uint8_t> bytes(&buffer_[position_], &buffer_[position_ + num_bytes]);
   position_ += num_bytes;
   return bytes;
 }

@@ -86,7 +86,7 @@ void onClientDisconnected(ConnectionId connectionId)
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
-  LOG_DEBUG("%s: ConnectionId: %d Length: %u", __func__, connectionId, packet->getLength());
+  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
 
   protocols.at(connectionId)->parsePacket(packet);
 }
