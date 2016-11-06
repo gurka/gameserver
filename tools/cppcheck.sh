@@ -1,2 +1,3 @@
 #!/bin/bash
-cppcheck --std=c++11 --enable=all gameserver $@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cppcheck --std=c++11 --enable=all "$DIR/../gameserver"
