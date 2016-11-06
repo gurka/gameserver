@@ -1,11 +1,23 @@
 * Rename GameEngine to PlayerManager (it manages player <-> world interaction)
+
 * Add NPCManager (it manages npc <-> world interaction, spawns NPCs, adds OnThink tasks periodically?)
+
 * Add simple NPC that responds on talk, walk around spawn point with max radius
+
 * Implement combat
+
 * Check and, if necessary, refactor Item, ItemData, ItemFactory:
   * Item should represent an unique item in the world. It only know its id and count.
   * ItemData has information for each item (using its id), loaded via .dat/.xml-files.
   * ItemFactory create Item objects given item id.
+
 * TODO in world.h
+
 * Figure out exactly, and document in README.md, what each module should and should not do.
   Especially World and Worldserver. How much logic and knowledge should World have?
+
+* Make sure classes that shouldn't be copied have their copy-constructors deleted
+
+* Check/fix/sort/remove #includes
+
+* Implement empty unittests (network/server, network/packet)
