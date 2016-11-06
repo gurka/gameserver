@@ -83,7 +83,7 @@ TEST_F(AcceptorTest, AsyncAccept)
   // Call callback with non-error errorcode
   EXPECT_CALL(onAcceptMock_, onAccept(_));
   EXPECT_CALL(service_, acceptor_async_accept(_, _));  // Acceptor should call async_accept again, to accept next connection
-  callback(0);
+  callback(Backend::Error::no_error);
 
   // Stop Acceptor
   EXPECT_CALL(service_, acceptor_cancel());
@@ -102,12 +102,12 @@ TEST_F(AcceptorTest, AsyncAcceptError)
 
   // Call callback with any errorcode except operation_aborted (1)
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
-  callback(49);
+  callback(Backend::Error::other_error);
 
   // Call callback with non-error errorcode to make sure new accepts is handled correctly
   EXPECT_CALL(onAcceptMock_, onAccept(_));
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
-  callback(0);
+  callback(Backend::Error::no_error);
 
   // Stop Acceptor
   EXPECT_CALL(service_, acceptor_cancel());

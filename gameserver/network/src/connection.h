@@ -163,8 +163,11 @@ class Connection
     {
       LOG_DEBUG("%s: could not send packet header", __func__);
 
-      callbacks_.onDisconnected();
-      close(true);
+      if (state_ != CLOSED)
+      {
+        callbacks_.onDisconnected();
+        close(true);
+      }
 
       return;
     }
@@ -189,8 +192,11 @@ class Connection
     {
       LOG_DEBUG("%s: could not send packet", __func__);
 
-      callbacks_.onDisconnected();
-      close(true);
+      if (state_ != CLOSED)
+      {
+        callbacks_.onDisconnected();
+        close(true);
+      }
 
       return;
     }
@@ -232,8 +238,11 @@ class Connection
       LOG_DEBUG("%s: could not receive packet header: %s",
                 __func__, errorCode.message().c_str());
 
-      callbacks_.onDisconnected();
-      close(true);
+      if (state_ != CLOSED)
+      {
+        callbacks_.onDisconnected();
+        close(true);
+      }
 
       return;
     }
@@ -267,8 +276,11 @@ class Connection
     {
       LOG_DEBUG("%s: could not receive packet", __func__);
 
-      callbacks_.onDisconnected();
-      close(true);
+      if (state_ != CLOSED)
+      {
+        callbacks_.onDisconnected();
+        close(true);
+      }
 
       return;
     }

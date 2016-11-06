@@ -110,19 +110,29 @@ TEST_F(ConnectionTest, SendPacket)
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
   outgoingPacket.addU32(0x12345678);
-  auto packetLength = outgoingPacket.getLength();
 
   // Connection should send packet header first (2 bytes)
+  const uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> writeHandler;
-  EXPECT_CALL(service_, async_write(_, _, 2, _)).WillOnce(SaveArg<3>(&writeHandler));
+  EXPECT_CALL(service_, async_write(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&writeHandler)));
   connection_->sendPacket(std::move(outgoingPacket));
 
+  // Verify buffer content
+  EXPECT_EQ(0x04, buffer[0]);
+  EXPECT_EQ(0x00, buffer[1]);
+
   // Respond to Connection and verify that packet data is sent next
-  EXPECT_CALL(service_, async_write(_, _, packetLength, _)).WillOnce(SaveArg<3>(&writeHandler));
-  writeHandler(0, 2);  // no error = 0, bytes sent = 2
+  EXPECT_CALL(service_, async_write(_, _, 4, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&writeHandler)));
+  writeHandler(Backend::Error::no_error, 2);
+
+  // Verify buffer content
+  EXPECT_EQ(0x78, buffer[0]);
+  EXPECT_EQ(0x56, buffer[1]);
+  EXPECT_EQ(0x34, buffer[2]);
+  EXPECT_EQ(0x12, buffer[3]);
 
   // Respond to Connection that 4 bytes was sent
-  writeHandler(0, packetLength);
+  writeHandler(Backend::Error::no_error, 4);
 
   // Close the connection
   EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
@@ -133,10 +143,205 @@ TEST_F(ConnectionTest, SendPacket)
 
 TEST_F(ConnectionTest, ReceivePacket)
 {
-  // TODO
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // We need to capture the variables in the async_read call
+  uint8_t* buffer = nullptr;
+  std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
+  EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // Write packet header to buffer (packet data is 4 bytes)
+  ASSERT_NE(nullptr, buffer);
+  buffer[0] = 0x04;
+  buffer[1] = 0x00;
+
+  // When Connection receives packet header it should call async_read to receive packet data (4 bytes)
+  EXPECT_CALL(service_, async_read(_, _, 4, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
+  readHandler(Backend::Error::no_error, 2);
+
+  // Write packet data to buffer
+  ASSERT_NE(nullptr, buffer);
+  buffer[0] = 0x12;
+  buffer[1] = 0x34;
+  buffer[2] = 0x56;
+  buffer[3] = 0x78;
+
+  // When Connection receives packet data it should call onPacketReceived callback
+  // and call async_read again to receive next packet header
+  IncomingPacket* packet;
+  EXPECT_CALL(callbacksMock_, onPacketReceived(_)).WillOnce(SaveArg<0>(&packet));
+  EXPECT_CALL(service_, async_read(_, _, 2, _));
+  readHandler(Backend::Error::no_error, 4);
+
+  // Verify the incoming packet
+  EXPECT_EQ(0x12, packet->getU8());
+  EXPECT_EQ(0x34, packet->getU8());
+  EXPECT_EQ(0x56, packet->getU8());
+  EXPECT_EQ(0x78, packet->getU8());
+
+  // Close the connection
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+  connection_->close(true);
 }
 
-TEST_F(ConnectionTest, Disconnect)
+TEST_F(ConnectionTest, Disconnect_1)
 {
-  // TODO
+  // Disconnect scenario 1: during async_read of packet header
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // We need to capture the callback in the async_read call
+  std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
+  EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(SaveArg<3>(&readHandler));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // onDisconnect callback should be called when async_read handler is called with error
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+
+  // And the Connection should be closed
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+
+  readHandler(Backend::Error::other_error, 0);
+
+  connection_.reset();  // Shouldn't have any side effects
+}
+
+TEST_F(ConnectionTest, Disconnect_2)
+{
+  // Disconnect scenario 2: during async_read of packet data
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // We need to capture the callback in the async_read call
+  uint8_t* buffer = nullptr;
+  std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
+  EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // Write packet header to buffer (packet data is 1 byte)
+  ASSERT_NE(nullptr, buffer);
+  buffer[0] = 0x01;
+  buffer[1] = 0x00;
+
+  // Call readHandler
+  EXPECT_CALL(service_, async_read(_, _, 1, _)).WillOnce(SaveArg<3>(&readHandler));
+  readHandler(Backend::Error::no_error, 2);
+
+  // onDisconnect callback should be called when async_read handler is called with error
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+
+  // And the Connection should be closed
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+
+  readHandler(Backend::Error::other_error, 0);
+
+  connection_.reset();  // Shouldn't have any side effects
+}
+
+TEST_F(ConnectionTest, Disconnect_3)
+{
+  // Disconnect scenario 3: during async_write of packet header
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  EXPECT_CALL(service_, async_read(_, _, _, _));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // Create an OutgoingPacket
+  OutgoingPacket outgoingPacket;
+  outgoingPacket.addU32(0x12345678);
+
+  // Save writeHandler
+  std::function<void(const Backend::ErrorCode&, std::size_t)> writeHandler;
+  EXPECT_CALL(service_, async_write(_, _, 2, _)).WillOnce(SaveArg<3>(&writeHandler));
+  connection_->sendPacket(std::move(outgoingPacket));
+
+  // onDisconnect callback should be called when async_write handler is called with error
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+
+  // And the Connection should be closed
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+
+  writeHandler(Backend::Error::other_error, 0);
+
+  connection_.reset();  // Shouldn't have any side effects
+}
+
+TEST_F(ConnectionTest, Disconnect_4)
+{
+  // Disconnect scenario 4: during async_write of packet data
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  EXPECT_CALL(service_, async_read(_, _, _, _));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // Create an OutgoingPacket
+  OutgoingPacket outgoingPacket;
+  outgoingPacket.addU32(0x12345678);
+
+  // Save writeHandler from call to async_write
+  std::function<void(const Backend::ErrorCode&, std::size_t)> writeHandler;
+  EXPECT_CALL(service_, async_write(_, _, _, _)).WillOnce(SaveArg<3>(&writeHandler));
+  connection_->sendPacket(std::move(outgoingPacket));
+
+  // Call writeHandler, the Connection should no call async_write to send packet data
+  EXPECT_CALL(service_, async_write(_, _, _, _)).WillOnce(SaveArg<3>(&writeHandler));
+  writeHandler(Backend::Error::no_error, 2);
+
+  // onDisconnect callback should be called when async_write handler is called with error
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+
+  // And the Connection should be closed
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+
+  writeHandler(Backend::Error::other_error, 0);
+
+  connection_.reset();  // Shouldn't have any side effects
+}
+
+TEST_F(ConnectionTest, Disconnect_5)
+{
+  // Disconnect scenario 5: both async_read and async_write fails
+  using ::testing::_;
+  using ::testing::SaveArg;
+
+  // We need to capture the callback in the async_read call
+  std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
+  EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
+  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+
+  // Create an OutgoingPacket
+  OutgoingPacket outgoingPacket;
+  outgoingPacket.addU32(0x12345678);
+
+  // Save writeHandler
+  std::function<void(const Backend::ErrorCode&, std::size_t)> writeHandler;
+  EXPECT_CALL(service_, async_write(_, _, _, _)).WillOnce(SaveArg<3>(&writeHandler));
+  connection_->sendPacket(std::move(outgoingPacket));
+
+  // onDisconnect callback should be called ONCE when both async_write and async_read fails
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+
+  // And the Connection should be closed (everything called only ONCE)
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onConnectionClosed());
+
+  readHandler(Backend::Error::other_error, 0);
+  writeHandler(Backend::Error::other_error, 0);
+
+  connection_.reset();  // Shouldn't have any side effects
 }

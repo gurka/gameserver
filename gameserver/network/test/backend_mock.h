@@ -33,7 +33,7 @@ struct Backend
 {
   enum shutdown_type { shutdown_both = 1 };
 
-  enum Error { operation_aborted = 1 };
+  enum Error { no_error = 0, operation_aborted = 1, other_error = 2 };
 
   struct ErrorCode
   {
