@@ -41,12 +41,16 @@
 #include "world.h"
 #include "worldfactory.h"
 
-// Keep this order!
+
 static boost::asio::io_service io_service;
+
+// We need to use unique_ptr, so that we can deallocate everything before
+// static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
-static GameEngineProxy gameEngineProxy;
-static AccountReader accountReader;
+static std::unique_ptr<GameEngineProxy> gameEngineProxy;
+static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
+
 static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(gurka): Maybe change to array?
 
 void onProtocolClosed(ConnectionId connectionId)
@@ -62,11 +66,11 @@ void onClientConnected(ConnectionId connectionId)
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
   auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
-                                                           &gameEngineProxy,
+                                                           gameEngineProxy.get(),
                                                            world.get(),
                                                            connectionId,
                                                            server.get(),
-                                                           &accountReader));
+                                                           accountReader.get()));
 
   protocols.emplace(std::piecewise_construct,
                     std::forward_as_tuple(connectionId),
@@ -149,12 +153,13 @@ int main(int argc, char* argv[])
   }
 
   // Create GameEngine
-  gameEngineProxy = GameEngineProxy(std::unique_ptr<GameEngine>(new GameEngine(&io_service,
-                                                                               loginMessage,
-                                                                               world.get())));
+  // TODO(gurka): Get rid of double unique_ptr
+  auto gameEngine = std::unique_ptr<GameEngine>(new GameEngine(&io_service, loginMessage, world.get()));
+  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(std::move(gameEngine)));
 
-  // Load AccountReader
-  if (!accountReader.loadFile(accountsFilename))
+  // Create and load AccountReader
+  accountReader = std::unique_ptr<AccountReader>(new AccountReader());
+  if (!accountReader->loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
     return -2;
@@ -169,31 +174,28 @@ int main(int argc, char* argv[])
   };
   server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
-  // Stop on ^C from user
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
 
-  // Start Server, GameEngine and io_service
-  if (!gameEngineProxy.start())
+  // Start GameEngine
+  // TODO(gurka:) Get rid of start/stop in GameEngine
+  if (!gameEngineProxy->start())
   {
     LOG_ERROR("Could not start GameEngine");
     return -3;
   }
 
-  if (!server->start())
-  {
-    LOG_ERROR("Could not start Server");
-    return -4;
-  }
-
   // run() will continue to run until ^C from user is catched
+  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
   io_service.run();
 
-  LOG_INFO("Stopping Server");
-  server->stop();
-
   LOG_INFO("Stopping GameEngine");
-  gameEngineProxy.stop();
+  gameEngineProxy->stop();
+
+  // Deallocate things (in reverse order of construction)
+  server.reset();
+  accountReader.reset();
+  gameEngineProxy.reset();
+  world.reset();
 
   return 0;
 }

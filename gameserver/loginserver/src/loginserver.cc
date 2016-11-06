@@ -34,16 +34,13 @@
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
 
-void onClientConnected(ConnectionId connectionId);
-void onClientDisconnected(ConnectionId connectionId);
-void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
-void parseLogin(ConnectionId connectionId, IncomingPacket* packet);
-
-AccountReader accountReader;
-std::unique_ptr<Server> server;
+// We need to use unique_ptr, so that we can deallocate everything before
+// static things (like Logger) gets deallocated
+static std::unique_ptr<AccountReader> accountReader;
+static std::unique_ptr<Server> server;
 
 // Due to "Static/global string variables are not permitted."
-struct
+static struct
 {
   std::string motd;
 } motd;
@@ -69,78 +66,73 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
     {
       case 0x01:
       {
-        parseLogin(connectionId, packet);
-        break;
+        LOG_DEBUG("Parsing login packet from connection id: %d", connectionId);
+
+        uint16_t clientOs = packet->getU16();       // Client OS
+        uint16_t clientVersion = packet->getU16();  // Client version
+        packet->getBytes(12);                       // Client OS info
+        uint32_t accountNumber = packet->getU32();
+        std::string password = packet->getString();
+
+        LOG_DEBUG("Client OS: %d Client version: %d Account number: %d Password: %s",
+                    clientOs,
+                    clientVersion,
+                    accountNumber,
+                    password.c_str());
+
+        // Send outgoing packet
+        OutgoingPacket response;
+
+          // Add MOTD
+        response.addU8(0x14);  // MOTD
+        response.addString("0\n" + motd.motd);
+
+        // Check if account exists
+        if (!accountReader->accountExists(accountNumber))
+        {
+          LOG_DEBUG("%s: Account (%d) not found", __func__, accountNumber);
+          response.addU8(0x0A);
+          response.addString("Invalid account number");
+        }
+        // Check if password is correct
+        else if (!accountReader->verifyPassword(accountNumber, password))
+        {
+          LOG_DEBUG("%s: Invalid password (%s) for account (%d)", __func__, password.c_str(), accountNumber);
+          response.addU8(0x0A);
+          response.addString("Invalid password");
+        }
+        else
+        {
+          const auto* account = accountReader->getAccount(accountNumber);
+          LOG_DEBUG("%s: Account number (%d) and password (%s) OK", __func__, accountNumber, password.c_str());
+          response.addU8(0x64);
+          response.addU8(account->characters.size());
+          for (const auto& character : account->characters)
+          {
+            response.addString(character.name);
+            response.addString(character.worldName);
+            response.addU32(character.worldIp);
+            response.addU16(character.worldPort);
+          }
+          response.addU16(account->premiumDays);
+        }
+
+        LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
+        server->sendPacket(connectionId, std::move(response));
+
+        LOG_DEBUG("Closing connection id: %d", connectionId);
+        server->closeConnection(connectionId, false);
       }
+      break;
 
       default:
       {
         LOG_DEBUG("Unknown packet from connection id: %d, packet id: %d", connectionId, packetId);
         server->closeConnection(connectionId, true);
-        break;
       }
+      break;
     }
   }
-}
-
-void parseLogin(ConnectionId connectionId, IncomingPacket* packet)
-{
-  LOG_DEBUG("Parsing login packet from connection id: %d", connectionId);
-
-  uint16_t clientOs = packet->getU16();       // Client OS
-  uint16_t clientVersion = packet->getU16();  // Client version
-  packet->getBytes(12);                       // Client OS info
-  uint32_t accountNumber = packet->getU32();
-  std::string password = packet->getString();
-
-  LOG_DEBUG("Client OS: %d Client version: %d Account number: %d Password: %s",
-              clientOs,
-              clientVersion,
-              accountNumber,
-              password.c_str());
-
-  // Send outgoing packet
-  OutgoingPacket response;
-
-    // Add MOTD
-  response.addU8(0x14);  // MOTD
-  response.addString("0\n" + motd.motd);
-
-  // Check if account exists
-  if (!accountReader.accountExists(accountNumber))
-  {
-    LOG_DEBUG("%s: Account (%d) not found", __func__, accountNumber);
-    response.addU8(0x0A);
-    response.addString("Invalid account number");
-  }
-  // Check if password is correct
-  else if (!accountReader.verifyPassword(accountNumber, password))
-  {
-    LOG_DEBUG("%s: Invalid password (%s) for account (%d)", __func__, password.c_str(), accountNumber);
-    response.addU8(0x0A);
-    response.addString("Invalid password");
-  }
-  else
-  {
-    const auto* account = accountReader.getAccount(accountNumber);
-    LOG_DEBUG("%s: Account number (%d) and password (%s) OK", __func__, accountNumber, password.c_str());
-    response.addU8(0x64);
-    response.addU8(account->characters.size());
-    for (const auto& character : account->characters)
-    {
-      response.addString(character.name);
-      response.addString(character.worldName);
-      response.addU32(character.worldIp);
-      response.addU16(character.worldPort);
-    }
-    response.addU16(account->premiumDays);
-  }
-
-  LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
-  server->sendPacket(connectionId, std::move(response));
-
-  LOG_DEBUG("Closing connection id: %d", connectionId);
-  server->closeConnection(connectionId, false);
 }
 
 int main(int argc, char* argv[])
@@ -187,18 +179,18 @@ int main(int argc, char* argv[])
   printf("Utils logging:             %s\n", logger_utils.c_str());
   printf("--------------------------------------------------------------------------------\n");
 
-  // Setup io_service, AccountManager and Server
+  // Create io_service
   boost::asio::io_service io_service;
 
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
-
-  if (!accountReader.loadFile(accountsFilename))
+  // Create and load AccountReader
+  accountReader = std::unique_ptr<AccountReader>(new AccountReader());
+  if (!accountReader->loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
     return 1;
   }
 
+  // Create Server
   Server::Callbacks callbacks =
   {
     &onClientConnected,
@@ -207,18 +199,14 @@ int main(int argc, char* argv[])
   };
   server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
-  // Start Server and io_service
-  if (!server->start())
-  {
-    LOG_ERROR("Could not start Server");
-    return 1;
-  }
-
   // run() will continue to run until ^C from user is catched
+  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
   io_service.run();
 
-  LOG_INFO("Stopping server");
-  server->stop();
+  // Deallocate things
+  server.reset();
+  accountReader.reset();
 
   return 0;
 }

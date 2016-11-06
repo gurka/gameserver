@@ -8,7 +8,6 @@ set(src
   "src/incomingpacket.cc"
   "src/outgoingpacket.cc"
   "src/server_factory.cc"
-  "src/server_impl.cc"
   "src/server_impl.h"
   "export/incomingpacket.h"
   "export/outgoingpacket.h"

@@ -24,11 +24,48 @@
 
 #include "server_factory.h"
 
+#include <boost/asio.hpp>  //NOLINT
+
 #include "server_impl.h"
+
+struct Backend
+{
+  using Service = boost::asio::io_service;
+
+  class Acceptor : public boost::asio::ip::tcp::acceptor
+  {
+   public:
+    Acceptor(Service& io_service, int port)
+      : boost::asio::ip::tcp::acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+    {
+    }
+  };
+
+  using Socket = boost::asio::ip::tcp::socket;
+  using ErrorCode = boost::system::error_code;
+  using Error = boost::asio::error::basic_errors;
+  using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
+
+  static void async_write(Socket& socket,
+                          const uint8_t* buffer,
+                          std::size_t length,
+                          const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
+  {
+    boost::asio::async_write(socket, boost::asio::buffer(buffer, length), handler);
+  }
+
+  static void async_read(Socket& socket,
+                         uint8_t* buffer,
+                         std::size_t length,
+                         const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
+  {
+    boost::asio::async_read(socket, boost::asio::buffer(buffer, length), handler);
+  }
+};
 
 std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_service* io_service,
                                                     unsigned short port,
                                                     const Server::Callbacks& callbacks)
 {
-  return std::unique_ptr<Server>(new ServerImpl(io_service, port, callbacks));
+  return std::unique_ptr<Server>(new ServerImpl<Backend>(io_service, port, callbacks));
 }

@@ -35,70 +35,29 @@ template <typename Backend>
 class Acceptor
 {
  public:
-  using BEAcceptor = typename Backend::Acceptor;
-  using Service    = typename Backend::Service;
-  using Socket     = typename Backend::Socket;
-  using ErrorCode  = typename Backend::ErrorCode;
-  using Error      = typename Backend::Error;
-
   struct Callbacks
   {
-    std::function<void(Socket)> onAccept;
+    std::function<void(typename Backend::Socket)> onAccept;
   };
 
-  Acceptor(Service* io_service,
+  Acceptor(typename Backend::Service* io_service,
            unsigned short port,
            const Callbacks& callbacks)
     : acceptor_(*io_service, port),
       socket_(*io_service),
-      callbacks_(callbacks),
-      state_(CLOSED)
+      callbacks_(callbacks)
   {
+    accept();
   }
 
   virtual ~Acceptor()
   {
-    if (isListening())
-    {
-      stop();
-    }
+    acceptor_.cancel();
   }
 
   // Delete copy constructors
   Acceptor(const Acceptor&) = delete;
   Acceptor& operator=(const Acceptor&) = delete;
-
-  bool start()
-  {
-    if (state_ != CLOSED)
-    {
-      LOG_ERROR("Acceptor already starting or currently shutting down");
-      return false;
-    }
-    else
-    {
-      LOG_INFO("Starting Acceptor");
-      state_ = LISTENING;
-      accept();
-      return true;
-    }
-  }
-
-  void stop()
-  {
-    if (state_ != LISTENING)
-    {
-      LOG_ERROR("Acceptor already stopped or currently shutting down");
-    }
-    else
-    {
-      LOG_INFO("Stopping Acceptor");
-      state_ = CLOSING;
-      acceptor_.cancel();
-    }
-  }
-
-  bool isListening() const { return state_ == LISTENING; }
 
  private:
   void accept()
@@ -106,10 +65,11 @@ class Acceptor
     acceptor_.async_accept(socket_, std::bind(&Acceptor::onAccept, this, std::placeholders::_1));
   }
 
-  void onAccept(const ErrorCode& errorCode)
+  void onAccept(const typename Backend::ErrorCode& errorCode)
   {
-    if (errorCode == Error::operation_aborted)
+    if (errorCode == Backend::Error::operation_aborted)
     {
+      // This instance might be deleted, so don't touch any instance variables
       return;
     }
     else if (errorCode)
@@ -122,31 +82,13 @@ class Acceptor
       callbacks_.onAccept(std::move(socket_));
     }
 
-    if (state_ == LISTENING)
-    {
-      accept();
-    }
-    else  // state == CLOSING || state == CLOSED
-    {
-      // We should never really get here
-      // If we cancel the Acceptor this function will be called with
-      // Error::operation_aborted, which is catched earlier in this function
-      LOG_INFO("Acceptor stopped");
-      state_ = CLOSED;
-    }
+    // Continue to accept new connections
+    accept();
   }
 
-  BEAcceptor acceptor_;
-  Socket socket_;
+  typename Backend::Acceptor acceptor_;
+  typename Backend::Socket socket_;
   Callbacks callbacks_;
-
-  enum State
-  {
-    CLOSED,
-    LISTENING,
-    CLOSING,
-  };
-  State state_;
 };
 
 #endif  // NETWORK_ACCEPTOR_H_

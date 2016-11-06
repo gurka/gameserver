@@ -48,9 +48,6 @@ class Server
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;
 
-  virtual bool start() = 0;
-  virtual void stop() = 0;
-
   virtual void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) = 0;
   virtual void closeConnection(ConnectionId connectionId, bool force) = 0;
 };

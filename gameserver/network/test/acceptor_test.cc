@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <memory>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -35,7 +37,7 @@ class AcceptorTest : public ::testing::Test
     : service_(),
       onAcceptMock_(),
       callbacks_({std::bind(&OnAcceptMock::onAccept, &onAcceptMock_, std::placeholders::_1)}),
-      acceptor_(&service_, 1234, callbacks_)
+      acceptor_()
   {
   }
 
@@ -51,23 +53,20 @@ class AcceptorTest : public ::testing::Test
   Acceptor<Backend>::Callbacks callbacks_;
 
   // Under test
-  Acceptor<Backend> acceptor_;
+  std::unique_ptr<Acceptor<Backend>> acceptor_;
 };
 
-TEST_F(AcceptorTest, StartStop)
+TEST_F(AcceptorTest, CreateDelete)
 {
   using ::testing::_;
 
-  // Start async accept
+  // Create Acceptor, should call async_accept
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
-  EXPECT_TRUE(acceptor_.start());
-  EXPECT_FALSE(acceptor_.start());
+  acceptor_ = std::unique_ptr<Acceptor<Backend>>(new Acceptor<Backend>(&service_, 1234, callbacks_));
 
-  // Stop Acceptor
+  // Delete Acceptor, should call cancel
   EXPECT_CALL(service_, acceptor_cancel());
-  acceptor_.stop();
-
-  acceptor_.stop();  // Should not have any side effects
+  acceptor_.reset();
 }
 
 TEST_F(AcceptorTest, AsyncAccept)
@@ -75,19 +74,19 @@ TEST_F(AcceptorTest, AsyncAccept)
   using ::testing::_;
   using ::testing::SaveArg;
 
-  // Start async accept, save callback
+  // Start Acceptor, save callback from async_accept
   std::function<void(Backend::ErrorCode)> callback;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
-  EXPECT_TRUE(acceptor_.start());
+  acceptor_ = std::unique_ptr<Acceptor<Backend>>(new Acceptor<Backend>(&service_, 1234, callbacks_));
 
   // Call callback with non-error errorcode
   EXPECT_CALL(onAcceptMock_, onAccept(_));
   EXPECT_CALL(service_, acceptor_async_accept(_, _));  // Acceptor should call async_accept again, to accept next connection
   callback(Backend::Error::no_error);
 
-  // Stop Acceptor
+  // Delete Acceptor
   EXPECT_CALL(service_, acceptor_cancel());
-  acceptor_.stop();
+  acceptor_.reset();
 }
 
 TEST_F(AcceptorTest, AsyncAcceptError)
@@ -95,10 +94,10 @@ TEST_F(AcceptorTest, AsyncAcceptError)
   using ::testing::_;
   using ::testing::SaveArg;
 
-  // Start async accept, save callback
+  // Create Acceptor, save callback from async_accept
   std::function<void(Backend::ErrorCode)> callback;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
-  EXPECT_TRUE(acceptor_.start());
+  acceptor_ = std::unique_ptr<Acceptor<Backend>>(new Acceptor<Backend>(&service_, 1234, callbacks_));
 
   // Call callback with any errorcode except operation_aborted (1)
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
@@ -109,9 +108,9 @@ TEST_F(AcceptorTest, AsyncAcceptError)
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
   callback(Backend::Error::no_error);
 
-  // Stop Acceptor
+  // Delete Acceptor
   EXPECT_CALL(service_, acceptor_cancel());
-  acceptor_.stop();
+  acceptor_.reset();
 }
 
 TEST_F(AcceptorTest, AsyncAcceptAbort)
@@ -119,10 +118,10 @@ TEST_F(AcceptorTest, AsyncAcceptAbort)
   using ::testing::_;
   using ::testing::SaveArg;
 
-  // Start async accept, save callback
+  // Create Acceptor, save callback from async_accept
   std::function<void(Backend::ErrorCode)> callback;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&callback));
-  EXPECT_TRUE(acceptor_.start());
+  acceptor_ = std::unique_ptr<Acceptor<Backend>>(new Acceptor<Backend>(&service_, 1234, callbacks_));
 
   // Call callback with Error::operation_aborted (1)
   // Acceptor should not call onAccept callback nor start a new async_accept
@@ -130,5 +129,5 @@ TEST_F(AcceptorTest, AsyncAcceptAbort)
 
   // Stop Acceptor
   EXPECT_CALL(service_, acceptor_cancel());
-  acceptor_.stop();
+  acceptor_.reset();
 }

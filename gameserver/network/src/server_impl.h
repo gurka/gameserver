@@ -26,75 +26,110 @@
 #define NETWORK_SERVERIMPL_H_
 
 #include <unordered_map>
-#include <boost/asio.hpp>  //NOLINT
 
 #include "server.h"
 #include "acceptor.h"
 #include "connection.h"
+#include "incomingpacket.h"
+#include "outgoingpacket.h"
+#include "logger.h"
 
 // Forward declarations
 class IncomingPacket;
 class OutgoingPacket;
 
+template <typename Backend>
 class ServerImpl : public Server
 {
  public:
-  ServerImpl(boost::asio::io_service* io_service,
+  ServerImpl(typename Backend::Service* io_service,
              unsigned short port,
-             const Callbacks& callbacks);
-  ~ServerImpl();
+             const Callbacks& callbacks)
+    : acceptor_(io_service,
+                port,
+                { std::bind(&ServerImpl::onAccept, this, std::placeholders::_1) }),
+      callbacks_(callbacks),
+      nextConnectionId_(0)
+  {
+  }
 
-  bool start();
-  void stop();
+  ~ServerImpl()
+  {
+    // Close all Connections
+    while (!connections_.empty())
+    {
+      // Connection will call the onConnectionClosed callback
+      // which erases it from connections_
+      connections_.begin()->second.close(true);
+    }
+  }
 
-  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet);
-  void closeConnection(ConnectionId connectionId, bool force);
+  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
+  {
+    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
+    connections_.at(connectionId).sendPacket(std::move(packet));
+  }
+
+  void closeConnection(ConnectionId connectionId, bool force)
+  {
+    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
+    connections_.at(connectionId).close(force);
+  }
 
  private:
   // Handler for Acceptor
-  void onAccept(boost::asio::ip::tcp::socket socket);
+  void onAccept(typename Backend::Socket socket)
+  {
+    LOG_DEBUG("%s: connectionId: %d num connections: %lu",
+              __func__,
+              nextConnectionId_,
+              connections_.size() + 1);
+
+    auto connectionId = nextConnectionId_;
+    nextConnectionId_ += 1;
+
+    // Create and insert Connection
+    typename Connection<Backend>::Callbacks callbacks
+    {
+      std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1),
+      std::bind(&ServerImpl::onDisconnected, this, connectionId),
+      std::bind(&ServerImpl::onConnectionClosed, this, connectionId),
+    };
+    connections_.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(connectionId),
+                         std::forward_as_tuple(std::move(socket), callbacks));
+
+    callbacks_.onClientConnected(connectionId);
+  }
 
   // Handler for Connection
-  void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet);
-  void onDisconnected(ConnectionId connectionId);
-  void onConnectionClosed(ConnectionId connectionId);
-
-  // Backend for Acceptor
-  // TODO(gurka): Common backend for acceptor and connection + move to loginserver / worldserver
-  struct Backend
+  void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
   {
-    using Service = boost::asio::io_service;
+    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
 
-    class Acceptor : public boost::asio::ip::tcp::acceptor
-    {
-     public:
-      Acceptor(Service& io_service, int port)
-        : boost::asio::ip::tcp::acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
-      {
-      }
-    };
+    callbacks_.onPacketReceived(connectionId, packet);
+  }
 
-    using Socket = boost::asio::ip::tcp::socket;
-    using ErrorCode = boost::system::error_code;
-    using Error = boost::asio::error::basic_errors;
-    using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
+  void onDisconnected(ConnectionId connectionId)
+  {
+    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
 
-    static void async_write(Socket& socket,
-                            const uint8_t* buffer,
-                            std::size_t length,
-                            const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
-    {
-      boost::asio::async_write(socket, boost::asio::buffer(buffer, length), handler);
-    }
+    callbacks_.onClientDisconnected(connectionId);
 
-    static void async_read(Socket& socket,
-                           uint8_t* buffer,
-                           std::size_t length,
-                           const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
-    {
-      boost::asio::async_read(socket, boost::asio::buffer(buffer, length), handler);
-    }
-  };
+    // The Connection will call the onConnectionClosed callback after this call
+  }
+
+  void onConnectionClosed(ConnectionId connectionId)
+  {
+    LOG_DEBUG("%s: connectionId: %d num connections: %lu",
+              __func__,
+              connectionId,
+              connections_.size() - 1);
+
+    connections_.erase(connectionId);
+  }
 
   Acceptor<Backend> acceptor_;
   Callbacks callbacks_;
