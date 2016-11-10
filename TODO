@@ -16,6 +16,4 @@
 * Figure out exactly, and document in README.md, what each module should and should not do.
   Especially World and Worldserver. How much logic and knowledge should World have?
 
-* Check/fix/sort/remove #includes
-
-* Add keyword 'override' to functions that overrides
+* Check/fix/sort/remove #includes and include guard names

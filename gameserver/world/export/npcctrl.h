@@ -34,18 +34,20 @@
 class NpcCtrl : public CreatureCtrl
 {
  public:
-  void onCreatureSpawn(const Creature& creature, const Position& position) {}
-  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) {}
+  void onCreatureSpawn(const Creature& creature, const Position& position) override {}
+  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) override {}
   void onCreatureMove(const Creature& creature,
-                      const Position& oldPosition, uint8_t oldStackPos,
-                      const Position& newPosition, uint8_t newStackPos) {}
-  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) {}
-  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) {}
+                      const Position& oldPosition,
+                      uint8_t oldStackPos,
+                      const Position& newPosition,
+                      uint8_t newStackPos) override {}
+  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) override {}
+  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) override {}
 
-  void onItemRemoved(const Position& position, uint8_t stackPos) {}
-  void onItemAdded(const Item& item, const Position& position) {}
+  void onItemRemoved(const Position& position, uint8_t stackPos) override {}
+  void onItemAdded(const Item& item, const Position& position) override {}
 
-  void onTileUpdate(const Position& position) {}
+  void onTileUpdate(const Position& position) override {}
 };
 
 #endif  // WORLD_NPCCTRL_H_

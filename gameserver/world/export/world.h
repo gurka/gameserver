@@ -82,10 +82,10 @@ class World : public WorldInterface
   bool creatureCanReach(CreatureId creatureId, const Position& position) const;
 
   // WorldInterface
-  const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const;
-  const Tile& getTile(const Position& position) const;
-  const Creature& getCreature(CreatureId creatureId) const;
-  const Position& getCreaturePosition(CreatureId creatureId) const;
+  const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const override;
+  const Tile& getTile(const Position& position) const override;
+  const Creature& getCreature(CreatureId creatureId) const override;
+  const Position& getCreaturePosition(CreatureId creatureId) const override;
 
  private:
   // Validation functions

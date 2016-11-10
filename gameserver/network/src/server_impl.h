@@ -69,14 +69,14 @@ class ServerImpl : public Server
   ServerImpl(const ServerImpl&) = delete;
   ServerImpl& operator=(const ServerImpl&) = delete;
 
-  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
+  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) override
   {
     LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
 
     connections_.at(connectionId).sendPacket(std::move(packet));
   }
 
-  void closeConnection(ConnectionId connectionId, bool force)
+  void closeConnection(ConnectionId connectionId, bool force) override
   {
     LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
 

@@ -59,33 +59,33 @@ class Protocol71 : public Protocol
   Protocol71& operator=(const Protocol71&) = delete;
 
   // Called by WorldServer (from Protocol)
-  void disconnected();
+  void disconnected() override;
 
   // Called by Server (from Protocol)
-  void parsePacket(IncomingPacket* packet);
+  void parsePacket(IncomingPacket* packet) override;
 
   // Called by World (from CreatureCtrl)
-  void onCreatureSpawn(const Creature& creature, const Position& position);
-  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos);
+  void onCreatureSpawn(const Creature& creature, const Position& position) override;
+  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) override;
   void onCreatureMove(const Creature& creature,
                       const Position& oldPosition,
                       uint8_t oldStackPos,
                       const Position& newPosition,
-                      uint8_t newStackPos);
-  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos);
-  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message);
+                      uint8_t newStackPos) override;
+  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) override;
+  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) override;
 
-  void onItemRemoved(const Position& position, uint8_t stackPos);
-  void onItemAdded(const Item& item, const Position& position);
+  void onItemRemoved(const Position& position, uint8_t stackPos) override;
+  void onItemAdded(const Item& item, const Position& position) override;
 
-  void onTileUpdate(const Position& position);
+  void onTileUpdate(const Position& position) override;
 
   // Called by GameEngine (from Protocol)
-  void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage);
-  void onEquipmentUpdated(const Player& player, int inventoryIndex);
-  void onUseItem(const Item& item);
-  void sendTextMessage(const std::string& message);
-  void sendCancel(const std::string& message);
+  void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) override;
+  void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
+  void onUseItem(const Item& item) override;
+  void sendTextMessage(const std::string& message) override;
+  void sendCancel(const std::string& message) override;
 
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
