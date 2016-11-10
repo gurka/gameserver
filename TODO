@@ -16,8 +16,6 @@
 * Figure out exactly, and document in README.md, what each module should and should not do.
   Especially World and Worldserver. How much logic and knowledge should World have?
 
-* Make sure classes that shouldn't be copied have their copy-constructors deleted
-
 * Check/fix/sort/remove #includes
 
-* Implement empty unittests (network/server, network/packet)
+* Add keyword 'override' to functions that overrides
