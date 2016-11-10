@@ -39,6 +39,10 @@ class Tile
   {
   }
 
+  // Delete copy constructors
+  Tile(const Tile&) = delete;
+  Tile& operator=(const Tile&) = delete;
+
   // Creatures
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);

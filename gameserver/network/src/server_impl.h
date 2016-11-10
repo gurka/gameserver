@@ -65,6 +65,10 @@ class ServerImpl : public Server
     }
   }
 
+  // Delete copy constructors
+  ServerImpl(const ServerImpl&) = delete;
+  ServerImpl& operator=(const ServerImpl&) = delete;
+
   void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet)
   {
     LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);

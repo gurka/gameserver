@@ -35,24 +35,14 @@
 template <class Task>
 class TaskQueue
 {
- private:
-  struct TaskWrapper
-  {
-    Task task;
-    boost::posix_time::ptime expire;
-
-    bool operator>(const TaskWrapper& other) const
-    {
-      return this->expire > other.expire;
-    }
-  };
-
  public:
   explicit TaskQueue(boost::asio::io_service* io_service)
     : timer_(*io_service),
       timerStarted_(false)
   {
   }
+
+  // Delete copy constructors
   TaskQueue(const TaskQueue&) = delete;
   TaskQueue& operator=(const TaskQueue&) = delete;
 
@@ -77,6 +67,17 @@ class TaskQueue
   }
 
  private:
+  struct TaskWrapper
+  {
+    Task task;
+    boost::posix_time::ptime expire;
+
+    bool operator>(const TaskWrapper& other) const
+    {
+      return this->expire > other.expire;
+    }
+  };
+
   void startTimer()
   {
     boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());

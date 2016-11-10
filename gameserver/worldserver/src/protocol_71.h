@@ -54,6 +54,10 @@ class Protocol71 : public Protocol
              Server* server,
              AccountReader* accountReader);
 
+  // Delete copy constructors
+  Protocol71(const Protocol71&) = delete;
+  Protocol71& operator=(const Protocol71&) = delete;
+
   // Called by WorldServer (from Protocol)
   void disconnected();
 

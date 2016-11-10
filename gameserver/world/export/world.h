@@ -55,7 +55,11 @@ class World : public WorldInterface
   World(std::unique_ptr<ItemFactory> itemFactory,
         int worldSizeX,
         int worldSizeY,
-        const std::unordered_map<Position, Tile, Position::Hash>& tiles);
+        std::unordered_map<Position, Tile, Position::Hash> tiles);
+
+  // Delete copy constructors
+  World(const World&) = delete;
+  World& operator=(const World&) = delete;
 
   // Creature management
   Position addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);

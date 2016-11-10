@@ -94,7 +94,6 @@ class Player : public Creature
   // From Creature
   int getSpeed() const override;
 
-
   int getMaxMana() const { return maxMana_; }
   void setMaxMana(int maxMana) { maxMana_ = maxMana; }
 

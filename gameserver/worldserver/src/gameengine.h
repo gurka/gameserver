@@ -50,7 +50,7 @@ class GameEngine
              const std::string& loginMessage,
              World* world);
 
-  // Not copyable
+  // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 

@@ -54,12 +54,13 @@ class WorldTest : public ::testing::Test
       for (auto y = 0; y < 16; y++)
       {
         // TODO(gurka): This damn 192 constant again...
-        tiles.insert(std::make_pair(Position(192 + x, 192 + y, 7),
-                                    Tile(Item())));
+        tiles.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(Position(192 + x, 192 + y, 7)),
+                      std::forward_as_tuple(Item()));
       }
     }
 
-    world.reset(new World(std::unique_ptr<ItemFactory>(new MockItemFactory()), 16, 16, tiles));
+    world.reset(new World(std::unique_ptr<ItemFactory>(new MockItemFactory()), 16, 16, std::move(tiles)));
   }
 
   std::unique_ptr<World> world;

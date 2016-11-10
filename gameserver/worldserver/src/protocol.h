@@ -38,7 +38,12 @@ class IncomingPacket;
 class Protocol : public CreatureCtrl
 {
  public:
+  Protocol() = default;
   virtual ~Protocol() = default;
+
+  // Delete copy constructors
+  Protocol(const Protocol&) = delete;
+  Protocol& operator=(const Protocol&) = delete;
 
   // Called by WorldServer
   virtual void disconnected() = 0;

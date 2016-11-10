@@ -122,7 +122,9 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
 
       auto groundItemId = std::stoi(groundItemAttr->value());
       auto groundItem = itemFactory->createItem(groundItemId);
-      tiles.insert(std::make_pair(position, Tile(groundItem)));
+      tiles.emplace(std::piecewise_construct,
+                    std::forward_as_tuple(position),
+                    std::forward_as_tuple(groundItem));
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -147,5 +149,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::unique_ptr<World>(new World(std::move(itemFactory), worldSizeX, worldSizeY, tiles));
+  return std::unique_ptr<World>(new World(std::move(itemFactory), worldSizeX, worldSizeY, std::move(tiles)));
 }

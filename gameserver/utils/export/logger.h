@@ -32,6 +32,9 @@ p * The MIT License (MIT)
 class Logger
 {
  public:
+  // Delete Constructor (static class only)
+  Logger() = delete;
+
   // Each level also include the levels above it
   // ERROR: should always be enabled, to be able to see software errors
   // INFO : can be good to have enabled to see basic information

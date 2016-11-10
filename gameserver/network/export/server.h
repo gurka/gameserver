@@ -45,6 +45,7 @@ class Server
   Server() = default;
   virtual ~Server() = default;
 
+  // Delete copy constructors
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;
 

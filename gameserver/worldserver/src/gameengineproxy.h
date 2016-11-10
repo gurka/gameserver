@@ -48,6 +48,10 @@ class GameEngineProxy
   {
   }
 
+  // Delete copy constructors
+  GameEngineProxy(const GameEngineProxy&) = delete;
+  GameEngineProxy& operator=(const GameEngineProxy&) = delete;
+
   template<class F, class... Args>
   void addTask(F&& f, Args&&... args)
   {
