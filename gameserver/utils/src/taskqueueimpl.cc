@@ -37,7 +37,7 @@ void TaskQueueImpl::addTask(const Task& task)
 
 void TaskQueueImpl::addTask(const Task& task, unsigned expire_ms)
 {
-  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time()) +
+  auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time()) +
                 boost::posix_time::millisec(expire_ms);
 
   TaskWrapper taskWrapper { task, expire };
@@ -55,7 +55,7 @@ void TaskQueueImpl::addTask(const Task& task, unsigned expire_ms)
 
 void TaskQueueImpl::startTimer()
 {
-  boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+  boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
   boost::posix_time::ptime taskExpire(queue_.top().expire);
   timer_.expires_from_now(taskExpire - now);
   timer_.async_wait(std::bind(&TaskQueueImpl::onTimeout, this, std::placeholders::_1));
@@ -75,7 +75,7 @@ void TaskQueueImpl::onTimeout(const boost::system::error_code& ec)
     abort();
   }
 
-  boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+  boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
   while (!queue_.empty())
   {
     auto taskWrapper = queue_.top();

@@ -1,5 +1,5 @@
 /**
-p * The MIT License (MIT)
+ * The MIT License (MIT)
  *
  * Copyright (c) 2016 Simon Sandström
  *

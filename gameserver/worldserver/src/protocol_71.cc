@@ -262,7 +262,7 @@ void Protocol71::onCreatureMove(const Creature& creature,
       duration *= 2;
     }
 
-    auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
+    auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time());
     nextWalkTime_ = now + boost::posix_time::millisec(duration);
 
     LOG_DEBUG("%s: creatureId: %d, groundSpeed: %d, creatureSpeed: %d, duration: %d",

@@ -92,7 +92,7 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
 {
   auto* protocol = getProtocol(creatureId);
 //  auto nextWalkTime = protocol->getNextWalkTime();
-//  auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time());
+//  auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time());
 
 //  if (nextWalkTime <= now)
 //  {
