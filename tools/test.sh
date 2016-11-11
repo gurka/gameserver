@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# Go to script directory
+# Go to repo root
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pushd "$DIR/.."
 
-# Create build_test (may already exist)
-mkdir -p build_test
-cd build_test
+# Call tools/cmake to create build_test
+tools/cmake test
 
-# Run cmake and make
-cmake .. -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
+# Go to build_test
+pushd "build_test"
 make || exit 1
 
 # Run tests
@@ -19,5 +18,6 @@ make || exit 1
 ./world_test || exit 1
 
 echo "All tests ran OK"
+popd
 popd
 exit 0
