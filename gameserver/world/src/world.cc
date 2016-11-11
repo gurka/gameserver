@@ -34,6 +34,7 @@
 #include "itemfactory.h"
 #include "npcctrl.h"
 #include "logger.h"
+#include "tick.h"
 
 World::World(std::unique_ptr<ItemFactory> itemFactory,
              int worldSizeX,
@@ -190,8 +191,22 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
+  // TODO(gurka): Creatures are also blocking!
+  // (enforced by the client when walking with arrow keys)
 
+  // Get Creature
   auto& creature = internalGetCreature(creatureId);
+
+  // Check if Creature may move at this time
+  auto current_tick = Tick::now();
+  if (creature.getNextWalkTick() > current_tick)
+  {
+    LOG_DEBUG("%s: current_tick = %u nextWalkTick = %u => MAY_NOT_MOVE_YET",
+              __func__,
+              current_tick,
+              creature.getNextWalkTick());
+    return ReturnCode::MAY_NOT_MOVE_YET;
+  }
 
   // Move the actual creature
   auto fromPosition = getCreaturePosition(creatureId);  // Need to create a new Position here (i.e. not auto&)
@@ -203,6 +218,20 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   auto toStackPos = toTile.getCreatureStackPos(creatureId);
   creaturePositions_.at(creatureId) = toPosition;
 
+  // Set new nextWalkTime for this Creature
+  auto groundSpeed = fromTile.getGroundSpeed();
+  auto creatureSpeed = creature.getSpeed();
+  auto duration = (1000 * groundSpeed) / creatureSpeed;
+
+  // Walking diagonally?
+  if (fromPosition.getX() != toPosition.getX() &&
+      fromPosition.getY() != toPosition.getY())
+  {
+    // Or is it times 3?
+    duration *= 2;
+  }
+
+  creature.setNextWalkTick(current_tick + duration);
 
   // Update direction
   if (fromPosition.getY() > toPosition.getY())

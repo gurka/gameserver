@@ -22,42 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PROTOCOL_H_
-#define WORLDSERVER_PROTOCOL_H_
+#include "tick.h"
 
-#include <string>
-
-#include "creaturectrl.h"
-#include "player.h"
-#include "creature.h"
-#include "position.h"
-#include "item.h"
-
-class IncomingPacket;
-
-class Protocol : public CreatureCtrl
+uint32_t Tick::now()
 {
- public:
-  Protocol() = default;
-  virtual ~Protocol() = default;
-
-  // Delete copy constructors
-  Protocol(const Protocol&) = delete;
-  Protocol& operator=(const Protocol&) = delete;
-
-  // Called by WorldServer
-  virtual void disconnected() = 0;
-
-  // Called by Server
-  virtual void parsePacket(IncomingPacket* packet) = 0;
-
-  // Called by GameEngine
-  virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
-  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
-  virtual void onUseItem(const Item& item) = 0;
-  virtual void sendTextMessage(const std::string& message) = 0;
-  virtual void sendCancel(const std::string& message) = 0;
-  virtual void cancelMove() = 0;
-};
-
-#endif  // WORLDSERVER_PROTOCOL_H_
+  return 0u;
+}

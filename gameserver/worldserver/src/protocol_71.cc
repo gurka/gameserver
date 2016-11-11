@@ -242,34 +242,6 @@ void Protocol71::onCreatureMove(const Creature& creature,
     return;
   }
 
-  // TODO(gurka): This should be handled by GameEngine...
-  // or actually by World (it handles all World logic, and should decide when a creature may move again)
-  /*
-  if (creature.getCreatureId() == playerId_)
-  {
-    // Set next walk time
-    const auto& tile = worldInterface_->getTile(newPosition);
-
-    auto groundSpeed = tile.getGroundSpeed();
-    auto creatureSpeed = creature.getSpeed();
-    auto duration = (1000 * groundSpeed) / creatureSpeed;
-
-    // Walking diagonally?
-    if (oldPosition.getX() != newPosition.getX() &&
-        oldPosition.getY() != newPosition.getY())
-    {
-      // Or is it times 3?
-      duration *= 2;
-    }
-
-    auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time());
-    nextWalkTime_ = now + boost::posix_time::millisec(duration);
-
-    LOG_DEBUG("%s: creatureId: %d, groundSpeed: %d, creatureSpeed: %d, duration: %d",
-              __func__, creature.getCreatureId(), groundSpeed, creatureSpeed, duration);
-  }
-  */
-
   // Build outgoing packet
   OutgoingPacket packet;
 
@@ -574,35 +546,12 @@ void Protocol71::sendCancel(const std::string& message)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-// TODO(gurka): fix
-/*
-void Protocol71::queueMoves(const std::deque<Direction>& moves)
-{
-  // Append or replace? Assume replace for now...
-  queuedMoves_ = moves;
-}
-
-Direction Protocol71::getNextQueuedMove()
-{
-  Direction direction = queuedMoves_.front();
-  queuedMoves_.pop_front();
-  return direction;
-}
-
 void Protocol71::cancelMove()
 {
-  queuedMoves_.clear();
-
   OutgoingPacket packet;
   packet.addU8(0xB5);
   server_->sendPacket(connectionId_, std::move(packet));
 }
-
-boost::posix_time::ptime Protocol71::getNextWalkTime() const
-{
-  return nextWalkTime_;
-}
-*/
 
 bool Protocol71::canSee(const Position& position) const
 {

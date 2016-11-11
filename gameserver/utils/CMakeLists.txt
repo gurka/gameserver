@@ -21,6 +21,7 @@ if (unittest)
   # Export / stubs
   set(src_test_stubs
     "test_export/stub_logger.cc"
+    "test_export/stub_tick.cc"
   )
   add_library(utils_test_stubs ${src_test_stubs})
 

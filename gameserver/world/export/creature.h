@@ -25,7 +25,9 @@
 #ifndef WORLD_CREATURE_H_
 #define WORLD_CREATURE_H_
 
+#include <cstdint>
 #include <string>
+
 #include "direction.h"
 
 using CreatureId = int;
@@ -76,6 +78,9 @@ class Creature
   int getLightLevel() const { return lightLevel_; }
   void setLightLevel(int lightLevel) { lightLevel_ = lightLevel; }
 
+  uint32_t getNextWalkTick() const { return nextWalkTick_; }
+  void setNextWalkTick(uint32_t tick) { nextWalkTick_ = tick; }
+
   static const CreatureId INVALID_ID;
   static int getFreeCreatureId() { return Creature::nextCreatureId_++; }
 
@@ -89,6 +94,8 @@ class Creature
   Outfit outfit_;
   int lightColor_;
   int lightLevel_;
+
+  uint32_t nextWalkTick_;
 
   static CreatureId nextCreatureId_;
 };

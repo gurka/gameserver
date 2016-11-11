@@ -49,6 +49,7 @@ class World : public WorldInterface
     CANNOT_MOVE_THAT_OBJECT,
     CANNOT_REACH_THAT_OBJECT,
     THERE_IS_NO_ROOM,
+    MAY_NOT_MOVE_YET,
     OTHER_ERROR,
   };
 

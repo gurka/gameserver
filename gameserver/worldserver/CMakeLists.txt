@@ -18,8 +18,8 @@ add_executable(worldserver ${src})
 target_link_libraries(worldserver
   "account"
   "network"
-  "utils"
   "world"
+  "utils"
   ${LIBRARIES}
 )
 

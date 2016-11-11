@@ -86,6 +86,7 @@ class Protocol71 : public Protocol
   void onUseItem(const Item& item) override;
   void sendTextMessage(const std::string& message) override;
   void sendCancel(const std::string& message) override;
+  void cancelMove() override;
 
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }

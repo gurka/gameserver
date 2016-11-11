@@ -39,6 +39,7 @@
 #include "position.h"
 #include "world.h"
 #include "logger.h"
+#include "tick.h"
 
 GameEngine::GameEngine(TaskQueue* taskQueue,
                        const std::string& loginMessage,
@@ -90,77 +91,86 @@ void GameEngine::playerDespawn(CreatureId creatureId)
 
 void GameEngine::playerMove(CreatureId creatureId, Direction direction)
 {
-  auto* protocol = getProtocol(creatureId);
-//  auto nextWalkTime = protocol->getNextWalkTime();
-//  auto now = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time());
+  if (playerProtocol_.count(creatureId) == 0)
+  {
+    // TODO(gurka): We might want to be able to tag all tasks, so that we can
+    //              throw away all tasks that belongs to a player when the player disconnects
+    LOG_DEBUG("%s: player not found (disconnected while walking?)", __func__);
+    return;
+  }
 
-//  if (nextWalkTime <= now)
-//  {
-    LOG_DEBUG("%s: Player move now, creature id: %d", __func__, creatureId);
-    auto rc = world_->creatureMove(creatureId, direction);
-    if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
-    {
-      protocol->sendCancel("There is no room.");
-    }
-//  }
-//  else
-//  {
-//    LOG_DEBUG("%s: Player move delayed, creature id: %d", __func__, creatureId);
-//    auto creatureMoveFunc = [this, creatureId, direction]
-//    {
-//      auto rc = world_->creatureMove(creatureId, direction);
-//      if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
-//      {
-//        protocol->sendCancel("There is no room.");
-//      }
-//    };
-//    taskQueue_->addTask(creatureMoveFunc, nextWalkTime);
-//  }
+  LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
+
+  auto* protocol = getProtocol(creatureId);
+
+  auto rc = world_->creatureMove(creatureId, direction);
+  if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
+  {
+    LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
+    const auto& creature = world_->getCreature(creatureId);
+    taskQueue_->addTask(std::bind(&GameEngine::playerMove, this, creatureId, direction), creature.getNextWalkTick() - Tick::now());
+  }
+  else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+  {
+    protocol->sendCancel("There is no room.");
+  }
 }
 
 void GameEngine::playerMovePath(CreatureId creatureId, const std::deque<Direction>& path)
 {
-//  auto* protocol = getProtocol(creatureId);
-//  protocol->queueMoves(path);
-//
-//  taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
+  auto& player = getPlayer(creatureId);
+  player.queueMoves(path);
+  playerMovePathStep(creatureId);
 }
 
 void GameEngine::playerMovePathStep(CreatureId creatureId)
 {
-//  if (players_.count(creatureId) == 0)
-//  {
-//    // TODO(gurka): We might want to be able to tag all tasks, so that we can
-//    //              throw away all tasks that belongs to a player when the player disconnects
-//    LOG_DEBUG("%s: Player not found (disconnected while walking?)", __func__);
-//    return;
-//  }
-//
-//  auto* protocol = getProtocol(creatureId);
-//
-//  // Make sure that the queued moves hasn't been canceled
-//  if (protocol->hasQueuedMove())
-//  {
-//    LOG_DEBUG("%s: Player move, creature id: %d", __func__, creatureId);
-//    world_->creatureMove(creatureId, protocol->getNextQueuedMove());
-//  }
-//
-//  // Add a new task if there are more queued moves
-//  if (protocol->hasQueuedMove())
-//  {
-//    taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
-//  }
+  if (playerProtocol_.count(creatureId) == 0)
+  {
+    // TODO(gurka): We might want to be able to tag all tasks, so that we can
+    //              throw away all tasks that belongs to a player when the player disconnects
+    LOG_DEBUG("%s: Player not found (disconnected while walking?)", __func__);
+    return;
+  }
+
+  auto& player = getPlayer(creatureId);
+
+  // Make sure that the queued moves hasn't been canceled
+  if (player.hasQueuedMove())
+  {
+    auto rc = world_->creatureMove(creatureId, player.getNextQueuedMove());
+
+    if (rc == World::ReturnCode::OK)
+    {
+      // Player moved, pop the move from the queue
+      player.popNextQueuedMove();
+    }
+    else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
+    {
+      // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
+      playerCancelMove(creatureId);
+    }
+
+    if (player.hasQueuedMove())
+    {
+      // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
+      // to move yet, add a new task
+      taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), player.getNextWalkTick() - Tick::now());
+    }
+  }
 }
 
 void GameEngine::playerCancelMove(CreatureId creatureId)
 {
-//  LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
-//
-//  auto* protocol = getProtocol(creatureId);
-//  if (protocol->hasQueuedMove())
-//  {
-//    protocol->cancelMove();
-//  }
+  LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
+
+  auto& player = getPlayer(creatureId);
+  auto* protocol = getProtocol(creatureId);
+  if (player.hasQueuedMove())
+  {
+    player.clearQueuedMoves();
+    protocol->cancelMove();
+  }
 }
 
 void GameEngine::playerTurn(CreatureId creatureId, Direction direction)
@@ -302,6 +312,12 @@ void GameEngine::playerMoveItemFromPosToPos(CreatureId creatureId,
     case World::ReturnCode::THERE_IS_NO_ROOM:
     {
       getProtocol(creatureId)->sendCancel("There is no room.");
+      break;
+    }
+
+    case World::ReturnCode::MAY_NOT_MOVE_YET:
+    {
+      // TODO(gurka): fix
       break;
     }
 
