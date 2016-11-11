@@ -8,9 +8,11 @@ set(src
   "export/logger.h"
   "export/taskqueue.h"
   "export/taskqueuefactory.h"
+  "export/tick.h"
   "src/taskqueueimpl.cc"
   "src/taskqueueimpl.h"
   "src/taskqueuefactory.cc"
+  "src/tick.cc"
 )
 
 add_library(utils ${src})
