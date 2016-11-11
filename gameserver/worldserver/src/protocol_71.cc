@@ -24,6 +24,7 @@
 
 #include "protocol_71.h"
 
+#include <algorithm>
 #include <deque>
 #include <utility>
 

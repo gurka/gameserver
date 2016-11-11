@@ -22,37 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_GAMEENGINEPROXY_H_
-#define WORLDSERVER_GAMEENGINEPROXY_H_
+#ifndef UTILS_TASKQUEUEFACTORY_H_
+#define UTILS_TASKQUEUEFACTORY_H_
 
-#include <string>
-#include <utility>
+#include <memory>
 
-#include "gameengine.h"
+#include "taskqueue.h"
 
-class TaskQueue;
-class World;
+namespace boost
+{
+namespace asio
+{
+class io_service;
+}
+}
 
-class GameEngineProxy
+class TaskQueueFactory
 {
  public:
-  GameEngineProxy(TaskQueue* taskQueue, const std::string& loginMessage, World* world)
-    : gameEngine_(taskQueue, loginMessage, world)
-  {
-  }
-
-  // Delete copy constructors
-  GameEngineProxy(const GameEngineProxy&) = delete;
-  GameEngineProxy& operator=(const GameEngineProxy&) = delete;
-
-  template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
-  {
-    gameEngine_.addTask(f, args...);
-  }
-
- private:
-  GameEngine gameEngine_;
+  static std::unique_ptr<TaskQueue> createTaskQueue(boost::asio::io_service* io_service);
 };
 
-#endif  // WORLDSERVER_GAMEENGINEPROXY_H_
+#endif  // UTILS_TASKQUEUEFACTORY_H_

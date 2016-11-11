@@ -22,37 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_GAMEENGINEPROXY_H_
-#define WORLDSERVER_GAMEENGINEPROXY_H_
+#ifndef UTILS_TASKQUEUE_H_
+#define UTILS_TASKQUEUE_H_
 
-#include <string>
-#include <utility>
+#include <functional>
 
-#include "gameengine.h"
-
-class TaskQueue;
-class World;
-
-class GameEngineProxy
+class TaskQueue
 {
  public:
-  GameEngineProxy(TaskQueue* taskQueue, const std::string& loginMessage, World* world)
-    : gameEngine_(taskQueue, loginMessage, world)
-  {
-  }
+  using Task = std::function<void(void)>;
+
+  TaskQueue() = default;
+  virtual ~TaskQueue() = default;
 
   // Delete copy constructors
-  GameEngineProxy(const GameEngineProxy&) = delete;
-  GameEngineProxy& operator=(const GameEngineProxy&) = delete;
+  TaskQueue(const TaskQueue&) = delete;
+  TaskQueue& operator=(const TaskQueue&) = delete;
 
-  template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
-  {
-    gameEngine_.addTask(f, args...);
-  }
+  // Add a Task that should expire as soon as possible
+  virtual void addTask(const Task& task) = 0;
 
- private:
-  GameEngine gameEngine_;
+  // Add a Task that should expire in expire_ms milliseconds (or later)
+  virtual void addTask(const Task& task, unsigned expire_ms) = 0;
 };
 
-#endif  // WORLDSERVER_GAMEENGINEPROXY_H_
+#endif  // UTILS_TASKQUEUE_H_

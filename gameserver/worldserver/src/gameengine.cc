@@ -40,10 +40,10 @@
 #include "world.h"
 #include "logger.h"
 
-GameEngine::GameEngine(boost::asio::io_service* io_service,
+GameEngine::GameEngine(TaskQueue* taskQueue,
                        const std::string& loginMessage,
                        World* world)
-  : taskQueue_(io_service),
+  : taskQueue_(taskQueue),
     loginMessage_(loginMessage),
     world_(world)
 {
@@ -114,7 +114,7 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
 //        protocol->sendCancel("There is no room.");
 //      }
 //    };
-//    taskQueue_.addTask(creatureMoveFunc, nextWalkTime);
+//    taskQueue_->addTask(creatureMoveFunc, nextWalkTime);
 //  }
 }
 
@@ -123,7 +123,7 @@ void GameEngine::playerMovePath(CreatureId creatureId, const std::deque<Directio
 //  auto* protocol = getProtocol(creatureId);
 //  protocol->queueMoves(path);
 //
-//  taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
+//  taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
 }
 
 void GameEngine::playerMovePathStep(CreatureId creatureId)
@@ -148,7 +148,7 @@ void GameEngine::playerMovePathStep(CreatureId creatureId)
 //  // Add a new task if there are more queued moves
 //  if (protocol->hasQueuedMove())
 //  {
-//    taskQueue_.addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
+//    taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), protocol->getNextWalkTime());
 //  }
 }
 

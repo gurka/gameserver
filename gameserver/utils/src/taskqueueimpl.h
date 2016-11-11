@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_TASKQUEUE_H_
-#define WORLDSERVER_TASKQUEUE_H_
+#ifndef UTIL_TASKQUEUEIMPL_H_
+#define UTIL_TASKQUEUEIMPL_H_
 
 #include <functional>
 #include <deque>
@@ -32,39 +32,19 @@
 #include <boost/asio.hpp>  //NOLINT
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
 
-template <class Task>
-class TaskQueue
+#include "taskqueue.h"
+
+class TaskQueueImpl : public TaskQueue
 {
  public:
-  explicit TaskQueue(boost::asio::io_service* io_service)
-    : timer_(*io_service),
-      timerStarted_(false)
-  {
-  }
+  explicit TaskQueueImpl(boost::asio::io_service* io_service);
 
   // Delete copy constructors
-  TaskQueue(const TaskQueue&) = delete;
-  TaskQueue& operator=(const TaskQueue&) = delete;
+  TaskQueueImpl(const TaskQueueImpl&) = delete;
+  TaskQueueImpl& operator=(const TaskQueueImpl&) = delete;
 
-  void addTask(const Task& task)
-  {
-    addTask(task, boost::posix_time::ptime(boost::posix_time::microsec_clock::local_time()));
-  }
-
-  void addTask(const Task& task, const boost::posix_time::ptime& expire)
-  {
-    TaskWrapper taskWrapper { task, expire };
-    queue_.push(taskWrapper);
-    if (timerStarted_)
-    {
-      // onTimeout will handle restart of timer
-      timer_.cancel();
-    }
-    else
-    {
-      startTimer();
-    }
-  }
+  void addTask(const Task& task) override;
+  void addTask(const Task& task, unsigned expire_ms) override;
 
  private:
   struct TaskWrapper
@@ -78,49 +58,8 @@ class TaskQueue
     }
   };
 
-  void startTimer()
-  {
-    boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
-    boost::posix_time::ptime taskExpire(queue_.top().expire);
-    timer_.expires_from_now(taskExpire - now);
-    timer_.async_wait(std::bind(&TaskQueue::onTimeout, this, std::placeholders::_1));
-    timerStarted_ = true;
-  }
-
-  void onTimeout(const boost::system::error_code& ec)
-  {
-    if (ec == boost::asio::error::operation_aborted)
-    {
-      // Canceled by addTask
-      startTimer();
-      return;
-    }
-    else if (ec)
-    {
-      abort();
-    }
-
-    boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
-    while (!queue_.empty())
-    {
-      auto taskWrapper = queue_.top();
-      if (taskWrapper.expire > now)
-      {
-        break;
-      }
-      queue_.pop();
-      taskWrapper.task();
-    }
-
-    if (!queue_.empty())
-    {
-      startTimer();
-    }
-    else
-    {
-      timerStarted_ = false;
-    }
-  }
+  void startTimer();
+  void onTimeout(const boost::system::error_code& ec);
 
   // We use std::greater to get reverse priority queue (Task with lowest time first)
   std::priority_queue<TaskWrapper, std::deque<TaskWrapper>, std::greater<TaskWrapper>> queue_;
@@ -129,4 +68,4 @@ class TaskQueue
   bool timerStarted_;
 };
 
-#endif  // WORLDSERVER_TASKQUEUE_H_
+#endif  // UTIL_TASKQUEUEIMPL_H_

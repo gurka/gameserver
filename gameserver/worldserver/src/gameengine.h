@@ -33,8 +33,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include <boost/asio.hpp>  //NOLINT
-
 #include "taskqueue.h"
 #include "player.h"
 #include "position.h"
@@ -46,7 +44,7 @@ class World;
 class GameEngine
 {
  public:
-  GameEngine(boost::asio::io_service* io_service,
+  GameEngine(TaskQueue* taskQueue,
              const std::string& loginMessage,
              World* world);
 
@@ -57,7 +55,7 @@ class GameEngine
   template<class F, class... Args>
   void addTask(F&& f, Args&&... args)
   {
-    taskQueue_.addTask(std::bind(f, this, args...));
+    taskQueue_->addTask(std::bind(f, this, args...));
   }
 
   // These functions should only be called via addTask
@@ -111,10 +109,6 @@ class GameEngine
   Player& getPlayer(CreatureId creatureId) { return playerProtocol_.at(creatureId).player; }
   Protocol* getProtocol(CreatureId creatureId) { return playerProtocol_.at(creatureId).protocol; }
 
-  // Task stuff
-  using TaskFunction = std::function<void(void)>;
-  TaskQueue<TaskFunction> taskQueue_;
-
   struct PlayerProtocol
   {
     Player player;
@@ -122,8 +116,8 @@ class GameEngine
   };
   std::unordered_map<CreatureId, PlayerProtocol> playerProtocol_;
 
+  TaskQueue* taskQueue_;
   std::string loginMessage_;
-
   World* world_;
 };
 

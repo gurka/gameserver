@@ -40,6 +40,8 @@
 #include "protocol_71.h"
 #include "world.h"
 #include "worldfactory.h"
+#include "taskqueue.h"
+#include "taskqueuefactory.h"
 
 
 static boost::asio::io_service io_service;
@@ -47,6 +49,7 @@ static boost::asio::io_service io_service;
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
+static std::unique_ptr<TaskQueue> taskQueue;
 static std::unique_ptr<GameEngineProxy> gameEngineProxy;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
@@ -154,8 +157,11 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  // Create TaskQueue
+  taskQueue = TaskQueueFactory::createTaskQueue(&io_service);
+
   // Create GameEngine / GameEngineProxy
-  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(&io_service, loginMessage, world.get()));
+  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(taskQueue.get(), loginMessage, world.get()));
 
   // Create and load AccountReader
   accountReader = std::unique_ptr<AccountReader>(new AccountReader());

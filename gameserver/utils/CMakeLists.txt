@@ -6,6 +6,11 @@ set(src
   "src/logger.cc"
   "export/configparser.h"
   "export/logger.h"
+  "export/taskqueue.h"
+  "export/taskqueuefactory.h"
+  "src/taskqueueimpl.cc"
+  "src/taskqueueimpl.h"
+  "src/taskqueuefactory.cc"
 )
 
 add_library(utils ${src})
