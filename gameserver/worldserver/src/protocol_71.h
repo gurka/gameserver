@@ -31,8 +31,6 @@
 #include <array>
 #include <string>
 
-#include "gameengineproxy.h"
-#include "worldinterface.h"
 #include "outgoingpacket.h"
 #include "player.h"
 #include "creature.h"
@@ -40,7 +38,7 @@
 #include "item.h"
 #include "server.h"
 
-class GameEngineProxy;
+class GameEngine;
 class WorldInterface;
 class AccountReader;
 
@@ -48,7 +46,7 @@ class Protocol71 : public Protocol
 {
  public:
   Protocol71(const std::function<void(void)>& closeProtocol,
-             GameEngineProxy* gameEngineProxy,
+             GameEngine* gameEngine,
              WorldInterface* worldInterface,
              ConnectionId connectionId,
              Server* server,
@@ -114,7 +112,7 @@ class Protocol71 : public Protocol
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
-  GameEngineProxy* gameEngineProxy_;
+  GameEngine* gameEngine_;
   WorldInterface* worldInterface_;
   ConnectionId connectionId_;
   Server* server_;

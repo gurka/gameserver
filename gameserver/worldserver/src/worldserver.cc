@@ -35,7 +35,6 @@
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
 #include "gameengine.h"
-#include "gameengineproxy.h"
 #include "protocol.h"
 #include "protocol_71.h"
 #include "world.h"
@@ -50,7 +49,7 @@ static boost::asio::io_service io_service;
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
 static std::unique_ptr<TaskQueue> taskQueue;
-static std::unique_ptr<GameEngineProxy> gameEngineProxy;
+static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
 
@@ -69,7 +68,7 @@ void onClientConnected(ConnectionId connectionId)
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
   auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
-                                                           gameEngineProxy.get(),
+                                                           gameEngine.get(),
                                                            world.get(),
                                                            connectionId,
                                                            server.get(),
@@ -160,8 +159,8 @@ int main(int argc, char* argv[])
   // Create TaskQueue
   taskQueue = TaskQueueFactory::createTaskQueue(&io_service);
 
-  // Create GameEngine / GameEngineProxy
-  gameEngineProxy = std::unique_ptr<GameEngineProxy>(new GameEngineProxy(taskQueue.get(), loginMessage, world.get()));
+  // Create GameEngine
+  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(taskQueue.get(), loginMessage, world.get()));
 
   // Create and load AccountReader
   accountReader = std::unique_ptr<AccountReader>(new AccountReader());
@@ -192,7 +191,7 @@ int main(int argc, char* argv[])
   // Deallocate things (in reverse order of construction)
   server.reset();
   accountReader.reset();
-  gameEngineProxy.reset();
+  gameEngine.reset();
   world.reset();
 
   return 0;
