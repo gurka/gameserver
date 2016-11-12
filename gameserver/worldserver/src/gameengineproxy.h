@@ -46,9 +46,10 @@ class GameEngineProxy
   GameEngineProxy& operator=(const GameEngineProxy&) = delete;
 
   template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
+  void addTask(CreatureId playerId, F&& f, Args&&... args)
   {
-    gameEngine_.addTask(f, args...);
+    // TODO(gurka): Fix this...
+    gameEngine_.addTask(playerId, f, args...);
   }
 
  private:

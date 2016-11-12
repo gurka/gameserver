@@ -40,10 +40,13 @@ class TaskQueue
   TaskQueue& operator=(const TaskQueue&) = delete;
 
   // Add a Task that should expire as soon as possible
-  virtual void addTask(const Task& task) = 0;
+  virtual void addTask(const Task& task, unsigned tag) = 0;
 
   // Add a Task that should expire in expire_ms milliseconds (or later)
-  virtual void addTask(const Task& task, unsigned expire_ms) = 0;
+  virtual void addTask(const Task& task, unsigned tag, unsigned expire_ms) = 0;
+
+  // Cancel all Tasks with the given tag
+  virtual void cancelAllTasks(unsigned tag) = 0;
 };
 
 #endif  // UTILS_TASKQUEUE_H_

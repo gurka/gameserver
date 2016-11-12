@@ -26,8 +26,7 @@
 #define UTIL_TASKQUEUEIMPL_H_
 
 #include <functional>
-#include <deque>
-#include <queue>
+#include <vector>
 
 #include <boost/asio.hpp>  //NOLINT
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
@@ -43,29 +42,34 @@ class TaskQueueImpl : public TaskQueue
   TaskQueueImpl(const TaskQueueImpl&) = delete;
   TaskQueueImpl& operator=(const TaskQueueImpl&) = delete;
 
-  void addTask(const Task& task) override;
-  void addTask(const Task& task, unsigned expire_ms) override;
+  void addTask(const Task& task, unsigned tag) override;
+  void addTask(const Task& task, unsigned tag, unsigned expire_ms) override;
+  void cancelAllTasks(unsigned tag) override;
 
  private:
   struct TaskWrapper
   {
-    Task task;
-    boost::posix_time::ptime expire;
-
-    bool operator>(const TaskWrapper& other) const
+    TaskWrapper(const Task& task, unsigned tag, const boost::posix_time::ptime& expire)
+      : task(task),
+        tag(tag),
+        expire(expire)
     {
-      return this->expire > other.expire;
     }
+
+    Task task;
+    unsigned tag;
+    boost::posix_time::ptime expire;
   };
 
   void startTimer();
   void onTimeout(const boost::system::error_code& ec);
 
-  // We use std::greater to get reverse priority queue (Task with lowest time first)
-  std::priority_queue<TaskWrapper, std::deque<TaskWrapper>, std::greater<TaskWrapper>> queue_;
+  // The vector should be sorted on TaskWrapper.expire
+  // This is handled by addTask()
+  std::vector<TaskWrapper> queue_;
 
   boost::asio::deadline_timer timer_;
-  bool timerStarted_;
+  bool timer_started_;
 };
 
 #endif  // UTIL_TASKQUEUEIMPL_H_

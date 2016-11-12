@@ -62,7 +62,7 @@ void Protocol71::disconnected()
   if (isLoggedIn())
   {
     // We are logged in to the game, add a task to despawn
-    gameEngineProxy_->addTask(&GameEngine::playerDespawn, playerId_);
+    gameEngineProxy_->addTask(playerId_, &GameEngine::playerDespawn, playerId_);
   }
   else
   {
@@ -103,7 +103,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     {
       case 0x14:
       {
-        gameEngineProxy_->addTask(&GameEngine::playerDespawn, playerId_);
+        gameEngineProxy_->addTask(playerId_, &GameEngine::playerDespawn, playerId_);
         break;
       }
 
@@ -118,13 +118,13 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        gameEngineProxy_->addTask(&GameEngine::playerMove, playerId_, static_cast<Direction>(packetId - 0x65));
+        gameEngineProxy_->addTask(playerId_, &GameEngine::playerMove, playerId_, static_cast<Direction>(packetId - 0x65));
         break;
       }
 
       case 0x69:
       {
-        gameEngineProxy_->addTask(&GameEngine::playerCancelMove, playerId_);
+        gameEngineProxy_->addTask(playerId_, &GameEngine::playerCancelMove, playerId_);
         break;
       }
 
@@ -133,7 +133,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        gameEngineProxy_->addTask(&GameEngine::playerTurn, playerId_, static_cast<Direction>(packetId - 0x6F));
+        gameEngineProxy_->addTask(playerId_, &GameEngine::playerTurn, playerId_, static_cast<Direction>(packetId - 0x6F));
         break;
       }
 
@@ -753,7 +753,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, add Player to GameEngine
-  gameEngineProxy_->addTask(&GameEngine::playerSpawn, character_name, this);
+  gameEngineProxy_->addTask(0u, &GameEngine::playerSpawn, character_name, this);
 }
 
 void Protocol71::parseMoveClick(IncomingPacket* packet)
@@ -772,7 +772,7 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngineProxy_->addTask(&GameEngine::playerMovePath, playerId_, moves);
+  gameEngineProxy_->addTask(playerId_, &GameEngine::playerMovePath, playerId_, moves);
 }
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
@@ -810,7 +810,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 unknown2,
                 unknown3);
 
-      gameEngineProxy_->addTask(&GameEngine::playerMoveItemFromInvToInv, playerId_, fromInventoryId, itemId, countOrSubType, toInventoryId);
+      gameEngineProxy_->addTask(playerId_, &GameEngine::playerMoveItemFromInvToInv, playerId_, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -827,7 +827,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 unknown,
                 unknown2);
 
-      gameEngineProxy_->addTask(&GameEngine::playerMoveItemFromInvToPos, playerId_, fromInventoryId, itemId, countOrSubType, toPosition);
+      gameEngineProxy_->addTask(playerId_, &GameEngine::playerMoveItemFromInvToPos, playerId_, fromInventoryId, itemId, countOrSubType, toPosition);
     }
   }
   else
@@ -855,7 +855,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 toInventoryId,
                 unknown);
 
-      gameEngineProxy_->addTask(&GameEngine::playerMoveItemFromPosToInv, playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
+      gameEngineProxy_->addTask(playerId_, &GameEngine::playerMoveItemFromPosToInv, playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -871,7 +871,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 fromStackPos,
                 toPosition.toString().c_str());
 
-      gameEngineProxy_->addTask(&GameEngine::playerMoveItemFromPosToPos, playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
+      gameEngineProxy_->addTask(playerId_, &GameEngine::playerMoveItemFromPosToPos, playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
   }
 }
@@ -895,7 +895,7 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngineProxy_->addTask(&GameEngine::playerUseInvItem, playerId_, itemId, inventoryIndex);
+    gameEngineProxy_->addTask(playerId_, &GameEngine::playerUseInvItem, playerId_, itemId, inventoryIndex);
   }
   else
   {
@@ -912,7 +912,7 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
               stackPosition,
               unknown);
 
-    gameEngineProxy_->addTask(&GameEngine::playerUsePosItem, playerId_, itemId, position, stackPosition);
+    gameEngineProxy_->addTask(playerId_, &GameEngine::playerUsePosItem, playerId_, itemId, position, stackPosition);
   }
 }
 
@@ -935,7 +935,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngineProxy_->addTask(&GameEngine::playerLookAtInvItem, playerId_, inventoryIndex, itemId);
+    gameEngineProxy_->addTask(playerId_, &GameEngine::playerLookAtInvItem, playerId_, inventoryIndex, itemId);
   }
   else
   {
@@ -950,7 +950,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
               position.toString().c_str(),
               stackPos);
 
-    gameEngineProxy_->addTask(&GameEngine::playerLookAtPosItem, playerId_, position, itemId, stackPos);
+    gameEngineProxy_->addTask(playerId_, &GameEngine::playerLookAtPosItem, playerId_, position, itemId, stackPos);
   }
 }
 
@@ -977,12 +977,12 @@ void Protocol71::parseSay(IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  gameEngineProxy_->addTask(&GameEngine::playerSay, playerId_, type, message, receiver, channelId);
+  gameEngineProxy_->addTask(playerId_, &GameEngine::playerSay, playerId_, type, message, receiver, channelId);
 }
 
 void Protocol71::parseCancelMove(IncomingPacket* packet)
 {
-  gameEngineProxy_->addTask(&GameEngine::playerCancelMove, playerId_);
+  gameEngineProxy_->addTask(playerId_, &GameEngine::playerCancelMove, playerId_);
 }
 
 Position Protocol71::getPosition(IncomingPacket* packet) const

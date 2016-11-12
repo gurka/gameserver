@@ -87,18 +87,13 @@ void GameEngine::playerDespawn(CreatureId creatureId)
 
   // Remove Player and PlayerCtrl
   playerProtocol_.erase(creatureId);
+
+  // Remove any queued tasks for this player
+  taskQueue_->cancelAllTasks(creatureId);
 }
 
 void GameEngine::playerMove(CreatureId creatureId, Direction direction)
 {
-  if (playerProtocol_.count(creatureId) == 0)
-  {
-    // TODO(gurka): We might want to be able to tag all tasks, so that we can
-    //              throw away all tasks that belongs to a player when the player disconnects
-    LOG_DEBUG("%s: player not found (disconnected while walking?)", __func__);
-    return;
-  }
-
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
   auto* protocol = getProtocol(creatureId);
@@ -108,7 +103,9 @@ void GameEngine::playerMove(CreatureId creatureId, Direction direction)
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
     const auto& creature = world_->getCreature(creatureId);
-    taskQueue_->addTask(std::bind(&GameEngine::playerMove, this, creatureId, direction), creature.getNextWalkTick() - Tick::now());
+    taskQueue_->addTask(std::bind(&GameEngine::playerMove, this, creatureId, direction),
+                        creatureId,
+                        creature.getNextWalkTick() - Tick::now());
   }
   else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
   {
@@ -125,14 +122,6 @@ void GameEngine::playerMovePath(CreatureId creatureId, const std::deque<Directio
 
 void GameEngine::playerMovePathStep(CreatureId creatureId)
 {
-  if (playerProtocol_.count(creatureId) == 0)
-  {
-    // TODO(gurka): We might want to be able to tag all tasks, so that we can
-    //              throw away all tasks that belongs to a player when the player disconnects
-    LOG_DEBUG("%s: Player not found (disconnected while walking?)", __func__);
-    return;
-  }
-
   auto& player = getPlayer(creatureId);
 
   // Make sure that the queued moves hasn't been canceled
@@ -155,7 +144,9 @@ void GameEngine::playerMovePathStep(CreatureId creatureId)
     {
       // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
       // to move yet, add a new task
-      taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId), player.getNextWalkTick() - Tick::now());
+      taskQueue_->addTask(std::bind(&GameEngine::playerMovePathStep, this, creatureId),
+                          creatureId,
+                          player.getNextWalkTick() - Tick::now());
     }
   }
 }
@@ -288,6 +279,9 @@ void GameEngine::playerMoveItemFromPosToPos(CreatureId creatureId,
             count,
             toPosition.toString().c_str());
 
+  // TODO(gurka): This function should handle the case where itemId == 99
+  // e.g. the item is actually a creature
+
   World::ReturnCode rc = world_->moveItem(creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
 
   switch (rc)
@@ -317,7 +311,7 @@ void GameEngine::playerMoveItemFromPosToPos(CreatureId creatureId,
 
     case World::ReturnCode::MAY_NOT_MOVE_YET:
     {
-      // TODO(gurka): fix
+      // TODO(gurka): fix, see TODO above
       break;
     }
 

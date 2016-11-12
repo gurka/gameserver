@@ -53,9 +53,10 @@ class GameEngine
   GameEngine& operator=(const GameEngine&) = delete;
 
   template<class F, class... Args>
-  void addTask(F&& f, Args&&... args)
+  void addTask(CreatureId playerId, F&& f, Args&&... args)
   {
-    taskQueue_->addTask(std::bind(f, this, args...));
+    // TODO(gurka): Fix this...
+    taskQueue_->addTask(std::bind(f, this, args...), playerId);
   }
 
   // These functions should only be called via addTask
