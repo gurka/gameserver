@@ -22,38 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_GAMEENGINEPROXY_H_
-#define WORLDSERVER_GAMEENGINEPROXY_H_
+#ifndef GAMEENGINE_PLAYERCTRL_H_
+#define GAMEENGINE_PLAYERCTRL_H_
 
 #include <string>
-#include <utility>
 
-#include "gameengine.h"
+#include "creaturectrl.h"
+#include "player.h"
+#include "position.h"
+#include "item.h"
 
-class TaskQueue;
-class World;
-
-class GameEngineProxy
+class PlayerCtrl : public CreatureCtrl
 {
  public:
-  GameEngineProxy(TaskQueue* taskQueue, const std::string& loginMessage, World* world)
-    : gameEngine_(taskQueue, loginMessage, world)
-  {
-  }
+  PlayerCtrl() = default;
+  virtual ~PlayerCtrl() = default;
 
   // Delete copy constructors
-  GameEngineProxy(const GameEngineProxy&) = delete;
-  GameEngineProxy& operator=(const GameEngineProxy&) = delete;
+  PlayerCtrl(const PlayerCtrl&) = delete;
+  PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
-  template<class F, class... Args>
-  void addTask(CreatureId playerId, F&& f, Args&&... args)
-  {
-    // TODO(gurka): Fix this...
-    gameEngine_.addTask(playerId, f, args...);
-  }
-
- private:
-  GameEngine gameEngine_;
+  // Called by GameEngine
+  virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
+  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
+  virtual void onUseItem(const Item& item) = 0;
+  virtual void sendTextMessage(const std::string& message) = 0;
+  virtual void sendCancel(const std::string& message) = 0;
+  virtual void cancelMove() = 0;
 };
 
-#endif  // WORLDSERVER_GAMEENGINEPROXY_H_
+#endif  // GAMEENGINE_PLAYERCTRL_H_

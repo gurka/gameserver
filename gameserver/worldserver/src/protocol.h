@@ -27,7 +27,7 @@
 
 #include <string>
 
-#include "creaturectrl.h"
+#include "playerctrl.h"
 #include "player.h"
 #include "creature.h"
 #include "position.h"
@@ -35,7 +35,7 @@
 
 class IncomingPacket;
 
-class Protocol : public CreatureCtrl
+class Protocol : public PlayerCtrl
 {
  public:
   Protocol() = default;
@@ -50,14 +50,6 @@ class Protocol : public CreatureCtrl
 
   // Called by Server
   virtual void parsePacket(IncomingPacket* packet) = 0;
-
-  // Called by GameEngine
-  virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
-  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
-  virtual void onUseItem(const Item& item) = 0;
-  virtual void sendTextMessage(const std::string& message) = 0;
-  virtual void sendCancel(const std::string& message) = 0;
-  virtual void cancelMove() = 0;
 };
 
 #endif  // WORLDSERVER_PROTOCOL_H_

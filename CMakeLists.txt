@@ -26,6 +26,7 @@ if (NOT unittest)
     "gameserver/network/export"
     "gameserver/utils/export"
     "gameserver/world/export"
+    "gameserver/gameengine/export"
   )
 endif()
 
@@ -58,6 +59,15 @@ target_include_directories(world PUBLIC
   "gameserver/world/export"
   "gameserver/utils/export"
   "lib/rapidxml"
+)
+
+# Gameengine
+add_subdirectory("gameserver/gameengine")
+target_include_directories(gameengine PUBLIC
+  "gameserver/gameengine/src"
+  "gameserver/gameengine/export"
+  "gameserver/world/export"
+  "gameserver/utils/export"
 )
 
 # Unit tests
