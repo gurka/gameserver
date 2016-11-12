@@ -78,7 +78,7 @@ class Protocol71 : public Protocol
 
   void onTileUpdate(const Position& position) override;
 
-  // Called by GameEngine (from Protocol)
+  // Called by GameEngine (from PlayerCtrl)
   void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) override;
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onUseItem(const Item& item) override;
