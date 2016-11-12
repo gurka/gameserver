@@ -60,42 +60,35 @@ class GameEngine
   void cancelMove(CreatureId creatureId);
   void turn(CreatureId creatureId, Direction direction);
 
-  void say(CreatureId creatureId,
-           uint8_t type,
-           const std::string& message,
-           const std::string& receiver,
-           uint16_t channelId);
+  void say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId);
 
-  void moveItemFromPosToPos(CreatureId creatureId,
-                            const Position& fromPosition,
-                            int fromStackPos,
-                            int itemId,
-                            int count,
-                            const Position& toPosition);
-  void moveItemFromPosToInv(CreatureId creatureId,
-                            const Position& fromPosition,
-                            int fromStackPos,
-                            int itemId,
-                            int count,
-                            int inventoryId);
-  void moveItemFromInvToPos(CreatureId creatureId,
-                            int fromInventoryId,
-                            int itemId,
-                            int count,
-                            const Position& toPosition);
-  void moveItemFromInvToInv(CreatureId creatureId,
-                            int fromInventoryId,
-                            int itemId,
-                            int count,
-                            int toInventoryId);
+  // TODO(gurka): Maybe name them all 'moveItem'? Would be OK since Position can't be casted to int
+  void moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition);
+  void moveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int inventoryId);
+  void moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition);
+  void moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId);
 
+  // TODO(gurka): Same as above
   void useInvItem(CreatureId creatureId, int itemId, int inventoryIndex);
   void usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos);
 
+  // TODO(gurka): Same as above
   void lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId);
   void lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
  private:
+  template <typename F, typename... Args>
+  void addTaskNow(CreatureId playerId, F&& f, Args&&... args)
+  {
+    taskQueue_->addTask(std::bind(f, this, args...), playerId);
+  }
+
+  template <typename F, typename... Args>
+  void addTaskLater(CreatureId playerId, unsigned expire_ms, F&& f, Args&&... args)
+  {
+    taskQueue_->addTask(std::bind(f, this, args...), playerId, expire_ms);
+  }
+
   // Tasks (e.g. functions that interacts with World)
   void taskSpawn(CreatureId creatureId);
   void taskDespawn(CreatureId creatureId);
@@ -104,34 +97,12 @@ class GameEngine
   void taskMovePath(CreatureId creatureId);
   void taskTurn(CreatureId creatureId, Direction direction);
 
-  void taskSay(CreatureId creatureId,
-               uint8_t type,
-               const std::string& message,
-               const std::string& receiver,
-               uint16_t channelId);
+  void taskSay(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId);
 
-  void taskMoveItemFromPosToPos(CreatureId creatureId,
-                                const Position& fromPosition,
-                                int fromStackPos,
-                                int itemId,
-                                int count,
-                                const Position& toPosition);
-  void taskMoveItemFromPosToInv(CreatureId creatureId,
-                                const Position& fromPosition,
-                                int fromStackPos,
-                                int itemId,
-                                int count,
-                                int toInventoryId);
-  void taskMoveItemFromInvToPos(CreatureId creatureId,
-                                int fromInventoryId,
-                                int itemId,
-                                int count,
-                                const Position& toPosition);
-  void taskMoveItemFromInvToInv(CreatureId creatureId,
-                                int fromInventoryId,
-                                int itemId,
-                                int count,
-                                int toInventoryId);
+  void taskMoveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition);
+  void taskMoveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int toInventoryId);
+  void taskMoveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition);
+  void taskMoveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId);
 
   void taskUseInvItem(CreatureId creatureId, int itemId, int inventoryIndex);
   void taskUsePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos);

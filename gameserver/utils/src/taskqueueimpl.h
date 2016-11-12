@@ -42,14 +42,14 @@ class TaskQueueImpl : public TaskQueue
   TaskQueueImpl(const TaskQueueImpl&) = delete;
   TaskQueueImpl& operator=(const TaskQueueImpl&) = delete;
 
-  void addTask(const Task& task, unsigned tag) override;
-  void addTask(const Task& task, unsigned tag, unsigned expire_ms) override;
-  void cancelAllTasks(unsigned tag) override;
+  void addTask(const Task& task, int tag) override;
+  void addTask(const Task& task, int tag, unsigned expire_ms) override;
+  void cancelAllTasks(int tag) override;
 
  private:
   struct TaskWrapper
   {
-    TaskWrapper(const Task& task, unsigned tag, const boost::posix_time::ptime& expire)
+    TaskWrapper(const Task& task, int tag, const boost::posix_time::ptime& expire)
       : task(task),
         tag(tag),
         expire(expire)
@@ -57,7 +57,7 @@ class TaskQueueImpl : public TaskQueue
     }
 
     Task task;
-    unsigned tag;
+    int tag;
     boost::posix_time::ptime expire;
   };
 
