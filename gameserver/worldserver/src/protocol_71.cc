@@ -133,7 +133,6 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-
         gameEngine_->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
         break;
       }
