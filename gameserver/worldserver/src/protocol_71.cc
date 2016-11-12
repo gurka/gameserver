@@ -62,7 +62,7 @@ void Protocol71::disconnected()
   if (isLoggedIn())
   {
     // Tell gameengine to despawn us
-    gameEngine_->playerDespawn(playerId_);
+    gameEngine_->despawn(playerId_);
   }
   else
   {
@@ -103,7 +103,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     {
       case 0x14:
       {
-        gameEngine_->playerDespawn(playerId_);
+        gameEngine_->despawn(playerId_);
         break;
       }
 
@@ -118,13 +118,13 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        gameEngine_->playerMove(playerId_, static_cast<Direction>(packetId - 0x65));
+        gameEngine_->move(playerId_, static_cast<Direction>(packetId - 0x65));
         break;
       }
 
       case 0x69:
       {
-        gameEngine_->playerCancelMove(playerId_);
+        gameEngine_->cancelMove(playerId_);
         break;
       }
 
@@ -134,7 +134,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x72:  // West  = 3
       {
 
-        gameEngine_->playerTurn(playerId_, static_cast<Direction>(packetId - 0x6F));
+        gameEngine_->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
         break;
       }
 
@@ -754,7 +754,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, add Player to GameEngine
-  gameEngine_->playerSpawn(character_name, this);
+  gameEngine_->spawn(character_name, this);
 }
 
 void Protocol71::parseMoveClick(IncomingPacket* packet)
@@ -773,7 +773,7 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine_->playerMovePath(playerId_, moves);
+  gameEngine_->movePath(playerId_, moves);
 }
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
@@ -811,7 +811,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 unknown2,
                 unknown3);
 
-      gameEngine_->playerMoveItemFromInvToInv(playerId_, fromInventoryId, itemId, countOrSubType, toInventoryId);
+      gameEngine_->moveItemFromInvToInv(playerId_, fromInventoryId, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -828,7 +828,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 unknown,
                 unknown2);
 
-      gameEngine_->playerMoveItemFromInvToPos(playerId_, fromInventoryId, itemId, countOrSubType, toPosition);
+      gameEngine_->moveItemFromInvToPos(playerId_, fromInventoryId, itemId, countOrSubType, toPosition);
     }
   }
   else
@@ -856,7 +856,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 toInventoryId,
                 unknown);
 
-      gameEngine_->playerMoveItemFromPosToInv(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
+      gameEngine_->moveItemFromPosToInv(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
     }
     else
     {
@@ -872,7 +872,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
                 fromStackPos,
                 toPosition.toString().c_str());
 
-      gameEngine_->playerMoveItemFromPosToPos(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
+      gameEngine_->moveItemFromPosToPos(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
     }
   }
 }
@@ -896,7 +896,7 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine_->playerUseInvItem(playerId_, itemId, inventoryIndex);
+    gameEngine_->useInvItem(playerId_, itemId, inventoryIndex);
   }
   else
   {
@@ -913,7 +913,7 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
               stackPosition,
               unknown);
 
-    gameEngine_->playerUsePosItem(playerId_, itemId, position, stackPosition);
+    gameEngine_->usePosItem(playerId_, itemId, position, stackPosition);
   }
 }
 
@@ -936,7 +936,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
               unknown,
               unknown2);
 
-    gameEngine_->playerLookAtInvItem(playerId_, inventoryIndex, itemId);
+    gameEngine_->lookAtInvItem(playerId_, inventoryIndex, itemId);
   }
   else
   {
@@ -951,7 +951,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
               position.toString().c_str(),
               stackPos);
 
-    gameEngine_->playerLookAtPosItem(playerId_, position, itemId, stackPos);
+    gameEngine_->lookAtPosItem(playerId_, position, itemId, stackPos);
   }
 }
 
@@ -978,12 +978,12 @@ void Protocol71::parseSay(IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  gameEngine_->playerSay(playerId_, type, message, receiver, channelId);
+  gameEngine_->say(playerId_, type, message, receiver, channelId);
 }
 
 void Protocol71::parseCancelMove(IncomingPacket* packet)
 {
-  gameEngine_->playerCancelMove(playerId_);
+  gameEngine_->cancelMove(playerId_);
 }
 
 Position Protocol71::getPosition(IncomingPacket* packet) const
