@@ -285,8 +285,12 @@ void GameEngine::taskSay(CreatureId creatureId, uint8_t type, const std::string&
 
 void GameEngine::moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition)
 {
-  // TODO(gurka): This function should handle the case where itemId == 99
-  // e.g. the item is actually a creature
+  if (itemId == 99)
+  {
+    // TODO(gurka): Figure out how to handle this, it's not trivial
+    return;
+  }
+
   addTaskNow(creatureId, &GameEngine::taskMoveItemFromPosToPos, creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
 }
 
@@ -325,12 +329,6 @@ void GameEngine::taskMoveItemFromPosToPos(CreatureId creatureId, const Position&
     case World::ReturnCode::THERE_IS_NO_ROOM:
     {
       getPlayerCtrl(creatureId)->sendCancel("There is no room.");
-      break;
-    }
-
-    case World::ReturnCode::MAY_NOT_MOVE_YET:
-    {
-      // TODO(gurka): fix, see TODO above
       break;
     }
 

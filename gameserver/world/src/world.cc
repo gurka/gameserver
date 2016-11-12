@@ -422,98 +422,64 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     return ReturnCode::CANNOT_REACH_THAT_OBJECT;
   }
 
-  if (itemId == 99)  // Item moved is a Creature
+  // Get tiles
+  auto& fromTile = internalGetTile(fromPosition);
+  auto& toTile = internalGetTile(toPosition);
+
+  // Check if Item exists in fromTile
+  auto item = fromTile.getItem(fromStackPos);
+  if (!item.isValid())
   {
-    // We need to get the Creature that is being moved
-    // It's not neccessarily the Creature that is doing the move
-
-    // Check that count is correct (may only be 1)
-    if (count != 1)
-    {
-      LOG_ERROR("%s: Trying to move a Creature, but count is not 1", __func__);
-      return ReturnCode::ITEM_NOT_FOUND;
-    }
-
-    // Check if trying to move more than 1 tile
-    if (std::abs(fromPosition.getX() - toPosition.getX()) > 1 ||
-        std::abs(fromPosition.getY() - toPosition.getY()) > 1)
-    {
-      LOG_ERROR("%s: Trying to move a Creature more than 1 tile", __func__);
-      return ReturnCode::OTHER_ERROR;
-    }
-
-    auto& fromTile = internalGetTile(fromPosition);
-    auto movedCreatureId = fromTile.getCreatureId(fromStackPos);
-    if (movedCreatureId == Creature::INVALID_ID)
-    {
-      LOG_ERROR("%s: Trying to move a Creature, but there is no Creature at the given position", __func__);
-      return ReturnCode::ITEM_NOT_FOUND;
-    }
-
-    // Move the Creature as a regular Creature move
-    return creatureMove(movedCreatureId, toPosition);
+    LOG_DEBUG("%s: Could not find item %d at %s", __func__, itemId, fromPosition.toString().c_str());
+    return ReturnCode::ITEM_NOT_FOUND;
   }
-  else  // Item moved is a regular Item
+
+  // Check if we can add Item to toTile
+  for (const auto& item : toTile.getItems())
   {
-    // Get tiles
-    auto& fromTile = internalGetTile(fromPosition);
-    auto& toTile = internalGetTile(toPosition);
-
-    // Check if Item exists in fromTile
-    auto item = fromTile.getItem(fromStackPos);
-    if (!item.isValid())
+    if (item.isBlocking())
     {
-      LOG_DEBUG("%s: Could not find item %d at %s", __func__, itemId, fromPosition.toString().c_str());
-      return ReturnCode::ITEM_NOT_FOUND;
+      LOG_DEBUG("%s: Item on toTile is blocking", __func__);
+      return ReturnCode::THERE_IS_NO_ROOM;
     }
+  }
 
-    // Check if we can add Item to toTile
-    for (const auto& item : toTile.getItems())
-    {
-      if (item.isBlocking())
-      {
-        LOG_DEBUG("%s: Item on toTile is blocking", __func__);
-        return ReturnCode::THERE_IS_NO_ROOM;
-      }
-    }
+  // Try to remove Item from fromTile
+  if (!fromTile.removeItem(itemId, fromStackPos))
+  {
+    LOG_DEBUG("%s: Could not remove item %d from %s", __func__, itemId, fromPosition.toString().c_str());
+    return ReturnCode::ITEM_NOT_FOUND;
+  }
 
-    // Try to remove Item from fromTile
-    if (!fromTile.removeItem(itemId, fromStackPos))
-    {
-      LOG_DEBUG("%s: Could not remove item %d from %s", __func__, itemId, fromPosition.toString().c_str());
-      return ReturnCode::ITEM_NOT_FOUND;
-    }
+  // Add Item to toTile
+  toTile.addItem(item);
 
-    // Add Item to toTile
-    toTile.addItem(item);
+  // Call onItemRemoved on all creatures that can see fromPosition
+  auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
+  for (const auto& nearCreatureId : nearCreatureIds)
+  {
+    getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
+  }
 
-    // Call onItemRemoved on all creatures that can see fromPosition
+  // Call onItemAdded on all creatures that can see toPosition
+  nearCreatureIds = getVisibleCreatureIds(toPosition);
+  for (const auto& nearCreatureId : nearCreatureIds)
+  {
+    getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
+  }
+
+  // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
+  // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
+  if (fromTile.getNumberOfThings() >= 10)
+  {
     auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
     }
-
-    // Call onItemAdded on all creatures that can see toPosition
-    nearCreatureIds = getVisibleCreatureIds(toPosition);
-    for (const auto& nearCreatureId : nearCreatureIds)
-    {
-      getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
-    }
-
-    // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
-    // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
-    if (fromTile.getNumberOfThings() >= 10)
-    {
-      auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
-      for (const auto& nearCreatureId : nearCreatureIds)
-      {
-        getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
-      }
-    }
-
-    return ReturnCode::OK;
   }
+
+  return ReturnCode::OK;
 }
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const

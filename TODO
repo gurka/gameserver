@@ -17,3 +17,5 @@
   Especially World and Worldserver. How much logic and knowledge should World have?
 
 * Check/fix/sort/remove #includes and include guard names
+
+* Fix moving creatures (GameEngine::moveItemFromPosToPos)
