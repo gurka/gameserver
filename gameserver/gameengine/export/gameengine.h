@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_GAMEENGINE_H_
-#define WORLDSERVER_GAMEENGINE_H_
+#ifndef GAMEENGINE_GAMEENGINE_H_
+#define GAMEENGINE_GAMEENGINE_H_
 
 #include <array>
 #include <deque>
@@ -38,7 +38,7 @@
 #include "position.h"
 
 class OutgoingPacket;
-class Protocol;
+class PlayerCtrl;
 class World;
 
 class GameEngine
@@ -52,7 +52,7 @@ class GameEngine
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 
-  void spawn(const std::string& name, Protocol* protocol);
+  void spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
 
   void move(CreatureId creatureId, Direction direction);
@@ -140,19 +140,20 @@ class GameEngine
   void taskLookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
   // Use these instead of the unordered_maps directly
-  Player& getPlayer(CreatureId creatureId) { return playerProtocol_.at(creatureId).player; }
-  Protocol* getProtocol(CreatureId creatureId) { return playerProtocol_.at(creatureId).protocol; }
+  Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }
+  PlayerCtrl* getPlayerCtrl(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player_ctrl; }
 
-  struct PlayerProtocol
+  // Player + PlayerCtrl
+  struct PlayerPlayerCtrl
   {
     Player player;
-    Protocol* protocol;
+    PlayerCtrl* player_ctrl;
   };
-  std::unordered_map<CreatureId, PlayerProtocol> playerProtocol_;
+  std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 
   TaskQueue* taskQueue_;
   std::string loginMessage_;
   World* world_;
 };
 
-#endif  // WORLDSERVER_GAMEENGINE_H_
+#endif  // GAMEENGINE_GAMEENGINE_H_

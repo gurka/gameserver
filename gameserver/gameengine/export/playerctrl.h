@@ -22,34 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PROTOCOL_H_
-#define WORLDSERVER_PROTOCOL_H_
+#ifndef GAMEENGINE_PLAYERCTRL_H_
+#define GAMEENGINE_PLAYERCTRL_H_
 
 #include <string>
 
 #include "creaturectrl.h"
 #include "player.h"
-#include "creature.h"
 #include "position.h"
 #include "item.h"
 
-class IncomingPacket;
-
-class Protocol : public CreatureCtrl
+class PlayerCtrl : public CreatureCtrl
 {
  public:
-  Protocol() = default;
-  virtual ~Protocol() = default;
+  PlayerCtrl() = default;
+  virtual ~PlayerCtrl() = default;
 
   // Delete copy constructors
-  Protocol(const Protocol&) = delete;
-  Protocol& operator=(const Protocol&) = delete;
-
-  // Called by WorldServer
-  virtual void disconnected() = 0;
-
-  // Called by Server
-  virtual void parsePacket(IncomingPacket* packet) = 0;
+  PlayerCtrl(const PlayerCtrl&) = delete;
+  PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
   // Called by GameEngine
   virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
@@ -60,4 +51,4 @@ class Protocol : public CreatureCtrl
   virtual void cancelMove() = 0;
 };
 
-#endif  // WORLDSERVER_PROTOCOL_H_
+#endif  // GAMEENGINE_PLAYERCTRL_H_

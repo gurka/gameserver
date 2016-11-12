@@ -7,7 +7,7 @@ set(src
   "src/player.cc"
   "src/player.h"
   "export/gameengine.h"
-  "export/protocol.h"
+  "export/playerctrl.h"
 )
 
 add_library(gameengine ${src})

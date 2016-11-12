@@ -5,6 +5,7 @@ project(worldserver)
 set(src
   "src/protocol_71.cc"
   "src/protocol_71.h"
+  "src/protocol.h"
   "src/worldserver.cc"
 )
 

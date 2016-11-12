@@ -31,7 +31,7 @@
 #include <utility>
 
 #include "player.h"
-#include "protocol.h"
+#include "playerctrl.h"
 #include "creature.h"
 #include "creaturectrl.h"
 #include "item.h"
@@ -50,14 +50,14 @@ GameEngine::GameEngine(TaskQueue* taskQueue,
 {
 }
 
-void GameEngine::spawn(const std::string& name, Protocol* protocol)
+void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   // Create the Player
   Player newPlayer{name};
   auto creatureId = newPlayer.getCreatureId();
 
-  // Store the Player and the Protocol
-  playerProtocol_.insert({creatureId, {std::move(newPlayer), protocol}});
+  // Store the Player and the PlayerCtrl
+  playerPlayerCtrl_.insert({creatureId, {std::move(newPlayer), player_ctrl}});
 
   // Add task to spawn player in world
   taskQueue_->addTask(std::bind(&GameEngine::taskSpawn, this, creatureId),
@@ -67,14 +67,14 @@ void GameEngine::spawn(const std::string& name, Protocol* protocol)
 void GameEngine::taskSpawn(CreatureId creatureId)
 {
   auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
 
   LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
 
   // adjustedPosition is the position where the creature actually spawned
   // i.e., if there is a creature already at the given position
   Position position(222, 222, 7);
-  auto adjustedPosition = world_->addCreature(&player, protocol, position);
+  auto adjustedPosition = world_->addCreature(&player, player_ctrl, position);
   if (adjustedPosition == Position::INVALID)
   {
     LOG_ERROR("%s: Could not spawn player", __func__);
@@ -83,7 +83,7 @@ void GameEngine::taskSpawn(CreatureId creatureId)
   }
   else
   {
-    protocol->onPlayerSpawn(player, adjustedPosition, loginMessage_);
+    player_ctrl->onPlayerSpawn(player, adjustedPosition, loginMessage_);
   }
 }
 
@@ -99,7 +99,7 @@ void GameEngine::taskDespawn(CreatureId creatureId)
   world_->removeCreature(creatureId);
 
   // Remove Player and PlayerCtrl
-  playerProtocol_.erase(creatureId);
+  playerPlayerCtrl_.erase(creatureId);
 
   // Remove any queued tasks for this player
   taskQueue_->cancelAllTasks(creatureId);
@@ -115,7 +115,7 @@ void GameEngine::taskMove(CreatureId creatureId, Direction direction)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
 
   auto rc = world_->creatureMove(creatureId, direction);
   if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
@@ -128,7 +128,7 @@ void GameEngine::taskMove(CreatureId creatureId, Direction direction)
   }
   else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
   {
-    protocol->sendCancel("There is no room.");
+    player_ctrl->sendCancel("There is no room.");
   }
 }
 
@@ -176,11 +176,11 @@ void GameEngine::cancelMove(CreatureId creatureId)
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
   auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
   if (player.hasQueuedMove())
   {
     player.clearQueuedMoves();
-    protocol->cancelMove();
+    player_ctrl->cancelMove();
   }
 
   // Don't cancel the task, just let it expire and do nothing
@@ -271,7 +271,7 @@ void GameEngine::taskSay(CreatureId creatureId,
         oss << "Creature: " << creatureId << "\n";
       }
 
-      getProtocol(creatureId)->sendTextMessage(oss.str());
+      getPlayerCtrl(creatureId)->sendTextMessage(oss.str());
     }
     else if (command == "put")
     {
@@ -281,7 +281,7 @@ void GameEngine::taskSay(CreatureId creatureId,
 
       if (itemId < 100 || itemId > 2381)
       {
-        getProtocol(creatureId)->sendTextMessage("Invalid itemId");
+        getPlayerCtrl(creatureId)->sendTextMessage("Invalid itemId");
       }
       else
       {
@@ -292,7 +292,7 @@ void GameEngine::taskSay(CreatureId creatureId,
     }
     else
     {
-      getProtocol(creatureId)->sendTextMessage("Invalid command");
+      getPlayerCtrl(creatureId)->sendTextMessage("Invalid command");
     }
   }
   else
@@ -348,19 +348,19 @@ void GameEngine::taskMoveItemFromPosToPos(CreatureId creatureId,
 
     case World::ReturnCode::CANNOT_MOVE_THAT_OBJECT:
     {
-      getProtocol(creatureId)->sendCancel("You cannot move that object.");
+      getPlayerCtrl(creatureId)->sendCancel("You cannot move that object.");
       break;
     }
 
     case World::ReturnCode::CANNOT_REACH_THAT_OBJECT:
     {
-      getProtocol(creatureId)->sendCancel("You are too far away.");
+      getPlayerCtrl(creatureId)->sendCancel("You are too far away.");
       break;
     }
 
     case World::ReturnCode::THERE_IS_NO_ROOM:
     {
-      getProtocol(creatureId)->sendCancel("There is no room.");
+      getPlayerCtrl(creatureId)->sendCancel("There is no room.");
       break;
     }
 
@@ -413,12 +413,12 @@ void GameEngine::taskMoveItemFromPosToInv(CreatureId creatureId,
             toInventoryId);
 
   auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
 
   // Check if the player can reach the fromPosition
   if (!world_->creatureCanReach(creatureId, fromPosition))
   {
-    protocol->sendCancel("You are too far away.");
+    player_ctrl->sendCancel("You are too far away.");
     return;
   }
 
@@ -434,7 +434,7 @@ void GameEngine::taskMoveItemFromPosToInv(CreatureId creatureId,
   auto& equipment = player.getEquipment();
   if (!equipment.canAddItem(item, toInventoryId))
   {
-    protocol->sendCancel("You cannot equip that object.");
+    player_ctrl->sendCancel("You cannot equip that object.");
     return;
   }
 
@@ -454,7 +454,7 @@ void GameEngine::taskMoveItemFromPosToInv(CreatureId creatureId,
 
   // Add the Item to the inventory
   equipment.addItem(item, toInventoryId);
-  protocol->onEquipmentUpdated(player, toInventoryId);
+  player_ctrl->onEquipmentUpdated(player, toInventoryId);
 }
 
 void GameEngine::moveItemFromInvToPos(CreatureId creatureId,
@@ -488,7 +488,7 @@ void GameEngine::taskMoveItemFromInvToPos(CreatureId creatureId,
             toPosition.toString().c_str());
 
   auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
   auto& equipment = player.getEquipment();
 
   // Check if there is an Item with correct itemId at the fromInventoryId
@@ -502,7 +502,7 @@ void GameEngine::taskMoveItemFromInvToPos(CreatureId creatureId,
   // Check if the player can throw the Item to the toPosition
   if (!world_->creatureCanThrowTo(creatureId, toPosition))
   {
-    protocol->sendCancel("There is no room.");
+    player_ctrl->sendCancel("There is no room.");
     return;
   }
 
@@ -513,7 +513,7 @@ void GameEngine::taskMoveItemFromInvToPos(CreatureId creatureId,
     return;
   }
 
-  protocol->onEquipmentUpdated(player, fromInventoryId);
+  player_ctrl->onEquipmentUpdated(player, fromInventoryId);
 
   // Add the Item to the toPosition
   world_->addItem(item, toPosition);
@@ -550,7 +550,7 @@ void GameEngine::taskMoveItemFromInvToInv(CreatureId creatureId,
             toInventoryId);
 
   auto& player = getPlayer(creatureId);
-  auto* protocol = getProtocol(creatureId);
+  auto* player_ctrl = getPlayerCtrl(creatureId);
   auto& equipment = player.getEquipment();
 
   // TODO(gurka): Count
@@ -566,7 +566,7 @@ void GameEngine::taskMoveItemFromInvToInv(CreatureId creatureId,
   // Check if we can add the Item to the toInventoryId
   if (!equipment.canAddItem(item, toInventoryId))
   {
-    protocol->sendCancel("You cannot equip that object.");
+    player_ctrl->sendCancel("You cannot equip that object.");
     return;
   }
 
@@ -583,8 +583,8 @@ void GameEngine::taskMoveItemFromInvToInv(CreatureId creatureId,
   // Add the Item to the to-inventory slot
   equipment.addItem(item, toInventoryId);
 
-  protocol->onEquipmentUpdated(player, fromInventoryId);
-  protocol->onEquipmentUpdated(player, toInventoryId);
+  player_ctrl->onEquipmentUpdated(player, fromInventoryId);
+  player_ctrl->onEquipmentUpdated(player, toInventoryId);
 }
 
 void GameEngine::useInvItem(CreatureId creatureId,
@@ -698,7 +698,7 @@ void GameEngine::taskLookAtInvItem(CreatureId creatureId, int inventoryIndex, It
     ss << "\n" << item.getAttribute<std::string>("description");
   }
 
-  getProtocol(creatureId)->sendTextMessage(ss.str());
+  getPlayerCtrl(creatureId)->sendTextMessage(ss.str());
 }
 
 void GameEngine::lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
@@ -775,5 +775,5 @@ void GameEngine::taskLookAtPosItem(CreatureId creatureId, const Position& positi
     }
   }
 
-  getProtocol(creatureId)->sendTextMessage(ss.str());
+  getPlayerCtrl(creatureId)->sendTextMessage(ss.str());
 }
