@@ -15,7 +15,6 @@ set(src
   "export/direction.h"
   "export/item.h"
   "export/itemfactory.h"
-  "export/npcctrl.h"
   "export/position.h"
   "export/tile.h"
   "export/world.h"
