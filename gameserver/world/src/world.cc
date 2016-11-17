@@ -32,7 +32,6 @@
 #include <utility>
 
 #include "itemfactory.h"
-#include "npcctrl.h"
 #include "logger.h"
 #include "tick.h"
 
@@ -116,7 +115,7 @@ Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, cons
     {
       if (nearCreatureId != creatureId)
       {
-        getCreatureCtrl(nearCreatureId).onCreatureSpawn(*creature, adjustedPosition);
+        getCreatureCtrl(nearCreatureId).onCreatureSpawn(*this, *creature, adjustedPosition);
       }
     }
 
@@ -147,7 +146,7 @@ void World::removeCreature(CreatureId creatureId)
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureDespawn(creature, position, stackPos);
+    getCreatureCtrl(nearCreatureId).onCreatureDespawn(*this, creature, position, stackPos);
   }
 
   creatures_.erase(creatureId);
@@ -266,7 +265,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       const auto& nearCreatureIds = tile.getCreatureIds();
       for (const auto nearCreatureId : nearCreatureIds)
       {
-        getCreatureCtrl(nearCreatureId).onCreatureMove(creature, fromPosition, fromStackPos, toPosition, toStackPos);
+        getCreatureCtrl(nearCreatureId).onCreatureMove(*this, creature, fromPosition, fromStackPos, toPosition, toStackPos);
       }
     }
   }
@@ -278,7 +277,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
     auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, fromPosition);
     }
   }
 
@@ -303,7 +302,7 @@ void World::creatureTurn(CreatureId creatureId, Direction direction)
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureTurn(creature, position, stackPos);
+    getCreatureCtrl(nearCreatureId).onCreatureTurn(*this, creature, position, stackPos);
   }
 }
 
@@ -320,7 +319,7 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureSay(creature, position, message);
+    getCreatureCtrl(nearCreatureId).onCreatureSay(*this, creature, position, message);
   }
 }
 
@@ -346,7 +345,7 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(item, position);
+    getCreatureCtrl(nearCreatureId).onItemAdded(*this, item, position);
   }
 
   return ReturnCode::OK;
@@ -372,7 +371,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(position, stackPos);
+    getCreatureCtrl(nearCreatureId).onItemRemoved(*this, position, stackPos);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
@@ -382,7 +381,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
     auto nearCreatureIds = getVisibleCreatureIds(position);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(position);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, position);
     }
   }
 
@@ -458,14 +457,14 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
+    getCreatureCtrl(nearCreatureId).onItemRemoved(*this, fromPosition, fromStackPos);
   }
 
   // Call onItemAdded on all creatures that can see toPosition
   nearCreatureIds = getVisibleCreatureIds(toPosition);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(item, toPosition);
+    getCreatureCtrl(nearCreatureId).onItemAdded(*this, item, toPosition);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
@@ -475,7 +474,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     auto nearCreatureIds = getVisibleCreatureIds(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, fromPosition);
     }
   }
 

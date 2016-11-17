@@ -32,6 +32,8 @@
 #include "position.h"
 #include "item.h"
 
+class WorldInterface;
+
 class PlayerCtrl : public CreatureCtrl
 {
  public:
@@ -43,7 +45,7 @@ class PlayerCtrl : public CreatureCtrl
   PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
   // Called by GameEngine
-  virtual void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) = 0;
+  virtual void onPlayerSpawn(const WorldInterface& world_interface, const Player& player, const Position& position, const std::string& loginMessage) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
   virtual void onUseItem(const Item& item) = 0;
   virtual void sendTextMessage(const std::string& message) = 0;

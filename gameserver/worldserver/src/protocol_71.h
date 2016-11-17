@@ -39,15 +39,14 @@
 #include "server.h"
 
 class GameEngine;
-class WorldInterface;
 class AccountReader;
+class WorldInterface;
 
 class Protocol71 : public Protocol
 {
  public:
   Protocol71(const std::function<void(void)>& closeProtocol,
              GameEngine* gameEngine,
-             WorldInterface* worldInterface,
              ConnectionId connectionId,
              Server* server,
              AccountReader* accountReader);
@@ -63,23 +62,24 @@ class Protocol71 : public Protocol
   void parsePacket(IncomingPacket* packet) override;
 
   // Called by World (from CreatureCtrl)
-  void onCreatureSpawn(const Creature& creature, const Position& position) override;
-  void onCreatureDespawn(const Creature& creature, const Position& position, uint8_t stackPos) override;
-  void onCreatureMove(const Creature& creature,
+  void onCreatureSpawn(const WorldInterface& world_interface, const Creature& creature, const Position& position) override;
+  void onCreatureDespawn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos) override;
+  void onCreatureMove(const WorldInterface& world_interface,
+                      const Creature& creature,
                       const Position& oldPosition,
                       uint8_t oldStackPos,
                       const Position& newPosition,
                       uint8_t newStackPos) override;
-  void onCreatureTurn(const Creature& creature, const Position& position, uint8_t stackPos) override;
-  void onCreatureSay(const Creature& creature, const Position& position, const std::string& message) override;
+  void onCreatureTurn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos) override;
+  void onCreatureSay(const WorldInterface& world_interface, const Creature& creature, const Position& position, const std::string& message) override;
 
-  void onItemRemoved(const Position& position, uint8_t stackPos) override;
-  void onItemAdded(const Item& item, const Position& position) override;
+  void onItemRemoved(const WorldInterface& world_interface, const Position& position, uint8_t stackPos) override;
+  void onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position) override;
 
-  void onTileUpdate(const Position& position) override;
+  void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
-  void onPlayerSpawn(const Player& player, const Position& position, const std::string& loginMessage) override;
+  void onPlayerSpawn(const WorldInterface& world_interface, const Player& player, const Position& position, const std::string& loginMessage) override;
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onUseItem(const Item& item) override;
   void sendTextMessage(const std::string& message) override;
@@ -91,9 +91,9 @@ class Protocol71 : public Protocol
   bool isConnected() const { return server_ != nullptr; }
 
   // Helper functions for creating OutgoingPackets
-  bool canSee(const Position& position) const;
+  bool canSee(const WorldInterface& world_interface, const Position& position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
-  void addMapData(const Position& position, int width, int height, OutgoingPacket* packet);
+  void addMapData(const WorldInterface& world_interface, const Position& position, int width, int height, OutgoingPacket* packet);
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
   void addEquipment(const Player& player, int inventoryIndex, OutgoingPacket* packet) const;
@@ -113,7 +113,6 @@ class Protocol71 : public Protocol
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
   GameEngine* gameEngine_;
-  WorldInterface* worldInterface_;
   ConnectionId connectionId_;
   Server* server_;
   AccountReader* accountReader_;

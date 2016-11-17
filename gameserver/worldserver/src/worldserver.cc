@@ -69,7 +69,6 @@ void onClientConnected(ConnectionId connectionId)
   // (We need to parse the login packet before we create a specific Protocol implementation)
   auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
                                                            gameEngine.get(),
-                                                           world.get(),
                                                            connectionId,
                                                            server.get(),
                                                            accountReader.get()));

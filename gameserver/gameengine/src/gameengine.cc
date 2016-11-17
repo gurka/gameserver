@@ -35,7 +35,6 @@
 #include "creature.h"
 #include "creaturectrl.h"
 #include "item.h"
-#include "npcctrl.h"
 #include "position.h"
 #include "world.h"
 #include "logger.h"
@@ -82,7 +81,7 @@ void GameEngine::taskSpawn(CreatureId creatureId)
   }
   else
   {
-    player_ctrl->onPlayerSpawn(player, adjustedPosition, loginMessage_);
+    player_ctrl->onPlayerSpawn(*world_, player, adjustedPosition, loginMessage_);
   }
 }
 
