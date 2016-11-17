@@ -91,7 +91,7 @@ class Protocol71 : public Protocol
   bool isConnected() const { return server_ != nullptr; }
 
   // Helper functions for creating OutgoingPackets
-  bool canSee(const WorldInterface& world_interface, const Position& position) const;
+  bool canSee(const Position& from_position, const Position& to_position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
   void addMapData(const WorldInterface& world_interface, const Position& position, int width, int height, OutgoingPacket* packet);
   void addCreature(const Creature& creature, OutgoingPacket* packet);

@@ -244,8 +244,9 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
   // Build outgoing packet
   OutgoingPacket packet;
 
-  bool canSeeOldPos = canSee(world_interface, oldPosition);
-  bool canSeeNewPos = canSee(world_interface, newPosition);
+  const auto& player_position = world_interface.getCreaturePosition(playerId_);
+  bool canSeeOldPos = canSee(player_position, oldPosition);
+  bool canSeeNewPos = canSee(player_position, newPosition);
 
   if (canSeeOldPos && canSeeNewPos)
   {
@@ -552,14 +553,12 @@ void Protocol71::cancelMove()
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-// TODO(gurka): Change to bool canSee(fromPosition, toPosition)
-bool Protocol71::canSee(const WorldInterface& world_interface, const Position& position) const
+bool Protocol71::canSee(const Position& from_position, const Position& to_position) const
 {
-  const Position& playerPosition = world_interface.getCreaturePosition(playerId_);
-  return position.getX() >  playerPosition.getX() - 9 &&
-         position.getX() <= playerPosition.getX() + 9 &&
-         position.getY() >  playerPosition.getY() - 7 &&
-         position.getY() <= playerPosition.getY() + 7;
+  return to_position.getX() >  from_position.getX() - 9 &&
+         to_position.getX() <= from_position.getX() + 9 &&
+         to_position.getY() >  from_position.getY() - 7 &&
+         to_position.getY() <= from_position.getY() + 7;
 }
 
 void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) const
