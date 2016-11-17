@@ -33,6 +33,7 @@
 
 #include "taskqueue.h"
 
+// TODO(gurka): If we ever want to run multiple threads for network I/O this queue needs to be threadsafe
 class TaskQueueImpl : public TaskQueue
 {
  public:

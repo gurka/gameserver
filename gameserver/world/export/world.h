@@ -63,7 +63,7 @@ class World : public WorldInterface
   World& operator=(const World&) = delete;
 
   // Creature management
-  Position addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
+  ReturnCode addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
   void removeCreature(CreatureId creatureId);
   bool creatureExists(CreatureId creatureId) const;
   ReturnCode creatureMove(CreatureId creatureId, Direction direction);

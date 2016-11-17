@@ -51,6 +51,11 @@ GameEngine::GameEngine(TaskQueue* taskQueue,
 
 void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
+  addTaskNow(Creature::INVALID_ID, &GameEngine::taskSpawn, name, player_ctrl);
+}
+
+void GameEngine::taskSpawn(const std::string& name, PlayerCtrl* player_ctrl)
+{
   // Create the Player
   Player newPlayer{name};
   auto creatureId = newPlayer.getCreatureId();
@@ -58,22 +63,17 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   // Store the Player and the PlayerCtrl
   playerPlayerCtrl_.insert({creatureId, {std::move(newPlayer), player_ctrl}});
 
-  // Add task to spawn player in world
-  addTaskNow(creatureId, &GameEngine::taskSpawn, creatureId);
-}
-
-void GameEngine::taskSpawn(CreatureId creatureId)
-{
+  // Get the Player again, since newPlayed is moved from
   auto& player = getPlayer(creatureId);
-  auto* player_ctrl = getPlayerCtrl(creatureId);
 
   LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
 
-  // adjustedPosition is the position where the creature actually spawned
-  // i.e., if there is a creature already at the given position
-  Position position(222, 222, 7);
-  auto adjustedPosition = world_->addCreature(&player, player_ctrl, position);
-  if (adjustedPosition == Position::INVALID)
+  // Tell PlayerCtrl its CreatureId
+  player_ctrl->setPlayerId(player.getCreatureId());
+
+  // Spawn the player
+  auto rc = world_->addCreature(&player, player_ctrl, Position(222, 222, 7));
+  if (rc != World::ReturnCode::OK)
   {
     LOG_ERROR("%s: Could not spawn player", __func__);
     // TODO(gurka): Maybe let Protocol know that the player couldn't spawn, instead of time out?
@@ -81,7 +81,7 @@ void GameEngine::taskSpawn(CreatureId creatureId)
   }
   else
   {
-    player_ctrl->onPlayerSpawn(*world_, player, adjustedPosition, loginMessage_);
+    player_ctrl->sendTextMessage(0x11, loginMessage_);
   }
 }
 
@@ -252,7 +252,7 @@ void GameEngine::taskSay(CreatureId creatureId, uint8_t type, const std::string&
         oss << "Creature: " << creatureId << "\n";
       }
 
-      getPlayerCtrl(creatureId)->sendTextMessage(oss.str());
+      getPlayerCtrl(creatureId)->sendTextMessage(0x13, oss.str());
     }
     else if (command == "put")
     {
@@ -262,7 +262,7 @@ void GameEngine::taskSay(CreatureId creatureId, uint8_t type, const std::string&
 
       if (itemId < 100 || itemId > 2381)
       {
-        getPlayerCtrl(creatureId)->sendTextMessage("Invalid itemId");
+        getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid itemId");
       }
       else
       {
@@ -273,7 +273,7 @@ void GameEngine::taskSay(CreatureId creatureId, uint8_t type, const std::string&
     }
     else
     {
-      getPlayerCtrl(creatureId)->sendTextMessage("Invalid command");
+      getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid command");
     }
   }
   else
@@ -598,7 +598,7 @@ void GameEngine::taskLookAtInvItem(CreatureId creatureId, int inventoryIndex, It
     ss << "\n" << item.getAttribute<std::string>("description");
   }
 
-  getPlayerCtrl(creatureId)->sendTextMessage(ss.str());
+  getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
 }
 
 void GameEngine::lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
@@ -674,5 +674,5 @@ void GameEngine::taskLookAtPosItem(CreatureId creatureId, const Position& positi
     }
   }
 
-  getPlayerCtrl(creatureId)->sendTextMessage(ss.str());
+  getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
 }

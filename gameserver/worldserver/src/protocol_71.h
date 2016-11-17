@@ -79,10 +79,10 @@ class Protocol71 : public Protocol
   void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
-  void onPlayerSpawn(const WorldInterface& world_interface, const Player& player, const Position& position, const std::string& loginMessage) override;
+  void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onUseItem(const Item& item) override;
-  void sendTextMessage(const std::string& message) override;
+  void sendTextMessage(uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
 

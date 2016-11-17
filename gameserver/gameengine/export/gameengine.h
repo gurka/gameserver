@@ -90,7 +90,7 @@ class GameEngine
   }
 
   // Tasks (e.g. functions that interacts with World)
-  void taskSpawn(CreatureId creatureId);
+  void taskSpawn(const std::string& name, PlayerCtrl* player_ctrl);
   void taskDespawn(CreatureId creatureId);
 
   void taskMove(CreatureId creatureId, Direction direction);

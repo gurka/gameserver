@@ -46,7 +46,7 @@ World::World(std::unique_ptr<ItemFactory> itemFactory,
 {
 }
 
-Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)
+World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)
 {
   auto creatureId = creature->getCreatureId();
 
@@ -55,14 +55,14 @@ Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, cons
     LOG_ERROR("addCreature: Creature already exists: %s (%d)",
                 creature->getName().c_str(),
                 creature->getCreatureId());
-    return Position::INVALID;
+    return ReturnCode::OTHER_ERROR;
   }
 
   if (!positionIsValid(position))
   {
     LOG_ERROR("addCreature: Invalid position: %s",
                 position.toString().c_str());
-    return Position::INVALID;
+    return ReturnCode::OTHER_ERROR;
   }
 
   // Offsets for other possible positions
@@ -109,22 +109,19 @@ Position World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, cons
     creaturePositions_.insert(std::make_pair(creatureId, adjustedPosition));
 
     // Tell near creatures that a creature has spawned
-    // Except the spawned creature itself
+    // Including the spawned creature!
     auto nearCreatureIds = getVisibleCreatureIds(adjustedPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      if (nearCreatureId != creatureId)
-      {
-        getCreatureCtrl(nearCreatureId).onCreatureSpawn(*this, *creature, adjustedPosition);
-      }
+      getCreatureCtrl(nearCreatureId).onCreatureSpawn(*this, *creature, adjustedPosition);
     }
 
-    return adjustedPosition;
+    return ReturnCode::OK;
   }
   else
   {
     LOG_DEBUG("%s: Could not find a Tile to spawn Creature: %d", __func__, creatureId);
-    return Position::INVALID;
+    return ReturnCode::OTHER_ERROR;
   }
 }
 

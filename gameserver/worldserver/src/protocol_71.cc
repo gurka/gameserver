@@ -184,14 +184,76 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface, const Cr
 
   OutgoingPacket packet;
 
-  packet.addU8(0x6A);
-  addPosition(position, &packet);
-  addCreature(creature, &packet);
+  if (creature.getCreatureId() == playerId_)
+  {
+    // We are spawning!
+    const auto& player = static_cast<const Player&>(creature);
 
-  // Spawn/login bubble
-  packet.addU8(0x83);
-  addPosition(position, &packet);
-  packet.addU8(0x0A);
+    packet.addU8(0x0A);  // Login
+    packet.addU32(playerId_);
+
+    packet.addU8(0x32);  // ??
+    packet.addU8(0x00);
+
+    packet.addU8(0x64);  // Full (visible) map
+    addPosition(position, &packet);  // Position
+
+    addMapData(world_interface, Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
+
+    for (auto i = 0; i < 12; i++)
+    {
+      packet.addU8(0xFF);
+    }
+
+    packet.addU8(0xE4);  // Light?
+    packet.addU8(0xFF);
+
+    packet.addU8(0x83);  // Magic effect (login)
+    packet.addU16(position.getX());
+    packet.addU16(position.getY());
+    packet.addU8(position.getZ());
+    packet.addU8(0x0A);
+
+    // Player stats
+    packet.addU8(0xA0);
+    packet.addU16(player.getHealth());
+    packet.addU16(player.getMaxHealth());
+    packet.addU16(player.getCapacity());
+    packet.addU32(player.getExperience());
+    packet.addU8(player.getLevel());
+    packet.addU16(player.getMana());
+    packet.addU16(player.getMaxMana());
+    packet.addU8(player.getMagicLevel());
+
+    packet.addU8(0x82);  // Light?
+    packet.addU8(0x6F);
+    packet.addU8(0xD7);
+
+    // Player skills
+    packet.addU8(0xA1);
+    for (auto i = 0; i < 7; i++)
+    {
+      packet.addU8(10);
+    }
+
+
+    for (auto i = 1; i <= 10; i++)
+    {
+      addEquipment(player, i, &packet);
+    }
+  }
+  else
+  {
+    // Someone else spawned
+    packet.addU8(0x6A);
+    addPosition(position, &packet);
+    addCreature(creature, &packet);
+
+    // Spawn/login bubble
+    packet.addU8(0x83);
+    addPosition(position, &packet);
+    packet.addU8(0x0A);
+  }
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
@@ -401,78 +463,6 @@ void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Posit
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onPlayerSpawn(const WorldInterface& world_interface, const Player& player, const Position& position, const std::string& loginMessage)
-{
-  playerId_ = player.getCreatureId();
-
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-
-  packet.addU8(0x0A);  // Login
-  packet.addU32(playerId_);
-
-  packet.addU8(0x32);  // ??
-  packet.addU8(0x00);
-
-  packet.addU8(0x64);  // Full (visible) map
-  addPosition(position, &packet);  // Position
-
-  addMapData(world_interface, Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
-
-  for (auto i = 0; i < 12; i++)
-  {
-    packet.addU8(0xFF);
-  }
-
-  packet.addU8(0xE4);  // Light?
-  packet.addU8(0xFF);
-
-  packet.addU8(0x83);  // Magic effect (login)
-  packet.addU16(position.getX());
-  packet.addU16(position.getY());
-  packet.addU8(position.getZ());
-  packet.addU8(0x0A);
-
-  // Player stats
-  packet.addU8(0xA0);
-  packet.addU16(player.getHealth());
-  packet.addU16(player.getMaxHealth());
-  packet.addU16(player.getCapacity());
-  packet.addU32(player.getExperience());
-  packet.addU8(player.getLevel());
-  packet.addU16(player.getMana());
-  packet.addU16(player.getMaxMana());
-  packet.addU8(player.getMagicLevel());
-
-  packet.addU8(0x82);  // Light?
-  packet.addU8(0x6F);
-  packet.addU8(0xD7);
-
-  // Player skills
-  packet.addU8(0xA1);
-  for (auto i = 0; i < 7; i++)
-  {
-    packet.addU8(10);
-  }
-
-
-  for (auto i = 1; i <= 10; i++)
-  {
-    addEquipment(player, i, &packet);
-  }
-
-  // Login message
-  packet.addU8(0xB4);  // Message
-  packet.addU8(0x11);  // Message type
-  packet.addString(loginMessage);  // Message text
-
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
 void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 {
   if (!isConnected())
@@ -514,7 +504,8 @@ void Protocol71::onUseItem(const Item& item)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::sendTextMessage(const std::string& message)
+// 0x13 default text, 0x11 login text
+void Protocol71::sendTextMessage(uint8_t message_type, const std::string& message)
 {
   if (!isConnected())
   {
@@ -524,7 +515,7 @@ void Protocol71::sendTextMessage(const std::string& message)
   OutgoingPacket packet;
 
   packet.addU8(0xB4);
-  packet.addU8(0x13);
+  packet.addU8(message_type);
   packet.addString(message);
 
   server_->sendPacket(connectionId_, std::move(packet));
