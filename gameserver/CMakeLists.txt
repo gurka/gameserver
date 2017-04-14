@@ -12,73 +12,73 @@ set(LIBRARIES boost_system pthread)
 
 if (NOT unittest)
   # Loginserver
-  add_subdirectory("gameserver/loginserver")
+  add_subdirectory("loginserver")
   target_include_directories(loginserver PUBLIC
-    "gameserver/account/export"
-    "gameserver/network/export"
-    "gameserver/utils/export"
+    "account/export"
+    "network/export"
+    "utils/export"
   )
 
   # Worldserver
-  add_subdirectory("gameserver/worldserver")
+  add_subdirectory("worldserver")
   target_include_directories(worldserver PUBLIC
-    "gameserver/account/export"
-    "gameserver/network/export"
-    "gameserver/utils/export"
-    "gameserver/world/export"
-    "gameserver/gameengine/export"
+    "account/export"
+    "network/export"
+    "utils/export"
+    "world/export"
+    "gameengine/export"
   )
 endif()
 
 # Account
-add_subdirectory("gameserver/account")
+add_subdirectory("account")
 target_include_directories(account PUBLIC
-  "gameserver/account/export"
-  "gameserver/utils/export"
-  "lib/rapidxml"
+  "account/export"
+  "utils/export"
+  "external/rapidxml"
 )
 
 # Utils
-add_subdirectory("gameserver/utils")
+add_subdirectory("utils")
 target_include_directories(utils PUBLIC
-  "gameserver/utils/export"
+  "utils/export"
 )
 
 # Network
-add_subdirectory("gameserver/network")
+add_subdirectory("network")
 target_include_directories(network PUBLIC
-  "gameserver/network/src"
-  "gameserver/network/export"
-  "gameserver/utils/export"
+  "network/src"
+  "network/export"
+  "utils/export"
 )
 
 # World
-add_subdirectory("gameserver/world")
+add_subdirectory("world")
 target_include_directories(world PUBLIC
-  "gameserver/world/src"
-  "gameserver/world/export"
-  "gameserver/utils/export"
-  "lib/rapidxml"
+  "world/src"
+  "world/export"
+  "utils/export"
+  "external/rapidxml"
 )
 
 # Gameengine
-add_subdirectory("gameserver/gameengine")
+add_subdirectory("gameengine")
 target_include_directories(gameengine PUBLIC
-  "gameserver/gameengine/src"
-  "gameserver/gameengine/export"
-  "gameserver/world/export"
-  "gameserver/utils/export"
+  "gameengine/src"
+  "gameengine/export"
+  "world/export"
+  "utils/export"
 )
 
 # Unit tests
 if (unittest)
-  add_subdirectory(lib/googletest)
+  add_subdirectory(external/googletest)
 
   enable_testing()
 
   # Utils stub
   target_include_directories(utils_test_stubs PUBLIC
-    "gameserver/utils/export"
+    "utils/export"
   )
 
   # Account test

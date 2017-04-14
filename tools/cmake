@@ -9,37 +9,37 @@ case $1 in
   'all')
     mkdir -p "$DIR_RELEASE"
     pushd "$DIR_RELEASE"
-    cmake .. -DCMAKE_BUILD_TYPE=release || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=release || exit 1
     popd
 
     mkdir -p "$DIR_DEBUG"
     pushd "$DIR_DEBUG"
-    cmake .. -DCMAKE_BUILD_TYPE=debug || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=debug || exit 1
     popd
 
     mkdir -p "$DIR_TEST"
     pushd "$DIR_TEST"
-    cmake .. -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
     popd
     ;;
 
   'release')
     mkdir -p "$DIR_RELEASE"
     pushd "$DIR_RELEASE"
-    cmake .. -DCMAKE_BUILD_TYPE=release || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=release || exit 1
     popd
     ;;
 
   'debug')
     mkdir -p "$DIR_DEBUG"
     pushd "$DIR_DEBUG"
-    cmake .. -DCMAKE_BUILD_TYPE=debug || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=debug || exit 1
     ;;
 
   'test')
     mkdir -p "$DIR_TEST"
     pushd "$DIR_TEST"
-    cmake .. -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
+    cmake ../gameserver -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
     popd
     ;;
 
