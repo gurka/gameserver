@@ -21,6 +21,4 @@ if (unittest)
     account
     utils_test_stubs
   )
-
-  set_property(TARGET account_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

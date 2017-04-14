@@ -18,5 +18,3 @@ target_link_libraries(worldserver
   "utils"
   ${LIBRARIES}
 )
-
-set_property(TARGET worldserver PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

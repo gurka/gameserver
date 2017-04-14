@@ -32,6 +32,4 @@ if (unittest)
     network
     utils_test_stubs
   )
-
-  set_property(TARGET network_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

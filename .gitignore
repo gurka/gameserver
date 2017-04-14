@@ -1,5 +1,6 @@
 *.swp
 /build_*/
+/eclipse/
 /data/data.dat
 /data/items.xml
 /data/world.xml

@@ -42,6 +42,4 @@ if (unittest)
     world
     utils_test_stubs
   )
-
-  set_property(TARGET world_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

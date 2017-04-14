@@ -4,6 +4,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR_RELEASE="$DIR/../build_release"
 DIR_DEBUG="$DIR/../build_debug"
 DIR_TEST="$DIR/../build_test"
+DIR_ECLIPSE="$DIR/../eclipse"
 
 case $1 in
   'all')
@@ -34,12 +35,20 @@ case $1 in
     mkdir -p "$DIR_DEBUG"
     pushd "$DIR_DEBUG"
     cmake ../gameserver -DCMAKE_BUILD_TYPE=debug || exit 1
+    popd
     ;;
 
   'test')
     mkdir -p "$DIR_TEST"
     pushd "$DIR_TEST"
     cmake ../gameserver -DCMAKE_BUILD_TYPE=debug -Dunittest=ON || exit 1
+    popd
+    ;;
+
+  'eclipse')
+    mkdir -p "$DIR_ECLIPSE"
+    pushd "$DIR_ECLIPSE"
+    cmake ../gameserver -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.6.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++11
     popd
     ;;
 

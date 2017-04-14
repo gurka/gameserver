@@ -36,6 +36,4 @@ if (unittest)
     gmock_main
     utils
   )
-
-  set_property(TARGET utils_test PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
