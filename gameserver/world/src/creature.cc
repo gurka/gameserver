@@ -34,7 +34,7 @@ Creature::Creature()
     maxHealth_(0),
     health_(0),
     speed_(0),
-    outfit_({0, 0, 0, 0, 0}),
+    outfit_({0, 0, 0, 0, 0, 0}),
     lightColor_(0),
     lightLevel_(0),
     nextWalkTick_(0)
@@ -48,7 +48,7 @@ Creature::Creature(const std::string& name)
     maxHealth_(100),
     health_(100),
     speed_(110),
-    outfit_({ 128, 20, 30, 40, 50 }),
+    outfit_({ 128, 0, 20, 30, 40, 50 }),
     lightColor_(0),
     lightLevel_(0),
     nextWalkTick_(0)
