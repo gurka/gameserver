@@ -43,8 +43,8 @@ class TaskQueueImpl : public TaskQueue
   TaskQueueImpl(const TaskQueueImpl&) = delete;
   TaskQueueImpl& operator=(const TaskQueueImpl&) = delete;
 
-  void addTask(const Task& task, int tag) override;
-  void addTask(const Task& task, int tag, unsigned expire_ms) override;
+  void addTask(int tag, const Task& task) override;
+  void addTask(int tag, unsigned expire_ms, const Task& task) override;
   void cancelAllTasks(int tag) override;
 
  private:

@@ -30,12 +30,12 @@ TaskQueueImpl::TaskQueueImpl(boost::asio::io_service* io_service)
 {
 }
 
-void TaskQueueImpl::addTask(const Task& task, int tag)
+void TaskQueueImpl::addTask(int tag, const Task& task)
 {
-  addTask(task, tag, 0u);
+  addTask(tag, 0u, task);
 }
 
-void TaskQueueImpl::addTask(const Task& task, int tag, unsigned expire_ms)
+void TaskQueueImpl::addTask(int tag, unsigned expire_ms, const Task& task)
 {
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time()) +
                 boost::posix_time::millisec(expire_ms);

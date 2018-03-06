@@ -95,7 +95,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 int main(int argc, char* argv[])
 {
   // Read configuration
-  auto config = ConfigParser::parseFile("data/worldserver.cfg");
+  const auto config = ConfigParser::parseFile("data/worldserver.cfg");
   if (!config.parsedOk())
   {
     printf("Could not parse config file: %s\n", config.getErrorMessage().c_str());
@@ -103,21 +103,21 @@ int main(int argc, char* argv[])
   }
 
   // Read [server] settings
-  auto serverPort = config.getInteger("server", "port", 7172);
+  const auto serverPort = config.getInteger("server", "port", 7172);
 
   // Read [world] settings
-  auto loginMessage     = config.getString("world", "login_message", "Welcome to LoginServer!");
-  auto accountsFilename = config.getString("world", "accounts_file", "data/accounts.xml");
-  auto dataFilename     = config.getString("world", "data_file", "data/data.dat");
-  auto itemsFilename    = config.getString("world", "item_file", "data/items.xml");
-  auto worldFilename    = config.getString("world", "world_file", "data/world.xml");
+  const auto loginMessage     = config.getString("world", "login_message", "Welcome to LoginServer!");
+  const auto accountsFilename = config.getString("world", "accounts_file", "data/accounts.xml");
+  const auto dataFilename     = config.getString("world", "data_file", "data/data.dat");
+  const auto itemsFilename    = config.getString("world", "item_file", "data/items.xml");
+  const auto worldFilename    = config.getString("world", "world_file", "data/world.xml");
 
   // Read [logger] settings
-  auto logger_account     = config.getString("logger", "account", "ERROR");
-  auto logger_network     = config.getString("logger", "network", "ERROR");
-  auto logger_utils       = config.getString("logger", "utils", "ERROR");
-  auto logger_world       = config.getString("logger", "world", "ERROR");
-  auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
+  const auto logger_account     = config.getString("logger", "account", "ERROR");
+  const auto logger_network     = config.getString("logger", "network", "ERROR");
+  const auto logger_utils       = config.getString("logger", "utils", "ERROR");
+  const auto logger_world       = config.getString("logger", "world", "ERROR");
+  const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
   // Set logger settings
   Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
   }
 
   // Create Server
-  Server::Callbacks callbacks =
+  const Server::Callbacks callbacks =
   {
     &onClientConnected,
     &onClientDisconnected,
