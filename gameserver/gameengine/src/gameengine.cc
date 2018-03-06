@@ -116,7 +116,7 @@ void GameEngine::despawn(CreatureId creatureId)
 
 void GameEngine::move(CreatureId creatureId, Direction direction)
 {
-  auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task)
+  const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task)
   {
     LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
@@ -143,7 +143,7 @@ void GameEngine::movePath(CreatureId creatureId, const std::deque<Direction>& pa
   auto& player = getPlayer(creatureId);
   player.queueMoves(path);
 
-  auto task = RecursiveTask([this, creatureId](const RecursiveTask& task)
+  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task)
   {
     auto& player = getPlayer(creatureId);
 
