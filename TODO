@@ -19,3 +19,7 @@
 * Check/fix/sort/remove #includes and include guard names
 
 * Fix moving creatures (GameEngine::moveItemFromPosToPos)
+
+* Refactor cmake files
+
+* Try to refactor addTask-functions (std::bind is slow + double number of class methods, e.g. foo and taskFoo)
