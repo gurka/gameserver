@@ -6,7 +6,7 @@ project(gameserver)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wno-unused-parameter -std=c++14 -pedantic -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -std=c++14 -pedantic -pthread")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 # Required libraries (Boost)
@@ -37,6 +37,8 @@ add_subdirectory("account")
 target_include_directories(account PUBLIC
   "account/export"
   "utils/export"
+)
+target_include_directories(account SYSTEM PRIVATE
   "external/rapidxml"
 )
 
@@ -60,6 +62,8 @@ target_include_directories(world PUBLIC
   "world/src"
   "world/export"
   "utils/export"
+)
+target_include_directories(world SYSTEM PRIVATE
   "external/rapidxml"
 )
 
