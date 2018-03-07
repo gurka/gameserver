@@ -45,14 +45,14 @@ namespace
 
 struct RecursiveTask
 {
-  RecursiveTask(const std::function<void(const RecursiveTask&)>& f) : f(f) {}
+  RecursiveTask(const std::function<void(const RecursiveTask&, World* world)>& f) : f(f) {}
 
-  void operator()() const
+  void operator()(World* world) const
   {
-    f(*this);
+    f(*this, world);
   }
 
-  std::function<void(const RecursiveTask&)> f;
+  std::function<void(const RecursiveTask&, World* world)> f;
 };
 
 }
@@ -113,63 +113,63 @@ void PlayerManager::despawn(CreatureId creatureId)
 
 void PlayerManager::move(CreatureId creatureId, Direction direction)
 {
-//  const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task)
-//  {
-//    LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
-//
-//    auto* player_ctrl = getPlayerCtrl(creatureId);
-//
-//    auto rc = world->creatureMove(creatureId, direction);
-//    if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
-//    {
-//      LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
-//      const auto& creature = world->getCreature(creatureId);
-//      worldTaskQueue_->addTask(creatureId, creature.getNextWalkTick() - Tick::now(), task);
-//    }
-//    else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
-//    {
-//      player_ctrl->sendCancel("There is no room.");
-//    }
-//  });
-//
-//  worldTaskQueue_->addTask(creatureId, task);
+  const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task, World* world)
+  {
+    LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
+
+    auto* player_ctrl = getPlayerCtrl(creatureId);
+
+    auto rc = world->creatureMove(creatureId, direction);
+    if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
+    {
+      LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
+      const auto& creature = world->getCreature(creatureId);
+      worldTaskQueue_->addTask(creatureId, creature.getNextWalkTick() - Tick::now(), task);
+    }
+    else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+    {
+      player_ctrl->sendCancel("There is no room.");
+    }
+  });
+
+  worldTaskQueue_->addTask(creatureId, task);
 }
 
 void PlayerManager::movePath(CreatureId creatureId, const std::deque<Direction>& path)
 {
-//  auto& player = getPlayer(creatureId);
-//  player.queueMoves(path);
-//
-//  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task)
-//  {
-//    auto& player = getPlayer(creatureId);
-//
-//    // Make sure that the queued moves hasn't been canceled
-//    if (player.hasQueuedMove())
-//    {
-//      auto rc = world->creatureMove(creatureId, player.getNextQueuedMove());
-//
-//      if (rc == World::ReturnCode::OK)
-//      {
-//        // Player moved, pop the move from the queue
-//        player.popNextQueuedMove();
-//      }
-//      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
-//      {
-//        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
-//        cancelMove(creatureId);
-//      }
-//
-//      if (player.hasQueuedMove())
-//      {
-//        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
-//        // to move yet, add a new task
-//        worldTaskQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
-//      }
-//    }
-//  });
-//
-//  worldTaskQueue_->addTask(creatureId, task);
+  auto& player = getPlayer(creatureId);
+  player.queueMoves(path);
+
+  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, World* world)
+  {
+    auto& player = getPlayer(creatureId);
+
+    // Make sure that the queued moves hasn't been canceled
+    if (player.hasQueuedMove())
+    {
+      auto rc = world->creatureMove(creatureId, player.getNextQueuedMove());
+
+      if (rc == World::ReturnCode::OK)
+      {
+        // Player moved, pop the move from the queue
+        player.popNextQueuedMove();
+      }
+      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
+      {
+        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
+        cancelMove(creatureId);
+      }
+
+      if (player.hasQueuedMove())
+      {
+        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
+        // to move yet, add a new task
+        worldTaskQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
+      }
+    }
+  });
+
+  worldTaskQueue_->addTask(creatureId, task);
 }
 
 void PlayerManager::cancelMove(CreatureId creatureId)
