@@ -19,5 +19,3 @@
 * Fix moving creatures (PlayerManager::moveItemFromPosToPos)
 
 * Refactor cmake files
-
-* Remove all uses of std::bind
