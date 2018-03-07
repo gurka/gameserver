@@ -27,7 +27,7 @@
 
 #include <string>
 
-#include "creaturectrl.h"
+#include "creature_ctrl.h"
 #include "player.h"
 #include "position.h"
 #include "item.h"

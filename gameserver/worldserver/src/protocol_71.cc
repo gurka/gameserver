@@ -30,9 +30,9 @@
 
 #include "player_manager.h"
 #include "server.h"
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
-#include "worldinterface.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
+#include "world_interface.h"
 #include "logger.h"
 #include "tile.h"
 #include "account.h"

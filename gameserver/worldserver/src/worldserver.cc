@@ -28,7 +28,7 @@
 #include <boost/asio.hpp>  //NOLINT
 
 // utils
-#include "configparser.h"
+#include "config_parser.h"
 #include "logger.h"
 
 // account
@@ -37,18 +37,18 @@
 // network
 #include "server.h"
 #include "server_factory.h"
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 
 // world
 #include "world.h"
-#include "worldfactory.h"
+#include "world_factory.h"
 
 // worldserver
 #include "player_manager.h"
 #include "protocol.h"
 #include "protocol_71.h"
-#include "worldtaskqueue.h"
+#include "world_task_queue.h"
 
 
 static boost::asio::io_service io_service;

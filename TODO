@@ -23,5 +23,3 @@
 * Change std::unique_ptr<>(new Foo(...)) to std::make_unique<Foo>(...)
 
 * Remove all uses of std::bind
-
-* Change "FooBarBaz" filenames to "foo_bar_baz" filenames and update logger.cc with new filenames

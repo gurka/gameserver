@@ -31,9 +31,9 @@
 #include <utility>
 
 #include "player.h"
-#include "playerctrl.h"
+#include "player_ctrl.h"
 #include "creature.h"
-#include "creaturectrl.h"
+#include "creature_ctrl.h"
 #include "item.h"
 #include "position.h"
 #include "world.h"

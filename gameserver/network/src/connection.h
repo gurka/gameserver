@@ -30,8 +30,8 @@
 #include <vector>
 #include <utility>
 
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 #include "logger.h"
 
 template <typename Backend>

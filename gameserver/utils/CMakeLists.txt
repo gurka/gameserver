@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.0)
 project(utils)
 
 set(src
-  "src/logger.cc"
-  "export/configparser.h"
+  "export/config_parser.h"
   "export/logger.h"
   "export/tick.h"
+  "src/logger.cc"
   "src/tick.cc"
 )
 

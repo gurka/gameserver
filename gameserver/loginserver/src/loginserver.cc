@@ -26,13 +26,13 @@
 #include <memory>
 #include <boost/asio.hpp>  //NOLINT
 
-#include "configparser.h"
+#include "config_parser.h"
 #include "logger.h"
 #include "account.h"
 #include "server.h"
 #include "server_factory.h"
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated

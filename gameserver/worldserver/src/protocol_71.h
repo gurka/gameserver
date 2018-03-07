@@ -31,7 +31,7 @@
 #include <array>
 #include <string>
 
-#include "outgoingpacket.h"
+#include "outgoing_packet.h"
 #include "player.h"
 #include "creature.h"
 #include "position.h"

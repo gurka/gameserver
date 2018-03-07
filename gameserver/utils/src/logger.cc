@@ -32,7 +32,7 @@
 const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
 {
   // src/utils
-  { "configparser.h",     Module::UTILS       },
+  { "config_parser.h",    Module::UTILS       },
 
   // src/account
   { "account.cc",         Module::ACCOUNT     },
@@ -40,8 +40,8 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   // src/network
   { "connection.h",       Module::NETWORK     },
   { "server_impl.h",      Module::NETWORK     },
-  { "incomingpacket.cc",  Module::NETWORK     },
-  { "outgoingpacket.cc",  Module::NETWORK     },
+  { "incoming_packet.cc", Module::NETWORK     },
+  { "outgoing_packet.cc", Module::NETWORK     },
   { "acceptor.h",         Module::NETWORK     },
 
   // src/world
@@ -50,15 +50,15 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "world.cc",           Module::WORLD       },
   { "creature.cc",        Module::WORLD       },
   { "position.cc",        Module::WORLD       },
-  { "itemfactory.cc",     Module::WORLD       },
-  { "worldfactory.cc",    Module::WORLD       },
+  { "item_factory.cc",    Module::WORLD       },
+  { "world_factory.cc",   Module::WORLD       },
 
   // src/loginserver
   { "loginserver.cc",     Module::LOGINSERVER },
 
   // src/worldserver
   { "protocol_71.cc",     Module::WORLDSERVER },
-  { "gameengine.cc",      Module::WORLDSERVER },
+  { "player_manager.cc",  Module::WORLDSERVER },
   { "worldserver.cc",     Module::WORLDSERVER },
   { "player.cc",          Module::WORLDSERVER },
 };

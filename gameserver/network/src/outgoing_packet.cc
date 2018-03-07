@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "outgoingpacket.h"
+#include "outgoing_packet.h"
 
 #include <algorithm>
 

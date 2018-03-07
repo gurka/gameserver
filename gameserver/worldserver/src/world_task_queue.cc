@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "worldtaskqueue.h"
+#include "world_task_queue.h"
 
 WorldTaskQueue::WorldTaskQueue(World* world, boost::asio::io_service* io_service)
   : world_(world),

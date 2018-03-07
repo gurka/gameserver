@@ -31,8 +31,8 @@
 #include "server.h"
 #include "acceptor.h"
 #include "connection.h"
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 #include "logger.h"
 
 // Forward declarations

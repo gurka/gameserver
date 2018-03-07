@@ -3,23 +3,23 @@ cmake_minimum_required(VERSION 3.0)
 project(world)
 
 set(src
-  "src/creature.cc"
-  "src/item.cc"
-  "src/itemfactory.cc"
-  "src/position.cc"
-  "src/tile.cc"
-  "src/world.cc"
-  "src/worldfactory.cc"
-  "export/creaturectrl.h"
+  "export/creature_ctrl.h"
   "export/creature.h"
   "export/direction.h"
+  "export/item_factory.h"
   "export/item.h"
-  "export/itemfactory.h"
   "export/position.h"
   "export/tile.h"
+  "export/world_factory.h"
+  "export/world_interface.h"
   "export/world.h"
-  "export/worldfactory.h"
-  "export/worldinterface.h"
+  "src/creature.cc"
+  "src/item_factory.cc"
+  "src/item.cc"
+  "src/position.cc"
+  "src/tile.cc"
+  "src/world_factory.cc"
+  "src/world.cc"
 )
 
 add_library(world ${src})

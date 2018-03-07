@@ -31,7 +31,7 @@
 #include <tuple>
 #include <utility>
 
-#include "itemfactory.h"
+#include "item_factory.h"
 #include "logger.h"
 #include "tick.h"
 

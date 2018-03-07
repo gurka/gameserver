@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "itemfactory.h"
+#include "item_factory.h"
 
 #include <cstdio>
 #include <cstring>

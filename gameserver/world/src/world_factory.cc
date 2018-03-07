@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "worldfactory.h"
+#include "world_factory.h"
 
 #include <cstring>
 #include <fstream>
@@ -31,7 +31,7 @@
 
 #include "position.h"
 #include "tile.h"
-#include "itemfactory.h"
+#include "item_factory.h"
 #include "world.h"
 #include "logger.h"
 #include "rapidxml.hpp"

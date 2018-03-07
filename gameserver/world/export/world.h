@@ -30,12 +30,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "worldinterface.h"
+#include "world_interface.h"
 #include "creature.h"
-#include "creaturectrl.h"
+#include "creature_ctrl.h"
 #include "tile.h"
 #include "position.h"
-#include "itemfactory.h"
+#include "item_factory.h"
 
 class World : public WorldInterface
 {
