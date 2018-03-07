@@ -149,7 +149,10 @@ class Connection
     Backend::async_write(socket_,
                          outgoingHeaderBuffer_.data(),
                          2,
-                         std::bind(&Connection::onPacketHeaderSent, this, std::placeholders::_1, std::placeholders::_2));
+                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                         {
+                           onPacketHeaderSent(errorCode, len);
+                         });
   }
 
   void onPacketHeaderSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
@@ -178,7 +181,10 @@ class Connection
     Backend::async_write(socket_,
                          packet.getBuffer(),
                          packet.getLength(),
-                         std::bind(&Connection::onPacketDataSent, this, std::placeholders::_1, std::placeholders::_2));
+                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                         {
+                           onPacketDataSent(errorCode, len);
+                         });
   }
 
   void onPacketDataSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
@@ -223,7 +229,10 @@ class Connection
     Backend::async_read(socket_,
                         readBuffer_.data(),
                         2,
-                        std::bind(&Connection::onPacketHeaderReceived, this, std::placeholders::_1, std::placeholders::_2));
+                        [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                        {
+                          onPacketHeaderReceived(errorCode, len);
+                        });
   }
 
   void onPacketHeaderReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
@@ -260,7 +269,10 @@ class Connection
     Backend::async_read(socket_,
                         readBuffer_.data(),
                         dataLength,
-                        std::bind(&Connection::onPacketDataReceived, this, std::placeholders::_1, std::placeholders::_2));
+                        [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                        {
+                          onPacketDataReceived(errorCode, len);
+                        });
   }
 
   void onPacketDataReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
@@ -288,7 +300,7 @@ class Connection
       return;
     }
 
-    LOG_DEBUG("%s: received packet data", __func__);
+    LOG_DEBUG("%s: received packet data, data length: %d", __func__, len);
 
     // Call handler
     // Maybe it should state somewhere that the IncomingPacket is only valid to read/use

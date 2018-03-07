@@ -93,8 +93,10 @@ void WorldTaskQueue::startTimer()
   boost::posix_time::ptime taskExpire(queue_.front().expire);
   timer_.expires_from_now(taskExpire - now);
 
-  // TODO(gurka): lambda
-  timer_.async_wait(std::bind(&WorldTaskQueue::onTimeout, this, std::placeholders::_1));
+  timer_.async_wait([this](const boost::system::error_code& ec)
+  {
+    onTimeout(ec);
+  });
 
   timer_started_ = true;
 }

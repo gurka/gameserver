@@ -36,6 +36,7 @@ class IncomingPacket
  public:
   IncomingPacket(const uint8_t* buffer, std::size_t length);
 
+  std::size_t getLength() const { return length_; }
   bool isEmpty() const { return position_ >= length_; }
   std::size_t bytesLeft() const { return length_ - position_; }
 
@@ -50,6 +51,7 @@ class IncomingPacket
 
   std::string getString();
 
+  std::vector<uint8_t> peekBytes(int num_bytes) const;
   std::vector<uint8_t> getBytes(int numBytes);
 
  private:

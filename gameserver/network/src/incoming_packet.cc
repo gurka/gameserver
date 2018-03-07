@@ -84,9 +84,15 @@ std::string IncomingPacket::getString()
   return std::string(&buffer_[temp], &buffer_[temp + length]);
 }
 
-std::vector<uint8_t> IncomingPacket::getBytes(int num_bytes)
+std::vector<uint8_t> IncomingPacket::peekBytes(int num_bytes) const
 {
   std::vector<uint8_t> bytes(&buffer_[position_], &buffer_[position_ + num_bytes]);
+  return bytes;
+}
+
+std::vector<uint8_t> IncomingPacket::getBytes(int num_bytes)
+{
+  auto bytes = peekBytes(num_bytes);
   position_ += num_bytes;
   return bytes;
 }

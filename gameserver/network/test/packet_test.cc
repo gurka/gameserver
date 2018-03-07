@@ -27,8 +27,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include "incomingpacket.h"
-#include "outgoingpacket.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 
 
 class PacketTest : public ::testing::Test

@@ -35,17 +35,12 @@ template <typename Backend>
 class Acceptor
 {
  public:
-  struct Callbacks
-  {
-    std::function<void(typename Backend::Socket)> onAccept;
-  };
-
   Acceptor(typename Backend::Service* io_service,
            unsigned short port,
-           const Callbacks& callbacks)
+           const std::function<void(typename Backend::Socket)>& onAccept)
     : acceptor_(*io_service, port),
       socket_(*io_service),
-      callbacks_(callbacks)
+      onAccept_(onAccept)
   {
     accept();
   }
@@ -62,33 +57,31 @@ class Acceptor
  private:
   void accept()
   {
-    acceptor_.async_accept(socket_, std::bind(&Acceptor::onAccept, this, std::placeholders::_1));
-  }
+    acceptor_.async_accept(socket_, [this](const typename Backend::ErrorCode& errorCode)
+    {
+      if (errorCode == Backend::Error::operation_aborted)
+      {
+        // This instance might be deleted, so don't touch any instance variables
+        return;
+      }
+      else if (errorCode)
+      {
+        LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
+      }
+      else
+      {
+        LOG_INFO("Accepted connection");
+        onAccept_(std::move(socket_));
+      }
 
-  void onAccept(const typename Backend::ErrorCode& errorCode)
-  {
-    if (errorCode == Backend::Error::operation_aborted)
-    {
-      // This instance might be deleted, so don't touch any instance variables
-      return;
-    }
-    else if (errorCode)
-    {
-      LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
-    }
-    else
-    {
-      LOG_INFO("Accepted connection");
-      callbacks_.onAccept(std::move(socket_));
-    }
-
-    // Continue to accept new connections
-    accept();
+      // Continue to accept new connections
+      accept();
+    });
   }
 
   typename Backend::Acceptor acceptor_;
   typename Backend::Socket socket_;
-  Callbacks callbacks_;
+  std::function<void(typename Backend::Socket)> onAccept_;
 };
 
 #endif  // NETWORK_ACCEPTOR_H_

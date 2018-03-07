@@ -37,12 +37,22 @@ class ServerTest : public ::testing::Test
     : server_(),
       service_(),
       callbacksMock_(),
-      callbacks_({
-        std::bind(&ServerCallbackMock::onClientConnected, &callbacksMock_, std::placeholders::_1),
-        std::bind(&ServerCallbackMock::onClientDisconnected, &callbacksMock_, std::placeholders::_1),
-        std::bind(&ServerCallbackMock::onPacketReceived, &callbacksMock_, std::placeholders::_1, std::placeholders::_2),
-      })
+      callbacks_()
   {
+    callbacks_.onClientConnected = [this](ConnectionId id)
+    {
+      callbacksMock_.onClientConnected(id);
+    };
+
+    callbacks_.onClientDisconnected = [this](ConnectionId id)
+    {
+      callbacksMock_.onClientDisconnected(id);
+    };
+
+    callbacks_.onPacketReceived = [this](ConnectionId id, IncomingPacket* packet)
+    {
+      callbacksMock_.onPacketReceived(id, packet);
+    };
   }
 
   struct ServerCallbackMock

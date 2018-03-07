@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "configparser.h"
+#include "config_parser.h"
 
 #include <sstream>
 

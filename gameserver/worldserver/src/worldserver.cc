@@ -51,8 +51,6 @@
 #include "world_task_queue.h"
 
 
-static boost::asio::io_service io_service;
-
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
@@ -63,11 +61,6 @@ static std::unique_ptr<Server> server;
 
 static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(gurka): Maybe change to array?
 
-void onProtocolClosed(ConnectionId connectionId)
-{
-  protocols.erase(connectionId);
-}
-
 void onClientConnected(ConnectionId connectionId)
 {
   LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
@@ -75,7 +68,10 @@ void onClientConnected(ConnectionId connectionId)
   // Create and store Protocol for this Connection
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
-  auto protocol = std::make_unique<Protocol71>(std::bind(&onProtocolClosed, connectionId),
+  auto protocol = std::make_unique<Protocol71>([connectionId]()
+                                               {
+                                                 protocols.erase(connectionId);
+                                               },
                                                playerManager.get(),
                                                connectionId,
                                                server.get(),
@@ -89,14 +85,12 @@ void onClientConnected(ConnectionId connectionId)
 void onClientDisconnected(ConnectionId connectionId)
 {
   LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
-
   protocols.at(connectionId)->disconnected();
 }
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
   LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
-
   protocols.at(connectionId)->parsePacket(packet);
 }
 
@@ -155,6 +149,8 @@ int main(int argc, char* argv[])
 
   LOG_INFO("Starting WorldServer!");
 
+  boost::asio::io_service io_service;
+
   // Create World
   world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
   if (!world)
@@ -190,7 +186,10 @@ int main(int argc, char* argv[])
 
   // run() will continue to run until ^C from user is catched
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
+  signals.async_wait([&io_service](const boost::system::error_code& error, int signal_number)
+  {
+    io_service.stop();
+  });
   io_service.run();
 
   LOG_INFO("Stopping WorldServer!");

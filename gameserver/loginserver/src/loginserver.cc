@@ -199,10 +199,17 @@ int main(int argc, char* argv[])
   };
   server = ServerFactory::createServer(&io_service, serverPort, callbacks);
 
+  LOG_INFO("LoginServer started!");
+
   // run() will continue to run until ^C from user is catched
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-  signals.async_wait(std::bind(&boost::asio::io_service::stop, &io_service));
+  signals.async_wait([&io_service](const boost::system::error_code& error, int signal_number)
+  {
+    io_service.stop();
+  });
   io_service.run();
+
+  LOG_INFO("Stopping WorldServer!");
 
   // Deallocate things
   server.reset();

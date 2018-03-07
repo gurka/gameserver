@@ -30,20 +30,51 @@
 #include "connection.h"
 #include "backend_mock.h"
 
+// To be able to match IncomingPackets
+bool operator==(const IncomingPacket& a, const IncomingPacket& b)
+{
+  if (a.getLength() != b.getLength())
+  {
+    return false;
+  }
+
+  const auto aBytes = a.peekBytes(a.getLength());
+  const auto bBytes = b.peekBytes(b.getLength());
+
+  for (auto i = 0u; i < aBytes.size(); i++)
+  {
+    if (aBytes[i] != bBytes[i])
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 class ConnectionTest : public ::testing::Test
 {
  public:
   ConnectionTest()
     : service_(),
       callbacksMock_(),
-      callbacks_(
-      {
-        std::bind(&CallbacksMock::onPacketReceived, &callbacksMock_, std::placeholders::_1),
-        std::bind(&CallbacksMock::onDisconnected, &callbacksMock_),
-        std::bind(&CallbacksMock::onConnectionClosed, &callbacksMock_),
-      }),
+      callbacks_(),
       connection_()  // Created in each test case
   {
+    callbacks_.onPacketReceived = [this](IncomingPacket* packet)
+    {
+      callbacksMock_.onPacketReceived(packet);
+    };
+
+    callbacks_.onDisconnected = [this]()
+    {
+      callbacksMock_.onDisconnected();
+    };
+
+    callbacks_.onConnectionClosed = [this]()
+    {
+      callbacksMock_.onConnectionClosed();
+    };
   }
 
   struct CallbacksMock
@@ -145,6 +176,7 @@ TEST_F(ConnectionTest, ReceivePacket)
 {
   using ::testing::_;
   using ::testing::SaveArg;
+  using ::testing::Pointee;
 
   // We need to capture the variables in the async_read call
   uint8_t* buffer = nullptr;
@@ -170,16 +202,11 @@ TEST_F(ConnectionTest, ReceivePacket)
 
   // When Connection receives packet data it should call onPacketReceived callback
   // and call async_read again to receive next packet header
-  IncomingPacket* packet;
-  EXPECT_CALL(callbacksMock_, onPacketReceived(_)).WillOnce(SaveArg<0>(&packet));
+  const uint8_t expectedPacketData[4] = { 0x12, 0x34, 0x56, 0x78 };
+  IncomingPacket expectedPacket { expectedPacketData, 4u };
+  EXPECT_CALL(callbacksMock_, onPacketReceived(Pointee(expectedPacket)));
   EXPECT_CALL(service_, async_read(_, _, 2, _));
   readHandler(Backend::Error::no_error, 4);
-
-  // Verify the incoming packet
-  EXPECT_EQ(0x12, packet->getU8());
-  EXPECT_EQ(0x34, packet->getU8());
-  EXPECT_EQ(0x56, packet->getU8());
-  EXPECT_EQ(0x78, packet->getU8());
 
   // Close the connection
   EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));

@@ -27,7 +27,7 @@
 
 #include "gmock/gmock.h"
 
-#include "creaturectrl.h"
+#include "creature_ctrl.h"
 #include "creature.h"
 #include "position.h"
 #include "item.h"

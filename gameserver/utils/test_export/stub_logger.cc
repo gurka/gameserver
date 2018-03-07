@@ -24,11 +24,44 @@
 
 #include "logger.h"
 
-//const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_;
-//std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_;
+#include <cstdio>
+#include <ctime>
+#include <cstdarg>
+#include <cstring>
 
 void Logger::log(const char* fileFullPath, int line, Level level, ...)
 {
+  // Remove directories in fileFullPath ("network/server.cc" => "server.cc")
+  const char* filename;
+  if (strrchr(fileFullPath, '/'))
+  {
+    filename = strrchr(fileFullPath, '/') + 1;
+  }
+  else
+  {
+    filename = fileFullPath;
+  }
+
+  // Get current date and time
+  time_t now = time(0);
+  struct tm tstruct{};
+  char time_str[32];
+  localtime_r(&now, &tstruct);
+  strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
+
+  // Extract variadic function arguments
+  va_list args;
+  va_start(args, level);  // Start to extract after the "level"-argument
+                          // Which also must be a non-reference according to CppCheck
+                          // otherwise va_start invokes undefined behaviour
+  const char* format = va_arg(args, const char*);
+  char message[256];
+  // Use the rest of the arguments together with the
+  // format string to construct the actual log message
+  vsnprintf(message, sizeof(message), format, args);
+  va_end(args);
+
+  printf("[%s][%s:%d] UNITTEST: %s\n", time_str, filename, line, message);
 }
 
 void Logger::setLevel(Module module, const std::string& level)

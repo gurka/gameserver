@@ -29,7 +29,7 @@
 
 #include "gmock/gmock.h"
 
-#include "itemfactory.h"
+#include "item_factory.h"
 #include "item.h"
 
 class MockItemFactory : public ItemFactory

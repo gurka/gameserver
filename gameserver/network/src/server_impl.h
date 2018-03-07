@@ -48,7 +48,10 @@ class ServerImpl : public Server
              const Callbacks& callbacks)
     : acceptor_(io_service,
                 port,
-                { std::bind(&ServerImpl::onAccept, this, std::placeholders::_1) }),
+                [this](typename Backend::Socket socket)
+                {
+                  onAccept(std::move(socket));
+                }),
       callbacks_(callbacks),
       nextConnectionId_(0)
   {
@@ -72,14 +75,12 @@ class ServerImpl : public Server
   void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) override
   {
     LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-
     connections_.at(connectionId).sendPacket(std::move(packet));
   }
 
   void closeConnection(ConnectionId connectionId, bool force) override
   {
     LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-
     connections_.at(connectionId).close(force);
   }
 
@@ -98,42 +99,30 @@ class ServerImpl : public Server
     // Create and insert Connection
     typename Connection<Backend>::Callbacks callbacks
     {
-      std::bind(&ServerImpl::onPacketReceived, this, connectionId, std::placeholders::_1),
-      std::bind(&ServerImpl::onDisconnected, this, connectionId),
-      std::bind(&ServerImpl::onConnectionClosed, this, connectionId),
+      [this, connectionId](IncomingPacket* packet)
+      {
+        LOG_DEBUG("onPacketReceived: connectionId: %d", connectionId);
+        callbacks_.onPacketReceived(connectionId, packet);
+      },
+
+      [this, connectionId]()
+      {
+        LOG_DEBUG("onClientDisconnected: connectionId: %d", connectionId);
+        callbacks_.onClientDisconnected(connectionId);
+        // The Connection will call the onConnectionClosed callback after this call
+      },
+
+      [this, connectionId]()
+      {
+        LOG_DEBUG("onConnectionClosed: connectionId: %d num connections: %lu", connectionId, connections_.size() - 1);
+        connections_.erase(connectionId);
+      }
     };
     connections_.emplace(std::piecewise_construct,
                          std::forward_as_tuple(connectionId),
                          std::forward_as_tuple(std::move(socket), callbacks));
 
     callbacks_.onClientConnected(connectionId);
-  }
-
-  // Handler for Connection
-  void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
-  {
-    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-
-    callbacks_.onPacketReceived(connectionId, packet);
-  }
-
-  void onDisconnected(ConnectionId connectionId)
-  {
-    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-
-    callbacks_.onClientDisconnected(connectionId);
-
-    // The Connection will call the onConnectionClosed callback after this call
-  }
-
-  void onConnectionClosed(ConnectionId connectionId)
-  {
-    LOG_DEBUG("%s: connectionId: %d num connections: %lu",
-              __func__,
-              connectionId,
-              connections_.size() - 1);
-
-    connections_.erase(connectionId);
   }
 
   Acceptor<Backend> acceptor_;
