@@ -30,7 +30,6 @@ if (NOT unittest)
     "network/export"
     "utils/export"
     "world/export"
-    "gameengine/export"
   )
 endif()
 
@@ -67,15 +66,6 @@ target_include_directories(world PUBLIC
 )
 target_include_directories(world SYSTEM PRIVATE
   "external/rapidxml"
-)
-
-# Gameengine
-add_subdirectory("gameengine")
-target_include_directories(gameengine PUBLIC
-  "gameengine/src"
-  "gameengine/export"
-  "world/export"
-  "utils/export"
 )
 
 # Unit tests
