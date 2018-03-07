@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.0)
 project(worldserver)
 
 set(src
-  "src/gameengine.cc"
-  "src/gameengine.h"
   "src/player.cc"
   "src/playerctrl.h"
   "src/player.h"
+  "src/player_manager.cc"
+  "src/player_manager.h"
   "src/protocol_71.cc"
   "src/protocol_71.h"
   "src/protocol.h"

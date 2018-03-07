@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_GAMEENGINE_H_
-#define GAMEENGINE_GAMEENGINE_H_
+#ifndef WORLDSERVER_PLAYERMANAGER_H_
+#define WORLDSERVER_PLAYERMANAGER_H_
 
 #include <array>
 #include <deque>
@@ -41,14 +41,14 @@ class OutgoingPacket;
 class PlayerCtrl;
 class World;
 
-class GameEngine
+class PlayerManager
 {
  public:
-  GameEngine(WorldTaskQueue* worldTaskQueue, std::string loginMessage);
+  PlayerManager(WorldTaskQueue* worldTaskQueue, std::string loginMessage);
 
   // Delete copy constructors
-  GameEngine(const GameEngine&) = delete;
-  GameEngine& operator=(const GameEngine&) = delete;
+  PlayerManager(const PlayerManager&) = delete;
+  PlayerManager& operator=(const PlayerManager&) = delete;
 
   void spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
@@ -91,4 +91,4 @@ class GameEngine
   std::string loginMessage_;
 };
 
-#endif  // GAMEENGINE_GAMEENGINE_H_
+#endif  // WORLDSERVER_PLAYERMANAGER_H_

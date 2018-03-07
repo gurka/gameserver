@@ -1,5 +1,3 @@
-* Rename GameEngine to PlayerManager (it manages player <-> world interaction)
-
 * Add NPCManager (it manages npc <-> world interaction, spawns NPCs, adds OnThink tasks periodically?)
 
 * Add simple NPC that responds on talk, walk around spawn point with max radius
@@ -18,10 +16,12 @@
 
 * Check/fix/sort/remove #includes and include guard names
 
-* Fix moving creatures (GameEngine::moveItemFromPosToPos)
+* Fix moving creatures (PlayerManager::moveItemFromPosToPos)
 
 * Refactor cmake files
 
 * Change std::unique_ptr<>(new Foo(...)) to std::make_unique<Foo>(...)
 
 * Remove all uses of std::bind
+
+* Change "FooBarBaz" filenames to "foo_bar_baz" filenames and update logger.cc with new filenames

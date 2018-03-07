@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "gameengine.h"
+#include "player_manager.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -57,13 +57,13 @@ struct RecursiveTask
 
 }
 
-GameEngine::GameEngine(WorldTaskQueue* worldTaskQueue, std::string loginMessage)
+PlayerManager::PlayerManager(WorldTaskQueue* worldTaskQueue, std::string loginMessage)
   : worldTaskQueue_(worldTaskQueue),
     loginMessage_(std::move(loginMessage))
 {
 }
 
-void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
+void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   worldTaskQueue_->addTask(Creature::INVALID_ID, [this, name, player_ctrl](World* world)
   {
@@ -96,7 +96,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   });
 }
 
-void GameEngine::despawn(CreatureId creatureId)
+void PlayerManager::despawn(CreatureId creatureId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId](World* world)
   {
@@ -111,7 +111,7 @@ void GameEngine::despawn(CreatureId creatureId)
   });
 }
 
-void GameEngine::move(CreatureId creatureId, Direction direction)
+void PlayerManager::move(CreatureId creatureId, Direction direction)
 {
 //  const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task)
 //  {
@@ -135,7 +135,7 @@ void GameEngine::move(CreatureId creatureId, Direction direction)
 //  worldTaskQueue_->addTask(creatureId, task);
 }
 
-void GameEngine::movePath(CreatureId creatureId, const std::deque<Direction>& path)
+void PlayerManager::movePath(CreatureId creatureId, const std::deque<Direction>& path)
 {
 //  auto& player = getPlayer(creatureId);
 //  player.queueMoves(path);
@@ -172,7 +172,7 @@ void GameEngine::movePath(CreatureId creatureId, const std::deque<Direction>& pa
 //  worldTaskQueue_->addTask(creatureId, task);
 }
 
-void GameEngine::cancelMove(CreatureId creatureId)
+void PlayerManager::cancelMove(CreatureId creatureId)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
@@ -187,7 +187,7 @@ void GameEngine::cancelMove(CreatureId creatureId)
   // Don't cancel the task, just let it expire and do nothing
 }
 
-void GameEngine::turn(CreatureId creatureId, Direction direction)
+void PlayerManager::turn(CreatureId creatureId, Direction direction)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, direction](World* world)
   {
@@ -196,7 +196,7 @@ void GameEngine::turn(CreatureId creatureId, Direction direction)
   });
 }
 
-void GameEngine::say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId)
+void PlayerManager::say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, type, message, receiver, channelId](World* world)
   {
@@ -288,7 +288,7 @@ void GameEngine::say(CreatureId creatureId, uint8_t type, const std::string& mes
   });
 }
 
-void GameEngine::moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition)
+void PlayerManager::moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition)
 {
   if (itemId == 99)
   {
@@ -343,7 +343,7 @@ void GameEngine::moveItemFromPosToPos(CreatureId creatureId, const Position& fro
   });
 }
 
-void GameEngine::moveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int toInventoryId)
+void PlayerManager::moveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int toInventoryId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromPosition, fromStackPos, itemId, count, toInventoryId](World* world)
   {
@@ -402,7 +402,7 @@ void GameEngine::moveItemFromPosToInv(CreatureId creatureId, const Position& fro
   });
 }
 
-void GameEngine::moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition)
+void PlayerManager::moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toPosition](World* world)
   {
@@ -447,7 +447,7 @@ void GameEngine::moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId
   });
 }
 
-void GameEngine::moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)
+void PlayerManager::moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toInventoryId](World* world)
   {
@@ -498,7 +498,7 @@ void GameEngine::moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId
   });
 }
 
-void GameEngine::useInvItem(CreatureId creatureId, int itemId, int inventoryIndex)
+void PlayerManager::useInvItem(CreatureId creatureId, int itemId, int inventoryIndex)
 {
   LOG_DEBUG("%s: Use Item in inventory, creature id: %d, itemId: %d, inventoryIndex: %d",
             __func__,
@@ -510,7 +510,7 @@ void GameEngine::useInvItem(CreatureId creatureId, int itemId, int inventoryInde
   //  world->useItem(creatureId, itemId, inventoryIndex);
 }
 
-void GameEngine::usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos)
+void PlayerManager::usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos)
 {
   LOG_DEBUG("%s: Use Item at position, creature id: %d, itemId: %d, position: %s, stackPos: %d",
             __func__,
@@ -523,7 +523,7 @@ void GameEngine::usePosItem(CreatureId creatureId, int itemId, const Position& p
   //  world->useItem(creatureId, itemId, position, stackPos);
 }
 
-void GameEngine::lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)
+void PlayerManager::lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, inventoryIndex, itemId](World* world)
   {
@@ -587,7 +587,7 @@ void GameEngine::lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId
   });
 }
 
-void GameEngine::lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
+void PlayerManager::lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, position, itemId, stackPos](World* world)
   {

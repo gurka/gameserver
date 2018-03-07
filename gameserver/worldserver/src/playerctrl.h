@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PLAYERCTRL_H_
-#define GAMEENGINE_PLAYERCTRL_H_
+#ifndef WORLDSERVER_PLAYERCTRL_H_
+#define WORLDSERVER_PLAYERCTRL_H_
 
 #include <string>
 
@@ -42,7 +42,7 @@ class PlayerCtrl : public CreatureCtrl
   PlayerCtrl(const PlayerCtrl&) = delete;
   PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
-  // Called by GameEngine
+  // Called by PlayerManager
   virtual void setPlayerId(CreatureId playerId) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
   virtual void onUseItem(const Item& item) = 0;
@@ -51,4 +51,4 @@ class PlayerCtrl : public CreatureCtrl
   virtual void cancelMove() = 0;
 };
 
-#endif  // GAMEENGINE_PLAYERCTRL_H_
+#endif  // WORLDSERVER_PLAYERCTRL_H_

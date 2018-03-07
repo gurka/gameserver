@@ -27,18 +27,27 @@
 #include <memory>
 #include <boost/asio.hpp>  //NOLINT
 
+// utils
 #include "configparser.h"
 #include "logger.h"
+
+// account
 #include "account.h"
+
+// network
 #include "server.h"
 #include "server_factory.h"
 #include "incomingpacket.h"
 #include "outgoingpacket.h"
-#include "gameengine.h"
-#include "protocol.h"
-#include "protocol_71.h"
+
+// world
 #include "world.h"
 #include "worldfactory.h"
+
+// worldserver
+#include "player_manager.h"
+#include "protocol.h"
+#include "protocol_71.h"
 #include "worldtaskqueue.h"
 
 
@@ -48,7 +57,7 @@ static boost::asio::io_service io_service;
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
 static std::unique_ptr<WorldTaskQueue> worldTaskQueue;
-static std::unique_ptr<GameEngine> gameEngine;
+static std::unique_ptr<PlayerManager> playerManager;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
 
@@ -67,7 +76,7 @@ void onClientConnected(ConnectionId connectionId)
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
   auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
-                                                           gameEngine.get(),
+                                                           playerManager.get(),
                                                            connectionId,
                                                            server.get(),
                                                            accountReader.get()));
@@ -157,8 +166,8 @@ int main(int argc, char* argv[])
   // Create WorldTaskQueue
   worldTaskQueue = std::make_unique<WorldTaskQueue>(world.get(), &io_service);
 
-  // Create GameEngine
-  gameEngine = std::make_unique<GameEngine>(worldTaskQueue.get(), loginMessage);
+  // Create PlayerManager
+  playerManager = std::make_unique<PlayerManager>(worldTaskQueue.get(), loginMessage);
 
   // Create and load AccountReader
   accountReader = std::make_unique<AccountReader>();
@@ -189,7 +198,7 @@ int main(int argc, char* argv[])
   // Deallocate things (in reverse order of construction)
   server.reset();
   accountReader.reset();
-  gameEngine.reset();
+  playerManager.reset();
   world.reset();
 
   return 0;

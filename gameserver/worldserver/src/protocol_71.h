@@ -38,7 +38,7 @@
 #include "item.h"
 #include "server.h"
 
-class GameEngine;
+class PlayerManager;
 class AccountReader;
 class WorldInterface;
 
@@ -46,7 +46,7 @@ class Protocol71 : public Protocol
 {
  public:
   Protocol71(const std::function<void(void)>& closeProtocol,
-             GameEngine* gameEngine,
+             PlayerManager* playerManager,
              ConnectionId connectionId,
              Server* server,
              AccountReader* accountReader);
@@ -78,7 +78,7 @@ class Protocol71 : public Protocol
 
   void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
 
-  // Called by GameEngine (from PlayerCtrl)
+  // Called by PlayerManager (from PlayerCtrl)
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onUseItem(const Item& item) override;
@@ -112,7 +112,7 @@ class Protocol71 : public Protocol
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
-  GameEngine* gameEngine_;
+  PlayerManager* playerManager_;
   ConnectionId connectionId_;
   Server* server_;
   AccountReader* accountReader_;
