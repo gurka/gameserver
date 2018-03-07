@@ -32,7 +32,7 @@
 #include "mocks/creaturectrl_mock.h"
 #include "world.h"
 #include "creature.h"
-#include "creaturectrl.h"
+#include "creature_ctrl.h"
 #include "position.h"
 #include "item.h"
 
@@ -60,7 +60,7 @@ class WorldTest : public ::testing::Test
       }
     }
 
-    world.reset(new World(std::unique_ptr<ItemFactory>(new MockItemFactory()), 16, 16, std::move(tiles)));
+    world = std::make_unique<World>(std::make_unique<MockItemFactory>(), 16, 16, std::move(tiles));
   }
 
   std::unique_ptr<World> world;

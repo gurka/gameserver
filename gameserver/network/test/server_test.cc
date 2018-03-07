@@ -65,7 +65,7 @@ TEST_F(ServerTest, CreateDelete)
 
   // Create Server, should call async_accept
   EXPECT_CALL(service_, acceptor_async_accept(_, _));
-  server_ = std::unique_ptr<Server>(new ServerImpl<Backend>(&service_, 1234, callbacks_));
+  server_ = std::make_unique<ServerImpl<Backend>>(&service_, 1234, callbacks_);
 
   // Delete Server, should call cancel
   EXPECT_CALL(service_, acceptor_cancel());
@@ -80,7 +80,7 @@ TEST_F(ServerTest, AcceptAndCloseConnection)
   // Create Server, save onAccept handler
   std::function<void(const Backend::ErrorCode&)> onAcceptHandler;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&onAcceptHandler));
-  server_ = std::unique_ptr<Server>(new ServerImpl<Backend>(&service_, 1234, callbacks_));
+  server_ = std::make_unique<ServerImpl<Backend>>(&service_, 1234, callbacks_);
 
   // Call onAccept handler with non-error errorcode
   // Server should call onClientConnected callback and call async_accept again
@@ -119,7 +119,7 @@ TEST_F(ServerTest, UnexpectedDisconnect)
   // Create Server, save onAccept handler
   std::function<void(const Backend::ErrorCode&)> onAcceptHandler;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&onAcceptHandler));
-  server_ = std::unique_ptr<Server>(new ServerImpl<Backend>(&service_, 1234, callbacks_));
+  server_ = std::make_unique<ServerImpl<Backend>>(&service_, 1234, callbacks_);
 
   // Call onAccept handler with non-error errorcode
   // Server should call onClientConnected callback and call async_accept again
@@ -151,7 +151,7 @@ TEST_F(ServerTest, OnPacketReceived)
   // Create Server, save onAccept handler
   std::function<void(const Backend::ErrorCode&)> onAcceptHandler;
   EXPECT_CALL(service_, acceptor_async_accept(_, _)).WillOnce(SaveArg<1>(&onAcceptHandler));
-  server_ = std::unique_ptr<Server>(new ServerImpl<Backend>(&service_, 1234, callbacks_));
+  server_ = std::make_unique<ServerImpl<Backend>>(&service_, 1234, callbacks_);
 
   // Call onAccept handler with non-error errorcode
   // Server should call onClientConnected callback and call async_accept again

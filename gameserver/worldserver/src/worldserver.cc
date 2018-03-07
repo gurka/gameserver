@@ -75,11 +75,11 @@ void onClientConnected(ConnectionId connectionId)
   // Create and store Protocol for this Connection
   // TODO(gurka): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
-  auto protocol = std::unique_ptr<Protocol>(new Protocol71(std::bind(&onProtocolClosed, connectionId),
-                                                           playerManager.get(),
-                                                           connectionId,
-                                                           server.get(),
-                                                           accountReader.get()));
+  auto protocol = std::make_unique<Protocol71>(std::bind(&onProtocolClosed, connectionId),
+                                               playerManager.get(),
+                                               connectionId,
+                                               server.get(),
+                                               accountReader.get());
 
   protocols.emplace(std::piecewise_construct,
                     std::forward_as_tuple(connectionId),

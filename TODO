@@ -20,6 +20,4 @@
 
 * Refactor cmake files
 
-* Change std::unique_ptr<>(new Foo(...)) to std::make_unique<Foo>(...)
-
 * Remove all uses of std::bind

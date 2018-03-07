@@ -41,7 +41,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
                                                  const std::string& worldFilename)
 {
   // Load ItemFactory
-  auto itemFactory = std::unique_ptr<ItemFactory>(new ItemFactory());
+  auto itemFactory = std::make_unique<ItemFactory>();
   if (!itemFactory->initialize(dataFilename, itemsFilename))
   {
     LOG_ERROR("%s: Could not initialize ItemFactory", __func__);
@@ -149,5 +149,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::unique_ptr<World>(new World(std::move(itemFactory), worldSizeX, worldSizeY, std::move(tiles)));
+  return std::make_unique<World>(std::move(itemFactory), worldSizeX, worldSizeY, std::move(tiles));
 }

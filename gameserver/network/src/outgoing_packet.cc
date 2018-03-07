@@ -36,7 +36,7 @@ OutgoingPacket::OutgoingPacket()
 {
   if (buffer_pool_.empty())
   {
-    buffer_.reset(new std::array<uint8_t, 8192>());
+    buffer_ = std::make_unique<std::array<uint8_t, 8192>>();
     LOG_DEBUG("Allocated new buffer");
   }
   else

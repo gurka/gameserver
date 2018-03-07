@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
   boost::asio::io_service io_service;
 
   // Create and load AccountReader
-  accountReader = std::unique_ptr<AccountReader>(new AccountReader());
+  accountReader = std::make_unique<AccountReader>();
   if (!accountReader->loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());

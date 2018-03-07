@@ -68,7 +68,7 @@ TEST_F(ConnectionTest, ConstructAndDelete)
   using ::testing::_;
 
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
   EXPECT_CALL(service_, socket_close(_));
@@ -82,7 +82,7 @@ TEST_F(ConnectionTest, Close)
 
   // Test with force == false
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
   EXPECT_CALL(service_, socket_close(_));
@@ -91,7 +91,7 @@ TEST_F(ConnectionTest, Close)
 
   // Test with force == true
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
   EXPECT_CALL(service_, socket_close(_));
@@ -105,7 +105,7 @@ TEST_F(ConnectionTest, SendPacket)
   using ::testing::SaveArg;
 
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
@@ -150,7 +150,7 @@ TEST_F(ConnectionTest, ReceivePacket)
   uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Write packet header to buffer (packet data is 4 bytes)
   ASSERT_NE(nullptr, buffer);
@@ -197,7 +197,7 @@ TEST_F(ConnectionTest, Disconnect_1)
   // We need to capture the callback in the async_read call
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // onDisconnect callback should be called when async_read handler is called with error
   EXPECT_CALL(callbacksMock_, onDisconnected());
@@ -222,7 +222,7 @@ TEST_F(ConnectionTest, Disconnect_2)
   uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Write packet header to buffer (packet data is 1 byte)
   ASSERT_NE(nullptr, buffer);
@@ -253,7 +253,7 @@ TEST_F(ConnectionTest, Disconnect_3)
   using ::testing::SaveArg;
 
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
@@ -284,7 +284,7 @@ TEST_F(ConnectionTest, Disconnect_4)
   using ::testing::SaveArg;
 
   EXPECT_CALL(service_, async_read(_, _, _, _));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
@@ -321,7 +321,7 @@ TEST_F(ConnectionTest, Disconnect_5)
   // We need to capture the callback in the async_read call
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_ = std::unique_ptr<Connection<Backend>>(new Connection<Backend>(Backend::Socket(service_), callbacks_));
+  connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
