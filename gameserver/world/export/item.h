@@ -65,14 +65,24 @@ class Item
   Item()
     : id_(INVALID_ID),
       count_(0),
-      itemData_(&itemDatas_[id_])  // Will point to an invalid ItemData
+      itemData_(&itemDatas_[id_]),  // Will point to an invalid ItemData
+      containerId_(INVALID_ID)
   {
   }
 
   explicit Item(ItemId itemId)
     : id_(itemId),
       count_(1),
-      itemData_(&itemDatas_[id_])
+      itemData_(&itemDatas_[id_]),
+      containerId_(INVALID_ID)
+  {
+  }
+
+  Item(ItemId itemId, int containerId)
+      : id_(itemId),
+        count_(1),
+        itemData_(&itemDatas_[id_]),
+        containerId_(containerId)
   {
   }
 
@@ -103,6 +113,8 @@ class Item
   template<typename T>
   T getAttribute(const std::string& name) const;
 
+  int getContainerId() const { return containerId_; }
+
 #ifdef UNITTEST
   static void setItemData(ItemId itemId, const ItemData& itemData) { itemDatas_[itemId] = itemData; }
 #endif
@@ -116,6 +128,9 @@ class Item
   ItemId id_;
   uint8_t count_;
   ItemData* itemData_;
+
+  // TODO(gurka): Try to refactor everything below as only certain types of items uses these values
+  int containerId_;
 };
 
 #endif  // WORLD_ITEM_H_

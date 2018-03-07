@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(worldserver)
 
 set(src
+  "src/container_manager.h"
   "src/player_ctrl.h"
   "src/player_manager.cc"
   "src/player_manager.h"

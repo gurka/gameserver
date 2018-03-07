@@ -81,7 +81,7 @@ class Protocol71 : public Protocol
   // Called by PlayerManager (from PlayerCtrl)
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
-  void onUseItem(const Item& item) override;
+  void onOpenContainer(const Item& container, const std::vector<Item>& contents) override;
   void sendTextMessage(uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;

@@ -477,16 +477,16 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onUseItem(const Item& item)
+void Protocol71::onOpenContainer(const Item& container, const std::vector<Item>& contents)
 {
   if (!isConnected())
   {
     return;
   }
 
-  if (!item.hasAttribute("maxitems"))
+  if (!container.hasAttribute("maxitems"))
   {
-    LOG_ERROR("onUseItem(): Container Item: %d missing \"maxitems\" attribute", item.getItemId());
+    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, container.getItemId());
     return;
   }
 
@@ -495,9 +495,9 @@ void Protocol71::onUseItem(const Item& item)
   packet.addU8(0x6E);
   packet.addU8(0x00);  // Level / Depth
 
-  packet.addU16(item.getItemId());  // Container ID
-  packet.addString(item.getName());
-  packet.addU16(item.getAttribute<int>("maxitems"));
+  packet.addU16(container.getItemId());  // Container ID
+  packet.addString(container.getName());
+  packet.addU16(container.getAttribute<int>("maxitems"));
 
   packet.addU8(0x00);  // Number of items
 

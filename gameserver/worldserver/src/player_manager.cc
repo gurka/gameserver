@@ -59,7 +59,8 @@ struct RecursiveTask
 
 PlayerManager::PlayerManager(WorldTaskQueue* worldTaskQueue, std::string loginMessage)
   : worldTaskQueue_(worldTaskQueue),
-    loginMessage_(std::move(loginMessage))
+    loginMessage_(std::move(loginMessage)),
+    containerManager_()
 {
 }
 
@@ -298,7 +299,7 @@ void PlayerManager::moveItemFromPosToPos(CreatureId creatureId, const Position& 
 
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromPosition, fromStackPos, itemId, count, toPosition](World* world)
   {
-    LOG_DEBUG("%s: Move Item from Tile to Tile, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
+    LOG_DEBUG("%s: creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
               __func__,
               creatureId,
               fromPosition.toString().c_str(),
@@ -347,7 +348,7 @@ void PlayerManager::moveItemFromPosToInv(CreatureId creatureId, const Position& 
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromPosition, fromStackPos, itemId, count, toInventoryId](World* world)
   {
-    LOG_DEBUG("%s: Move Item from Tile to Inventory, creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, toInventoryId: %d",
+    LOG_DEBUG("%s: creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, toInventoryId: %d",
               __func__,
               creatureId,
               fromPosition.toString().c_str(),
@@ -406,7 +407,7 @@ void PlayerManager::moveItemFromInvToPos(CreatureId creatureId, int fromInventor
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toPosition](World* world)
   {
-    LOG_DEBUG("%s: Move Item from Inventory to Tile, creature id: %d, from: %d, itemId: %d, count: %d, to: %s",
+    LOG_DEBUG("%s: creature id: %d, from: %d, itemId: %d, count: %d, to: %s",
               __func__,
               creatureId,
               fromInventoryId,
@@ -451,7 +452,7 @@ void PlayerManager::moveItemFromInvToInv(CreatureId creatureId, int fromInventor
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toInventoryId](World* world)
   {
-    LOG_DEBUG("%s: Move Item from Inventory to Inventory, creature id: %d, from: %d, itemId: %d, count: %d, to: %d",
+    LOG_DEBUG("%s: creature id: %d, from: %d, itemId: %d, count: %d, to: %d",
               __func__,
               creatureId,
               fromInventoryId,
@@ -500,27 +501,48 @@ void PlayerManager::moveItemFromInvToInv(CreatureId creatureId, int fromInventor
 
 void PlayerManager::useInvItem(CreatureId creatureId, int itemId, int inventoryIndex)
 {
-  LOG_DEBUG("%s: Use Item in inventory, creature id: %d, itemId: %d, inventoryIndex: %d",
+  LOG_DEBUG("%s: creature id: %d, itemId: %d, inventoryIndex: %d",
             __func__,
             creatureId,
             itemId,
             inventoryIndex);
 
-  // TODO(gurka): Fix
-  //  world->useItem(creatureId, itemId, inventoryIndex);
+  auto& player = getPlayer(creatureId);
+  const auto& playerEquipment = player.getEquipment();
+
+  if (!playerEquipment.hasItem(inventoryIndex))
+  {
+    LOG_DEBUG("%s: There is no item in inventoryIndex %u",
+              __func__,
+              inventoryIndex);
+    return;
+  }
+
+  auto& item = playerEquipment.getItem(inventoryIndex);
+
+  // Opening a container in inventory does not require World context
+  if (item.isContainer())
+  {
+    if (item.getContainerId() == 0)  // TODO(gurka): fix constant
+    {
+      LOG_ERROR("%s: Item is container but containerId is invalid", __func__);
+      return;
+    }
+
+    // Ask ContainerManager for the contents and send it to the player
+    const auto& contents = containerManager_.getContainerContents(item.getContainerId());
+    getPlayerCtrl(creatureId)->onOpenContainer(item, contents);
+  }
 }
 
 void PlayerManager::usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos)
 {
-  LOG_DEBUG("%s: Use Item at position, creature id: %d, itemId: %d, position: %s, stackPos: %d",
+  LOG_DEBUG("%s: creature id: %d, itemId: %d, position: %s, stackPos: %d",
             __func__,
             creatureId,
             itemId,
             position.toString().c_str(),
             stackPos);
-
-  // TODO(gurka): Fix
-  //  world->useItem(creatureId, itemId, position, stackPos);
 }
 
 void PlayerManager::lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)

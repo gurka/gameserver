@@ -36,6 +36,7 @@
 #include "world_task_queue.h"
 #include "player.h"
 #include "position.h"
+#include "container_manager.h"
 
 class OutgoingPacket;
 class PlayerCtrl;
@@ -89,6 +90,7 @@ class PlayerManager
 
   WorldTaskQueue* worldTaskQueue_;
   std::string loginMessage_;
+  ContainerManager containerManager_;
 };
 
 #endif  // WORLDSERVER_PLAYERMANAGER_H_

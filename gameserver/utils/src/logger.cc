@@ -32,35 +32,36 @@
 const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
 {
   // src/utils
-  { "config_parser.h",    Module::UTILS       },
+  { "config_parser.h",     Module::UTILS       },
 
   // src/account
-  { "account.cc",         Module::ACCOUNT     },
+  { "account.cc",          Module::ACCOUNT     },
 
   // src/network
-  { "connection.h",       Module::NETWORK     },
-  { "server_impl.h",      Module::NETWORK     },
-  { "incoming_packet.cc", Module::NETWORK     },
-  { "outgoing_packet.cc", Module::NETWORK     },
-  { "acceptor.h",         Module::NETWORK     },
+  { "connection.h",        Module::NETWORK     },
+  { "server_impl.h",       Module::NETWORK     },
+  { "incoming_packet.cc",  Module::NETWORK     },
+  { "outgoing_packet.cc",  Module::NETWORK     },
+  { "acceptor.h",          Module::NETWORK     },
 
   // src/world
-  { "item.cc",            Module::WORLD       },
-  { "tile.cc",            Module::WORLD       },
-  { "world.cc",           Module::WORLD       },
-  { "creature.cc",        Module::WORLD       },
-  { "position.cc",        Module::WORLD       },
-  { "item_factory.cc",    Module::WORLD       },
-  { "world_factory.cc",   Module::WORLD       },
+  { "item.cc",             Module::WORLD       },
+  { "tile.cc",             Module::WORLD       },
+  { "world.cc",            Module::WORLD       },
+  { "creature.cc",         Module::WORLD       },
+  { "position.cc",         Module::WORLD       },
+  { "item_factory.cc",     Module::WORLD       },
+  { "world_factory.cc",    Module::WORLD       },
 
   // src/loginserver
-  { "loginserver.cc",     Module::LOGINSERVER },
+  { "loginserver.cc",      Module::LOGINSERVER },
 
   // src/worldserver
-  { "protocol_71.cc",     Module::WORLDSERVER },
-  { "player_manager.cc",  Module::WORLDSERVER },
-  { "worldserver.cc",     Module::WORLDSERVER },
-  { "player.cc",          Module::WORLDSERVER },
+  { "container_manager.h", Module::WORLDSERVER },
+  { "protocol_71.cc",      Module::WORLDSERVER },
+  { "player_manager.cc",   Module::WORLDSERVER },
+  { "worldserver.cc",      Module::WORLDSERVER },
+  { "player.cc",           Module::WORLDSERVER },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_ =

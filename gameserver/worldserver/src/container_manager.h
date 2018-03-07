@@ -22,34 +22,55 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PLAYERCTRL_H_
-#define WORLDSERVER_PLAYERCTRL_H_
+#ifndef WORLDSERVER_CONTAINERMANAGER_H_
+#define WORLDSERVER_CONTAINERMANAGER_H_
 
-#include <string>
 #include <vector>
 
-#include "creature_ctrl.h"
-#include "player.h"
-#include "position.h"
 #include "item.h"
+#include "logger.h"
 
-class PlayerCtrl : public CreatureCtrl
+class ContainerManager
 {
  public:
-  PlayerCtrl() = default;
-  virtual ~PlayerCtrl() = default;
+  const std::vector<Item>& getContainerContents(int containerId)
+  {
+    for (const auto& container : containers_)
+    {
+      if (container.id == containerId)
+      {
+        return container.items;
+      }
+    }
 
-  // Delete copy constructors
-  PlayerCtrl(const PlayerCtrl&) = delete;
-  PlayerCtrl& operator=(const PlayerCtrl&) = delete;
+    // Create a new empty container
+    LOG_DEBUG("%s: creating new container with id: %d", __func__, containerId);
+    containers_.push_back({ containerId, {} });
+    return containers_.back().items;
+  }
 
-  // Called by PlayerManager
-  virtual void setPlayerId(CreatureId playerId) = 0;
-  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
-  virtual void onOpenContainer(const Item& container, const std::vector<Item>& contents) = 0;
-  virtual void sendTextMessage(uint8_t message_type, const std::string& message) = 0;
-  virtual void sendCancel(const std::string& message) = 0;
-  virtual void cancelMove() = 0;
+  void addItem(int containerId, const Item& item)
+  {
+    for (auto& container : containers_)
+    {
+      if (container.id == containerId)
+      {
+        container.items.push_back(item);
+        return;
+      }
+    }
+
+    LOG_ERROR("%s: could not find container with id: %d", __func__, containerId);
+  }
+
+ private:
+  struct Container
+  {
+    int id;
+    std::vector<Item> items;
+  };
+
+  std::vector<Container> containers_;
 };
 
-#endif  // WORLDSERVER_PLAYERCTRL_H_
+#endif  // WORLDSERVER_CONTAINERMANAGER_H_
