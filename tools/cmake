@@ -30,6 +30,7 @@ case $1 in
     mkdir -p "$DIR_ECLIPSE"
     pushd "$DIR_ECLIPSE"
     cmake ../gameserver -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.2 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+    ln -s ../data data
     popd
     ;;
 
@@ -60,6 +61,7 @@ case $1 in
     mkdir -p "$DIR_ECLIPSE"
     pushd "$DIR_ECLIPSE"
     cmake ../gameserver -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.2 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+    ln -s ../data data
     popd
     ;;
 
