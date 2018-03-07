@@ -88,6 +88,12 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
                                 position.getY() + std::get<1>(offsets),
                                 position.getZ());
 
+    // Make sure the adjusted position is valid
+    if (!positionIsValid(adjustedPosition))
+    {
+      continue;
+    }
+
     // TODO(gurka): Need to check more stuff (blocking, etc)
     if (internalGetTile(adjustedPosition).getCreatureIds().size() == 0)
     {
@@ -254,8 +260,13 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   {
     for (auto y = y_min - 7; y <= y_max + 7; y++)
     {
-      const auto& tile = getTile(Position(x, y, 7));
+      const auto position = Position(x, y, 7);
+      if (!positionIsValid(position))
+      {
+        continue;
+      }
 
+      const auto& tile = getTile(position);
       const auto& nearCreatureIds = tile.getCreatureIds();
       for (const auto nearCreatureId : nearCreatureIds)
       {
@@ -537,7 +548,7 @@ Tile& World::internalGetTile(const Position& position)
 {
   if (!positionIsValid(position))
   {
-    LOG_ERROR("getTile called with invalid Position");
+    LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
   return tiles_.at(position);
 }
@@ -546,7 +557,7 @@ const Tile& World::getTile(const Position& position) const
 {
   if (!positionIsValid(position))
   {
-    LOG_ERROR("getTile called with invalid Position");
+    LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
   return tiles_.at(position);
 }
@@ -555,7 +566,7 @@ Creature& World::internalGetCreature(CreatureId creatureId)
 {
   if (!creatureExists(creatureId))
   {
-    LOG_ERROR("getCreature called with non-existent CreatureId");
+    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
   }
   return *(creatures_.at(creatureId));
 }
@@ -564,7 +575,7 @@ const Creature& World::getCreature(CreatureId creatureId) const
 {
   if (!creatureExists(creatureId))
   {
-    LOG_ERROR("getCreature called with non-existent CreatureId");
+    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
     return Creature::INVALID;
   }
   return *(creatures_.at(creatureId));

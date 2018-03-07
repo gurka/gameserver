@@ -103,6 +103,10 @@ class Item
   template<typename T>
   T getAttribute(const std::string& name) const;
 
+#ifdef UNITTEST
+  static void setItemData(ItemId itemId, const ItemData& itemData) { itemDatas_[itemId] = itemData; }
+#endif
+
  private:
   static constexpr ItemId INVALID_ID = 0;
 

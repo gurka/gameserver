@@ -25,7 +25,6 @@ add_library(world ${src})
 if (unittest)
   set(src_test
     "test/mocks/creaturectrl_mock.h"
-    "test/mocks/itemfactory_mock.h"
     "test/position_test.cc"
     "test/creature_test.cc"
     "test/item_test.cc"
@@ -34,6 +33,7 @@ if (unittest)
   )
 
   add_executable(world_test ${src_test})
+  target_compile_definitions(world_test PRIVATE "UNITTEST")
   target_link_libraries(world_test
     gtest_main
     gmock_main

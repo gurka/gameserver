@@ -28,7 +28,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include "mocks/itemfactory_mock.h"
 #include "mocks/creaturectrl_mock.h"
 #include "world.h"
 #include "creature.h"
@@ -60,7 +59,7 @@ class WorldTest : public ::testing::Test
       }
     }
 
-    world = std::make_unique<World>(std::make_unique<MockItemFactory>(), 16, 16, std::move(tiles));
+    world = std::make_unique<World>(16, 16, std::move(tiles));
   }
 
   std::unique_ptr<World> world;
@@ -191,17 +190,6 @@ TEST_F(WorldTest, RemoveCreature)
 
 TEST_F(WorldTest, CreatureMoveSingleCreature)
 {
-  // TODO(gurka): Fix Item in test environment:
-
-  /*
-Program received signal SIGSEGV, Segmentation fault.
-0x00000000005965c8 in Item::isBlocking (this=0x7f8ff0) at /home/simon/code/gameserver/gameserver/world/export/item.h:80
-80        bool isBlocking() const { return itemData_->isBlocking; }
-(gdb) print itemData_
-$1 = (const ItemData *) 0x0
-  */
-
-  /*
   Creature creatureOne("TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
   Position creaturePositionOne(192, 192, 7);
@@ -209,13 +197,14 @@ $1 = (const ItemData *) 0x0
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
 
   // Test with Direction
+  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _, _));
   Direction direction(Direction::EAST);
   world->creatureMove(creatureOne.getCreatureId(), direction);
   EXPECT_EQ(creaturePositionOne.addDirection(direction), world->getCreaturePosition(creatureOne.getCreatureId()));
 
   // Test with Position, from (193, 192, 7) to (193, 193, 7)
+  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _, _));
   Position position(193, 193, 7);
   world->creatureMove(creatureOne.getCreatureId(), position);
   EXPECT_EQ(position, world->getCreaturePosition(creatureOne.getCreatureId()));
-  */
 }

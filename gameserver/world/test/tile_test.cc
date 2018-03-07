@@ -23,6 +23,7 @@
  */
 
 #include "tile.h"
+#include "item.h"
 
 #include "gtest/gtest.h"
 
@@ -31,37 +32,46 @@ class TileTest : public ::testing::Test
  public:
   TileTest()
   {
-    dummyItemA_.id = 1;
-    dummyItemA_.name = "DummyItemA";
+    ItemData itemDataA;
+    itemDataA.valid = true;
+    itemDataA.name = "Item A";
+    Item::setItemData(itemIdA, itemDataA);
 
-    dummyItemB_.id = 2;
-    dummyItemB_.name = "DummyItemB";
+    ItemData itemDataB;
+    itemDataB.valid = true;
+    itemDataB.name = "Item B";
+    Item::setItemData(itemIdB, itemDataB);
 
-    dummyItemC_.id = 3;
-    dummyItemC_.name = "DummyItemC";
+    ItemData itemDataC;
+    itemDataC.valid = true;
+    itemDataC.name = "Item C";
+    Item::setItemData(itemIdC, itemDataC);
 
-    dummyItemD_.id = 4;
-    dummyItemD_.name = "DummyItemD";
+    ItemData itemDataD;
+    itemDataD.valid = true;
+    itemDataD.name = "Item D";
+    Item::setItemData(itemIdD, itemDataD);
   }
 
-  ItemData dummyItemA_;
-  ItemData dummyItemB_;
-  ItemData dummyItemC_;
-  ItemData dummyItemD_;
+ protected:
+  static constexpr ItemId itemIdA = 1;
+  static constexpr ItemId itemIdB = 2;
+  static constexpr ItemId itemIdC = 3;
+  static constexpr ItemId itemIdD = 4;
 };
 
 TEST_F(TileTest, Constructor)
 {
-  Item groundItem(&dummyItemA_);
+  Item groundItem(itemIdA);
   Tile tileA(groundItem);
 
-  ASSERT_EQ(tileA.getItem(0), groundItem);
+  ASSERT_EQ(tileA.getItem(0).getItemId(), groundItem.getItemId());
   ASSERT_EQ(tileA.getNumberOfThings(), 1u);  // Only ground item
 }
 
 TEST_F(TileTest, AddRemoveCreatures)
 {
-  Item groundItem(&dummyItemA_);
+  Item groundItem(itemIdA);
   Tile tile(groundItem);
   CreatureId creatureA(1);
   CreatureId creatureB(2);
@@ -100,12 +110,12 @@ TEST_F(TileTest, AddRemoveCreatures)
 
 TEST_F(TileTest, AddRemoveItems)
 {
-  Item groundItem(&dummyItemA_);
+  Item groundItem(itemIdD);
   Tile tile(groundItem);
 
-  Item itemA(&dummyItemB_);
-  Item itemB(&dummyItemC_);
-  Item itemC(&dummyItemD_);
+  Item itemA(itemIdA);
+  Item itemB(itemIdB);
+  Item itemC(itemIdC);
 
   // Add an item and remove it
   tile.addItem(itemA);

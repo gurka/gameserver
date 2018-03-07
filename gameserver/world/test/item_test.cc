@@ -31,61 +31,40 @@ class ItemTest : public ::testing::Test
  public:
   ItemTest()
   {
-    dummyItemA_.id = 1;
-    dummyItemA_.name = "DummyItemA";
+    ItemData itemDataA;
+    itemDataA.valid = true;
+    itemDataA.name = "Item A";
+    Item::setItemData(itemIdA, itemDataA);
 
-    dummyItemB_.id = 2;
-    dummyItemB_.name = "DummyItemB";
-    dummyItemB_.attributes.insert(std::make_pair("string", "test"));
-    dummyItemB_.attributes.insert(std::make_pair("integer", "1234"));
-    dummyItemB_.attributes.insert(std::make_pair("float", "3.14"));
+    ItemData itemDataB;
+    itemDataB.valid = true;
+    itemDataB.name = "Item B";
+    itemDataB.attributes.insert(std::make_pair("string", "test"));
+    itemDataB.attributes.insert(std::make_pair("integer", "1234"));
+    itemDataB.attributes.insert(std::make_pair("float", "3.14"));
+    Item::setItemData(itemIdB, itemDataB);
   }
 
-  ItemData dummyItemA_;
-  ItemData dummyItemB_;
+ protected:
+  static constexpr ItemId itemIdA = 1;
+  static constexpr ItemId itemIdB = 2;
 };
-
-static ItemData dummyItemA;
 
 TEST_F(ItemTest, Constructor)
 {
-  Item invalidItem(nullptr);
+  Item invalidItem{};
   ASSERT_FALSE(invalidItem.isValid());
 
-  Item validItem(&dummyItemA_);
+  Item validItem(itemIdA);
   ASSERT_TRUE(validItem.isValid());
 }
 
 TEST_F(ItemTest, Attribute)
 {
-  Item testItem(&dummyItemB_);
-  ASSERT_TRUE(testItem.isValid());
+  Item item(itemIdB);
+  ASSERT_TRUE(item.isValid());
 
-  ASSERT_EQ(testItem.getAttribute<std::string>("string"), "test");
-  ASSERT_EQ(testItem.getAttribute<int>("integer"), 1234);
-  ASSERT_FLOAT_EQ(testItem.getAttribute<float>("float"), 3.14f);
-}
-
-TEST_F(ItemTest, Equals)
-{
-  Item testItemA(&dummyItemA_);
-  Item testItemAA(&dummyItemA_);
-  Item testItemB(&dummyItemB_);
-  Item testItemC(nullptr);
-
-  ASSERT_TRUE(testItemA.isValid());
-  ASSERT_TRUE(testItemB.isValid());
-  ASSERT_FALSE(testItemC.isValid());
-
-  ASSERT_EQ(testItemA, testItemAA);
-  ASSERT_NE(testItemA, testItemB);
-  ASSERT_NE(testItemA, testItemC);
-
-  Item testItemD = testItemA;
-  ASSERT_EQ(testItemA, testItemD);
-
-  Item testItemE(testItemB);
-  ASSERT_EQ(testItemB, testItemE);
-
-  ASSERT_EQ(testItemC, Item(nullptr));
+  ASSERT_EQ(item.getAttribute<std::string>("string"), "test");
+  ASSERT_EQ(item.getAttribute<int>("integer"), 1234);
+  ASSERT_FLOAT_EQ(item.getAttribute<float>("float"), 3.14f);
 }
