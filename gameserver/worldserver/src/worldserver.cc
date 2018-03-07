@@ -39,8 +39,7 @@
 #include "protocol_71.h"
 #include "world.h"
 #include "worldfactory.h"
-#include "taskqueue.h"
-#include "taskqueuefactory.h"
+#include "worldtaskqueue.h"
 
 
 static boost::asio::io_service io_service;
@@ -48,7 +47,7 @@ static boost::asio::io_service io_service;
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
-static std::unique_ptr<TaskQueue> taskQueue;
+static std::unique_ptr<WorldTaskQueue> worldTaskQueue;
 static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
@@ -155,14 +154,14 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create TaskQueue
-  taskQueue = TaskQueueFactory::createTaskQueue(&io_service);
+  // Create WorldTaskQueue
+  worldTaskQueue = std::make_unique<WorldTaskQueue>(world.get(), &io_service);
 
   // Create GameEngine
-  gameEngine = std::unique_ptr<GameEngine>(new GameEngine(taskQueue.get(), loginMessage, world.get()));
+  gameEngine = std::make_unique<GameEngine>(worldTaskQueue.get(), loginMessage);
 
   // Create and load AccountReader
-  accountReader = std::unique_ptr<AccountReader>(new AccountReader());
+  accountReader = std::make_unique<AccountReader>();
   if (!accountReader->loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef UTIL_TASKQUEUEIMPL_H_
-#define UTIL_TASKQUEUEIMPL_H_
+#ifndef GAMEENGINE_WORLDTASKQUEUE_H_
+#define GAMEENGINE_WORLDTASKQUEUE_H_
 
 #include <functional>
 #include <vector>
@@ -31,21 +31,23 @@
 #include <boost/asio.hpp>  //NOLINT
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
 
-#include "taskqueue.h"
+#include "world.h"
 
 // TODO(gurka): If we ever want to run multiple threads for network I/O this queue needs to be threadsafe
-class TaskQueueImpl : public TaskQueue
+class WorldTaskQueue
 {
  public:
-  explicit TaskQueueImpl(boost::asio::io_service* io_service);
+  using Task = std::function<void(World*)>;
+
+  WorldTaskQueue(World* world, boost::asio::io_service* io_service);
 
   // Delete copy constructors
-  TaskQueueImpl(const TaskQueueImpl&) = delete;
-  TaskQueueImpl& operator=(const TaskQueueImpl&) = delete;
+  WorldTaskQueue(const WorldTaskQueue&) = delete;
+  WorldTaskQueue& operator=(const WorldTaskQueue&) = delete;
 
-  void addTask(int tag, const Task& task) override;
-  void addTask(int tag, unsigned expire_ms, const Task& task) override;
-  void cancelAllTasks(int tag) override;
+  void addTask(int tag, const Task& task);
+  void addTask(int tag, unsigned expire_ms, const Task& task);
+  void cancelAllTasks(int tag);
 
  private:
   struct TaskWrapper
@@ -65,6 +67,8 @@ class TaskQueueImpl : public TaskQueue
   void startTimer();
   void onTimeout(const boost::system::error_code& ec);
 
+  World* world_;
+
   // The vector should be sorted on TaskWrapper.expire
   // This is handled by addTask()
   std::vector<TaskWrapper> queue_;
@@ -73,4 +77,4 @@ class TaskQueueImpl : public TaskQueue
   bool timer_started_;
 };
 
-#endif  // UTIL_TASKQUEUEIMPL_H_
+#endif  // GAMEENGINE_WORLDTASKQUEUE_H_

@@ -6,6 +6,8 @@ set(src
   "src/gameengine.cc"
   "src/player.cc"
   "src/player.h"
+  "src/worldtaskqueue.cc"
+  "src/worldtaskqueue.h"
   "export/gameengine.h"
   "export/playerctrl.h"
 )

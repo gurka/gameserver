@@ -22,20 +22,21 @@
  * SOFTWARE.
  */
 
-#include "taskqueueimpl.h"
+#include "worldtaskqueue.h"
 
-TaskQueueImpl::TaskQueueImpl(boost::asio::io_service* io_service)
-  : timer_(*io_service),
+WorldTaskQueue::WorldTaskQueue(World* world, boost::asio::io_service* io_service)
+  : world_(world),
+    timer_(*io_service),
     timer_started_(false)
 {
 }
 
-void TaskQueueImpl::addTask(int tag, const Task& task)
+void WorldTaskQueue::addTask(int tag, const Task& task)
 {
   addTask(tag, 0u, task);
 }
 
-void TaskQueueImpl::addTask(int tag, unsigned expire_ms, const Task& task)
+void WorldTaskQueue::addTask(int tag, unsigned expire_ms, const Task& task)
 {
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time()) +
                 boost::posix_time::millisec(expire_ms);
@@ -62,7 +63,7 @@ void TaskQueueImpl::addTask(int tag, unsigned expire_ms, const Task& task)
   }
 }
 
-void TaskQueueImpl::cancelAllTasks(int tag)
+void WorldTaskQueue::cancelAllTasks(int tag)
 {
   if (!queue_.empty())
   {
@@ -85,18 +86,20 @@ void TaskQueueImpl::cancelAllTasks(int tag)
   }
 }
 
-void TaskQueueImpl::startTimer()
+void WorldTaskQueue::startTimer()
 {
   // Start timer
   boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
   boost::posix_time::ptime taskExpire(queue_.front().expire);
   timer_.expires_from_now(taskExpire - now);
-  timer_.async_wait(std::bind(&TaskQueueImpl::onTimeout, this, std::placeholders::_1));
+
+  // TODO(gurka): lambda
+  timer_.async_wait(std::bind(&WorldTaskQueue::onTimeout, this, std::placeholders::_1));
 
   timer_started_ = true;
 }
 
-void TaskQueueImpl::onTimeout(const boost::system::error_code& ec)
+void WorldTaskQueue::onTimeout(const boost::system::error_code& ec)
 {
   if (ec == boost::asio::error::operation_aborted)
   {
@@ -123,7 +126,7 @@ void TaskQueueImpl::onTimeout(const boost::system::error_code& ec)
     // So copy the task and remove it from the queue before calling task(), to avoid problems
     auto tw = queue_.front();
     queue_.erase(queue_.begin());
-    tw.task();
+    tw.task(world_);
   }
 
   // Start the timer again if there are more tasks in the queue

@@ -33,7 +33,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "taskqueue.h"
+#include "worldtaskqueue.h"
 #include "player.h"
 #include "position.h"
 
@@ -44,9 +44,7 @@ class World;
 class GameEngine
 {
  public:
-  GameEngine(TaskQueue* taskQueue,
-             std::string loginMessage,
-             World* world);
+  GameEngine(WorldTaskQueue* worldTaskQueue, std::string loginMessage);
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
@@ -89,9 +87,8 @@ class GameEngine
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 
-  TaskQueue* taskQueue_;
+  WorldTaskQueue* worldTaskQueue_;
   std::string loginMessage_;
-  World* world_;
 };
 
 #endif  // GAMEENGINE_GAMEENGINE_H_
