@@ -182,3 +182,14 @@ std::size_t Tile::getNumberOfThings() const
 {
   return items_.size() + creatureIds_.size();
 }
+
+int Tile::getGroundSpeed() const
+{
+  if (items_.empty())
+  {
+    LOG_ERROR("%s: Tile does not have any items", __func__);
+    return 0;
+  }
+
+  return items_.front().getSpeed();
+}

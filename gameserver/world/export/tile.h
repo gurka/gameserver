@@ -58,7 +58,7 @@ class Tile
 
   // Other
   std::size_t getNumberOfThings() const;
-  int getGroundSpeed() const { return items_.front().getSpeed(); }
+  int getGroundSpeed() const;
 
  private:
   int numberOfTopItems;

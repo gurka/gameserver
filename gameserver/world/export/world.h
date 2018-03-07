@@ -35,7 +35,6 @@
 #include "creature_ctrl.h"
 #include "tile.h"
 #include "position.h"
-#include "item_factory.h"
 
 class World : public WorldInterface
 {
@@ -53,8 +52,7 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(std::unique_ptr<ItemFactory> itemFactory,
-        int worldSizeX,
+  World(int worldSizeX,
         int worldSizeY,
         std::unordered_map<Position, Tile, Position::Hash> tiles);
 
@@ -99,9 +97,6 @@ class World : public WorldInterface
   Tile& internalGetTile(const Position& position);
   Creature& internalGetCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
-
-  // Not used at the moment, but will be needed in the future (?)
-  std::unique_ptr<ItemFactory> itemFactory_;
 
   // World size
   int worldSizeX_;

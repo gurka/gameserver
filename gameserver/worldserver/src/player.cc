@@ -32,7 +32,7 @@ Equipment::Equipment()
 {
   items_.insert(std::make_pair(Slot::HELMET,     Item()));
   items_.insert(std::make_pair(Slot::AMULET,     Item()));
-  items_.insert(std::make_pair(Slot::BACKPACK,   Item()));
+  items_.insert(std::make_pair(Slot::BACKPACK,   Item(1411)));
   items_.insert(std::make_pair(Slot::ARMOR,      Item()));
   items_.insert(std::make_pair(Slot::RIGHT_HAND, Item()));
   items_.insert(std::make_pair(Slot::LEFT_HAND,  Item()));
@@ -153,10 +153,10 @@ bool Equipment::addItem(const Item& item, uint8_t inventoryIndex)
   }
 }
 
-bool Equipment::removeItem(const Item& item, uint8_t inventoryIndex)
+bool Equipment::removeItem(ItemId itemId, uint8_t inventoryIndex)
 {
   Slot slot = static_cast<Slot>(inventoryIndex);
-  if (items_.at(slot)== item)
+  if (items_.at(slot).getItemId() == itemId)
   {
     items_.at(slot) = Item();
     return true;

@@ -29,9 +29,9 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "item.h"
 #include "position.h"
 #include "tile.h"
-#include "item_factory.h"
 #include "world.h"
 #include "logger.h"
 #include "rapidxml.hpp"
@@ -40,11 +40,10 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
                                                  const std::string& itemsFilename,
                                                  const std::string& worldFilename)
 {
-  // Load ItemFactory
-  auto itemFactory = std::make_unique<ItemFactory>();
-  if (!itemFactory->initialize(dataFilename, itemsFilename))
+  // Load ItemData
+  if (!Item::loadItemData(dataFilename, itemsFilename))
   {
-    LOG_ERROR("%s: Could not initialize ItemFactory", __func__);
+    LOG_ERROR("%s: Could not load ItemData", __func__);
     return std::unique_ptr<World>();
   }
 
@@ -72,11 +71,11 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   worldXml.parse<0>(xmlString);
 
   // Get top node (<map>)
-  auto* mapNode = worldXml.first_node();
+  const auto* mapNode = worldXml.first_node();
 
   // Read width and height
-  auto* widthAttr = mapNode->first_attribute("width");
-  auto* heightAttr = mapNode->first_attribute("height");
+  const auto* widthAttr = mapNode->first_attribute("width");
+  const auto* heightAttr = mapNode->first_attribute("height");
   if (widthAttr == nullptr || heightAttr == nullptr)
   {
     LOG_ERROR("%s: Invalid file, missing attributes width or height in <map>-node", __func__);
@@ -84,17 +83,17 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
     return std::unique_ptr<World>();
   }
 
-  int worldSizeX = std::stoi(widthAttr->value());
-  int worldSizeY = std::stoi(heightAttr->value());
+  const auto worldSizeX = std::stoi(widthAttr->value());
+  const auto worldSizeY = std::stoi(heightAttr->value());
 
   // Read tiles
   std::unordered_map<Position, Tile, Position::Hash> tiles;
-  auto* tileNode = mapNode->first_node();
+  const auto* tileNode = mapNode->first_node();
   for (int y = worldSizeStart_; y < worldSizeStart_ + worldSizeY; y++)
   {
     for (int x = worldSizeStart_; x < worldSizeStart_ + worldSizeX; x++)
     {
-      Position position(x, y, 7);
+      const Position position(x, y, 7);
 
       if (tileNode == nullptr)
       {
@@ -105,14 +104,14 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
 
       // Read the first <item> (there must be at least one, the ground item)
       // TODO(gurka): Must there be one? What about "void", or is it also an Item?
-      auto* groundItemNode = tileNode->first_node();
+      const auto* groundItemNode = tileNode->first_node();
       if (groundItemNode == nullptr)
       {
         LOG_ERROR("%s: Invalid file, <tile>-node is missing <item>-node", __func__);
         free(xmlString);
         return std::unique_ptr<World>();
       }
-      auto* groundItemAttr = groundItemNode->first_attribute("id");
+      const auto* groundItemAttr = groundItemNode->first_attribute("id");
       if (groundItemAttr == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing attribute id in <item>-node", __func__);
@@ -120,8 +119,16 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
         return std::unique_ptr<World>();
       }
 
-      auto groundItemId = std::stoi(groundItemAttr->value());
-      auto groundItem = itemFactory->createItem(groundItemId);
+      const auto groundItemId = std::stoi(groundItemAttr->value());
+      const auto groundItem = Item(groundItemId);
+
+      if (!groundItem.isValid())
+      {
+        LOG_ERROR("%s: groundItemId %d is invalid", __func__, groundItemId);
+        free(xmlString);
+        return std::unique_ptr<World>();
+      }
+
       tiles.emplace(std::piecewise_construct,
                     std::forward_as_tuple(position),
                     std::forward_as_tuple(groundItem));
@@ -130,15 +137,24 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
       // But due to the way otserv-3.0 made world.xml, do it backwards
       for (auto* itemNode = tileNode->last_node(); itemNode != groundItemNode; itemNode = itemNode->previous_sibling())
       {
-        auto* itemIdAttr = itemNode->first_attribute("id");
+        const auto* itemIdAttr = itemNode->first_attribute("id");
         if (itemIdAttr == nullptr)
         {
           LOG_DEBUG("%s: Missing attribute id in <item>-node, skipping Item", __func__);
           continue;
         }
 
-        auto itemId = std::stoi(itemIdAttr->value());
-        tiles.at(position).addItem(itemFactory->createItem(itemId));
+        const auto itemId = std::stoi(itemIdAttr->value());
+        const auto item = Item(itemId);
+
+        if (!item.isValid())
+        {
+          LOG_ERROR("%s: itemId %d is invalid", __func__, itemId);
+          free(xmlString);
+          return std::unique_ptr<World>();
+        }
+
+        tiles.at(position).addItem(item);
       }
 
       // Go to next <tile> in XML
@@ -149,5 +165,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::make_unique<World>(std::move(itemFactory), worldSizeX, worldSizeY, std::move(tiles));
+  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles));
 }

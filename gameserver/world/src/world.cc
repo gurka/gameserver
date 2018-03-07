@@ -31,16 +31,13 @@
 #include <tuple>
 #include <utility>
 
-#include "item_factory.h"
 #include "logger.h"
 #include "tick.h"
 
-World::World(std::unique_ptr<ItemFactory> itemFactory,
-             int worldSizeX,
+World::World(int worldSizeX,
              int worldSizeY,
              std::unordered_map<Position, Tile, Position::Hash> tiles)
-  : itemFactory_(std::move(itemFactory)),
-    worldSizeX_(worldSizeX),
+  : worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
     tiles_(std::move(tiles))
 {
@@ -322,8 +319,7 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
 
 World::ReturnCode World::addItem(ItemId itemId, const Position& position)
 {
-  auto item = itemFactory_->createItem(itemId);
-  return addItem(item, position);
+  return addItem(Item(itemId), position);
 }
 
 World::ReturnCode World::addItem(const Item& item, const Position& position)

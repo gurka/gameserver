@@ -25,6 +25,8 @@
 #ifndef WORLD_ITEM_H_
 #define WORLD_ITEM_H_
 
+#include <cstdint>
+#include <array>
 #include <string>
 #include <unordered_map>
 
@@ -32,12 +34,11 @@ using ItemId = int;
 
 struct ItemData
 {
-  static const ItemId INVALID_ID;
+  bool valid        = false;
 
   // Loaded from data file
-  ItemId id         = INVALID_ID;
   bool ground       = false;
-  int speed         = 0;
+  int  speed        = 0;
   bool isBlocking   = false;
   bool alwaysOnTop  = false;
   bool isContainer  = false;
@@ -47,44 +48,52 @@ struct ItemData
   bool isNotMovable = false;
   bool isEquipable  = false;
 
-  // Loaded from items.xml
-  std::string name  = "";
+  // Loaded from item file
+  std::string name = "";
+
+  // TODO(gurka): Change to std::vector ?
   std::unordered_map<std::string, std::string> attributes;
 };
 
 class Item
 {
  public:
-  Item()
-    : itemData_(nullptr),
-      count_(0)
-  {
-  }
-
-  explicit Item(const ItemData* itemData)
-    : itemData_(itemData),
-      count_((itemData_ != nullptr) ? 1 : 0)
-  {
-  }
-
-  virtual ~Item() = default;
-
+  // Loads ItemData from the data file and the item file
+  // Must be loaded (successfully) before any Item objects are created
   static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
 
-  bool isValid() const { return itemData_ != nullptr; }
+  Item()
+    : id_(INVALID_ID),
+      count_(0),
+      itemData_(&itemDatas_[id_])  // Will point to an invalid ItemData
+  {
+  }
+
+  explicit Item(ItemId itemId)
+    : id_(itemId),
+      count_(1),
+      itemData_(&itemDatas_[id_])
+  {
+  }
+
+  bool isValid() const { return itemData_->valid; }
+
+  // Specific for this distinct Item
+  ItemId getItemId() const { return id_; }
+  uint8_t getCount() const { return count_; }
 
   // Loaded from data file
-  ItemId getItemId() const { return itemData_->id; }
-  bool isGround() const { return itemData_->ground; }
-  int getSpeed() const { return itemData_->speed; }
-  bool isBlocking() const { return itemData_->isBlocking; }
-  bool alwaysOnTop() const { return itemData_->alwaysOnTop; }
-  bool isContainer() const { return itemData_->isContainer; }
-  bool isStackable() const { return itemData_->isStackable; }
-  bool isUsable() const { return itemData_->isUsable; }
-  bool isMultitype() const { return itemData_->isMultitype; }
+  bool isGround()     const { return itemData_->ground; }
+  int getSpeed()      const { return itemData_->speed; }
+  bool isBlocking()   const { return itemData_->isBlocking; }
+  bool alwaysOnTop()  const { return itemData_->alwaysOnTop; }
+  bool isContainer()  const { return itemData_->isContainer; }
+  bool isStackable()  const { return itemData_->isStackable; }
+  bool isUsable()     const { return itemData_->isUsable; }
+  bool isMultitype()  const { return itemData_->isMultitype; }
   bool isNotMovable() const { return itemData_->isNotMovable; }
-  bool isEquipable() const { return itemData_->isEquipable; }
+  bool isEquipable()  const { return itemData_->isEquipable; }
+  int getSubtype()    const { return 0; }  // TODO(gurka): ??
 
   // Loaded from items.xml
   const std::string& getName() const { return itemData_->name; }
@@ -94,19 +103,15 @@ class Item
   template<typename T>
   T getAttribute(const std::string& name) const;
 
-  // For this specific Item
-  void setCount(int count) { count_ = count; }
-  int getCount() const { return count_; }
-
-  int getSubtype() const { return 0; }  // TODO(gurka): ??
-
-  bool operator==(const Item& other) const;
-  bool operator!=(const Item& other) const;
-
  private:
-  const ItemData* itemData_;
+  static constexpr ItemId INVALID_ID = 0;
+
+  static constexpr std::size_t MAX_ITEM_DATAS = 3072;
+  static std::array<ItemData, MAX_ITEM_DATAS> itemDatas_;
+
+  ItemId id_;
   uint8_t count_;
+  ItemData* itemData_;
 };
 
 #endif  // WORLD_ITEM_H_
-

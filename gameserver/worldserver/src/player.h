@@ -72,7 +72,7 @@ class Equipment
   }
 
   bool addItem(const Item& item, uint8_t inventoryIndex);
-  bool removeItem(const Item& item, uint8_t inventoryIndex);
+  bool removeItem(ItemId itemId, uint8_t inventoryIndex);
 
   bool canAddItem(const Item& item, uint8_t inventoryIndex) const;
 

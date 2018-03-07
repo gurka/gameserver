@@ -434,7 +434,7 @@ void PlayerManager::moveItemFromInvToPos(CreatureId creatureId, int fromInventor
     }
 
     // Remove the Item from the inventory slot
-    if (!equipment.removeItem(item, fromInventoryId))
+    if (!equipment.removeItem(item.getItemId(), fromInventoryId))
     {
       LOG_ERROR("%s: Could not remove item %d from inventory slot %d", __func__, itemId, fromInventoryId);
       return;
@@ -481,7 +481,7 @@ void PlayerManager::moveItemFromInvToInv(CreatureId creatureId, int fromInventor
     }
 
     // Remove the Item from the fromInventoryId
-    if (!equipment.removeItem(item, fromInventoryId))
+    if (!equipment.removeItem(item.getItemId(), fromInventoryId))
     {
       LOG_ERROR("%s: Could not remove item %d from inventory slot %d",
                 __func__,
