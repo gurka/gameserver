@@ -58,6 +58,8 @@ struct ItemData
 class Item
 {
  public:
+  static constexpr ItemId INVALID_ID = 0;
+
   // Loads ItemData from the data file and the item file
   // Must be loaded (successfully) before any Item objects are created
   static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
@@ -65,7 +67,7 @@ class Item
   Item()
     : id_(INVALID_ID),
       count_(0),
-      itemData_(&itemDatas_[id_]),  // Will point to an invalid ItemData
+      itemData_(&itemDatas_[id_]),  // Valid pointer to an invalid ItemData
       containerId_(INVALID_ID)
   {
   }
@@ -113,6 +115,10 @@ class Item
   template<typename T>
   T getAttribute(const std::string& name) const;
 
+  // Common attributes
+  int getWeight() const { return 1; }//hasAttribute("weight") ? getAttribute<int>("weight") : 0; }
+
+  void setContainerId(int containerId) { containerId_ = containerId; }
   int getContainerId() const { return containerId_; }
 
 #ifdef UNITTEST
@@ -120,11 +126,10 @@ class Item
 #endif
 
  private:
-  static constexpr ItemId INVALID_ID = 0;
-
   static constexpr std::size_t MAX_ITEM_DATAS = 3072;
   static std::array<ItemData, MAX_ITEM_DATAS> itemDatas_;
 
+  // TODO(gurka): Move id_ to ItemData
   ItemId id_;
   uint8_t count_;
   ItemData* itemData_;

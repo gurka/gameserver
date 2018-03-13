@@ -66,7 +66,18 @@ class Equipment
   {
     return getItem(static_cast<Slot>(inventoryIndex));
   }
+
   const Item& getItem(Slot slot) const
+  {
+    return items_.at(slot);
+  }
+
+  Item& getItem(uint8_t inventoryIndex)
+  {
+    return getItem(static_cast<Slot>(inventoryIndex));
+  }
+
+  Item& getItem(Slot slot)
   {
     return items_.at(slot);
   }
@@ -85,6 +96,7 @@ class Equipment
     }
   };
 
+  // TODO(gurka): std::array<Item, 10> items_;
   std::unordered_map<Slot, Item, SlotHash> items_;
 };
 
@@ -141,6 +153,7 @@ class Player : public Creature
   int partyShield_;
   Equipment equipment_;
 
+  // TODO(gurka): Move to PlayerPlayerCtrl?
   std::deque<Direction> queuedMoves_;
 };
 

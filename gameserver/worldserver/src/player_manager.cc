@@ -73,7 +73,7 @@ void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
     auto creatureId = newPlayer.getCreatureId();
 
     // Store the Player and the PlayerCtrl
-    playerPlayerCtrl_.insert({creatureId, {std::move(newPlayer), player_ctrl}});
+    playerPlayerCtrl_.insert({creatureId, {std::move(newPlayer), player_ctrl, {}}});
 
     // Get the Player again, since newPlayed is moved from
     auto& player = getPlayer(creatureId);
@@ -89,6 +89,8 @@ void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
     {
       LOG_ERROR("%s: Could not spawn player", __func__);
       // TODO(gurka): Maybe let Protocol know that the player couldn't spawn, instead of time out?
+      // playerPlayerCtrl_.erase(creatureId);
+      // player_ctrl->disconnect();
     }
     else
     {
@@ -508,7 +510,7 @@ void PlayerManager::useInvItem(CreatureId creatureId, int itemId, int inventoryI
             inventoryIndex);
 
   auto& player = getPlayer(creatureId);
-  const auto& playerEquipment = player.getEquipment();
+  auto& playerEquipment = player.getEquipment();
 
   if (!playerEquipment.hasItem(inventoryIndex))
   {
@@ -520,18 +522,69 @@ void PlayerManager::useInvItem(CreatureId creatureId, int itemId, int inventoryI
 
   auto& item = playerEquipment.getItem(inventoryIndex);
 
-  // Opening a container in inventory does not require World context
+  // Opening or closing a container in inventory does not require World context
   if (item.isContainer())
   {
-    if (item.getContainerId() == 0)  // TODO(gurka): fix constant
+    if (item.getContainerId() == Container::INVALID_ID)
     {
-      LOG_ERROR("%s: Item is container but containerId is invalid", __func__);
+      const auto containerId = containerManager_.createNewContainer(item.getItemId());
+      item.setContainerId(containerId);
+
+      LOG_DEBUG("%s: created new Container with id: %d", __func__, containerId);
+    }
+
+    const auto& container = containerManager_.getContainer(item.getContainerId());
+    if (container.id == Container::INVALID_ID)
+    {
+      LOG_ERROR("%s: Container is invalid", __func__);
       return;
     }
 
-    // Ask ContainerManager for the contents and send it to the player
-    const auto& contents = containerManager_.getContainerContents(item.getContainerId());
-    getPlayerCtrl(creatureId)->onOpenContainer(item, contents);
+    auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+
+    // Check if Player already have this container open
+    int localContainerId = -1;
+    for (auto i = 0u; i < openContainers.size(); i++)
+    {
+      if (openContainers[i] == container.id)
+      {
+        localContainerId = i;
+        break;
+      }
+    }
+
+    if (localContainerId != -1)
+    {
+      // Container is already open, let's close the container
+      // Note: mapping is removed when client acks the removal
+      getPlayerCtrl(creatureId)->onCloseContainer(localContainerId);
+    }
+    else
+    {
+      // Create local to global container mapping
+      for (auto i = 0u; i < openContainers.size(); i++)
+      {
+        if (openContainers[i] == Container::INVALID_ID)
+        {
+          // Use this free slot
+          openContainers[i] = container.id;
+          localContainerId = i;
+          break;
+        }
+      }
+      if (localContainerId == -1)
+      {
+        // Create new slot if no free slot found
+        openContainers.push_back(container.id);
+        localContainerId = openContainers.size() - 1;
+      }
+
+      // Add this Player to Container's list of Players
+      containerManager_.addPlayer(container.id, creatureId);
+
+      // Send container info to player
+      getPlayerCtrl(creatureId)->onOpenContainer(localContainerId, container);
+    }
   }
 }
 
@@ -681,4 +734,28 @@ void PlayerManager::lookAtPosItem(CreatureId creatureId, const Position& positio
 
     getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
   });
+}
+
+void PlayerManager::closeContainer(CreatureId creatureId, int localContainerId)
+{
+  LOG_DEBUG("%s: creatureId: %d localContainerId: %d", __func__, creatureId, localContainerId);
+
+  // Verify that the Player actually have this container open
+  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+
+  if (static_cast<int>(openContainers.size()) <= localContainerId ||
+      openContainers[localContainerId] == Container::INVALID_ID)
+  {
+    LOG_ERROR("%s: player does not have the given Container open", __func__);
+    return;
+  }
+
+  // Remove this Player from Container's list of Players
+  containerManager_.removePlayer(openContainers[localContainerId], creatureId);
+
+  // Remove the local to global container id mapping
+  openContainers[localContainerId] = Container::INVALID_ID;
+
+  // Send onCloseContainer to player again (???)
+//  getPlayerCtrl(creatureId)->onCloseContainer(localContainerId);
 }

@@ -75,16 +75,23 @@ class PlayerManager
   void lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId);
   void lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
 
+  void closeContainer(CreatureId creatureId, int localContainerId);
+
  private:
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }
   PlayerCtrl* getPlayerCtrl(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player_ctrl; }
 
   // Player + PlayerCtrl
+  // TODO(gurka): PlayerData
   struct PlayerPlayerCtrl
   {
     Player player;
     PlayerCtrl* player_ctrl;
+
+    // Maps local container id (index in vector) to global container id
+    // A value of Container::INVALID_ID means that the index is free for use
+    std::vector<int> openContainers;
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 

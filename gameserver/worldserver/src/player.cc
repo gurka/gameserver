@@ -32,7 +32,7 @@ Equipment::Equipment()
 {
   items_.insert(std::make_pair(Slot::HELMET,     Item()));
   items_.insert(std::make_pair(Slot::AMULET,     Item()));
-  items_.insert(std::make_pair(Slot::BACKPACK,   Item(1411, 1)));  // Backpack, containerId = 1
+  items_.insert(std::make_pair(Slot::BACKPACK,   Item(1411)));  // Backpack
   items_.insert(std::make_pair(Slot::ARMOR,      Item()));
   items_.insert(std::make_pair(Slot::RIGHT_HAND, Item()));
   items_.insert(std::make_pair(Slot::LEFT_HAND,  Item()));

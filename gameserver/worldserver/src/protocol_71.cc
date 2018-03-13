@@ -147,6 +147,12 @@ void Protocol71::parsePacket(IncomingPacket* packet)
         break;
       }
 
+      case 0x87:
+      {
+        parseCloseContainer(packet);
+        break;
+      }
+
       case 0x8C:
       {
         parseLookAt(packet);
@@ -477,29 +483,49 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onOpenContainer(const Item& container, const std::vector<Item>& contents)
+void Protocol71::onOpenContainer(uint8_t localContainerId, const Container& container)
 {
   if (!isConnected())
   {
     return;
   }
 
-  if (!container.hasAttribute("maxitems"))
+  const auto containerItem = Item(container.containerItemId);
+
+  if (!containerItem.hasAttribute("maxitems"))
   {
-    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, container.getItemId());
+    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, container.containerItemId);
     return;
   }
+
+  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
 
   OutgoingPacket packet;
 
   packet.addU8(0x6E);
-  packet.addU8(0x00);  // Level / Depth
-
-  packet.addU16(container.getItemId());  // Container ID
-  packet.addString(container.getName());
-  packet.addU16(container.getAttribute<int>("maxitems"));
+  packet.addU8(localContainerId);
+  packet.addU16(container.containerItemId);
+  packet.addString(containerItem.getName());
+  packet.addU16(containerItem.getAttribute<int>("maxitems"));
 
   packet.addU8(0x00);  // Number of items
+
+  server_->sendPacket(connectionId_, std::move(packet));
+}
+
+void Protocol71::onCloseContainer(uint8_t localContainerId)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
+
+  OutgoingPacket packet;
+
+  packet.addU8(0x6F);
+  packet.addU8(localContainerId);
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
@@ -904,6 +930,13 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
 
     playerManager_->usePosItem(playerId_, itemId, position, stackPosition);
   }
+}
+
+void Protocol71::parseCloseContainer(IncomingPacket* packet)
+{
+  const auto localContainerId = packet->getU8();
+  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
+  playerManager_->closeContainer(playerId_, localContainerId);
 }
 
 void Protocol71::parseLookAt(IncomingPacket* packet)
