@@ -73,7 +73,7 @@ void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
     auto creatureId = newPlayer.getCreatureId();
 
     // Store the Player and the PlayerCtrl
-    playerPlayerCtrl_.insert({creatureId, {std::move(newPlayer), player_ctrl, {}}});
+    playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl, {}});
 
     // Get the Player again, since newPlayed is moved from
     auto& player = getPlayer(creatureId);
@@ -199,7 +199,11 @@ void PlayerManager::turn(CreatureId creatureId, Direction direction)
   });
 }
 
-void PlayerManager::say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId)
+void PlayerManager::say(CreatureId creatureId,
+                        uint8_t type,
+                        const std::string& message,
+                        const std::string& receiver,
+                        uint16_t channelId)
 {
   worldTaskQueue_->addTask(creatureId, [this, creatureId, type, message, receiver, channelId](World* world)
   {
@@ -291,449 +295,94 @@ void PlayerManager::say(CreatureId creatureId, uint8_t type, const std::string& 
   });
 }
 
-void PlayerManager::moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition)
+void PlayerManager::moveItem(CreatureId creatureId,
+                             const ProtocolPosition& fromPosition,
+                             int itemId,
+                             int fromStackPos,
+                             const ProtocolPosition& toPosition,
+                             int count)
 {
-  if (itemId == 99)
-  {
-    // TODO(gurka): Figure out how to handle this (move Creature), it's not trivial
-    return;
-  }
-
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, fromPosition, fromStackPos, itemId, count, toPosition](World* world)
-  {
-    LOG_DEBUG("%s: creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, to: %s",
-              __func__,
-              creatureId,
-              fromPosition.toString().c_str(),
-              fromStackPos,
-              itemId,
-              count,
-              toPosition.toString().c_str());
-
-    World::ReturnCode rc = world->moveItem(creatureId, fromPosition, fromStackPos, itemId, count, toPosition);
-
-    switch (rc)
-    {
-      case World::ReturnCode::OK:
-      {
-        break;
-      }
-
-      case World::ReturnCode::CANNOT_MOVE_THAT_OBJECT:
-      {
-        getPlayerCtrl(creatureId)->sendCancel("You cannot move that object.");
-        break;
-      }
-
-      case World::ReturnCode::CANNOT_REACH_THAT_OBJECT:
-      {
-        getPlayerCtrl(creatureId)->sendCancel("You are too far away.");
-        break;
-      }
-
-      case World::ReturnCode::THERE_IS_NO_ROOM:
-      {
-        getPlayerCtrl(creatureId)->sendCancel("There is no room.");
-        break;
-      }
-
-      default:
-      {
-        // TODO(gurka): Disconnect player?
-        break;
-      }
-    }
-  });
+  getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
-void PlayerManager::moveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int toInventoryId)
+void PlayerManager::useItem(CreatureId creatureId,
+                            const ProtocolPosition& position,
+                            int itemId,
+                            int stackPosition,
+                            int newContainerId)
 {
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, fromPosition, fromStackPos, itemId, count, toInventoryId](World* world)
+  if (position.isInventorySlot())
   {
-    LOG_DEBUG("%s: creature id: %d, from: %s, stackPos: %d, itemId: %d, count: %d, toInventoryId: %d",
-              __func__,
-              creatureId,
-              fromPosition.toString().c_str(),
-              fromStackPos,
-              itemId,
-              count,
-              toInventoryId);
+    // Using an item in inventory doesn't need world context
+    auto inventorySlot = position.getInventorySlot();
 
+    // Verify itemId
     auto& player = getPlayer(creatureId);
-    auto* player_ctrl = getPlayerCtrl(creatureId);
-
-    // Check if the player can reach the fromPosition
-    if (!world->creatureCanReach(creatureId, fromPosition))
+    auto& inventory = player.getEquipment();
+    if (!inventory.hasItem(inventorySlot))
     {
-      player_ctrl->sendCancel("You are too far away.");
+      LOG_ERROR("%s: no Item in given inventorySlot", __func__);
       return;
     }
-
-    // Get the Item from the position
-    auto item = world->getTile(fromPosition).getItem(fromStackPos);
-    if (!item.isValid() || item.getItemId() != itemId)
-    {
-      LOG_ERROR("%s: Could not find Item with given itemId at fromPosition", __func__);
-      return;
-    }
-
-    // Check if we can add the Item to that inventory slot
-    auto& equipment = player.getEquipment();
-    if (!equipment.canAddItem(item, toInventoryId))
-    {
-      player_ctrl->sendCancel("You cannot equip that object.");
-      return;
-    }
-
-    // Remove the Item from the fromTile
-    World::ReturnCode rc = world->removeItem(itemId, count, fromPosition, fromStackPos);
-    if (rc != World::ReturnCode::OK)
-    {
-      LOG_ERROR("%s: Could not remove item %d (count %d) from %s (stackpos: %d)",
-                __func__,
-                itemId,
-                count,
-                fromPosition.toString().c_str(),
-                fromStackPos);
-      // TODO(gurka): Disconnect player?
-      return;
-    }
-
-    // Add the Item to the inventory
-    equipment.addItem(item, toInventoryId);
-    player_ctrl->onEquipmentUpdated(player, toInventoryId);
-  });
-}
-
-void PlayerManager::moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition)
-{
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toPosition](World* world)
-  {
-    LOG_DEBUG("%s: creature id: %d, from: %d, itemId: %d, count: %d, to: %s",
-              __func__,
-              creatureId,
-              fromInventoryId,
-              itemId,
-              count,
-              toPosition.toString().c_str());
-
-    auto& player = getPlayer(creatureId);
-    auto* player_ctrl = getPlayerCtrl(creatureId);
-    auto& equipment = player.getEquipment();
-
-    // Check if there is an Item with correct itemId at the fromInventoryId
-    auto item = equipment.getItem(fromInventoryId);
-    if (!item.isValid() || item.getItemId() != itemId)
-    {
-      LOG_ERROR("%s: Could not find Item with given itemId at fromInventoryId", __func__);
-      return;
-    }
-
-    // Check if the player can throw the Item to the toPosition
-    if (!world->creatureCanThrowTo(creatureId, toPosition))
-    {
-      player_ctrl->sendCancel("There is no room.");
-      return;
-    }
-
-    // Remove the Item from the inventory slot
-    if (!equipment.removeItem(item.getItemId(), fromInventoryId))
-    {
-      LOG_ERROR("%s: Could not remove item %d from inventory slot %d", __func__, itemId, fromInventoryId);
-      return;
-    }
-
-    player_ctrl->onEquipmentUpdated(player, fromInventoryId);
-
-    // Add the Item to the toPosition
-    world->addItem(item, toPosition);
-  });
-}
-
-void PlayerManager::moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId)
-{
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, fromInventoryId, itemId, count, toInventoryId](World* world)
-  {
-    LOG_DEBUG("%s: creature id: %d, from: %d, itemId: %d, count: %d, to: %d",
-              __func__,
-              creatureId,
-              fromInventoryId,
-              itemId,
-              count,
-              toInventoryId);
-
-    auto& player = getPlayer(creatureId);
-    auto* player_ctrl = getPlayerCtrl(creatureId);
-    auto& equipment = player.getEquipment();
-
-    // TODO(gurka): Count
-
-    // Check if there is an Item with correct itemId at the fromInventoryId
-    auto item = equipment.getItem(fromInventoryId);
-    if (!item.isValid() || item.getItemId() != itemId)
-    {
-      LOG_ERROR("%s: Could not find Item with given itemId at fromInventoryId", __func__);
-      return;
-    }
-
-    // Check if we can add the Item to the toInventoryId
-    if (!equipment.canAddItem(item, toInventoryId))
-    {
-      player_ctrl->sendCancel("You cannot equip that object.");
-      return;
-    }
-
-    // Remove the Item from the fromInventoryId
-    if (!equipment.removeItem(item.getItemId(), fromInventoryId))
-    {
-      LOG_ERROR("%s: Could not remove item %d from inventory slot %d",
-                __func__,
-                itemId,
-                fromInventoryId);
-      return;
-    }
-
-    // Add the Item to the to-inventory slot
-    equipment.addItem(item, toInventoryId);
-
-    player_ctrl->onEquipmentUpdated(player, fromInventoryId);
-    player_ctrl->onEquipmentUpdated(player, toInventoryId);
-  });
-}
-
-void PlayerManager::useInvItem(CreatureId creatureId, int itemId, int inventoryIndex)
-{
-  LOG_DEBUG("%s: creature id: %d, itemId: %d, inventoryIndex: %d",
-            __func__,
-            creatureId,
-            itemId,
-            inventoryIndex);
-
-  auto& player = getPlayer(creatureId);
-  auto& playerEquipment = player.getEquipment();
-
-  if (!playerEquipment.hasItem(inventoryIndex))
-  {
-    LOG_DEBUG("%s: There is no item in inventoryIndex %u",
-              __func__,
-              inventoryIndex);
-    return;
-  }
-
-  auto& item = playerEquipment.getItem(inventoryIndex);
-
-  // Opening or closing a container in inventory does not require World context
-  if (item.isContainer())
-  {
-    if (item.getContainerId() == Container::INVALID_ID)
-    {
-      const auto containerId = containerManager_.createNewContainer(item.getItemId());
-      item.setContainerId(containerId);
-
-      LOG_DEBUG("%s: created new Container with id: %d", __func__, containerId);
-    }
-
-    const auto& container = containerManager_.getContainer(item.getContainerId());
-    if (container.id == Container::INVALID_ID)
-    {
-      LOG_ERROR("%s: Container is invalid", __func__);
-      return;
-    }
-
-    auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-
-    // Check if Player already have this container open
-    int localContainerId = -1;
-    for (auto i = 0u; i < openContainers.size(); i++)
-    {
-      if (openContainers[i] == container.id)
-      {
-        localContainerId = i;
-        break;
-      }
-    }
-
-    if (localContainerId != -1)
-    {
-      // Container is already open, let's close the container
-      // Note: mapping is removed when client acks the removal
-      getPlayerCtrl(creatureId)->onCloseContainer(localContainerId);
-    }
-    else
-    {
-      // Create local to global container mapping
-      for (auto i = 0u; i < openContainers.size(); i++)
-      {
-        if (openContainers[i] == Container::INVALID_ID)
-        {
-          // Use this free slot
-          openContainers[i] = container.id;
-          localContainerId = i;
-          break;
-        }
-      }
-      if (localContainerId == -1)
-      {
-        // Create new slot if no free slot found
-        openContainers.push_back(container.id);
-        localContainerId = openContainers.size() - 1;
-      }
-
-      // Add this Player to Container's list of Players
-      containerManager_.addPlayer(container.id, creatureId);
-
-      // Send container info to player
-      getPlayerCtrl(creatureId)->onOpenContainer(localContainerId, container);
-    }
-  }
-}
-
-void PlayerManager::usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos)
-{
-  LOG_DEBUG("%s: creature id: %d, itemId: %d, position: %s, stackPos: %d",
-            __func__,
-            creatureId,
-            itemId,
-            position.toString().c_str(),
-            stackPos);
-}
-
-void PlayerManager::lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId)
-{
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, inventoryIndex, itemId](World* world)
-  {
-    auto& player = getPlayer(creatureId);
-    const auto& playerEquipment = player.getEquipment();
-
-    if (!playerEquipment.hasItem(inventoryIndex))
-    {
-      LOG_DEBUG("%s: There is no item in inventoryIndex %u",
-                __func__,
-                inventoryIndex);
-      return;
-    }
-
-    const auto& item = playerEquipment.getItem(inventoryIndex);
-
+    auto& item = inventory.getItem(inventorySlot);
     if (item.getItemId() != itemId)
     {
-      LOG_DEBUG("%s: Item at given inventoryIndex does not match given itemId, given itemId: %u inventory itemId: %u",
-                __func__,
-                itemId,
-                item.getItemId());
+      LOG_ERROR("%s: expected itemId: %d actual itemId: %d", __func__, itemId, item.getItemId());
       return;
     }
 
-    if (!item.isValid())
+    // Handle containers
+    if (item.isContainer())
     {
-      LOG_DEBUG("%s: Item at given inventoryIndex is not valid", __func__);
-      return;
-    }
-
-    std::ostringstream ss;
-
-    if (!item.getName().empty())
-    {
-      if (item.isStackable() && item.getCount() > 1)
+      if (item.getContainerId() == Container::INVALID_ID)
       {
-        ss << "You see " << item.getCount() << " " << item.getName() << "s.";
+        const auto containerId = containerManager_.createNewContainer(item.getItemId());
+        item.setContainerId(containerId);
+        LOG_DEBUG("%s: created new Container with id: %d", __func__, containerId);
       }
-      else
+
+      const auto& container = containerManager_.getContainer(item.getContainerId());
+
+      // Check if player already have this container open
+      auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+      int clientContainerId = -1;
+      for (auto i = 0u; i < openContainers.size(); i++)
       {
-        ss << "You see a " << item.getName() << ".";
-      }
-    }
-    else
-    {
-      ss << "You see an item with id " << itemId << ".";
-    }
-
-    if (item.hasAttribute("weight"))
-    {
-      ss << "\nIt weights " << item.getAttribute<float>("weight")<< " oz.";
-    }
-
-    if (item.hasAttribute("description"))
-    {
-      ss << "\n" << item.getAttribute<std::string>("description");
-    }
-
-    getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
-  });
-}
-
-void PlayerManager::lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos)
-{
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, position, itemId, stackPos](World* world)
-  {
-    std::ostringstream ss;
-
-    const auto& tile = world->getTile(position);
-
-    if (itemId == 99)
-    {
-      const auto& creatureIds = tile.getCreatureIds();
-      if (!creatureIds.empty())
-      {
-        const auto& creatureId = creatureIds.front();
-        const auto& creature = world->getCreature(creatureId);
-        ss << "You see " << creature.getName() << ".";
-      }
-      else
-      {
-        LOG_DEBUG("%s: No Creatures at given position: %s", __func__, position.toString().c_str());
-        return;
-      }
-    }
-    else
-    {
-      Item item;
-
-      for (const auto& tileItem : tile.getItems())
-      {
-        if (tileItem.getItemId() == itemId)
+        if (openContainers[i] == container.id)
         {
-          item = tileItem;
+          clientContainerId = i;
           break;
         }
       }
 
-      if (!item.isValid())
+      if (clientContainerId == -1)
       {
-        LOG_DEBUG("%s: No Item with itemId %d at given position: %s", __func__, itemId, position.toString().c_str());
-        return;
-      }
-
-      if (!item.getName().empty())
-      {
-        if (item.isStackable() && item.getCount() > 1)
-        {
-          ss << "You see " << item.getCount() << " " << item.getName() << "s.";
-        }
-        else
-        {
-          ss << "You see a " << item.getName() << ".";
-        }
+        // Container not yet open, so open it
+        clientContainerId = newContainerId;
+        openContainers[clientContainerId] = container.id;
+        containerManager_.addPlayer(container.id, creatureId);
+        getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, container);
       }
       else
       {
-        ss << "You see an item with id " << itemId << ".";
-      }
-
-      // TODO(gurka): Can only see weight if standing next to the item
-      if (item.hasAttribute("weight"))
-      {
-        ss << "\nIt weights " << item.getAttribute<float>("weight")<< " oz.";
-      }
-
-      if (item.hasAttribute("description"))
-      {
-        ss << "\n" << item.getAttribute<std::string>("description");
+        // Container already open, so close it
+        getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
       }
     }
+    else
+    {
+      getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+    }
+  }
+  else
+  {
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  }
+}
 
-    getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
-  });
+void PlayerManager::lookAt(CreatureId creatureId, const ProtocolPosition& position, int itemId, int stackPosition)
+{
+  getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
 void PlayerManager::closeContainer(CreatureId creatureId, int localContainerId)

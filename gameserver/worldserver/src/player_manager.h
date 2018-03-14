@@ -37,6 +37,7 @@
 #include "player.h"
 #include "position.h"
 #include "container_manager.h"
+#include "protocol_position.h"
 
 class OutgoingPacket;
 class PlayerCtrl;
@@ -59,21 +60,24 @@ class PlayerManager
   void cancelMove(CreatureId creatureId);
   void turn(CreatureId creatureId, Direction direction);
 
-  void say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId);
+  void say(CreatureId creatureId,
+           uint8_t type,
+           const std::string& message,
+           const std::string& receiver,
+           uint16_t channelId);
 
-  // TODO(gurka): Maybe name them all 'moveItem'? Would be OK since Position can't be casted to int
-  void moveItemFromPosToPos(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, const Position& toPosition);
-  void moveItemFromPosToInv(CreatureId creatureId, const Position& fromPosition, int fromStackPos, int itemId, int count, int inventoryId);
-  void moveItemFromInvToPos(CreatureId creatureId, int fromInventoryId, int itemId, int count, const Position& toPosition);
-  void moveItemFromInvToInv(CreatureId creatureId, int fromInventoryId, int itemId, int count, int toInventoryId);
-
-  // TODO(gurka): Same as above
-  void useInvItem(CreatureId creatureId, int itemId, int inventoryIndex);
-  void usePosItem(CreatureId creatureId, int itemId, const Position& position, int stackPos);
-
-  // TODO(gurka): Same as above
-  void lookAtInvItem(CreatureId creatureId, int inventoryIndex, ItemId itemId);
-  void lookAtPosItem(CreatureId creatureId, const Position& position, ItemId itemId, int stackPos);
+  void moveItem(CreatureId creatureId,
+                const ProtocolPosition& fromPosition,
+                int itemId,
+                int fromStackPos,
+                const ProtocolPosition& toPosition,
+                int count);
+  void useItem(CreatureId creatureId,
+               const ProtocolPosition& position,
+               int itemId,
+               int stackPosition,
+               int newContainerId);
+  void lookAt(CreatureId creatureId, const ProtocolPosition& position, int itemId, int stackPosition);
 
   void closeContainer(CreatureId creatureId, int localContainerId);
 
@@ -89,9 +93,8 @@ class PlayerManager
     Player player;
     PlayerCtrl* player_ctrl;
 
-    // Maps local container id (index in vector) to global container id
-    // A value of Container::INVALID_ID means that the index is free for use
-    std::vector<int> openContainers;
+    // Maps client container id (index in vector) to global container id
+    std::array<int, 64> openContainers;
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 

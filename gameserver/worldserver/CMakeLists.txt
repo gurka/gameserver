@@ -11,6 +11,7 @@ set(src
   "src/player.h"
   "src/protocol_71.cc"
   "src/protocol_71.h"
+  "src/protocol_position.h"
   "src/protocol.h"
   "src/world_task_queue.cc"
   "src/world_task_queue.h"

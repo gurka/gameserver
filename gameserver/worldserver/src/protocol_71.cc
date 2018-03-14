@@ -24,6 +24,9 @@
 
 #include "protocol_71.h"
 
+#include <cstdio>
+#include <cstdint>
+
 #include <algorithm>
 #include <deque>
 #include <utility>
@@ -36,6 +39,7 @@
 #include "logger.h"
 #include "tile.h"
 #include "account.h"
+#include "protocol_position.h"
 
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
                        PlayerManager* playerManager,
@@ -508,7 +512,11 @@ void Protocol71::onOpenContainer(uint8_t localContainerId, const Container& cont
   packet.addString(containerItem.getName());
   packet.addU16(containerItem.getAttribute<int>("maxitems"));
 
-  packet.addU8(0x00);  // Number of items
+  packet.addU8(3);  // Number of items
+
+  packet.addU16(1712);
+  packet.addU16(1745);
+  packet.addU16(1411);
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
@@ -788,148 +796,43 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  playerManager_->movePath(playerId_, moves);
+  playerManager_->movePath(playerId_, std::move(moves));
 }
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
 {
-  // There are four options here:
-  // Moving from inventory to inventory
-  // Moving from inventory to Tile
-  // Moving from Tile to inventory
-  // Moving from Tile to Tile
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Moving from inventory ...
-    packet->getU16();
+  const auto fromProtocolPosition = getProtocolPosition(packet);
+  const auto itemId = packet->getU16();
+  const auto fromStackPosition = packet->getU8();
+  const auto toProtocolPosition = getProtocolPosition(packet);
+  const auto count = packet->getU8();
 
-    auto fromInventoryId = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU8();
+  LOG_DEBUG("%s: from: %s, itemId: %u, fromStackPosition: %u, to: %s, count: %u",
+            __func__,
+            fromProtocolPosition.toString().c_str(),
+            itemId,
+            fromStackPosition,
+            toProtocolPosition.toString().c_str(),
+            count);
 
-    if (packet->peekU16() == 0xFFFF)
-    {
-      // ... to inventory
-      packet->getU16();
-      auto toInventoryId = packet->getU8();
-      auto unknown3 = packet->getU16();
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to iventoryId %u (unknown: %u, unknown2: %u, unknown3: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromInventoryId,
-                toInventoryId,
-                unknown,
-                unknown2,
-                unknown3);
-
-      playerManager_->moveItemFromInvToInv(playerId_, fromInventoryId, itemId, countOrSubType, toInventoryId);
-    }
-    else
-    {
-      // ... to Tile
-      auto toPosition = getPosition(packet);
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from inventoryId %u to %s (unknown: %u, unknown2: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromInventoryId,
-                toPosition.toString().c_str(),
-                unknown,
-                unknown2);
-
-      playerManager_->moveItemFromInvToPos(playerId_, fromInventoryId, itemId, countOrSubType, toPosition);
-    }
-  }
-  else
-  {
-    // Moving from Tile ...
-    auto fromPosition = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto fromStackPos = packet->getU8();
-
-    if (packet->peekU16() == 0xFFFF)
-    {
-      // ... to inventory
-      packet->getU16();
-
-      auto toInventoryId = packet->getU8();
-      auto unknown = packet->getU16();
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to inventoryId %u (unknown: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromPosition.toString().c_str(),
-                fromStackPos,
-                toInventoryId,
-                unknown);
-
-      playerManager_->moveItemFromPosToInv(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toInventoryId);
-    }
-    else
-    {
-      // ... to Tile
-      auto toPosition = getPosition(packet);
-      auto countOrSubType = packet->getU8();
-
-      LOG_DEBUG("%s: Moving %u (countOrSubType %u) from %s (stackpos: %u) to %s (unknown: %u)",
-                __func__,
-                itemId,
-                countOrSubType,
-                fromPosition.toString().c_str(),
-                fromStackPos,
-                toPosition.toString().c_str());
-
-      playerManager_->moveItemFromPosToPos(playerId_, fromPosition, fromStackPos, itemId, countOrSubType, toPosition);
-    }
-  }
+  playerManager_->moveItem(playerId_, fromProtocolPosition, itemId, fromStackPosition, toProtocolPosition, count);
 }
 
 void Protocol71::parseUseItem(IncomingPacket* packet)
 {
-  // There are two options here:
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Use Item in inventory
-    packet->getU16();
-    auto inventoryIndex = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU16();
+  const auto protocolPosition = getProtocolPosition(packet);
+  const auto itemId = packet->getU16();
+  const auto stackPosition = packet->getU8();
+  const auto newContainerId = packet->getU8();
 
-    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
-              __func__,
-              itemId,
-              inventoryIndex,
-              unknown,
-              unknown2);
+  LOG_DEBUG("%s: protocolPosition: %s, itemId: %u, stackPosition: %u, newContainerId: %u",
+            __func__,
+            protocolPosition.toString().c_str(),
+            itemId,
+            stackPosition,
+            newContainerId);
 
-    playerManager_->useInvItem(playerId_, itemId, inventoryIndex);
-  }
-  else
-  {
-    // Use Item on Tile
-    auto position = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto stackPosition = packet->getU8();
-    auto unknown = packet->getU8();
-
-    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u (unknown: %u)",
-              __func__,
-              itemId,
-              position.toString().c_str(),
-              stackPosition,
-              unknown);
-
-    playerManager_->usePosItem(playerId_, itemId, position, stackPosition);
-  }
+  playerManager_->useItem(playerId_, protocolPosition, itemId, stackPosition, newContainerId);
 }
 
 void Protocol71::parseCloseContainer(IncomingPacket* packet)
@@ -941,40 +844,17 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
 
 void Protocol71::parseLookAt(IncomingPacket* packet)
 {
-  // There are two options here:
-  if (packet->peekU16() == 0xFFFF)
-  {
-    // Look at Item in inventory
-    packet->getU16();
-    auto inventoryIndex = packet->getU8();
-    auto unknown = packet->getU16();
-    auto itemId = packet->getU16();
-    auto unknown2 = packet->getU8();
+  const auto protocolPosition = getProtocolPosition(packet);
+  const auto itemId = packet->getU16();
+  const auto stackPosition = packet->getU8();
 
-    LOG_DEBUG("%s: Item %u at inventory index: %u (unknown: %u, unknown2: %u)",
-              __func__,
-              itemId,
-              inventoryIndex,
-              unknown,
-              unknown2);
+  LOG_DEBUG("%s: protocolPosition: %s, itemId: %u, stackPosition: %u",
+            __func__,
+            protocolPosition.toString().c_str(),
+            itemId,
+            stackPosition);
 
-    playerManager_->lookAtInvItem(playerId_, inventoryIndex, itemId);
-  }
-  else
-  {
-    // Look at Item on Tile
-    auto position = getPosition(packet);
-    auto itemId = packet->getU16();
-    auto stackPos = packet->getU8();
-
-    LOG_DEBUG("%s: Item %u at Tile: %s stackPos: %u",
-              __func__,
-              itemId,
-              position.toString().c_str(),
-              stackPos);
-
-    playerManager_->lookAtPosItem(playerId_, position, itemId, stackPos);
-  }
+  playerManager_->lookAt(playerId_, protocolPosition, itemId, stackPosition);
 }
 
 void Protocol71::parseSay(IncomingPacket* packet)
@@ -1008,10 +888,10 @@ void Protocol71::parseCancelMove(IncomingPacket* packet)
   playerManager_->cancelMove(playerId_);
 }
 
-Position Protocol71::getPosition(IncomingPacket* packet) const
+ProtocolPosition Protocol71::getProtocolPosition(IncomingPacket* packet)
 {
-  auto x = packet->getU16();
-  auto y = packet->getU16();
-  auto z = packet->getU8();
-  return Position(x, y, z);
+  const auto x = packet->getU16();
+  const auto y = packet->getU16();
+  const auto z = packet->getU8();
+  return ProtocolPosition(x, y, z);
 }

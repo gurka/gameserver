@@ -37,6 +37,7 @@
 #include "position.h"
 #include "item.h"
 #include "server.h"
+#include "protocol_position.h"
 
 class PlayerManager;
 class AccountReader;
@@ -109,8 +110,8 @@ class Protocol71 : public Protocol
   void parseSay(IncomingPacket* packet);
   void parseCancelMove(IncomingPacket* packet);
 
-  // Helper functions when parsing IncomingPackets
-  Position getPosition(IncomingPacket* packet) const;
+  // Helper functions for parsing IncomingPackets
+  ProtocolPosition getProtocolPosition(IncomingPacket* packet);
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
