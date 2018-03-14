@@ -487,7 +487,7 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onOpenContainer(uint8_t localContainerId, const Container& container)
+void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container)
 {
   if (!isConnected())
   {
@@ -502,12 +502,12 @@ void Protocol71::onOpenContainer(uint8_t localContainerId, const Container& cont
     return;
   }
 
-  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
 
   OutgoingPacket packet;
 
   packet.addU8(0x6E);
-  packet.addU8(localContainerId);
+  packet.addU8(clientContainerId);
   packet.addU16(container.containerItemId);
   packet.addString(containerItem.getName());
   packet.addU16(containerItem.getAttribute<int>("maxitems"));
@@ -521,19 +521,19 @@ void Protocol71::onOpenContainer(uint8_t localContainerId, const Container& cont
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onCloseContainer(uint8_t localContainerId)
+void Protocol71::onCloseContainer(uint8_t clientContainerId)
 {
   if (!isConnected())
   {
     return;
   }
 
-  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
 
   OutgoingPacket packet;
 
   packet.addU8(0x6F);
-  packet.addU8(localContainerId);
+  packet.addU8(clientContainerId);
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
@@ -837,9 +837,9 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
 
 void Protocol71::parseCloseContainer(IncomingPacket* packet)
 {
-  const auto localContainerId = packet->getU8();
-  LOG_DEBUG("%s: localContainerId: %u", __func__, localContainerId);
-  playerManager_->closeContainer(playerId_, localContainerId);
+  const auto clientContainerId = packet->getU8();
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+  playerManager_->closeContainer(playerId_, clientContainerId);
 }
 
 void Protocol71::parseLookAt(IncomingPacket* packet)

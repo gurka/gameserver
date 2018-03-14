@@ -385,26 +385,26 @@ void PlayerManager::lookAt(CreatureId creatureId, const ProtocolPosition& positi
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
-void PlayerManager::closeContainer(CreatureId creatureId, int localContainerId)
+void PlayerManager::closeContainer(CreatureId creatureId, int clientContainerId)
 {
-  LOG_DEBUG("%s: creatureId: %d localContainerId: %d", __func__, creatureId, localContainerId);
+  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
 
   // Verify that the Player actually have this container open
   auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
 
-  if (static_cast<int>(openContainers.size()) <= localContainerId ||
-      openContainers[localContainerId] == Container::INVALID_ID)
+  if (static_cast<int>(openContainers.size()) <= clientContainerId ||
+      openContainers[clientContainerId] == Container::INVALID_ID)
   {
     LOG_ERROR("%s: player does not have the given Container open", __func__);
     return;
   }
 
   // Remove this Player from Container's list of Players
-  containerManager_.removePlayer(openContainers[localContainerId], creatureId);
+  containerManager_.removePlayer(openContainers[clientContainerId], creatureId);
 
   // Remove the local to global container id mapping
-  openContainers[localContainerId] = Container::INVALID_ID;
+  openContainers[clientContainerId] = Container::INVALID_ID;
 
   // Send onCloseContainer to player again (???)
-//  getPlayerCtrl(creatureId)->onCloseContainer(localContainerId);
+//  getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
 }

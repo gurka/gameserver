@@ -47,8 +47,8 @@ class PlayerCtrl : public CreatureCtrl
   // Called by PlayerManager
   virtual void setPlayerId(CreatureId playerId) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
-  virtual void onOpenContainer(uint8_t localContainerId, const Container& container) = 0;
-  virtual void onCloseContainer(uint8_t localContainerId) = 0;
+  virtual void onOpenContainer(uint8_t clientContainerId, const Container& container) = 0;
+  virtual void onCloseContainer(uint8_t clientContainerId) = 0;
   virtual void sendTextMessage(uint8_t message_type, const std::string& message) = 0;
   virtual void sendCancel(const std::string& message) = 0;
   virtual void cancelMove() = 0;
