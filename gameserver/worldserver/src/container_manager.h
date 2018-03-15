@@ -89,39 +89,35 @@ class ContainerManager
   // Creates a new Container that is located on a Tile at the given position
   int createNewContainer(ItemId containerItemId, const Position& position)
   {
-    containers_.emplace_back();
-
-    auto& container = containers_.back();
-    container.id = nextContainterId_;
-    container.parentContainerId = Container::PARENT_IS_TILE;
-    container.rootContainerId = Container::PARENT_IS_TILE;
-    container.weight = Item(containerItemId).getWeight();
-    container.containerItemId = containerItemId;
-    container.position = position;
-
-    nextContainterId_ += 1;
-
-    return container.id;
+    return createNewContainer(containerItemId,
+                              Container::PARENT_IS_TILE,
+                              Container::PARENT_IS_TILE,
+                              Item(containerItemId).getWeight(),
+                              &position);
   }
 
   // Creates a new Container that is equipped on a Player
   int createNewContainer(ItemId containerItemId)
   {
-    containers_.emplace_back();
-
-    auto& container = containers_.back();
-    container.id = nextContainterId_;
-    container.parentContainerId = Container::PARENT_IS_PLAYER;
-    container.rootContainerId = Container::PARENT_IS_PLAYER;
-    container.weight = Item(containerItemId).getWeight();
-    container.containerItemId = containerItemId;
-
-    nextContainterId_ += 1;
-
-    return container.id;
+    return createNewContainer(containerItemId,
+                              Container::PARENT_IS_PLAYER,
+                              Container::PARENT_IS_PLAYER,
+                              Item(containerItemId).getWeight(),
+                              nullptr);
   }
 
-  const Container& getContainer(int containerId) const
+  // Creates a new Container that is located in another container with the given containerId
+  int createNewContainer(ItemId containerItemId, int containerId)
+  {
+    const auto& parentContainer = getContainer(containerId);
+    return createNewContainer(containerItemId,
+                              containerId,
+                              parentContainer.rootContainerId,
+                              Item(containerItemId).getWeight(),
+                              nullptr);
+  }
+
+  Container& getContainer(int containerId)
   {
     for (auto& container : containers_)
     {
@@ -131,13 +127,13 @@ class ContainerManager
       }
     }
 
-    static const Container INVALID_CONTAINER = Container();
+    static Container INVALID_CONTAINER = Container();
     return INVALID_CONTAINER;
   }
 
   void addPlayer(int containerId, CreatureId playerId)
   {
-    auto& container = getContainerInternal(containerId);
+    auto& container = getContainer(containerId);
     if (container.id == Container::INVALID_ID)
     {
       LOG_ERROR("%s: no container with id: %d", __func__, containerId);
@@ -148,7 +144,7 @@ class ContainerManager
 
   void removePlayer(int containerId, CreatureId playerId)
   {
-    auto& container = getContainerInternal(containerId);
+    auto& container = getContainer(containerId);
     if (container.id == Container::INVALID_ID)
     {
       LOG_ERROR("%s: no container with id: %d", __func__, containerId);
@@ -167,18 +163,42 @@ class ContainerManager
   }
 
  private:
-  Container& getContainerInternal(int containerId)
+  int createNewContainer(ItemId containerItemId, int parentContainerId, int rootContainerId, int weight, const Position* position)
   {
-    for (auto& container : containers_)
+    containers_.emplace_back();
+
+    auto& container = containers_.back();
+    container.id = nextContainterId_;
+    container.parentContainerId = parentContainerId;
+    container.rootContainerId = rootContainerId;
+    container.weight = weight;
+    container.containerItemId = containerItemId;
+    if (position)
     {
-      if (container.id == containerId)
-      {
-        return container;
-      }
+      container.position = *position;
     }
 
-    static Container INVALID_CONTAINER = Container();
-    return INVALID_CONTAINER;
+    LOG_DEBUG("%s: containerItemId: %d, parentContainerId: %d, rootContainerId: %d, weight: %d, position: %s",
+              __func__,
+              containerItemId,
+              parentContainerId,
+              rootContainerId,
+              weight,
+              (position ? position->toString().c_str() : "<nullptr>"));
+
+    // Until we have a database with containers...
+    if (container.id == Container::VALID_ID_START)
+    {
+      container.items = { Item(1712), Item(1745), Item(1411) };
+    }
+    else if (container.id == Container::VALID_ID_START + 1)
+    {
+      container.items = { Item(1560) };
+    }
+
+    nextContainterId_ += 1;
+
+    return container.id;
   }
 
   int nextContainterId_;

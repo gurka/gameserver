@@ -510,13 +510,17 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
   packet.addU8(clientContainerId);
   packet.addU16(container.containerItemId);
   packet.addString(containerItem.getName());
-  packet.addU16(containerItem.getAttribute<int>("maxitems"));
-
-  packet.addU8(3);  // Number of items
-
-  packet.addU16(1712);
-  packet.addU16(1745);
-  packet.addU16(1411);
+  packet.addU8(containerItem.getAttribute<int>("maxitems"));
+  packet.addU8(container.parentContainerId >= Container::VALID_ID_START ? 1 : 0);  // Has parent container or not
+  packet.addU8(container.items.size());
+  for (const auto& item : container.items)
+  {
+    packet.addU16(item.getItemId());
+    if (item.isStackable())  // or splash or fluid container?
+    {
+      packet.addU8(item.getCount());
+    }
+  }
 
   server_->sendPacket(connectionId_, std::move(packet));
 }

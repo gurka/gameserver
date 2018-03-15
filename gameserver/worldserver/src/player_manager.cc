@@ -311,12 +311,16 @@ void PlayerManager::useItem(CreatureId creatureId,
                             int stackPosition,
                             int newContainerId)
 {
+  int parentContainerId = Container::INVALID_ID;
+  Item* item = nullptr;
+
+  // Try to retrieve the item without world context
   if (position.isInventorySlot())
   {
     // Using an item in inventory doesn't need world context
     auto inventorySlot = position.getInventorySlot();
 
-    // Verify itemId
+    // Get the item
     auto& player = getPlayer(creatureId);
     auto& inventory = player.getEquipment();
     if (!inventory.hasItem(inventorySlot))
@@ -324,54 +328,105 @@ void PlayerManager::useItem(CreatureId creatureId,
       LOG_ERROR("%s: no Item in given inventorySlot", __func__);
       return;
     }
-    auto& item = inventory.getItem(inventorySlot);
-    if (item.getItemId() != itemId)
+
+    item = &inventory.getItem(inventorySlot);
+  }
+  else if (position.isContainer())
+  {
+    // Using an item in a container doesn't need world context if the
+    // container is in the player's inventory
+    const auto clientContainerId = position.getContainerId();
+
+    // Map client contianer id to global container id and get the container
+    const auto containerId = playerPlayerCtrl_.at(creatureId).openContainers[clientContainerId];
+    auto& container = containerManager_.getContainer(containerId);
+    if (container.id == Container::INVALID_ID)
     {
-      LOG_ERROR("%s: expected itemId: %d actual itemId: %d", __func__, itemId, item.getItemId());
+      LOG_ERROR("%s: clientContainerId: %d, containerId: %d, container is invalid",
+                __func__,
+                clientContainerId,
+                containerId);
       return;
     }
 
-    // Handle containers
-    if (item.isContainer())
+    if (container.rootContainerId == Container::PARENT_IS_PLAYER)
     {
-      if (item.getContainerId() == Container::INVALID_ID)
+      // Make sure that the container slot is valid
+      const auto containerSlot = position.getContainerSlot();
+      if (static_cast<int>(container.items.size()) <= containerSlot)
       {
-        const auto containerId = containerManager_.createNewContainer(item.getItemId());
-        item.setContainerId(containerId);
-        LOG_DEBUG("%s: created new Container with id: %d", __func__, containerId);
+        LOG_ERROR("%s: clientContainerId: %d, containerId: %d, containerSlot: %d, items.size: %u, out of range",
+                  __func__,
+                  clientContainerId,
+                  containerId,
+                  containerSlot,
+                  container.items.size());
+        return;
       }
 
-      const auto& container = containerManager_.getContainer(item.getContainerId());
+      // Set parent containerId and get the item
+      parentContainerId = containerId;
+      item = &container.items[containerSlot];
+    }
+  }
+  else
+  {
+    // TODO(gurka): needs world context!
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  }
 
-      // Check if player already have this container open
-      auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-      int clientContainerId = -1;
-      for (auto i = 0u; i < openContainers.size(); i++)
-      {
-        if (openContainers[i] == container.id)
-        {
-          clientContainerId = i;
-          break;
-        }
-      }
+  if (!item)
+  {
+    // Could not get the item without world context
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+    return;
+  }
 
-      if (clientContainerId == -1)
+  if (item->getItemId() != itemId)
+  {
+    LOG_ERROR("%s: expected itemId: %d actual itemId: %d", __func__, itemId, item->getItemId());
+    return;
+  }
+
+  // Handle containers
+  if (item->isContainer())
+  {
+    if (item->getContainerId() == Container::INVALID_ID)
+    {
+      // TODO(gurka): create new container with Position as parent when applicable
+      const auto containerId = parentContainerId == Container::INVALID_ID ?
+                               containerManager_.createNewContainer(item->getItemId()) :
+                               containerManager_.createNewContainer(item->getItemId(), parentContainerId);
+      item->setContainerId(containerId);
+      LOG_DEBUG("%s: created new Container with id: %d", __func__, containerId);
+    }
+
+    const auto& container = containerManager_.getContainer(item->getContainerId());
+
+    // Check if player already have this container open
+    auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+    int clientContainerId = -1;
+    for (auto i = 0u; i < openContainers.size(); i++)
+    {
+      if (openContainers[i] == container.id)
       {
-        // Container not yet open, so open it
-        clientContainerId = newContainerId;
-        openContainers[clientContainerId] = container.id;
-        containerManager_.addPlayer(container.id, creatureId);
-        getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, container);
+        clientContainerId = i;
+        break;
       }
-      else
-      {
-        // Container already open, so close it
-        getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
-      }
+    }
+
+    if (clientContainerId == -1)
+    {
+      // Container not yet open, so open it
+      clientContainerId = newContainerId;
+      openContainers[clientContainerId] = container.id;
+      containerManager_.addPlayer(container.id, creatureId);
+      getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, container);
     }
     else
     {
-      getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+      // Container already open, so close it
+      getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
     }
   }
   else
