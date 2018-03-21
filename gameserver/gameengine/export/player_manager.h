@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PLAYERMANAGER_H_
-#define WORLDSERVER_PLAYERMANAGER_H_
+#ifndef GAMEENGINE_PLAYERMANAGER_H_
+#define GAMEENGINE_PLAYERMANAGER_H_
 
 #include <array>
 #include <deque>
@@ -103,4 +103,4 @@ class PlayerManager
   ContainerManager containerManager_;
 };
 
-#endif  // WORLDSERVER_PLAYERMANAGER_H_
+#endif  // GAMEENGINE_PLAYERMANAGER_H_

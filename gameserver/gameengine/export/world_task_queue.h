@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_WORLDTASKQUEUE_H_
-#define WORLDSERVER_WORLDTASKQUEUE_H_
+#ifndef GAMEENGINE_WORLDTASKQUEUE_H_
+#define GAMEENGINE_WORLDTASKQUEUE_H_
 
 #include <functional>
 #include <vector>
@@ -77,4 +77,4 @@ class WorldTaskQueue
   bool timer_started_;
 };
 
-#endif  // WORLDSERVER_WORLDTASKQUEUE_H_
+#endif  // GAMEENGINE_WORLDTASKQUEUE_H_

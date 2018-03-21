@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_CONTAINERMANAGER_H_
-#define WORLDSERVER_CONTAINERMANAGER_H_
+#ifndef GAMEENGINE_CONTAINERMANAGER_H_
+#define GAMEENGINE_CONTAINERMANAGER_H_
 
 #include <algorithm>
 #include <vector>
@@ -161,4 +161,4 @@ class ContainerManager
   std::vector<Container> containers_;
 };
 
-#endif  // WORLDSERVER_CONTAINERMANAGER_H_
+#endif  // GAMEENGINE_CONTAINERMANAGER_H_

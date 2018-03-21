@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PROTOCOLPOSITION_H_
-#define WORLDSERVER_PROTOCOLPOSITION_H_
+#ifndef GAMEENGINE_PROTOCOLPOSITION_H_
+#define GAMEENGINE_PROTOCOLPOSITION_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -96,4 +96,4 @@ class ProtocolPosition
   std::uint8_t z_;
 };
 
-#endif  // WORLDSERVER_PROTOCOLPOSITION_H_
+#endif  // GAMEENGINE_PROTOCOLPOSITION_H_
