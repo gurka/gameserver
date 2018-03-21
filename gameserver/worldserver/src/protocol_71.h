@@ -38,6 +38,7 @@
 #include "item.h"
 #include "server.h"
 #include "protocol_position.h"
+#include "container.h"
 
 class PlayerManager;
 class AccountReader;

@@ -29,12 +29,11 @@
 #include <cstdio>
 #include <string>
 
-#include "incoming_packet.h"
-
 // A 40 byte object that can be interpreted as one of:
 //   - Position in the world
 //   - Inventory slot
 //   - Container id and slot
+// TODO(simon): ItemPosition ?
 class ProtocolPosition
 {
  public:
