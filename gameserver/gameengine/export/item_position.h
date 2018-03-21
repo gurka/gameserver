@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PROTOCOLPOSITION_H_
-#define GAMEENGINE_PROTOCOLPOSITION_H_
+#ifndef GAMEENGINE_ITEMPOSITION_H_
+#define GAMEENGINE_ITEMPOSITION_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -33,32 +33,33 @@
 //   - Position in the world
 //   - Inventory slot
 //   - Container id and slot
-// TODO(simon): ItemPosition ?
-class ProtocolPosition
+//
+// TODO(simon): Maybe this class should hold stackpos (if Position) and ItemId as well?
+class ItemPosition
 {
  public:
-  ProtocolPosition(const Position& position)
+  ItemPosition(const Position& position)
     : x_(position.getX()),
       y_(position.getY()),
       z_(position.getZ())
   {
   }
 
-  ProtocolPosition(int inventorySlot)
+  ItemPosition(int inventorySlot)
     : x_(0xFFFF),
       y_(inventorySlot),
       z_(0)
   {
   }
 
-  ProtocolPosition(int containerId, int containerSlot)
+  ItemPosition(int containerId, int containerSlot)
     : x_(0xFFFF),
       y_(containerId | 0x40),
       z_(containerSlot)
   {
   }
 
-  ProtocolPosition(std::uint16_t x, std::uint16_t y, std::uint8_t z)
+  ItemPosition(std::uint16_t x, std::uint16_t y, std::uint8_t z)
     : x_(x),
       y_(y),
       z_(z)
@@ -96,4 +97,4 @@ class ProtocolPosition
   std::uint8_t z_;
 };
 
-#endif  // GAMEENGINE_PROTOCOLPOSITION_H_
+#endif  // GAMEENGINE_ITEMPOSITION_H_

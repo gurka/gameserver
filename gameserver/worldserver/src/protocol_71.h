@@ -37,7 +37,7 @@
 #include "position.h"
 #include "item.h"
 #include "server.h"
-#include "protocol_position.h"
+#include "item_position.h"
 #include "container.h"
 
 class PlayerManager;
@@ -112,7 +112,7 @@ class Protocol71 : public Protocol
   void parseCancelMove(IncomingPacket* packet);
 
   // Helper functions for parsing IncomingPackets
-  ProtocolPosition getProtocolPosition(IncomingPacket* packet);
+  ItemPosition getItemPosition(IncomingPacket* packet);
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;

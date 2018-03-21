@@ -37,7 +37,7 @@
 #include "player.h"
 #include "position.h"
 #include "container_manager.h"
-#include "protocol_position.h"
+#include "item_position.h"
 
 class OutgoingPacket;
 class PlayerCtrl;
@@ -67,17 +67,17 @@ class PlayerManager
            uint16_t channelId);
 
   void moveItem(CreatureId creatureId,
-                const ProtocolPosition& fromPosition,
+                const ItemPosition& fromPosition,
                 int itemId,
                 int fromStackPos,
-                const ProtocolPosition& toPosition,
+                const ItemPosition& toPosition,
                 int count);
   void useItem(CreatureId creatureId,
-               const ProtocolPosition& position,
+               const ItemPosition& position,
                int itemId,
                int stackPosition,
                int newContainerId);
-  void lookAt(CreatureId creatureId, const ProtocolPosition& position, int itemId, int stackPosition);
+  void lookAt(CreatureId creatureId, const ItemPosition& position, int itemId, int stackPosition);
 
   void closeContainer(CreatureId creatureId, int localContainerId);
 

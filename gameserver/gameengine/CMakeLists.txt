@@ -4,9 +4,9 @@ project(gameengine)
 
 set(src
   "export/container.h"
+  "export/item_position.h"
   "export/player_ctrl.h"
   "export/player_manager.h"
-  "export/protocol_position.h"
   "export/world_task_queue.h"
   "src/container_manager.h"
   "src/player_manager.cc"

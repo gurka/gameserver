@@ -296,17 +296,17 @@ void PlayerManager::say(CreatureId creatureId,
 }
 
 void PlayerManager::moveItem(CreatureId creatureId,
-                             const ProtocolPosition& fromPosition,
+                             const ItemPosition& fromPosition,
                              int itemId,
                              int fromStackPos,
-                             const ProtocolPosition& toPosition,
+                             const ItemPosition& toPosition,
                              int count)
 {
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
 void PlayerManager::useItem(CreatureId creatureId,
-                            const ProtocolPosition& position,
+                            const ItemPosition& position,
                             int itemId,
                             int stackPosition,
                             int newContainerId)
@@ -435,7 +435,7 @@ void PlayerManager::useItem(CreatureId creatureId,
   }
 }
 
-void PlayerManager::lookAt(CreatureId creatureId, const ProtocolPosition& position, int itemId, int stackPosition)
+void PlayerManager::lookAt(CreatureId creatureId, const ItemPosition& position, int itemId, int stackPosition)
 {
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }

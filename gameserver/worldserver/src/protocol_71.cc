@@ -39,7 +39,7 @@
 #include "logger.h"
 #include "tile.h"
 #include "account.h"
-#include "protocol_position.h"
+#include "item_position.h"
 
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
                        PlayerManager* playerManager,
@@ -805,26 +805,26 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
 {
-  const auto fromProtocolPosition = getProtocolPosition(packet);
+  const auto fromItemPosition = getItemPosition(packet);
   const auto itemId = packet->getU16();
   const auto fromStackPosition = packet->getU8();
-  const auto toProtocolPosition = getProtocolPosition(packet);
+  const auto toItemPosition = getItemPosition(packet);
   const auto count = packet->getU8();
 
   LOG_DEBUG("%s: from: %s, itemId: %u, fromStackPosition: %u, to: %s, count: %u",
             __func__,
-            fromProtocolPosition.toString().c_str(),
+            fromItemPosition.toString().c_str(),
             itemId,
             fromStackPosition,
-            toProtocolPosition.toString().c_str(),
+            toItemPosition.toString().c_str(),
             count);
 
-  playerManager_->moveItem(playerId_, fromProtocolPosition, itemId, fromStackPosition, toProtocolPosition, count);
+  playerManager_->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
 }
 
 void Protocol71::parseUseItem(IncomingPacket* packet)
 {
-  const auto protocolPosition = getProtocolPosition(packet);
+  const auto protocolPosition = getItemPosition(packet);
   const auto itemId = packet->getU16();
   const auto stackPosition = packet->getU8();
   const auto newContainerId = packet->getU8();
@@ -848,7 +848,7 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
 
 void Protocol71::parseLookAt(IncomingPacket* packet)
 {
-  const auto protocolPosition = getProtocolPosition(packet);
+  const auto protocolPosition = getItemPosition(packet);
   const auto itemId = packet->getU16();
   const auto stackPosition = packet->getU8();
 
@@ -892,10 +892,10 @@ void Protocol71::parseCancelMove(IncomingPacket* packet)
   playerManager_->cancelMove(playerId_);
 }
 
-ProtocolPosition Protocol71::getProtocolPosition(IncomingPacket* packet)
+ItemPosition Protocol71::getItemPosition(IncomingPacket* packet)
 {
   const auto x = packet->getU16();
   const auto y = packet->getU16();
   const auto z = packet->getU8();
-  return ProtocolPosition(x, y, z);
+  return ItemPosition(x, y, z);
 }
