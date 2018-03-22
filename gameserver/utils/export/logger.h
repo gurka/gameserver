@@ -50,6 +50,7 @@ class Logger
   enum class Module : std::size_t
   {
     ACCOUNT,
+    GAMEENGINE,
     LOGINSERVER,
     NETWORK,
     UTILS,
