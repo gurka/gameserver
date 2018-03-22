@@ -42,13 +42,13 @@
 #include "item_position.h"
 
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
-                       GameEngine* gameEngine,
+                       GameEngineQueue* gameEngineQueue,
                        ConnectionId connectionId,
                        Server* server,
                        AccountReader* accountReader)
   : closeProtocol_(closeProtocol),
     playerId_(Creature::INVALID_ID),
-    gameEngine_(gameEngine),
+    gameEngineQueue_(gameEngineQueue),
     connectionId_(connectionId),
     server_(server),
     accountReader_(accountReader)
@@ -64,7 +64,10 @@ void Protocol71::disconnected()
   if (isLoggedIn())
   {
     // Despawn the player
-    gameEngine_->despawn(playerId_);
+    gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
+    {
+      gameEngine->despawn(playerId_);
+    });
   }
   else
   {
@@ -105,7 +108,10 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     {
       case 0x14:
       {
-        gameEngine_->despawn(playerId_);
+        gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
+        {
+          gameEngine->despawn(playerId_);
+        });
         break;
       }
 
@@ -120,13 +126,19 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        gameEngine_->move(playerId_, static_cast<Direction>(packetId - 0x65));
+        gameEngineQueue_->addTask(playerId_, [this, packetId](GameEngine* gameEngine)
+        {
+          gameEngine->move(playerId_, static_cast<Direction>(packetId - 0x65));
+        });
         break;
       }
 
       case 0x69:
       {
-        gameEngine_->cancelMove(playerId_);
+        gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
+        {
+          gameEngine->cancelMove(playerId_);
+        });
         break;
       }
 
@@ -135,7 +147,10 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        gameEngine_->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
+        gameEngineQueue_->addTask(playerId_, [this, packetId](GameEngine* gameEngine)
+        {
+          gameEngine->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
+        });
         break;
       }
 
@@ -172,7 +187,10 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0xBE:
       {
         // TODO(simon): This packet more likely means "stop all actions", not only moving
-        parseCancelMove(packet);
+        gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
+        {
+          gameEngine->cancelMove(playerId_);
+        });
         break;
       }
 
@@ -781,7 +799,10 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, spawn player
-  gameEngine_->spawn(character_name, this);
+  gameEngineQueue_->addTask(playerId_, [this, character_name](GameEngine* gameEngine)
+  {
+    gameEngine->spawn(character_name, this);
+  });
 }
 
 void Protocol71::parseMoveClick(IncomingPacket* packet)
@@ -800,7 +821,10 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  gameEngine_->movePath(playerId_, std::move(moves));
+  gameEngineQueue_->addTask(playerId_, [this, moves](GameEngine* gameEngine) mutable
+  {
+    gameEngine->movePath(playerId_, std::move(moves));
+  });
 }
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
@@ -819,46 +843,65 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
             toItemPosition.toString().c_str(),
             count);
 
-  gameEngine_->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
+  gameEngineQueue_->addTask(playerId_, [this,
+                                        fromItemPosition,
+                                        itemId,
+                                        fromStackPosition,
+                                        toItemPosition,
+                                        count](GameEngine* gameEngine)
+  {
+    gameEngine->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
+  });
 }
 
 void Protocol71::parseUseItem(IncomingPacket* packet)
 {
-  const auto protocolPosition = getItemPosition(packet);
+  const auto itemPosition = getItemPosition(packet);
   const auto itemId = packet->getU16();
   const auto stackPosition = packet->getU8();
   const auto newContainerId = packet->getU8();
 
-  LOG_DEBUG("%s: protocolPosition: %s, itemId: %u, stackPosition: %u, newContainerId: %u",
+  LOG_DEBUG("%s: itemPosition: %s, itemId: %u, stackPosition: %u, newContainerId: %u",
             __func__,
-            protocolPosition.toString().c_str(),
+            itemPosition.toString().c_str(),
             itemId,
             stackPosition,
             newContainerId);
 
-  gameEngine_->useItem(playerId_, protocolPosition, itemId, stackPosition, newContainerId);
+  gameEngineQueue_->addTask(playerId_, [this, itemPosition, itemId, stackPosition, newContainerId](GameEngine* gameEngine)
+  {
+    gameEngine->useItem(playerId_, itemPosition, itemId, stackPosition, newContainerId);
+  });
 }
 
 void Protocol71::parseCloseContainer(IncomingPacket* packet)
 {
   const auto clientContainerId = packet->getU8();
+
   LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-  gameEngine_->closeContainer(playerId_, clientContainerId);
+
+  gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
+  {
+    gameEngine->closeContainer(playerId_, clientContainerId);
+  });
 }
 
 void Protocol71::parseLookAt(IncomingPacket* packet)
 {
-  const auto protocolPosition = getItemPosition(packet);
+  const auto itemPosition = getItemPosition(packet);
   const auto itemId = packet->getU16();
   const auto stackPosition = packet->getU8();
 
-  LOG_DEBUG("%s: protocolPosition: %s, itemId: %u, stackPosition: %u",
+  LOG_DEBUG("%s: itemPosition: %s, itemId: %u, stackPosition: %u",
             __func__,
-            protocolPosition.toString().c_str(),
+            itemPosition.toString().c_str(),
             itemId,
             stackPosition);
 
-  gameEngine_->lookAt(playerId_, protocolPosition, itemId, stackPosition);
+  gameEngineQueue_->addTask(playerId_, [this, itemPosition, itemId, stackPosition](GameEngine* gameEngine)
+  {
+    gameEngine->lookAt(playerId_, itemPosition, itemId, stackPosition);
+  });
 }
 
 void Protocol71::parseSay(IncomingPacket* packet)
@@ -884,12 +927,10 @@ void Protocol71::parseSay(IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  gameEngine_->say(playerId_, type, message, receiver, channelId);
-}
-
-void Protocol71::parseCancelMove(IncomingPacket* packet)
-{
-  gameEngine_->cancelMove(playerId_);
+  gameEngineQueue_->addTask(playerId_, [this, type, message, receiver, channelId](GameEngine* gameEngine)
+  {
+    gameEngine->say(playerId_, type, message, receiver, channelId);
+  });
 }
 
 ItemPosition Protocol71::getItemPosition(IncomingPacket* packet)

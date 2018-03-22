@@ -138,7 +138,7 @@ class Player : public Creature
     return equipment_;
   }
 
-  void queueMoves(const std::deque<Direction>& moves) { queuedMoves_ = moves; }
+  void queueMoves(std::deque<Direction>&& moves) { queuedMoves_ = std::move(moves); }
   Direction getNextQueuedMove() const { return queuedMoves_.front(); }
   void popNextQueuedMove() { queuedMoves_.pop_front(); }
   bool hasQueuedMove() const { return !queuedMoves_.empty(); }

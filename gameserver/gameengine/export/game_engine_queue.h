@@ -31,19 +31,21 @@
 #include <boost/asio.hpp>  //NOLINT
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
 
-#include "world.h"
+class GameEngine;
 
 // TODO(simon): If we ever want to run multiple threads for network I/O this queue needs to be threadsafe
 class GameEngineQueue
 {
  public:
-  using Task = std::function<void(World*)>;
+  using Task = std::function<void(GameEngine*)>;
 
-  GameEngineQueue(World* world, boost::asio::io_service* io_service);
+  GameEngineQueue(boost::asio::io_service* io_service);
 
   // Delete copy constructors
   GameEngineQueue(const GameEngineQueue&) = delete;
   GameEngineQueue& operator=(const GameEngineQueue&) = delete;
+
+  void setGameEngine(GameEngine* gameEngine) { gameEngine_ = gameEngine; }
 
   void addTask(int tag, const Task& task);
   void addTask(int tag, unsigned expire_ms, const Task& task);
@@ -67,7 +69,7 @@ class GameEngineQueue
   void startTimer();
   void onTimeout(const boost::system::error_code& ec);
 
-  World* world_;
+  GameEngine* gameEngine_;
 
   // The vector should be sorted on TaskWrapper.expire
   // This is handled by addTask()

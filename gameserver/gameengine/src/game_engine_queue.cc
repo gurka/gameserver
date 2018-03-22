@@ -24,8 +24,8 @@
 
 #include "game_engine_queue.h"
 
-GameEngineQueue::GameEngineQueue(World* world, boost::asio::io_service* io_service)
-  : world_(world),
+GameEngineQueue::GameEngineQueue(boost::asio::io_service* io_service)
+  : gameEngine_(nullptr),
     timer_(*io_service),
     timer_started_(false)
 {
@@ -128,7 +128,7 @@ void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
     // So copy the task and remove it from the queue before calling task(), to avoid problems
     auto tw = queue_.front();
     queue_.erase(queue_.begin());
-    tw.task(world_);
+    tw.task(gameEngine_);
   }
 
   // Start the timer again if there are more tasks in the queue

@@ -40,7 +40,7 @@
 #include "item_position.h"
 #include "container.h"
 
-class GameEngine;
+class GameEngineQueue;
 class AccountReader;
 class WorldInterface;
 
@@ -48,7 +48,7 @@ class Protocol71 : public Protocol
 {
  public:
   Protocol71(const std::function<void(void)>& closeProtocol,
-             GameEngine* gameEngine,
+             GameEngineQueue* gameEngineQueue,
              ConnectionId connectionId,
              Server* server,
              AccountReader* accountReader);
@@ -109,14 +109,13 @@ class Protocol71 : public Protocol
   void parseCloseContainer(IncomingPacket* packet);
   void parseLookAt(IncomingPacket* packet);
   void parseSay(IncomingPacket* packet);
-  void parseCancelMove(IncomingPacket* packet);
 
   // Helper functions for parsing IncomingPackets
   ItemPosition getItemPosition(IncomingPacket* packet);
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;
-  GameEngine* gameEngine_;
+  GameEngineQueue* gameEngineQueue_;
   ConnectionId connectionId_;
   Server* server_;
   AccountReader* accountReader_;

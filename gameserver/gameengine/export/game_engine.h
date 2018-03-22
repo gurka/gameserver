@@ -46,7 +46,7 @@ class World;
 class GameEngine
 {
  public:
-  GameEngine(GameEngineQueue* gameEngineQueue, std::string loginMessage);
+  GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage);
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
@@ -56,7 +56,7 @@ class GameEngine
   void despawn(CreatureId creatureId);
 
   void move(CreatureId creatureId, Direction direction);
-  void movePath(CreatureId creatureId, const std::deque<Direction>& path);
+  void movePath(CreatureId creatureId, std::deque<Direction>&& path);
   void cancelMove(CreatureId creatureId);
   void turn(CreatureId creatureId, Direction direction);
 
@@ -99,6 +99,7 @@ class GameEngine
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 
   GameEngineQueue* gameEngineQueue_;
+  World* world_;
   std::string loginMessage_;
   ContainerManager containerManager_;
 };

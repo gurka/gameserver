@@ -72,7 +72,7 @@ void onClientConnected(ConnectionId connectionId)
                                                {
                                                  protocols.erase(connectionId);
                                                },
-                                               gameEngine.get(),
+                                               gameEngineQueue.get(),
                                                connectionId,
                                                server.get(),
                                                accountReader.get());
@@ -159,11 +159,10 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create GameEngineQueue
-  gameEngineQueue = std::make_unique<GameEngineQueue>(world.get(), &io_service);
-
-  // Create GameEngine
-  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), loginMessage);
+  // Create GameEngine and GameEngineQueue
+  gameEngineQueue = std::make_unique<GameEngineQueue>(&io_service);
+  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), world.get(), loginMessage);
+  gameEngineQueue->setGameEngine(gameEngine.get());
 
   // Create and load AccountReader
   accountReader = std::make_unique<AccountReader>();

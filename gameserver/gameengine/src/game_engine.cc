@@ -57,8 +57,9 @@ struct RecursiveTask
 
 }
 
-GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, std::string loginMessage)
+GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage)
   : gameEngineQueue_(gameEngineQueue),
+    world_(world),
     loginMessage_(std::move(loginMessage)),
     containerManager_()
 {
@@ -66,113 +67,107 @@ GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, std::string loginMessag
 
 void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
-  gameEngineQueue_->addTask(Creature::INVALID_ID, [this, name, player_ctrl](World* world)
+  // Create the Player
+  Player newPlayer{name};
+  auto creatureId = newPlayer.getCreatureId();
+
+  // Store the Player and the PlayerCtrl
+  playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl, {}});
+
+  // Get the Player again, since newPlayed is moved from
+  auto& player = getPlayer(creatureId);
+
+  LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
+
+  // Tell PlayerCtrl its CreatureId
+  player_ctrl->setPlayerId(player.getCreatureId());
+
+  // Spawn the player
+  auto rc = world_->addCreature(&player, player_ctrl, Position(222, 222, 7));
+  if (rc != World::ReturnCode::OK)
   {
-    // Create the Player
-    Player newPlayer{name};
-    auto creatureId = newPlayer.getCreatureId();
-
-    // Store the Player and the PlayerCtrl
-    playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl, {}});
-
-    // Get the Player again, since newPlayed is moved from
-    auto& player = getPlayer(creatureId);
-
-    LOG_DEBUG("%s: Spawn player: %s", __func__, player.getName().c_str());
-
-    // Tell PlayerCtrl its CreatureId
-    player_ctrl->setPlayerId(player.getCreatureId());
-
-    // Spawn the player
-    auto rc = world->addCreature(&player, player_ctrl, Position(222, 222, 7));
-    if (rc != World::ReturnCode::OK)
-    {
-      LOG_ERROR("%s: Could not spawn player", __func__);
-      // TODO(simon): Maybe let Protocol know that the player couldn't spawn, instead of time out?
-      // playerPlayerCtrl_.erase(creatureId);
-      // player_ctrl->disconnect();
-    }
-    else
-    {
-      player_ctrl->sendTextMessage(0x11, loginMessage_);
-    }
-  });
+    LOG_ERROR("%s: Could not spawn player", __func__);
+    // TODO(simon): Maybe let Protocol know that the player couldn't spawn, instead of time out?
+    // playerPlayerCtrl_.erase(creatureId);
+    // player_ctrl->disconnect();
+  }
+  else
+  {
+    player_ctrl->sendTextMessage(0x11, loginMessage_);
+  }
 }
 
 void GameEngine::despawn(CreatureId creatureId)
 {
-  gameEngineQueue_->addTask(creatureId, [this, creatureId](World* world)
-  {
-    LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
-    world->removeCreature(creatureId);
+  LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
+  world_->removeCreature(creatureId);
 
-    // Remove Player and PlayerCtrl
-    playerPlayerCtrl_.erase(creatureId);
+  // Remove Player and PlayerCtrl
+  playerPlayerCtrl_.erase(creatureId);
 
-    // Remove any queued tasks for this player
-    gameEngineQueue_->cancelAllTasks(creatureId);
-  });
+  // Remove any queued tasks for this player
+  gameEngineQueue_->cancelAllTasks(creatureId);
 }
 
 void GameEngine::move(CreatureId creatureId, Direction direction)
 {
-  const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task, World* world)
+  LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
+
+  auto* player_ctrl = getPlayerCtrl(creatureId);
+
+  auto rc = world_->creatureMove(creatureId, direction);
+  if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
   {
-    LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
-
-    auto* player_ctrl = getPlayerCtrl(creatureId);
-
-    auto rc = world->creatureMove(creatureId, direction);
-    if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
+    LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
+    const auto& creature = world_->getCreature(creatureId);
+    gameEngineQueue_->addTask(creatureId,
+                              creature.getNextWalkTick() - Tick::now(),
+                              [this, creatureId, direction](GameEngine* gameEngine)
     {
-      LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
-      const auto& creature = world->getCreature(creatureId);
-      gameEngineQueue_->addTask(creatureId, creature.getNextWalkTick() - Tick::now(), task);
-    }
-    else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
-    {
-      player_ctrl->sendCancel("There is no room.");
-    }
-  });
-
-  gameEngineQueue_->addTask(creatureId, task);
+      move(creatureId, direction);
+    });
+  }
+  else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+  {
+    player_ctrl->sendCancel("There is no room.");
+  }
 }
 
-void GameEngine::movePath(CreatureId creatureId, const std::deque<Direction>& path)
+void GameEngine::movePath(CreatureId creatureId, std::deque<Direction>&& path)
 {
-  auto& player = getPlayer(creatureId);
-  player.queueMoves(path);
-
-  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, World* world)
-  {
-    auto& player = getPlayer(creatureId);
-
-    // Make sure that the queued moves hasn't been canceled
-    if (player.hasQueuedMove())
-    {
-      auto rc = world->creatureMove(creatureId, player.getNextQueuedMove());
-
-      if (rc == World::ReturnCode::OK)
-      {
-        // Player moved, pop the move from the queue
-        player.popNextQueuedMove();
-      }
-      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
-      {
-        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
-        cancelMove(creatureId);
-      }
-
-      if (player.hasQueuedMove())
-      {
-        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
-        // to move yet, add a new task
-        gameEngineQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
-      }
-    }
-  });
-
-  gameEngineQueue_->addTask(creatureId, task);
+//  auto& player = getPlayer(creatureId);
+//  player.queueMoves(std::move(path));
+//
+//  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, World* world)
+//  {
+//    auto& player = getPlayer(creatureId);
+//
+//    // Make sure that the queued moves hasn't been canceled
+//    if (player.hasQueuedMove())
+//    {
+//      auto rc = world_->creatureMove(creatureId, player.getNextQueuedMove());
+//
+//      if (rc == World::ReturnCode::OK)
+//      {
+//        // Player moved, pop the move from the queue
+//        player.popNextQueuedMove();
+//      }
+//      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
+//      {
+//        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
+//        cancelMove(creatureId);
+//      }
+//
+//      if (player.hasQueuedMove())
+//      {
+//        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
+//        // to move yet, add a new task
+//        gameEngineQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
+//      }
+//    }
+//  });
+//
+//  gameEngineQueue_->addTask(creatureId, task);
 }
 
 void GameEngine::cancelMove(CreatureId creatureId)
@@ -192,11 +187,8 @@ void GameEngine::cancelMove(CreatureId creatureId)
 
 void GameEngine::turn(CreatureId creatureId, Direction direction)
 {
-  gameEngineQueue_->addTask(creatureId, [this, creatureId, direction](World* world)
-  {
-    LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creatureId);
-    world->creatureTurn(creatureId, direction);
-  });
+  LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creatureId);
+  world_->creatureTurn(creatureId, direction);
 }
 
 void GameEngine::say(CreatureId creatureId,
@@ -205,94 +197,91 @@ void GameEngine::say(CreatureId creatureId,
                         const std::string& receiver,
                         uint16_t channelId)
 {
-  gameEngineQueue_->addTask(creatureId, [this, creatureId, type, message, receiver, channelId](World* world)
+  LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
+
+  // Check if message is a command
+  if (message.size() > 0 && message[0] == '/')
   {
-    LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
+    // Extract everything after '/'
+    auto fullCommand = message.substr(1, std::string::npos);
 
-    // Check if message is a command
-    if (message.size() > 0 && message[0] == '/')
+    // Check if there is arguments
+    auto space = fullCommand.find_first_of(' ');
+    std::string command;
+    std::string option;
+    if (space == std::string::npos)
     {
-      // Extract everything after '/'
-      auto fullCommand = message.substr(1, std::string::npos);
+      command = fullCommand;
+      option = "";
+    }
+    else
+    {
+      command = fullCommand.substr(0, space);
+      option = fullCommand.substr(space + 1);
+    }
 
-      // Check if there is arguments
-      auto space = fullCommand.find_first_of(' ');
-      std::string command;
-      std::string option;
-      if (space == std::string::npos)
+    // Check commands
+    if (command == "debug" || command == "debugf")
+    {
+      // Different position for debug / debugf
+      Position position;
+
+      // Show debug info for a tile
+      if (command == "debug")
       {
-        command = fullCommand;
-        option = "";
+        // Show debug information on player tile
+        position = world_->getCreaturePosition(creatureId);
+      }
+      else if (command == "debugf")
+      {
+        // Show debug information on tile in front of player
+        const auto& player = getPlayer(creatureId);
+        position = world_->getCreaturePosition(creatureId).addDirection(player.getDirection());
+      }
+
+      const auto& tile = world_->getTile(position);
+
+      std::ostringstream oss;
+      oss << "Position: " << position.toString() << "\n";
+
+      for (const auto& item : tile.getItems())
+      {
+        oss << "Item: " << item.getItemId() << " (" << item.getName() << ")\n";
+      }
+
+      for (const auto& creatureId : tile.getCreatureIds())
+      {
+        oss << "Creature: " << creatureId << "\n";
+      }
+
+      getPlayerCtrl(creatureId)->sendTextMessage(0x13, oss.str());
+    }
+    else if (command == "put")
+    {
+      std::istringstream iss(option);
+      int itemId = 0;
+      iss >> itemId;
+
+      if (itemId < 100 || itemId > 2381)
+      {
+        getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid itemId");
       }
       else
       {
-        command = fullCommand.substr(0, space);
-        option = fullCommand.substr(space + 1);
-      }
-
-      // Check commands
-      if (command == "debug" || command == "debugf")
-      {
-        // Different position for debug / debugf
-        Position position;
-
-        // Show debug info for a tile
-        if (command == "debug")
-        {
-          // Show debug information on player tile
-          position = world->getCreaturePosition(creatureId);
-        }
-        else if (command == "debugf")
-        {
-          // Show debug information on tile in front of player
-          const auto& player = getPlayer(creatureId);
-          position = world->getCreaturePosition(creatureId).addDirection(player.getDirection());
-        }
-
-        const auto& tile = world->getTile(position);
-
-        std::ostringstream oss;
-        oss << "Position: " << position.toString() << "\n";
-
-        for (const auto& item : tile.getItems())
-        {
-          oss << "Item: " << item.getItemId() << " (" << item.getName() << ")\n";
-        }
-
-        for (const auto& creatureId : tile.getCreatureIds())
-        {
-          oss << "Creature: " << creatureId << "\n";
-        }
-
-        getPlayerCtrl(creatureId)->sendTextMessage(0x13, oss.str());
-      }
-      else if (command == "put")
-      {
-        std::istringstream iss(option);
-        int itemId = 0;
-        iss >> itemId;
-
-        if (itemId < 100 || itemId > 2381)
-        {
-          getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid itemId");
-        }
-        else
-        {
-          const auto& player = getPlayer(creatureId);
-          auto position = world->getCreaturePosition(creatureId).addDirection(player.getDirection());
-          world->addItem(itemId, position);
-        }
-      }
-      else
-      {
-        getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid command");
+        const auto& player = getPlayer(creatureId);
+        auto position = world_->getCreaturePosition(creatureId).addDirection(player.getDirection());
+        world_->addItem(itemId, position);
       }
     }
     else
     {
-      world->creatureSay(creatureId, message);
+      getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Invalid command");
     }
-  });
+  }
+  else
+  {
+    world_->creatureSay(creatureId, message);
+  }
 }
 
 void GameEngine::moveItem(CreatureId creatureId,
