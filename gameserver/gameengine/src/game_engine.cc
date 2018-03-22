@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "player_manager.h"
+#include "game_engine.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -57,16 +57,16 @@ struct RecursiveTask
 
 }
 
-PlayerManager::PlayerManager(WorldTaskQueue* worldTaskQueue, std::string loginMessage)
-  : worldTaskQueue_(worldTaskQueue),
+GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, std::string loginMessage)
+  : gameEngineQueue_(gameEngineQueue),
     loginMessage_(std::move(loginMessage)),
     containerManager_()
 {
 }
 
-void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
+void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
-  worldTaskQueue_->addTask(Creature::INVALID_ID, [this, name, player_ctrl](World* world)
+  gameEngineQueue_->addTask(Creature::INVALID_ID, [this, name, player_ctrl](World* world)
   {
     // Create the Player
     Player newPlayer{name};
@@ -99,9 +99,9 @@ void PlayerManager::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   });
 }
 
-void PlayerManager::despawn(CreatureId creatureId)
+void GameEngine::despawn(CreatureId creatureId)
 {
-  worldTaskQueue_->addTask(creatureId, [this, creatureId](World* world)
+  gameEngineQueue_->addTask(creatureId, [this, creatureId](World* world)
   {
     LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
     world->removeCreature(creatureId);
@@ -110,11 +110,11 @@ void PlayerManager::despawn(CreatureId creatureId)
     playerPlayerCtrl_.erase(creatureId);
 
     // Remove any queued tasks for this player
-    worldTaskQueue_->cancelAllTasks(creatureId);
+    gameEngineQueue_->cancelAllTasks(creatureId);
   });
 }
 
-void PlayerManager::move(CreatureId creatureId, Direction direction)
+void GameEngine::move(CreatureId creatureId, Direction direction)
 {
   const auto task = RecursiveTask([this, creatureId, direction](const RecursiveTask& task, World* world)
   {
@@ -127,7 +127,7 @@ void PlayerManager::move(CreatureId creatureId, Direction direction)
     {
       LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
       const auto& creature = world->getCreature(creatureId);
-      worldTaskQueue_->addTask(creatureId, creature.getNextWalkTick() - Tick::now(), task);
+      gameEngineQueue_->addTask(creatureId, creature.getNextWalkTick() - Tick::now(), task);
     }
     else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
     {
@@ -135,10 +135,10 @@ void PlayerManager::move(CreatureId creatureId, Direction direction)
     }
   });
 
-  worldTaskQueue_->addTask(creatureId, task);
+  gameEngineQueue_->addTask(creatureId, task);
 }
 
-void PlayerManager::movePath(CreatureId creatureId, const std::deque<Direction>& path)
+void GameEngine::movePath(CreatureId creatureId, const std::deque<Direction>& path)
 {
   auto& player = getPlayer(creatureId);
   player.queueMoves(path);
@@ -167,15 +167,15 @@ void PlayerManager::movePath(CreatureId creatureId, const std::deque<Direction>&
       {
         // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
         // to move yet, add a new task
-        worldTaskQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
+        gameEngineQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
       }
     }
   });
 
-  worldTaskQueue_->addTask(creatureId, task);
+  gameEngineQueue_->addTask(creatureId, task);
 }
 
-void PlayerManager::cancelMove(CreatureId creatureId)
+void GameEngine::cancelMove(CreatureId creatureId)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creatureId);
 
@@ -190,22 +190,22 @@ void PlayerManager::cancelMove(CreatureId creatureId)
   // Don't cancel the task, just let it expire and do nothing
 }
 
-void PlayerManager::turn(CreatureId creatureId, Direction direction)
+void GameEngine::turn(CreatureId creatureId, Direction direction)
 {
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, direction](World* world)
+  gameEngineQueue_->addTask(creatureId, [this, creatureId, direction](World* world)
   {
     LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creatureId);
     world->creatureTurn(creatureId, direction);
   });
 }
 
-void PlayerManager::say(CreatureId creatureId,
+void GameEngine::say(CreatureId creatureId,
                         uint8_t type,
                         const std::string& message,
                         const std::string& receiver,
                         uint16_t channelId)
 {
-  worldTaskQueue_->addTask(creatureId, [this, creatureId, type, message, receiver, channelId](World* world)
+  gameEngineQueue_->addTask(creatureId, [this, creatureId, type, message, receiver, channelId](World* world)
   {
     LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
 
@@ -295,7 +295,7 @@ void PlayerManager::say(CreatureId creatureId,
   });
 }
 
-void PlayerManager::moveItem(CreatureId creatureId,
+void GameEngine::moveItem(CreatureId creatureId,
                              const ItemPosition& fromPosition,
                              int itemId,
                              int fromStackPos,
@@ -305,7 +305,7 @@ void PlayerManager::moveItem(CreatureId creatureId,
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
-void PlayerManager::useItem(CreatureId creatureId,
+void GameEngine::useItem(CreatureId creatureId,
                             const ItemPosition& position,
                             int itemId,
                             int stackPosition,
@@ -435,12 +435,12 @@ void PlayerManager::useItem(CreatureId creatureId,
   }
 }
 
-void PlayerManager::lookAt(CreatureId creatureId, const ItemPosition& position, int itemId, int stackPosition)
+void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position, int itemId, int stackPosition)
 {
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
-void PlayerManager::closeContainer(CreatureId creatureId, int clientContainerId)
+void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 {
   LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
 

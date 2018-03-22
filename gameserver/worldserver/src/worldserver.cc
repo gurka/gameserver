@@ -45,17 +45,17 @@
 #include "world_factory.h"
 
 // worldserver
-#include "player_manager.h"
+#include "game_engine.h"
 #include "protocol.h"
 #include "protocol_71.h"
-#include "world_task_queue.h"
+#include "game_engine_queue.h"
 
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
 static std::unique_ptr<World> world;
-static std::unique_ptr<WorldTaskQueue> worldTaskQueue;
-static std::unique_ptr<PlayerManager> playerManager;
+static std::unique_ptr<GameEngineQueue> gameEngineQueue;
+static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
 
@@ -72,7 +72,7 @@ void onClientConnected(ConnectionId connectionId)
                                                {
                                                  protocols.erase(connectionId);
                                                },
-                                               playerManager.get(),
+                                               gameEngine.get(),
                                                connectionId,
                                                server.get(),
                                                accountReader.get());
@@ -159,11 +159,11 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  // Create WorldTaskQueue
-  worldTaskQueue = std::make_unique<WorldTaskQueue>(world.get(), &io_service);
+  // Create GameEngineQueue
+  gameEngineQueue = std::make_unique<GameEngineQueue>(world.get(), &io_service);
 
-  // Create PlayerManager
-  playerManager = std::make_unique<PlayerManager>(worldTaskQueue.get(), loginMessage);
+  // Create GameEngine
+  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), loginMessage);
 
   // Create and load AccountReader
   accountReader = std::make_unique<AccountReader>();
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
   // Deallocate things (in reverse order of construction)
   server.reset();
   accountReader.reset();
-  playerManager.reset();
+  gameEngine.reset();
   world.reset();
 
   return 0;

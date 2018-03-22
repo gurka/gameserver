@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PLAYERMANAGER_H_
-#define GAMEENGINE_PLAYERMANAGER_H_
+#ifndef GAMEENGINE_GAMEENGINE_H_
+#define GAMEENGINE_GAMEENGINE_H_
 
 #include <array>
 #include <deque>
@@ -33,7 +33,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "world_task_queue.h"
+#include "game_engine_queue.h"
 #include "player.h"
 #include "position.h"
 #include "container_manager.h"
@@ -43,14 +43,14 @@ class OutgoingPacket;
 class PlayerCtrl;
 class World;
 
-class PlayerManager
+class GameEngine
 {
  public:
-  PlayerManager(WorldTaskQueue* worldTaskQueue, std::string loginMessage);
+  GameEngine(GameEngineQueue* gameEngineQueue, std::string loginMessage);
 
   // Delete copy constructors
-  PlayerManager(const PlayerManager&) = delete;
-  PlayerManager& operator=(const PlayerManager&) = delete;
+  GameEngine(const GameEngine&) = delete;
+  GameEngine& operator=(const GameEngine&) = delete;
 
   void spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
@@ -98,9 +98,9 @@ class PlayerManager
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 
-  WorldTaskQueue* worldTaskQueue_;
+  GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;
   ContainerManager containerManager_;
 };
 
-#endif  // GAMEENGINE_PLAYERMANAGER_H_
+#endif  // GAMEENGINE_GAMEENGINE_H_

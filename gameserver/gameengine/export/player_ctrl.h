@@ -44,7 +44,7 @@ class PlayerCtrl : public CreatureCtrl
   PlayerCtrl(const PlayerCtrl&) = delete;
   PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
-  // Called by PlayerManager
+  // Called by GameEngine
   virtual void setPlayerId(CreatureId playerId) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
   virtual void onOpenContainer(uint8_t clientContainerId, const Container& container) = 0;

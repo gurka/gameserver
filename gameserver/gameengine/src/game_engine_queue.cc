@@ -22,21 +22,21 @@
  * SOFTWARE.
  */
 
-#include "world_task_queue.h"
+#include "game_engine_queue.h"
 
-WorldTaskQueue::WorldTaskQueue(World* world, boost::asio::io_service* io_service)
+GameEngineQueue::GameEngineQueue(World* world, boost::asio::io_service* io_service)
   : world_(world),
     timer_(*io_service),
     timer_started_(false)
 {
 }
 
-void WorldTaskQueue::addTask(int tag, const Task& task)
+void GameEngineQueue::addTask(int tag, const Task& task)
 {
   addTask(tag, 0u, task);
 }
 
-void WorldTaskQueue::addTask(int tag, unsigned expire_ms, const Task& task)
+void GameEngineQueue::addTask(int tag, unsigned expire_ms, const Task& task)
 {
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time()) +
                 boost::posix_time::millisec(expire_ms);
@@ -63,7 +63,7 @@ void WorldTaskQueue::addTask(int tag, unsigned expire_ms, const Task& task)
   }
 }
 
-void WorldTaskQueue::cancelAllTasks(int tag)
+void GameEngineQueue::cancelAllTasks(int tag)
 {
   if (!queue_.empty())
   {
@@ -86,7 +86,7 @@ void WorldTaskQueue::cancelAllTasks(int tag)
   }
 }
 
-void WorldTaskQueue::startTimer()
+void GameEngineQueue::startTimer()
 {
   // Start timer
   boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
@@ -101,7 +101,7 @@ void WorldTaskQueue::startTimer()
   timer_started_ = true;
 }
 
-void WorldTaskQueue::onTimeout(const boost::system::error_code& ec)
+void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
 {
   if (ec == boost::asio::error::operation_aborted)
   {

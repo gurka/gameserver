@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_WORLDTASKQUEUE_H_
-#define GAMEENGINE_WORLDTASKQUEUE_H_
+#ifndef GAMEENGINE_GAMEENGINEQUEUE_H_
+#define GAMEENGINE_GAMEENGINEQUEUE_H_
 
 #include <functional>
 #include <vector>
@@ -34,16 +34,16 @@
 #include "world.h"
 
 // TODO(gurka): If we ever want to run multiple threads for network I/O this queue needs to be threadsafe
-class WorldTaskQueue
+class GameEngineQueue
 {
  public:
   using Task = std::function<void(World*)>;
 
-  WorldTaskQueue(World* world, boost::asio::io_service* io_service);
+  GameEngineQueue(World* world, boost::asio::io_service* io_service);
 
   // Delete copy constructors
-  WorldTaskQueue(const WorldTaskQueue&) = delete;
-  WorldTaskQueue& operator=(const WorldTaskQueue&) = delete;
+  GameEngineQueue(const GameEngineQueue&) = delete;
+  GameEngineQueue& operator=(const GameEngineQueue&) = delete;
 
   void addTask(int tag, const Task& task);
   void addTask(int tag, unsigned expire_ms, const Task& task);
@@ -77,4 +77,4 @@ class WorldTaskQueue
   bool timer_started_;
 };
 
-#endif  // GAMEENGINE_WORLDTASKQUEUE_H_
+#endif  // GAMEENGINE_GAMEENGINEQUEUE_H_

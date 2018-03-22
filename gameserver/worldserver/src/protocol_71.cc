@@ -31,7 +31,7 @@
 #include <deque>
 #include <utility>
 
-#include "player_manager.h"
+#include "game_engine.h"
 #include "server.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
@@ -42,13 +42,13 @@
 #include "item_position.h"
 
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
-                       PlayerManager* playerManager,
+                       GameEngine* gameEngine,
                        ConnectionId connectionId,
                        Server* server,
                        AccountReader* accountReader)
   : closeProtocol_(closeProtocol),
     playerId_(Creature::INVALID_ID),
-    playerManager_(playerManager),
+    gameEngine_(gameEngine),
     connectionId_(connectionId),
     server_(server),
     accountReader_(accountReader)
@@ -64,7 +64,7 @@ void Protocol71::disconnected()
   if (isLoggedIn())
   {
     // Despawn the player
-    playerManager_->despawn(playerId_);
+    gameEngine_->despawn(playerId_);
   }
   else
   {
@@ -105,7 +105,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     {
       case 0x14:
       {
-        playerManager_->despawn(playerId_);
+        gameEngine_->despawn(playerId_);
         break;
       }
 
@@ -120,13 +120,13 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        playerManager_->move(playerId_, static_cast<Direction>(packetId - 0x65));
+        gameEngine_->move(playerId_, static_cast<Direction>(packetId - 0x65));
         break;
       }
 
       case 0x69:
       {
-        playerManager_->cancelMove(playerId_);
+        gameEngine_->cancelMove(playerId_);
         break;
       }
 
@@ -135,7 +135,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        playerManager_->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
+        gameEngine_->turn(playerId_, static_cast<Direction>(packetId - 0x6F));
         break;
       }
 
@@ -781,7 +781,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, spawn player
-  playerManager_->spawn(character_name, this);
+  gameEngine_->spawn(character_name, this);
 }
 
 void Protocol71::parseMoveClick(IncomingPacket* packet)
@@ -800,7 +800,7 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
     moves.push_back(static_cast<Direction>(packet->getU8()));
   }
 
-  playerManager_->movePath(playerId_, std::move(moves));
+  gameEngine_->movePath(playerId_, std::move(moves));
 }
 
 void Protocol71::parseMoveItem(IncomingPacket* packet)
@@ -819,7 +819,7 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
             toItemPosition.toString().c_str(),
             count);
 
-  playerManager_->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
+  gameEngine_->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
 }
 
 void Protocol71::parseUseItem(IncomingPacket* packet)
@@ -836,14 +836,14 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
             stackPosition,
             newContainerId);
 
-  playerManager_->useItem(playerId_, protocolPosition, itemId, stackPosition, newContainerId);
+  gameEngine_->useItem(playerId_, protocolPosition, itemId, stackPosition, newContainerId);
 }
 
 void Protocol71::parseCloseContainer(IncomingPacket* packet)
 {
   const auto clientContainerId = packet->getU8();
   LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-  playerManager_->closeContainer(playerId_, clientContainerId);
+  gameEngine_->closeContainer(playerId_, clientContainerId);
 }
 
 void Protocol71::parseLookAt(IncomingPacket* packet)
@@ -858,7 +858,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
             itemId,
             stackPosition);
 
-  playerManager_->lookAt(playerId_, protocolPosition, itemId, stackPosition);
+  gameEngine_->lookAt(playerId_, protocolPosition, itemId, stackPosition);
 }
 
 void Protocol71::parseSay(IncomingPacket* packet)
@@ -884,12 +884,12 @@ void Protocol71::parseSay(IncomingPacket* packet)
 
   std::string message = packet->getString();
 
-  playerManager_->say(playerId_, type, message, receiver, channelId);
+  gameEngine_->say(playerId_, type, message, receiver, channelId);
 }
 
 void Protocol71::parseCancelMove(IncomingPacket* packet)
 {
-  playerManager_->cancelMove(playerId_);
+  gameEngine_->cancelMove(playerId_);
 }
 
 ItemPosition Protocol71::getItemPosition(IncomingPacket* packet)

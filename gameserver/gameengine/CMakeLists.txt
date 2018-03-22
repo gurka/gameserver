@@ -6,13 +6,13 @@ set(src
   "export/container.h"
   "export/item_position.h"
   "export/player_ctrl.h"
-  "export/player_manager.h"
-  "export/world_task_queue.h"
+  "export/game_engine.h"
+  "export/game_engine_queue.h"
   "src/container_manager.h"
-  "src/player_manager.cc"
+  "src/game_engine.cc"
   "src/player.cc"
   "src/player.h"
-  "src/world_task_queue.cc"
+  "src/game_engine_queue.cc"
 )
 
 add_library(gameengine ${src})
