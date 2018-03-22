@@ -129,7 +129,7 @@ class ServerImpl : public Server
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;
-  std::unordered_map<ConnectionId, Connection<Backend>> connections_;  // TODO(gurka): vector/array?
+  std::unordered_map<ConnectionId, Connection<Backend>> connections_;  // TODO(simon): vector/array?
 };
 
 #endif  // NETWORK_SERVERIMPL_H_

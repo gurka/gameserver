@@ -103,7 +103,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
       }
 
       // Read the first <item> (there must be at least one, the ground item)
-      // TODO(gurka): Must there be one? What about "void", or is it also an Item?
+      // TODO(simon): Must there be one? What about "void", or is it also an Item?
       const auto* groundItemNode = tileNode->first_node();
       if (groundItemNode == nullptr)
       {

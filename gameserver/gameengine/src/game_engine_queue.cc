@@ -111,7 +111,7 @@ void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
   }
   else if (ec)
   {
-    // TODO(gurka): abort() isn't good.
+    // TODO(simon): abort() isn't good.
     abort();
   }
 

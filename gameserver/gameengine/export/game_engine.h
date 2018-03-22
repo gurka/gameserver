@@ -87,7 +87,7 @@ class GameEngine
   PlayerCtrl* getPlayerCtrl(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player_ctrl; }
 
   // Player + PlayerCtrl
-  // TODO(gurka): PlayerData
+  // TODO(simon): PlayerData
   struct PlayerPlayerCtrl
   {
     Player player;

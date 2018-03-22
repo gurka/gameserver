@@ -39,7 +39,7 @@ class WorldFactory
 
  private:
   // Offset for world size, since the client doesn't like too low positions
-  // TODO(gurka): This constant is both in WorldFactory and in World
+  // TODO(simon): This constant is both in WorldFactory and in World
   static const int worldSizeStart_ = 192;
 };
 

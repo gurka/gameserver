@@ -96,7 +96,7 @@ class Equipment
     }
   };
 
-  // TODO(gurka): std::array<Item, 10> items_;
+  // TODO(simon): std::array<Item, 10> items_;
   std::unordered_map<Slot, Item, SlotHash> items_;
 };
 
@@ -153,7 +153,7 @@ class Player : public Creature
   int partyShield_;
   Equipment equipment_;
 
-  // TODO(gurka): Move to PlayerPlayerCtrl?
+  // TODO(simon): Move to PlayerPlayerCtrl?
   std::deque<Direction> queuedMoves_;
 };
 

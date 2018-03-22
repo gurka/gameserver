@@ -105,7 +105,7 @@ class World : public WorldInterface
   // Offset for world size, since the client doesn't like too low positions
   const int worldSizeStart_ = 192;
 
-  // TODO(gurka): Use std::vector or std::array since pointer access is slow,
+  // TODO(simon): Use std::vector or std::array since pointer access is slow,
   //              and contiguous memory is cache friendly.
   //              Changing tiles_ to vector/array is not easy:
   //                Make sure access is always done in same order, e.g.

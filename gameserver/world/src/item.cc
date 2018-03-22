@@ -39,7 +39,7 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
   // Load from data file
   ItemId nextItemId = 100;  // 100 is the first item id
 
-  // TODO(gurka): Use std::ifstream?
+  // TODO(simon): Use std::ifstream?
   FILE* f = fopen(dataFilename.c_str(), "rb");
   if (f == nullptr)
   {

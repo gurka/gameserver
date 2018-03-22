@@ -94,7 +94,7 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
       continue;
     }
 
-    // TODO(gurka): Need to check more stuff (blocking, etc)
+    // TODO(simon): Need to check more stuff (blocking, etc)
     if (internalGetTile(adjustedPosition).getCreatureIds().size() == 0)
     {
       found = true;
@@ -190,7 +190,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
-  // TODO(gurka): Creatures are also blocking!
+  // TODO(simon): Creatures are also blocking!
   // (enforced by the client when walking with arrow keys)
 
   // Get Creature
@@ -487,7 +487,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const
 {
-  return true;  // TODO(gurka): Fix
+  return true;  // TODO(simon): Fix
 }
 
 bool World::creatureCanReach(CreatureId creatureId, const Position& position) const

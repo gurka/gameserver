@@ -51,7 +51,7 @@ struct ItemData
   // Loaded from item file
   std::string name = "";
 
-  // TODO(gurka): Change to std::vector ?
+  // TODO(simon): Change to std::vector ?
   std::unordered_map<std::string, std::string> attributes;
 };
 
@@ -105,7 +105,7 @@ class Item
   bool isMultitype()  const { return itemData_->isMultitype; }
   bool isNotMovable() const { return itemData_->isNotMovable; }
   bool isEquipable()  const { return itemData_->isEquipable; }
-  int getSubtype()    const { return 0; }  // TODO(gurka): ??
+  int getSubtype()    const { return 0; }  // TODO(simon): ??
 
   // Loaded from items.xml
   const std::string& getName() const { return itemData_->name; }
@@ -129,12 +129,12 @@ class Item
   static constexpr std::size_t MAX_ITEM_DATAS = 3072;
   static std::array<ItemData, MAX_ITEM_DATAS> itemDatas_;
 
-  // TODO(gurka): Move id_ to ItemData
+  // TODO(simon): Move id_ to ItemData
   ItemId id_;
   uint8_t count_;
   ItemData* itemData_;
 
-  // TODO(gurka): Try to refactor everything below as only certain types of items uses these values
+  // TODO(simon): Try to refactor everything below as only certain types of items uses these values
   int containerId_;
 };
 

@@ -70,7 +70,7 @@ uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
   if (it == creatureIds_.cend())
   {
     LOG_ERROR("getCreatureStackPos(): No creature %d at this Tile", creatureId);
-    return 255;  // TODO(gurka): Invalid stackPosition constant?
+    return 255;  // TODO(simon): Invalid stackPosition constant?
   }
   return 1 + numberOfTopItems + std::distance(creatureIds_.cbegin(), it);
 }

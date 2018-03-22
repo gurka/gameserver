@@ -59,14 +59,14 @@ static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
 
-static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(gurka): Maybe change to array?
+static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;  // TODO(simon): Maybe change to array?
 
 void onClientConnected(ConnectionId connectionId)
 {
   LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
 
   // Create and store Protocol for this Connection
-  // TODO(gurka): Need a different solution if we want to support different protocol versions
+  // TODO(simon): Need a different solution if we want to support different protocol versions
   // (We need to parse the login packet before we create a specific Protocol implementation)
   auto protocol = std::make_unique<Protocol71>([connectionId]()
                                                {

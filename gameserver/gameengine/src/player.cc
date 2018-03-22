@@ -46,7 +46,7 @@ bool Equipment::canAddItem(const Item& item, uint8_t inventoryIndex) const
 {
   Slot slot = static_cast<Slot>(inventoryIndex);
 
-  // TODO(gurka): Check capacity
+  // TODO(simon): Check capacity
 
   // First check if the slot is empty
   if (items_.at(slot).isValid())
@@ -132,7 +132,7 @@ bool Equipment::canAddItem(const Item& item, uint8_t inventoryIndex) const
 
     case Slot::AMMO:
     {
-      // TODO(gurka): Not yet in items.xml
+      // TODO(simon): Not yet in items.xml
       return itemType == "ammo";
     }
   }

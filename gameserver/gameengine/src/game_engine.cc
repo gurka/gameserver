@@ -88,7 +88,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
     if (rc != World::ReturnCode::OK)
     {
       LOG_ERROR("%s: Could not spawn player", __func__);
-      // TODO(gurka): Maybe let Protocol know that the player couldn't spawn, instead of time out?
+      // TODO(simon): Maybe let Protocol know that the player couldn't spawn, instead of time out?
       // playerPlayerCtrl_.erase(creatureId);
       // player_ctrl->disconnect();
     }
@@ -371,7 +371,7 @@ void GameEngine::useItem(CreatureId creatureId,
   }
   else
   {
-    // TODO(gurka): needs world context!
+    // TODO(simon): needs world context!
     getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
   }
 
@@ -393,7 +393,7 @@ void GameEngine::useItem(CreatureId creatureId,
   {
     if (item->getContainerId() == Container::INVALID_ID)
     {
-      // TODO(gurka): create new container with Position as parent when applicable
+      // TODO(simon): create new container with Position as parent when applicable
       const auto containerId = parentContainerId == Container::INVALID_ID ?
                                containerManager_.createNewContainer(item->getItemId()) :
                                containerManager_.createNewContainer(item->getItemId(), parentContainerId);

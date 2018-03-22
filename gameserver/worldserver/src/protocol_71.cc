@@ -171,7 +171,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
 
       case 0xBE:
       {
-        // TODO(gurka): This packet more likely means "stop all actions", not only moving
+        // TODO(simon): This packet more likely means "stop all actions", not only moving
         parseCancelMove(packet);
         break;
       }
@@ -677,7 +677,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
     if (unused == knownCreatures_.end())
     {
       // No empty spot!
-      // TODO(gurka): Figure out how to handle this
+      // TODO(simon): Figure out how to handle this
       LOG_ERROR("%s: knownCreatures_ is full!");
     }
     else
