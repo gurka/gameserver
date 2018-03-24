@@ -45,14 +45,17 @@ namespace
 
 struct RecursiveTask
 {
-  RecursiveTask(const std::function<void(const RecursiveTask&, World* world)>& f) : f(f) {}
-
-  void operator()(World* world) const
+  RecursiveTask(const std::function<void(const RecursiveTask&, GameEngine* gameEngine)>& func)
+    : func_(func)
   {
-    f(*this, world);
   }
 
-  std::function<void(const RecursiveTask&, World* world)> f;
+  void operator()(GameEngine* gameEngine) const
+  {
+    func_(*this, gameEngine);
+  }
+
+  std::function<void(const RecursiveTask&, GameEngine* gameEngine)> func_;
 };
 
 }
@@ -135,39 +138,38 @@ void GameEngine::move(CreatureId creatureId, Direction direction)
 
 void GameEngine::movePath(CreatureId creatureId, std::deque<Direction>&& path)
 {
-//  auto& player = getPlayer(creatureId);
-//  player.queueMoves(std::move(path));
-//
-//  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, World* world)
-//  {
-//    auto& player = getPlayer(creatureId);
-//
-//    // Make sure that the queued moves hasn't been canceled
-//    if (player.hasQueuedMove())
-//    {
-//      auto rc = world_->creatureMove(creatureId, player.getNextQueuedMove());
-//
-//      if (rc == World::ReturnCode::OK)
-//      {
-//        // Player moved, pop the move from the queue
-//        player.popNextQueuedMove();
-//      }
-//      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
-//      {
-//        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
-//        cancelMove(creatureId);
-//      }
-//
-//      if (player.hasQueuedMove())
-//      {
-//        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
-//        // to move yet, add a new task
-//        gameEngineQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
-//      }
-//    }
-//  });
-//
-//  gameEngineQueue_->addTask(creatureId, task);
+  getPlayer(creatureId).queueMoves(std::move(path));
+
+  const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, GameEngine* gameEngine)
+  {
+    auto& player = getPlayer(creatureId);
+
+    // Make sure that the queued moves hasn't been canceled
+    if (player.hasQueuedMove())
+    {
+      const auto rc = world_->creatureMove(creatureId, player.getNextQueuedMove());
+
+      if (rc == World::ReturnCode::OK)
+      {
+        // Player moved, pop the move from the queue
+        player.popNextQueuedMove();
+      }
+      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
+      {
+        // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
+        cancelMove(creatureId);
+      }
+
+      if (player.hasQueuedMove())
+      {
+        // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
+        // to move yet, add a new task
+        gameEngineQueue_->addTask(creatureId, player.getNextWalkTick() - Tick::now(), task);
+      }
+    }
+  });
+
+  task(this);
 }
 
 void GameEngine::cancelMove(CreatureId creatureId)
@@ -191,11 +193,7 @@ void GameEngine::turn(CreatureId creatureId, Direction direction)
   world_->creatureTurn(creatureId, direction);
 }
 
-void GameEngine::say(CreatureId creatureId,
-                        uint8_t type,
-                        const std::string& message,
-                        const std::string& receiver,
-                        uint16_t channelId)
+void GameEngine::say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId)
 {
   LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
 
@@ -285,20 +283,20 @@ void GameEngine::say(CreatureId creatureId,
 }
 
 void GameEngine::moveItem(CreatureId creatureId,
-                             const ItemPosition& fromPosition,
-                             int itemId,
-                             int fromStackPos,
-                             const ItemPosition& toPosition,
-                             int count)
+                          const ItemPosition& fromPosition,
+                          int itemId,
+                          int fromStackPos,
+                          const ItemPosition& toPosition,
+                          int count)
 {
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
 void GameEngine::useItem(CreatureId creatureId,
-                            const ItemPosition& position,
-                            int itemId,
-                            int stackPosition,
-                            int newContainerId)
+                         const ItemPosition& position,
+                         int itemId,
+                         int stackPosition,
+                         int newContainerId)
 {
   int parentContainerId = Container::INVALID_ID;
   Item* item = nullptr;
