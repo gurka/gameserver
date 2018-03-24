@@ -37,7 +37,7 @@
 #include "position.h"
 #include "item.h"
 #include "server.h"
-#include "item_position.h"
+#include "game_position.h"
 #include "container.h"
 
 class GameEngineQueue;
@@ -111,7 +111,8 @@ class Protocol71 : public Protocol
   void parseSay(IncomingPacket* packet);
 
   // Helper functions for parsing IncomingPackets
-  ItemPosition getItemPosition(IncomingPacket* packet);
+  GamePosition getGamePosition(IncomingPacket* packet) const;
+  ItemPosition getItemPosition(IncomingPacket* packet) const;
 
   std::function<void(void)> closeProtocol_;
   CreatureId playerId_;

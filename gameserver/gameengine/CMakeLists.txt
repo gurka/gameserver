@@ -4,7 +4,7 @@ project(gameengine)
 
 set(src
   "export/container.h"
-  "export/item_position.h"
+  "export/game_position.h"
   "export/player_ctrl.h"
   "export/game_engine.h"
   "export/game_engine_queue.h"

@@ -39,7 +39,7 @@
 #include "logger.h"
 #include "tile.h"
 #include "account.h"
-#include "item_position.h"
+#include "game_position.h"
 
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
                        GameEngineQueue* gameEngineQueue,
@@ -830,47 +830,27 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
 void Protocol71::parseMoveItem(IncomingPacket* packet)
 {
   const auto fromItemPosition = getItemPosition(packet);
-  const auto itemId = packet->getU16();
-  const auto fromStackPosition = packet->getU8();
-  const auto toItemPosition = getItemPosition(packet);
+  const auto toGamePosition = getGamePosition(packet);
   const auto count = packet->getU8();
 
-  LOG_DEBUG("%s: from: %s, itemId: %u, fromStackPosition: %u, to: %s, count: %u",
-            __func__,
-            fromItemPosition.toString().c_str(),
-            itemId,
-            fromStackPosition,
-            toItemPosition.toString().c_str(),
-            count);
+  LOG_DEBUG("%s: from: %s, to: %s, count: %u", __func__, fromItemPosition.toString().c_str(), toGamePosition.toString().c_str(), count);
 
-  gameEngineQueue_->addTask(playerId_, [this,
-                                        fromItemPosition,
-                                        itemId,
-                                        fromStackPosition,
-                                        toItemPosition,
-                                        count](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, fromItemPosition, toGamePosition, count](GameEngine* gameEngine)
   {
-    gameEngine->moveItem(playerId_, fromItemPosition, itemId, fromStackPosition, toItemPosition, count);
+    gameEngine->moveItem(playerId_, fromItemPosition, toGamePosition, count);
   });
 }
 
 void Protocol71::parseUseItem(IncomingPacket* packet)
 {
   const auto itemPosition = getItemPosition(packet);
-  const auto itemId = packet->getU16();
-  const auto stackPosition = packet->getU8();
   const auto newContainerId = packet->getU8();
 
-  LOG_DEBUG("%s: itemPosition: %s, itemId: %u, stackPosition: %u, newContainerId: %u",
-            __func__,
-            itemPosition.toString().c_str(),
-            itemId,
-            stackPosition,
-            newContainerId);
+  LOG_DEBUG("%s: itemPosition: %s, newContainerId: %u", __func__, itemPosition.toString().c_str(), newContainerId);
 
-  gameEngineQueue_->addTask(playerId_, [this, itemPosition, itemId, stackPosition, newContainerId](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, itemPosition, newContainerId](GameEngine* gameEngine)
   {
-    gameEngine->useItem(playerId_, itemPosition, itemId, stackPosition, newContainerId);
+    gameEngine->useItem(playerId_, itemPosition, newContainerId);
   });
 }
 
@@ -889,18 +869,12 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
 void Protocol71::parseLookAt(IncomingPacket* packet)
 {
   const auto itemPosition = getItemPosition(packet);
-  const auto itemId = packet->getU16();
-  const auto stackPosition = packet->getU8();
 
-  LOG_DEBUG("%s: itemPosition: %s, itemId: %u, stackPosition: %u",
-            __func__,
-            itemPosition.toString().c_str(),
-            itemId,
-            stackPosition);
+  LOG_DEBUG("%s: itemPosition: %s", __func__, itemPosition.toString().c_str());
 
-  gameEngineQueue_->addTask(playerId_, [this, itemPosition, itemId, stackPosition](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, itemPosition](GameEngine* gameEngine)
   {
-    gameEngine->lookAt(playerId_, itemPosition, itemId, stackPosition);
+    gameEngine->lookAt(playerId_, itemPosition);
   });
 }
 
@@ -933,10 +907,39 @@ void Protocol71::parseSay(IncomingPacket* packet)
   });
 }
 
-ItemPosition Protocol71::getItemPosition(IncomingPacket* packet)
+GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
 {
   const auto x = packet->getU16();
   const auto y = packet->getU16();
   const auto z = packet->getU8();
-  return ItemPosition(x, y, z);
+
+  LOG_DEBUG("%s: x = 0x%04X, y = 0x%04X, z = 0x%02X", __func__, x, y, z);
+
+  if (x != 0xFFFF)
+  {
+    // Positions have x not fully set
+    return GamePosition(Position(x, y, z));
+  }
+  else if ((y & 0x40) == 0x00)
+  {
+    // Inventory have x fully set and 7th bit in y not set
+    // Inventory slot is 4 lower bits in y
+    return GamePosition(y & ~0x40);
+  }
+  else
+  {
+    // Container have x fully set and 7th bit in y set
+    // Container id is lower 6 bits in y
+    // Container slot is z
+    return GamePosition(y & ~0x40, z);
+  }
+}
+
+ItemPosition Protocol71::getItemPosition(IncomingPacket* packet) const
+{
+  const auto gamePosition = getGamePosition(packet);
+  const auto itemId = packet->getU16();
+  const auto stackPosition = packet->getU8();
+
+  return ItemPosition(gamePosition, itemId, stackPosition);
 }

@@ -37,7 +37,7 @@
 #include "player.h"
 #include "position.h"
 #include "container_manager.h"
-#include "item_position.h"
+#include "game_position.h"
 
 class OutgoingPacket;
 class PlayerCtrl;
@@ -60,24 +60,11 @@ class GameEngine
   void cancelMove(CreatureId creatureId);
   void turn(CreatureId creatureId, Direction direction);
 
-  void say(CreatureId creatureId,
-           uint8_t type,
-           const std::string& message,
-           const std::string& receiver,
-           uint16_t channelId);
+  void say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId);
 
-  void moveItem(CreatureId creatureId,
-                const ItemPosition& fromPosition,
-                int itemId,
-                int fromStackPos,
-                const ItemPosition& toPosition,
-                int count);
-  void useItem(CreatureId creatureId,
-               const ItemPosition& position,
-               int itemId,
-               int stackPosition,
-               int newContainerId);
-  void lookAt(CreatureId creatureId, const ItemPosition& position, int itemId, int stackPosition);
+  void moveItem(CreatureId creatureId, const ItemPosition& fromPosition, const GamePosition& toPosition, int count);
+  void useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId);
+  void lookAt(CreatureId creatureId, const ItemPosition& position);
 
   void closeContainer(CreatureId creatureId, int localContainerId);
 
