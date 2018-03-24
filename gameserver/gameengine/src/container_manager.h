@@ -87,6 +87,20 @@ class ContainerManager
     return INVALID_CONTAINER;
   }
 
+  const Container& getContainer(int containerId) const
+  {
+    for (auto& container : containers_)
+    {
+      if (container.id == containerId)
+      {
+        return container;
+      }
+    }
+
+    static const Container INVALID_CONTAINER = Container();
+    return INVALID_CONTAINER;
+  }
+
   void addPlayer(int containerId, CreatureId playerId)
   {
     auto& container = getContainer(containerId);

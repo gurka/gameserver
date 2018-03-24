@@ -294,7 +294,46 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
 void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
 {
-  getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  const auto item = getItem(creatureId, position);
+  // TODO(simon): verify that player is close enough, if item is in world
+
+  if (item.isValid())
+  {
+    std::ostringstream ss;
+
+    if (!item.getName().empty())
+    {
+      if (item.isStackable() && item.getCount() > 1)
+      {
+        ss << "You see " << item.getCount() << " " << item.getName() << "s.";
+      }
+      else
+      {
+        ss << "You see a " << item.getName() << ".";
+      }
+    }
+    else
+    {
+      ss << "You see an item with id " << item.getItemId() << ".";
+    }
+
+    // TODO(simon): only if standing next to the item
+    if (item.hasAttribute("weight"))
+    {
+      ss << "\nIt weights " << item.getAttribute<float>("weight")<< " oz.";
+    }
+
+    if (item.hasAttribute("description"))
+    {
+      ss << "\n" << item.getAttribute<std::string>("description");
+    }
+
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
+  }
+  else
+  {
+    LOG_ERROR("%s: could not find an Item at position: %s", __func__, position.toString().c_str());
+  }
 }
 
 void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
@@ -319,4 +358,50 @@ void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 
   // Send onCloseContainer to player again (???)
 //  getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
+}
+
+Item GameEngine::getItem(CreatureId creatureId, const ItemPosition& position) const
+{
+  // TODO(simon): verify ItemId
+
+  const auto& gamePosition = position.getGamePosition();
+  if (gamePosition.isPosition())
+  {
+    const auto& tile = world_->getTile(gamePosition.getPosition());
+    return tile.getItem(position.getStackPosition());
+  }
+
+  if (gamePosition.isInventory())
+  {
+    const auto& player = getPlayer(creatureId);
+    if (player.getEquipment().hasItem(gamePosition.getInventorySlot()))
+    {
+      return player.getEquipment().getItem(gamePosition.getInventorySlot());
+    }
+    else
+    {
+      LOG_ERROR("%s: no Item found in inventorySlot: %d", __func__, gamePosition.getInventorySlot());
+      return Item();
+    }
+  }
+
+  if (gamePosition.isContainer())
+  {
+    // TODO(simon): getContainer()
+    const auto clientContainerId = gamePosition.getContainerId();
+    const auto containerId = playerPlayerCtrl_.at(creatureId).openContainers[clientContainerId];
+    const auto& container = containerManager_.getContainer(containerId);
+    if (gamePosition.getContainerSlot() <= static_cast<int>(container.items.size()))
+    {
+      return container.items[gamePosition.getContainerSlot()];
+    }
+    else
+    {
+      LOG_ERROR("%s: no Item found in container: %d at slot: %d", __func__, containerId, gamePosition.getContainerSlot());
+      return Item();
+    }
+  }
+
+  LOG_ERROR("%s: GamePosition: %s, is invalid", __func__, gamePosition.toString().c_str());
+  return Item();
 }
