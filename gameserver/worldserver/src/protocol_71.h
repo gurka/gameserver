@@ -107,6 +107,7 @@ class Protocol71 : public Protocol
   void parseMoveItem(IncomingPacket* packet);
   void parseUseItem(IncomingPacket* packet);
   void parseCloseContainer(IncomingPacket* packet);
+  void parseOpenParentContainer(IncomingPacket* packet);
   void parseLookAt(IncomingPacket* packet);
   void parseSay(IncomingPacket* packet);
 

@@ -172,6 +172,12 @@ void Protocol71::parsePacket(IncomingPacket* packet)
         break;
       }
 
+      case 0x88:
+      {
+        parseOpenParentContainer(packet);
+        break;
+      }
+
       case 0x8C:
       {
         parseLookAt(packet);
@@ -859,6 +865,18 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
   gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
   {
     gameEngine->closeContainer(playerId_, clientContainerId);
+  });
+}
+
+void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
+{
+  const auto clientContainerId = packet->getU8();
+
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+
+  gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
+  {
+    gameEngine->openParentContainer(playerId_, clientContainerId);
   });
 }
 

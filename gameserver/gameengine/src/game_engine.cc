@@ -382,7 +382,6 @@ void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 
   // Verify that the Player actually have this container open
   auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-
   if (static_cast<int>(openContainers.size()) <= clientContainerId ||
       openContainers[clientContainerId] == Container::INVALID_ID)
   {
@@ -398,6 +397,49 @@ void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 
   // Send onCloseContainer to player again (???)
 //  getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
+}
+
+void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerId)
+{
+  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
+
+  // Verify that the Player actually have this container open
+  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+  if (static_cast<int>(openContainers.size()) <= clientContainerId ||
+      openContainers[clientContainerId] == Container::INVALID_ID)
+  {
+    LOG_ERROR("%s: player does not have the given Container open", __func__);
+    return;
+  }
+
+  // Get current Container
+  const auto currentContainerId = openContainers[clientContainerId];
+  auto* currentContainer = containerManager_.getContainer(currentContainerId);
+  if (!currentContainer)
+  {
+    LOG_ERROR("%s: could not find container with id: %d", __func__, currentContainerId);
+    return;
+  }
+
+  // Verify that old Container has parent
+  if (!currentContainer->itemPosition.getGamePosition().isContainer())
+  {
+    LOG_ERROR("%s: old Container does not have parent Container", __func__);
+    return;
+  }
+
+  // Close current Container
+  containerManager_.removePlayer(currentContainerId, creatureId);
+
+  // Open parent Container
+  const auto parentContainerId = currentContainer->itemPosition.getGamePosition().getContainerId();
+  auto* parentContainer = containerManager_.getContainer(parentContainerId);
+  containerManager_.addPlayer(parentContainerId, creatureId);
+  openContainers[clientContainerId] = parentContainerId;
+
+  // Update client
+  auto* item = getItem(creatureId, parentContainer->itemPosition);
+  getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, *parentContainer, *item);
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
