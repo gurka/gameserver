@@ -83,7 +83,7 @@ class Protocol71 : public Protocol
   // Called by GameEngine (from PlayerCtrl)
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
-  void onOpenContainer(uint8_t localContainerId, const Container& container) override;
+  void onOpenContainer(uint8_t localContainerId, const Container& container, const Item& item) override;
   void onCloseContainer(uint8_t localContainerId) override;
   void sendTextMessage(uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
@@ -99,7 +99,7 @@ class Protocol71 : public Protocol
   void addMapData(const WorldInterface& world_interface, const Position& position, int width, int height, OutgoingPacket* packet);
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
-  void addEquipment(const Player& player, int inventoryIndex, OutgoingPacket* packet) const;
+  void addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const;
 
   // Functions to parse IncomingPackets
   void parseLogin(IncomingPacket* packet);

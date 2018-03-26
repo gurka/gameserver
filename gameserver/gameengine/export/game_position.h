@@ -32,6 +32,11 @@
 class GamePosition
 {
  public:
+  GamePosition()
+    : type_(Type::INVALID)
+  {
+  }
+
   GamePosition(const Position& position)
     : type_(Type::POSITION),
       position_(position)
@@ -52,7 +57,11 @@ class GamePosition
 
   std::string toString() const
   {
-    if (type_ == Type::POSITION)
+    if (type_ == Type::INVALID)
+    {
+      return "INVALID";
+    }
+    else if (type_ == Type::POSITION)
     {
       return position_.toString();
     }
@@ -65,6 +74,8 @@ class GamePosition
       return std::to_string(container_.id) + ", " + std::to_string(container_.slot);
     }
   }
+
+  bool isValid() const { return type_ != Type::INVALID; }
 
   bool isPosition() const { return type_ == Type::POSITION; }
   const Position& getPosition() const { return position_; }
@@ -79,6 +90,7 @@ class GamePosition
  private:
   enum class Type
   {
+    INVALID,
     POSITION,
     INVENTORY,
     CONTAINER,
@@ -99,6 +111,13 @@ class GamePosition
 class ItemPosition
 {
  public:
+  ItemPosition()
+    : gamePosition_(),
+      itemId_(Item::INVALID_ID),
+      stackPosition_(0)
+  {
+  }
+
   ItemPosition(const GamePosition& gamePosition, ItemId itemId, int stackPosition)
     : gamePosition_(gamePosition),
       itemId_(itemId),

@@ -52,34 +52,24 @@ class Equipment
 
   Equipment();
 
-  bool hasItem(uint8_t inventoryIndex) const
-  {
-    return hasItem(static_cast<Slot>(inventoryIndex));
-  }
-
-  bool hasItem(Slot slot) const
-  {
-    return items_.count(slot) == 1;
-  }
-
-  const Item& getItem(uint8_t inventoryIndex) const
+  const Item* getItem(uint8_t inventoryIndex) const
   {
     return getItem(static_cast<Slot>(inventoryIndex));
   }
 
-  const Item& getItem(Slot slot) const
+  const Item* getItem(Slot slot) const
   {
-    return items_.at(slot);
+    return &(items_.at(slot));
   }
 
-  Item& getItem(uint8_t inventoryIndex)
+  Item* getItem(uint8_t inventoryIndex)
   {
     return getItem(static_cast<Slot>(inventoryIndex));
   }
 
-  Item& getItem(Slot slot)
+  Item* getItem(Slot slot)
   {
-    return items_.at(slot);
+    return &(items_.at(slot));
   }
 
   bool addItem(const Item& item, uint8_t inventoryIndex);

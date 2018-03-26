@@ -37,141 +37,105 @@ class ContainerManager
 {
  public:
   ContainerManager()
-    : nextContainterId_(Container::VALID_ID_START),
+    : nextContainerId_(0),
       containers_()
   {
   }
 
-  // Creates a new Container that is located on a Tile at the given position
-  int createNewContainer(ItemId containerItemId, const Position& position)
+  int createContainer(const ItemPosition& itemPosition)
   {
-    return createNewContainer(containerItemId,
-                              Container::PARENT_IS_TILE,
-                              Container::PARENT_IS_TILE,
-                              Item(containerItemId).getWeight(),
-                              &position);
-  }
+    LOG_DEBUG("%s: containerId: %d itemPosition: %s", __func__, nextContainerId_, itemPosition.toString().c_str());
 
-  // Creates a new Container that is equipped on a Player
-  int createNewContainer(ItemId containerItemId)
-  {
-    return createNewContainer(containerItemId,
-                              Container::PARENT_IS_PLAYER,
-                              Container::PARENT_IS_PLAYER,
-                              Item(containerItemId).getWeight(),
-                              nullptr);
-  }
-
-  // Creates a new Container that is located in another container with the given containerId
-  int createNewContainer(ItemId containerItemId, int containerId)
-  {
-    const auto& parentContainer = getContainer(containerId);
-    return createNewContainer(containerItemId,
-                              containerId,
-                              parentContainer.rootContainerId,
-                              Item(containerItemId).getWeight(),
-                              nullptr);
-  }
-
-  Container& getContainer(int containerId)
-  {
-    for (auto& container : containers_)
-    {
-      if (container.id == containerId)
-      {
-        return container;
-      }
-    }
-
-    static Container INVALID_CONTAINER = Container();
-    return INVALID_CONTAINER;
-  }
-
-  const Container& getContainer(int containerId) const
-  {
-    for (auto& container : containers_)
-    {
-      if (container.id == containerId)
-      {
-        return container;
-      }
-    }
-
-    static const Container INVALID_CONTAINER = Container();
-    return INVALID_CONTAINER;
-  }
-
-  void addPlayer(int containerId, CreatureId playerId)
-  {
-    auto& container = getContainer(containerId);
-    if (container.id == Container::INVALID_ID)
-    {
-      LOG_ERROR("%s: no container with id: %d", __func__, containerId);
-      return;
-    }
-    container.relatedPlayers.push_back(playerId);
-  }
-
-  void removePlayer(int containerId, CreatureId playerId)
-  {
-    auto& container = getContainer(containerId);
-    if (container.id == Container::INVALID_ID)
-    {
-      LOG_ERROR("%s: no container with id: %d", __func__, containerId);
-      return;
-    }
-
-    auto it = std::find_if(container.relatedPlayers.begin(),
-                           container.relatedPlayers.end(),
-                           [playerId](CreatureId id){ return id == playerId; });
-    if (it == container.relatedPlayers.end())
-    {
-      LOG_ERROR("%s: playerId: %d not found in relatedPlayers", __func__, playerId);
-      return;
-    }
-    container.relatedPlayers.erase(it);
-  }
-
- private:
-  int createNewContainer(ItemId containerItemId, int parentContainerId, int rootContainerId, int weight, const Position* position)
-  {
     containers_.emplace_back();
-
     auto& container = containers_.back();
-    container.id = nextContainterId_;
-    container.parentContainerId = parentContainerId;
-    container.rootContainerId = rootContainerId;
-    container.weight = weight;
-    container.containerItemId = containerItemId;
-    if (position)
-    {
-      container.position = *position;
-    }
-
-    LOG_DEBUG("%s: containerItemId: %d, parentContainerId: %d, rootContainerId: %d, weight: %d, position: %s",
-              __func__,
-              containerItemId,
-              parentContainerId,
-              rootContainerId,
-              weight,
-              (position ? position->toString().c_str() : "<nullptr>"));
+    container.id = nextContainerId_;
+    container.weight = 0;  // TODO(simon): fix
+    container.itemPosition = itemPosition;
 
     // Until we have a database with containers...
-    if (container.id == Container::VALID_ID_START)
+    if (container.id == 0)
     {
       container.items = { Item(1712), Item(1745), Item(1411) };
     }
-    else if (container.id == Container::VALID_ID_START + 1)
+    else if (container.id == 1)
     {
       container.items = { Item(1560) };
     }
 
-    nextContainterId_ += 1;
+    nextContainerId_ += 1;
 
     return container.id;
   }
 
-  int nextContainterId_;
+  Container* getContainer(int containerId)
+  {
+    for (auto& container : containers_)
+    {
+      if (container.id == containerId)
+      {
+        return &container;
+      }
+    }
+
+    return nullptr;
+  }
+
+  Item* getItem(int containerId, int containerSlot)
+  {
+    auto* container = getContainer(containerId);
+    if (!container)
+    {
+      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
+      return nullptr;
+    }
+
+    if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
+    {
+      LOG_ERROR("%s: containerSlot: %d out of range for container with id: %d",
+                __func__,
+                containerSlot,
+                containerId);
+      return nullptr;
+    }
+
+    return &container->items[containerSlot];
+  }
+
+  void addPlayer(int containerId, CreatureId playerId)
+  {
+    auto* container = getContainer(containerId);
+    if (!container)
+    {
+      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
+      return;
+    }
+
+    container->relatedPlayers.push_back(playerId);
+  }
+
+  void removePlayer(int containerId, CreatureId playerId)
+  {
+    auto* container = getContainer(containerId);
+    if (!container)
+    {
+      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
+      return;
+    }
+
+    auto it = std::find_if(container->relatedPlayers.begin(),
+                           container->relatedPlayers.end(),
+                           [playerId](CreatureId id){ return id == playerId; });
+    if (it == container->relatedPlayers.end())
+    {
+      LOG_ERROR("%s: playerId: %d not found in relatedPlayers", __func__, playerId);
+      return;
+    }
+
+    container->relatedPlayers.erase(it);
+  }
+
+ private:
+  int nextContainerId_;
   std::vector<Container> containers_;
 };
 

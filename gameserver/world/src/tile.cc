@@ -143,39 +143,55 @@ bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
   return false;
 }
 
-Item Tile::getItem(uint8_t stackPosition) const
+const Item* Tile::getItem(uint8_t stackPosition) const
 {
+  static const Item INVALID_ITEM = Item();
+
   if (stackPosition == 0)
   {
     // Ground Item
-    return items_.front();
+    return &(items_.front());
   }
   else if (stackPosition < 1 + numberOfTopItems)
   {
     // Top Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition);
-    return *itemIt;
+    return &(*itemIt);
   }
   else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
   {
     // Creature
     LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
+    return &INVALID_ITEM;
   }
   else if (stackPosition < 1 + items_.size() + creatureIds_.size())
   {
     // Bottom Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition - creatureIds_.size());
-    return *itemIt;
+    return &(*itemIt);
   }
   else
   {
     // Invalid stackpos
     LOG_ERROR("%s: Stackposition is invalid", __func__);
+    return &INVALID_ITEM;
   }
+}
 
-  return Item();
+Item* Tile::getItem(uint8_t stackPosition)
+{
+  // Ugly but correct according to https://stackoverflow.com/a/123995/969365
+  const auto* item = static_cast<const Tile*>(this)->getItem(stackPosition);
+  if (item->isValid())
+  {
+    return const_cast<Item*>(item);
+  }
+  else
+  {
+    return nullptr;
+  }
 }
 
 std::size_t Tile::getNumberOfThings() const

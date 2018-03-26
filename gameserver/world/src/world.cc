@@ -429,14 +429,6 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   auto& fromTile = internalGetTile(fromPosition);
   auto& toTile = internalGetTile(toPosition);
 
-  // Check if Item exists in fromTile
-  auto item = fromTile.getItem(fromStackPos);
-  if (!item.isValid())
-  {
-    LOG_DEBUG("%s: Could not find item %d at %s", __func__, itemId, fromPosition.toString().c_str());
-    return ReturnCode::ITEM_NOT_FOUND;
-  }
-
   // Check if we can add Item to toTile
   for (const auto& item : toTile.getItems())
   {
@@ -446,6 +438,9 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
+
+  // Take a copy of the Item from fromTile
+  auto item = *fromTile.getItem(fromStackPos);
 
   // Try to remove Item from fromTile
   if (!fromTile.removeItem(itemId, fromStackPos))
@@ -483,6 +478,18 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   }
 
   return ReturnCode::OK;
+}
+
+Item* World::getItem(const Position& position, int stackPosition)
+{
+  if (!positionIsValid(position))
+  {
+    LOG_ERROR("%s: invalid position: %s", __func__, position.toString().c_str());
+    return nullptr;
+  }
+
+  auto& tile = internalGetTile(position);
+  return tile.getItem(stackPosition);
 }
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const

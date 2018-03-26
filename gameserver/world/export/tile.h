@@ -53,7 +53,8 @@ class Tile
   // Items
   void addItem(const Item& item);
   bool removeItem(ItemId itemId, uint8_t stackPosition);
-  Item getItem(uint8_t stackPosition) const;
+  const Item* getItem(uint8_t stackPosition) const;
+  Item* getItem(uint8_t stackPosition);
   const std::vector<Item>& getItems() const { return items_; }
 
   // Other

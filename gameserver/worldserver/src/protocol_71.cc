@@ -267,7 +267,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface, const Cr
 
     for (auto i = 1; i <= 10; i++)
     {
-      addEquipment(player, i, &packet);
+      addEquipment(player.getEquipment(), i, &packet);
     }
   }
   else
@@ -500,23 +500,21 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 
   OutgoingPacket packet;
 
-  addEquipment(player, inventoryIndex, &packet);
+  addEquipment(player.getEquipment(), inventoryIndex, &packet);
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container)
+void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item)
 {
   if (!isConnected())
   {
     return;
   }
 
-  const auto containerItem = Item(container.containerItemId);
-
-  if (!containerItem.hasAttribute("maxitems"))
+  if (!item.hasAttribute("maxitems"))
   {
-    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, container.containerItemId);
+    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, item.getItemId());
     return;
   }
 
@@ -526,10 +524,10 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
 
   packet.addU8(0x6E);
   packet.addU8(clientContainerId);
-  packet.addU16(container.containerItemId);
-  packet.addString(containerItem.getName());
-  packet.addU8(containerItem.getAttribute<int>("maxitems"));
-  packet.addU8(container.parentContainerId >= Container::VALID_ID_START ? 1 : 0);  // Has parent container or not
+  addItem(item, &packet);
+  packet.addString(item.getName());
+  packet.addU8(item.getAttribute<int>("maxitems"));
+  packet.addU8(container.itemPosition.getGamePosition().isContainer());  // Has parent container or not
   packet.addU8(container.items.size());
   for (const auto& item : container.items)
   {
@@ -744,12 +742,10 @@ void Protocol71::addItem(const Item& item, OutgoingPacket* packet) const
   }
 }
 
-void Protocol71::addEquipment(const Player& player, int inventoryIndex, OutgoingPacket* packet) const
+void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const
 {
-  const auto& equipment = player.getEquipment();
-  const auto& item = equipment.getItem(inventoryIndex);
-
-  if (!item.isValid())
+  const auto* item = equipment.getItem(inventoryIndex);
+  if (!item || !item->isValid())
   {
     packet->addU8(0x79);  // No Item in this slot
     packet->addU8(inventoryIndex);
@@ -758,7 +754,7 @@ void Protocol71::addEquipment(const Player& player, int inventoryIndex, Outgoing
   {
     packet->addU8(0x78);
     packet->addU8(inventoryIndex);
-    addItem(item, packet);
+    addItem(*item, packet);
   }
 }
 

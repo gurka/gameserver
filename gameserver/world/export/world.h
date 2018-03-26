@@ -75,6 +75,7 @@ class World : public WorldInterface
   ReturnCode removeItem(int itemId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
                       int itemId, int count, const Position& toPosition);
+  Item* getItem(const Position& position, int stackPosition);
 
   // Creature checks
   bool creatureCanThrowTo(CreatureId creatureId, const Position& position) const;

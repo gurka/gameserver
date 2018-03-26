@@ -60,6 +60,9 @@ struct RecursiveTask
 
 }
 
+// TODO(simon): Fix this
+constexpr int Container::INVALID_ID;
+
 GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage)
   : gameEngineQueue_(gameEngineQueue),
     world_(world),
@@ -76,6 +79,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 
   // Store the Player and the PlayerCtrl
   playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl, {}});
+  playerPlayerCtrl_.at(creatureId).openContainers.fill(Container::INVALID_ID);
 
   // Get the Player again, since newPlayed is moved from
   auto& player = getPlayer(creatureId);
@@ -284,48 +288,84 @@ void GameEngine::say(CreatureId creatureId, uint8_t type, const std::string& mes
 
 void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPosition, const GamePosition& toPosition, int count)
 {
+  LOG_DEBUG("%s: creatureId: %d fromPosition: %s toPosition: %s count: %d",
+            __func__,
+            creatureId,
+            fromPosition.toString().c_str(),
+            toPosition.toString().c_str(),
+            count);
+
   getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
 {
-  getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  LOG_DEBUG("%s: creatureId: %d position: %s newContainerId: %d",
+            __func__,
+            creatureId,
+            position.toString().c_str(),
+            newContainerId);
+
+  auto* item = getItem(creatureId, position);
+  if (!item)
+  {
+    LOG_ERROR("%s: could not find Item", __func__);
+    return;
+  }
+
+  // TODO(simon): verify that player is close enough, if item is in world
+
+  if (item->isContainer())
+  {
+    useContainer(creatureId, item, position, newContainerId);
+  }
 }
 
 void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
 {
-  const auto item = getItem(creatureId, position);
+  LOG_DEBUG("%s: creatureId: %d position: %s",
+            __func__,
+            creatureId,
+            position.toString().c_str());
+
+  auto* item = getItem(creatureId, position);
+  if (!item)
+  {
+    LOG_ERROR("%s: could not find Item", __func__);
+    return;
+  }
+
   // TODO(simon): verify that player is close enough, if item is in world
 
-  if (item.isValid())
+  if (item->isValid())
   {
     std::ostringstream ss;
 
-    if (!item.getName().empty())
+    if (!item->getName().empty())
     {
-      if (item.isStackable() && item.getCount() > 1)
+      if (item->isStackable() && item->getCount() > 1)
       {
-        ss << "You see " << item.getCount() << " " << item.getName() << "s.";
+        ss << "You see " << item->getCount() << " " << item->getName() << "s.";
       }
       else
       {
-        ss << "You see a " << item.getName() << ".";
+        ss << "You see a " << item->getName() << ".";
       }
     }
     else
     {
-      ss << "You see an item with id " << item.getItemId() << ".";
+      ss << "You see an item with id " << item->getItemId() << ".";
     }
 
     // TODO(simon): only if standing next to the item
-    if (item.hasAttribute("weight"))
+    if (item->hasAttribute("weight"))
     {
-      ss << "\nIt weights " << item.getAttribute<float>("weight")<< " oz.";
+      ss << "\nIt weights " << item->getAttribute<float>("weight")<< " oz.";
     }
 
-    if (item.hasAttribute("description"))
+    if (item->hasAttribute("description"))
     {
-      ss << "\n" << item.getAttribute<std::string>("description");
+      ss << "\n" << item->getAttribute<std::string>("description");
     }
 
     getPlayerCtrl(creatureId)->sendTextMessage(0x13, ss.str());
@@ -360,29 +400,20 @@ void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 //  getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
 }
 
-Item GameEngine::getItem(CreatureId creatureId, const ItemPosition& position) const
+Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 {
   // TODO(simon): verify ItemId
 
   const auto& gamePosition = position.getGamePosition();
   if (gamePosition.isPosition())
   {
-    const auto& tile = world_->getTile(gamePosition.getPosition());
-    return tile.getItem(position.getStackPosition());
+    return world_->getItem(gamePosition.getPosition(), position.getStackPosition());
   }
 
   if (gamePosition.isInventory())
   {
-    const auto& player = getPlayer(creatureId);
-    if (player.getEquipment().hasItem(gamePosition.getInventorySlot()))
-    {
-      return player.getEquipment().getItem(gamePosition.getInventorySlot());
-    }
-    else
-    {
-      LOG_ERROR("%s: no Item found in inventorySlot: %d", __func__, gamePosition.getInventorySlot());
-      return Item();
-    }
+    auto& player = getPlayer(creatureId);
+    return player.getEquipment().getItem(gamePosition.getInventorySlot());
   }
 
   if (gamePosition.isContainer())
@@ -390,18 +421,49 @@ Item GameEngine::getItem(CreatureId creatureId, const ItemPosition& position) co
     // TODO(simon): getContainer()
     const auto clientContainerId = gamePosition.getContainerId();
     const auto containerId = playerPlayerCtrl_.at(creatureId).openContainers[clientContainerId];
-    const auto& container = containerManager_.getContainer(containerId);
-    if (gamePosition.getContainerSlot() <= static_cast<int>(container.items.size()))
-    {
-      return container.items[gamePosition.getContainerSlot()];
-    }
-    else
-    {
-      LOG_ERROR("%s: no Item found in container: %d at slot: %d", __func__, containerId, gamePosition.getContainerSlot());
-      return Item();
-    }
+    auto* item = containerManager_.getItem(containerId, gamePosition.getContainerSlot());
+    return item;
   }
 
   LOG_ERROR("%s: GamePosition: %s, is invalid", __func__, gamePosition.toString().c_str());
-  return Item();
+  return nullptr;
+}
+
+void GameEngine::useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId)
+{
+  // Check if this Item has a corresponding Container object
+  if (item->getContainerId() == Container::INVALID_ID)
+  {
+    // Create Container for this Item
+    item->setContainerId(containerManager_.createContainer(itemPosition));
+  }
+
+  const auto containerId = item->getContainerId();
+
+  // Check if player already have this container open
+  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
+  int clientContainerId = -1;
+  for (auto i = 0u; i < openContainers.size(); i++)
+  {
+    if (openContainers[i] == containerId)
+    {
+      clientContainerId = i;
+      break;
+    }
+  }
+
+  if (clientContainerId == -1)
+  {
+    // Container not yet open, so open it
+    clientContainerId = newContainerId;
+    openContainers[clientContainerId] = containerId;
+    containerManager_.addPlayer(containerId, creatureId);
+    auto* container = containerManager_.getContainer(containerId);
+    getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, *container, *item);
+  }
+  else
+  {
+    // Container already open, so close it
+    getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
+  }
 }

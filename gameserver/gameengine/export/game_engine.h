@@ -69,7 +69,9 @@ class GameEngine
   void closeContainer(CreatureId creatureId, int localContainerId);
 
  private:
-  Item getItem(CreatureId creatureId, const ItemPosition& position) const;
+  Item* getItem(CreatureId creatureId, const ItemPosition& position);
+
+  void useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId);
 
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }
