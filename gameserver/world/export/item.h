@@ -58,7 +58,7 @@ struct ItemData
 class Item
 {
  public:
-  static constexpr ItemId INVALID_ID = -1;
+  static constexpr ItemId INVALID_ID = 0;
 
   // Loads ItemData from the data file and the item file
   // Must be loaded (successfully) before any Item objects are created
