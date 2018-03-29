@@ -197,6 +197,7 @@ int main(int argc, char* argv[])
   server.reset();
   accountReader.reset();
   gameEngine.reset();
+  gameEngineQueue.reset();
   world.reset();
 
   return 0;
