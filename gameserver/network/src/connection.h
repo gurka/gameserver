@@ -151,18 +151,20 @@ class Connection
                          2,
                          [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                          {
+                           // Just abort on operation_aborted, this instance might have been deletd
+                           if (errorCode == Backend::Error::operation_aborted)
+                           {
+                             LOG_DEBUG("%s: operation_aborted", __func__);
+                             return;
+                           }
+
                            onPacketHeaderSent(errorCode, len);
                          });
   }
 
   void onPacketHeaderSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode == Backend::Error::operation_aborted)
-    {
-      // Connection closed, just return
-      return;
-    }
-    else if (errorCode)
+    if (errorCode)
     {
       LOG_DEBUG("%s: could not send packet header", __func__);
 
@@ -183,18 +185,20 @@ class Connection
                          packet.getLength(),
                          [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                          {
+                           // Just abort on operation_aborted, this instance might have been deletd
+                           if (errorCode == Backend::Error::operation_aborted)
+                           {
+                             LOG_DEBUG("%s: operation_aborted", __func__);
+                             return;
+                           }
+
                            onPacketDataSent(errorCode, len);
                          });
   }
 
   void onPacketDataSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode == Backend::Error::operation_aborted)
-    {
-      // Connection closed, just return
-      return;
-    }
-    else if (errorCode)
+    if (errorCode)
     {
       LOG_DEBUG("%s: could not send packet", __func__);
 
@@ -231,18 +235,20 @@ class Connection
                         2,
                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                         {
+                          // Just abort on operation_aborted, this instance might have been deletd
+                          if (errorCode == Backend::Error::operation_aborted)
+                          {
+                            LOG_DEBUG("%s: operation_aborted", __func__);
+                            return;
+                          }
+
                           onPacketHeaderReceived(errorCode, len);
                         });
   }
 
   void onPacketHeaderReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode == Backend::Error::operation_aborted)
-    {
-      // Connection closed, just return
-      return;
-    }
-    else if (errorCode)
+    if (errorCode)
     {
       LOG_DEBUG("%s: could not receive packet header: %s",
                 __func__, errorCode.message().c_str());
@@ -271,18 +277,20 @@ class Connection
                         dataLength,
                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                         {
+                          // Just abort on operation_aborted, this instance might have been deletd
+                          if (errorCode == Backend::Error::operation_aborted)
+                          {
+                            LOG_DEBUG("%s: operation_aborted", __func__);
+                            return;
+                          }
+
                           onPacketDataReceived(errorCode, len);
                         });
   }
 
   void onPacketDataReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode == Backend::Error::operation_aborted)
-    {
-      // Connection closed, just return
-      return;
-    }
-    else if (errorCode)
+    if (errorCode)
     {
       LOG_DEBUG("%s: could not receive packet", __func__);
 
