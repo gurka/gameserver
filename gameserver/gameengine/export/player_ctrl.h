@@ -32,7 +32,7 @@
 #include "player.h"
 #include "position.h"
 #include "item.h"
-#include "container_manager.h"
+#include "container.h"
 
 class PlayerCtrl : public CreatureCtrl
 {
@@ -45,6 +45,7 @@ class PlayerCtrl : public CreatureCtrl
   PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
   // Called by GameEngine
+  virtual CreatureId getPlayerId() const = 0;
   virtual void setPlayerId(CreatureId playerId) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
   virtual void onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item) = 0;

@@ -25,118 +25,47 @@
 #ifndef GAMEENGINE_CONTAINERMANAGER_H_
 #define GAMEENGINE_CONTAINERMANAGER_H_
 
-#include <algorithm>
-#include <vector>
+#include <array>
+#include <unordered_map>
 
-#include "item.h"
-#include "position.h"
-#include "logger.h"
 #include "container.h"
+#include "game_position.h"
+
+class PlayerCtrl;
+class Item;
 
 class ContainerManager
 {
  public:
   ContainerManager()
-    : nextContainerId_(0),
-      containers_()
+    : nextContainerId_(64),
+      containers_(),
+      clientContainerIds_()
   {
   }
 
-  int createContainer(const ItemPosition& itemPosition)
-  {
-    LOG_DEBUG("%s: containerId: %d itemPosition: %s", __func__, nextContainerId_, itemPosition.toString().c_str());
+  void playerSpawn(PlayerCtrl* playerCtrl);
+  void playerDespawn(PlayerCtrl* playerCtrl);
 
-    containers_.emplace_back();
-    auto& container = containers_.back();
-    container.id = nextContainerId_;
-    container.weight = 0;  // TODO(simon): fix
-    container.itemPosition = itemPosition;
+  Container* getContainer(PlayerCtrl* playerCtrl, int containerId);
+  Item* getItem(PlayerCtrl* playerCtrl, int containerId, int containerSlot);
 
-    // Until we have a database with containers...
-    if (container.id == 0)
-    {
-      container.items = { Item(1712), Item(1745), Item(1411) };
-    }
-    else if (container.id == 1)
-    {
-      container.items = { Item(1560) };
-    }
-
-    nextContainerId_ += 1;
-
-    return container.id;
-  }
-
-  Container* getContainer(int containerId)
-  {
-    for (auto& container : containers_)
-    {
-      if (container.id == containerId)
-      {
-        return &container;
-      }
-    }
-
-    return nullptr;
-  }
-
-  Item* getItem(int containerId, int containerSlot)
-  {
-    auto* container = getContainer(containerId);
-    if (!container)
-    {
-      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
-      return nullptr;
-    }
-
-    if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
-    {
-      LOG_ERROR("%s: containerSlot: %d out of range for container with id: %d",
-                __func__,
-                containerSlot,
-                containerId);
-      return nullptr;
-    }
-
-    return &container->items[containerSlot];
-  }
-
-  void addPlayer(int containerId, CreatureId playerId)
-  {
-    auto* container = getContainer(containerId);
-    if (!container)
-    {
-      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
-      return;
-    }
-
-    container->relatedPlayers.push_back(playerId);
-  }
-
-  void removePlayer(int containerId, CreatureId playerId)
-  {
-    auto* container = getContainer(containerId);
-    if (!container)
-    {
-      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
-      return;
-    }
-
-    auto it = std::find_if(container->relatedPlayers.begin(),
-                           container->relatedPlayers.end(),
-                           [playerId](CreatureId id){ return id == playerId; });
-    if (it == container->relatedPlayers.end())
-    {
-      LOG_ERROR("%s: playerId: %d not found in relatedPlayers", __func__, playerId);
-      return;
-    }
-
-    container->relatedPlayers.erase(it);
-  }
+  void useContainer(PlayerCtrl* playerCtrl, Item* item, const ItemPosition& itemPosition, int newClientContainerId);
+  void closeContainer(PlayerCtrl* playerCtrl, int containerId);
+  void openParentContainer(PlayerCtrl* playerCtrl, int containerId);
 
  private:
+  void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item);
+  void closeContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId);
+
+  bool isClientContainerId(int containerId) const;
+  void setClientContainerId(CreatureId playerId, int clientContainerId, int containerId);
+  int getClientContainerId(CreatureId playerId, int containerId) const;
+  int getContainerId(CreatureId playerId, int clientContainerId) const;
+
   int nextContainerId_;
-  std::vector<Container> containers_;
+  std::unordered_map<int, Container> containers_;
+  std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
 };
 
 #endif  // GAMEENGINE_CONTAINERMANAGER_H_

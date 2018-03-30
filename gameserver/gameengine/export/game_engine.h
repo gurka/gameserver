@@ -71,8 +71,9 @@ class GameEngine
 
  private:
   Item* getItem(CreatureId creatureId, const ItemPosition& position);
-
-  void useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId);
+  bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const;
+  void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
+  void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
 
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }
@@ -86,9 +87,6 @@ class GameEngine
   {
     Player player;
     PlayerCtrl* player_ctrl;
-
-    // Maps client container id (index in vector) to global container id
-    std::array<int, 64> openContainers;
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 

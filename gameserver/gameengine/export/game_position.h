@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <string>
 
+#include "position.h"
+
 class GamePosition
 {
  public:
@@ -63,15 +65,15 @@ class GamePosition
     }
     else if (type_ == Type::POSITION)
     {
-      return position_.toString();
+      return std::string("(Position) ") + position_.toString();
     }
     else if (type_ == Type::INVENTORY)
     {
-      return std::to_string(inventorySlot_);
+      return std::string("(Inventory) ") + std::to_string(inventorySlot_);
     }
     else  // type_ == Type::CONTAINER
     {
-      return std::to_string(container_.id) + ", " + std::to_string(container_.slot);
+      return std::string("(Container) ") + std::to_string(container_.id) + ", " + std::to_string(container_.slot);
     }
   }
 

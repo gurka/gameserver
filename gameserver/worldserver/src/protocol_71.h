@@ -81,6 +81,7 @@ class Protocol71 : public Protocol
   void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
+  CreatureId getPlayerId() const override { return playerId_; }
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onOpenContainer(uint8_t localContainerId, const Container& container, const Item& item) override;
@@ -122,6 +123,7 @@ class Protocol71 : public Protocol
   Server* server_;
   AccountReader* accountReader_;
 
+  // TODO(simon) vector to save space?
   std::array<CreatureId, 64> knownCreatures_;
 };
 

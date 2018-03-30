@@ -31,17 +31,24 @@
 #include "game_position.h"
 #include "creature.h"
 
+class PlayerCtrl;
+
 struct Container
 {
   Container()
     : id(INVALID_ID),
       weight(0),
-      itemPosition(),
+      itemId(0),
+      parentContainerId(INVALID_ID),
+      rootItemPosition(),
       items(),
       relatedPlayers()
   {
   }
 
+  // Invalid id: -1
+  // Client container id: 0..63
+  // (Global) container id: 64..INT_MAX
   static constexpr int INVALID_ID = -1;
 
   // This Container's id
@@ -50,14 +57,22 @@ struct Container
   // The total weight of this Container and all Items in it (including other Containers)
   int weight;
 
-  // ItemPosition of the Item that this Container belongs to
-  ItemPosition itemPosition;
+  // Id of the Item that corresponds to this Container (e.g. itemId of a backpack)
+  int itemId;
+
+  // Container id of the parent container, or INVALID_ID if no parent
+  // This id must NOT be a clientContainerId
+  int parentContainerId;
+
+  // ItemPosition of the root item that this Container belongs to
+  // Is either a world position or a inventory position
+  ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
   std::vector<Item> items;
 
   // List of Players that have this Container open
-  std::vector<CreatureId> relatedPlayers;
+  std::vector<PlayerCtrl*> relatedPlayers;
 };
 
 #endif // GAMEENGINE_CONTAINER_H_
