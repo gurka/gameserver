@@ -295,7 +295,34 @@ void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPositio
             toPosition.toString().c_str(),
             count);
 
-  getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  if (fromPosition.getItemId() == 0x63)
+  {
+    // Move Creature
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+  }
+
+  // Verify that the Item is at fromPosition and can be moved
+  if (!getItem(creatureId, fromPosition))
+  {
+    LOG_ERROR("%s: could not find Item at fromPosition: %s", __func__, fromPosition.toString().c_str());
+    return;
+  }
+  const auto item = *getItem(creatureId, fromPosition);
+  // TODO(simon): verify that Item is movable
+
+  // Verify that the Item can be added to toPosition
+  if (!canAddItem(creatureId, item, toPosition))
+  {
+    // TODO(simon): proper error message to player
+    LOG_ERROR("%s: cannot add Item to toPosition: %s", __func__, toPosition.toString().c_str());
+    return;
+  }
+
+  // Remove Item from fromPosition
+  removeItem(creatureId, fromPosition);
+
+  // Add Item to toPosition
+  addItem(creatureId, item, toPosition);
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
@@ -508,4 +535,39 @@ void GameEngine::useContainer(CreatureId creatureId, Item* item, const ItemPosit
     // Container already open, so close it
     getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
   }
+}
+
+bool GameEngine::canAddItem(CreatureId creatureId, const Item& item, const GamePosition& position)
+{
+  if (position.isPosition())
+  {
+    return world_->canAddItem(item, position);
+  }
+  else if (position.isInventory())
+  {
+    // TODO(simon): check capacity of Player and weight of Item
+    // TODO(simon): if there is a Container item at the inventorySlot, then check if we
+    //              can add the Item to that Container
+    return getPlayer(creatureId).getEquipment().getItem(position.getInventorySlot()) == nullptr;
+  }
+  else if (position.isContainer())
+  {
+    // TODO(simon): check capacity of Player if root Container is in Player inventory
+    // Note: if non-container item or no item at all in container slot, then Item can be added
+    //       and should go to first slot in the container
+    //       if there is a container in the container slot, then we need to check that container
+  }
+
+  LOG_ERROR("%s: invalid position: %s", __func__, position.toString().c_str());
+  return false;
+}
+
+void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position)
+{
+
+}
+
+void GameEngine::addItem(CreatureId creatureId, const Item& item, const GamePosition& position)
+{
+
 }
