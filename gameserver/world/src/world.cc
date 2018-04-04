@@ -328,6 +328,25 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
   }
 }
 
+bool World::canAddItem(const Item& item, const Position& position) const
+{
+  if (!positionIsValid(position))
+  {
+    LOG_ERROR("%s: Invalid position: %s", __func__, position.toString().c_str());
+    return false;
+  }
+
+  for (const auto& item : getTile(position).getItems())
+  {
+    if (item.isBlocking())
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 World::ReturnCode World::addItem(ItemId itemId, const Position& position)
 {
   return addItem(Item(itemId), position);

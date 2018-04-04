@@ -72,9 +72,9 @@ class GameEngine
  private:
   Item* getItem(CreatureId creatureId, const ItemPosition& position);
   void useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId);
-  bool canAddItem(CreatureId creatureId, const Item& item, const GamePosition& position);
-  void removeItem(CreatureId creatureId, const ItemPosition& position);
-  void addItem(CreatureId creatureId, const Item& item, const GamePosition& position);
+  bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
+  void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
+  void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
 
   // Use these instead of the unordered_maps directly
   Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }

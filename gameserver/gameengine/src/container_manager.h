@@ -37,7 +37,9 @@ class ContainerManager
 {
  public:
   ContainerManager()
-    : nextContainerId_(0),
+    : nextContainerId_(100),  // Container id starts at 100 so that we can catch errors where
+                              // client container id (0..63) are accidentally used as a regular
+                              // container id
       containers_()
   {
   }
@@ -53,11 +55,11 @@ class ContainerManager
     container.itemPosition = itemPosition;
 
     // Until we have a database with containers...
-    if (container.id == 0)
+    if (container.id == 100)
     {
       container.items = { Item(1712), Item(1745), Item(1411) };
     }
-    else if (container.id == 1)
+    else if (container.id == 101)
     {
       container.items = { Item(1560) };
     }
@@ -69,6 +71,11 @@ class ContainerManager
 
   Container* getContainer(int containerId)
   {
+    if (containerId < 100)
+    {
+      LOG_ERROR("%s: containerId: %d is a client container id", __func__, containerId);
+    }
+
     for (auto& container : containers_)
     {
       if (container.id == containerId)

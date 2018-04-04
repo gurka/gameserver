@@ -65,7 +65,11 @@ case $1 in
     popd
     ;;
 
+  'clean')
+    rm -rf "$DIR_RELEASE" "$DIR_DEBUG" "$DIR_TEST" "$DIR_ECLIPSE"
+    ;;
+
   *)
-    echo "Usage: $0 [all | release | debug | test]"
+    echo "Usage: $0 [all | release | debug | test | eclipse | clean]"
     ;;
 esac

@@ -46,6 +46,7 @@ class PlayerCtrl : public CreatureCtrl
 
   // Called by GameEngine
   virtual void setPlayerId(CreatureId playerId) = 0;
+  virtual void setContainerMap(int clientContainerId, int containerId) = 0;
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
   virtual void onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item) = 0;
   virtual void onCloseContainer(uint8_t clientContainerId) = 0;

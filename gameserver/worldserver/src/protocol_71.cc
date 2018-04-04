@@ -53,7 +53,8 @@ Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
     server_(server),
     accountReader_(accountReader)
 {
-  std::fill(knownCreatures_.begin(), knownCreatures_.end(), Creature::INVALID_ID);
+  knownCreatures_.fill(Creature::INVALID_ID);
+  containerMap_.fill(Container::INVALID_ID);
 }
 
 void Protocol71::disconnected()
@@ -497,6 +498,17 @@ void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Posit
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
+void Protocol71::setContainerMap(int clientContainerId, int containerId)
+{
+  LOG_DEBUG("%s: playerId: %d clientContainerId: %d containerId: %d",
+            __func__,
+            playerId_,
+            clientContainerId,
+            containerId);
+
+  containerMap_[clientContainerId] = containerId;
+}
+
 void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 {
   if (!isConnected())
@@ -510,6 +522,8 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 
   server_->sendPacket(connectionId_, std::move(packet));
 }
+
+// onOpen/onClose, change clientContainerId to containerId and search map for clientContainerId
 
 void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item)
 {
@@ -945,7 +959,15 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     // Container have x fully set and 7th bit in y set
     // Container id is lower 6 bits in y
     // Container slot is z
-    return GamePosition(y & ~0x40, z);
+    const auto clientContainerId = y & ~0x40;
+    if (containerMap_[clientContainerId] == Container::INVALID_ID)
+    {
+      LOG_ERROR("%s: playerId: %d, could not find clientContainerId: %d in map",
+                __func__,
+                playerId_,
+                clientContainerId);
+    }
+    return GamePosition(containerMap_[clientContainerId], z);
   }
 }
 

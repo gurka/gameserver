@@ -42,7 +42,7 @@ struct Container
   {
   }
 
-  static constexpr int INVALID_ID = -1;
+  static constexpr int INVALID_ID = Item::INVALID_ID;
 
   // This Container's id
   int id;

@@ -82,6 +82,7 @@ class Protocol71 : public Protocol
 
   // Called by GameEngine (from PlayerCtrl)
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
+  void setContainerMap(int clientContainerId, int containerId) override;
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onOpenContainer(uint8_t localContainerId, const Container& container, const Item& item) override;
   void onCloseContainer(uint8_t localContainerId) override;
@@ -122,7 +123,9 @@ class Protocol71 : public Protocol
   Server* server_;
   AccountReader* accountReader_;
 
+  // TODO(simon) vector to save space?
   std::array<CreatureId, 64> knownCreatures_;
+  std::array<int, 64> containerMap_;
 };
 
 #endif  // WORLDSERVER_PROTOCOL71_H_
