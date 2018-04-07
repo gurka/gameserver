@@ -430,6 +430,13 @@ void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerI
 {
   LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
 
+  return;
+
+  // Below does not work since a Container's itemPosition (if container) uses containerId = clientContainerId
+  // If a child contianer has been opened, this id is no longer valid
+  // We need to convert ItemPosition with clientContainerId to ItemPosition with containerId
+#if 0
+
   // Verify that the Player actually have this container open
   auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
   if (static_cast<int>(openContainers.size()) <= clientContainerId ||
@@ -468,6 +475,7 @@ void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerI
   // Update client
   auto* item = getItem(creatureId, parentContainer->itemPosition);
   getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, *parentContainer, *item);
+#endif
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)

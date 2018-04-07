@@ -26,7 +26,7 @@
 #define GAMEENGINE_CONTAINERMANAGER_H_
 
 #include <algorithm>
-#include <vector>
+#include <unordered_map>
 
 #include "item.h"
 #include "position.h"
@@ -48,8 +48,7 @@ class ContainerManager
   {
     LOG_DEBUG("%s: containerId: %d itemPosition: %s", __func__, nextContainerId_, itemPosition.toString().c_str());
 
-    containers_.emplace_back();
-    auto& container = containers_.back();
+    auto& container = containers_[nextContainerId_];
     container.id = nextContainerId_;
     container.weight = 0;  // TODO(simon): fix
     container.itemPosition = itemPosition;
@@ -76,12 +75,9 @@ class ContainerManager
       LOG_ERROR("%s: containerId: %d is a client container id", __func__, containerId);
     }
 
-    for (auto& container : containers_)
+    if (containers_.count(containerId) == 1)
     {
-      if (container.id == containerId)
-      {
-        return &container;
-      }
+      return &containers_.at(containerId);
     }
 
     return nullptr;
@@ -141,9 +137,21 @@ class ContainerManager
     container->relatedPlayers.erase(it);
   }
 
+  void useContainer(Item* item, PlayerCtrl* playerCtrl)
+  {
+  }
+
+  void closeContainer(Item* item, PlayerCtrl* playerCtrl)
+  {
+  }
+
+  void openParentContainer(Item* item, PlayerCtrl* playerCtrl)
+  {
+  }
+
  private:
   int nextContainerId_;
-  std::vector<Container> containers_;
+  std::unordered_map<int, Container> containers_;
 };
 
 #endif  // GAMEENGINE_CONTAINERMANAGER_H_
