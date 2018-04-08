@@ -29,8 +29,6 @@
 #include <cstdio>
 #include <string>
 
-#include "container_id.h"
-
 class GamePosition
 {
  public:
@@ -51,7 +49,7 @@ class GamePosition
   {
   }
 
-  GamePosition(ContainerId containerId, int containerSlot)
+  GamePosition(int containerId, int containerSlot)
     : type_(Type::CONTAINER),
       container_{containerId, containerSlot}
   {
@@ -73,7 +71,7 @@ class GamePosition
     }
     else  // type_ == Type::CONTAINER
     {
-      return std::string("(Container) ") + std::to_string(container_.id.getContainerId()) + ", " + std::to_string(container_.slot);
+      return std::string("(Container) ") + std::to_string(container_.id) + ", " + std::to_string(container_.slot);
     }
   }
 
@@ -86,7 +84,7 @@ class GamePosition
   int getInventorySlot() const { return inventorySlot_; }
 
   bool isContainer() const { return type_ == Type::CONTAINER; }
-  ContainerId getContainerId() const { return container_.id; }
+  int getContainerId() const { return container_.id; }
   int getContainerSlot() const { return container_.slot; }
 
  private:
@@ -104,7 +102,7 @@ class GamePosition
     int inventorySlot_;
     struct
     {
-      ContainerId id;
+      int id;
       int slot;
     } container_;
   };

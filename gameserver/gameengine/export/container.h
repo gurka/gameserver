@@ -27,7 +27,6 @@
 
 #include <vector>
 
-#include "container_id.h"
 #include "item.h"
 #include "game_position.h"
 #include "creature.h"
@@ -37,15 +36,20 @@ class PlayerCtrl;
 struct Container
 {
   Container()
-    : id(ContainerId::INVALID_ID),
+    : id(INVALID_ID),
       weight(0),
       itemId(0),
-      parentContainerId(ContainerId::INVALID_ID),
+      parentContainerId(INVALID_ID),
       rootItemPosition(),
       items(),
       relatedPlayers()
   {
   }
+
+  // Invalid id: -1
+  // Client container id: 0..63
+  // (Global) container id: 64..INT_MAX
+  static constexpr int INVALID_ID = -1;
 
   // This Container's id
   int id;
@@ -56,9 +60,9 @@ struct Container
   // Id of the Item that corresponds to this Container (e.g. itemId of a backpack)
   int itemId;
 
-  // Container id of the parent container, or ContainerId::INVALID_ID if no parent
+  // Container id of the parent container, or INVALID_ID if no parent
   // This id must NOT be a clientContainerId
-  ContainerId parentContainerId;
+  int parentContainerId;
 
   // ItemPosition of the root item that this Container belongs to
   // Is either a world position or a inventory position

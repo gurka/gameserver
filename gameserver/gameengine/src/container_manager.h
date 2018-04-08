@@ -47,37 +47,36 @@ class ContainerManager
   {
   }
 
-  Container* getContainer(PlayerCtrl* playerCtrl, ContainerId containerId)
+  Container* getContainer(PlayerCtrl* playerCtrl, int containerId)
   {
-    if (!containerId.isValid())
+    if (containerId == Container::INVALID_ID)
     {
       LOG_ERROR("%s: invalid containerId", __func__);
       return nullptr;
     }
 
     // Convert from clientContainerId to containerId if needed
-    if (containerId.isClientContainerId())
+    if (isClientContainerId(containerId))
     {
-      const auto& clientContainerIds = clientContainerIds_[playerCtrl->getPlayerId()];
-      containerId = ContainerId(clientContainerIds[containerId.getContainerId()]);
+      containerId = getContainerId(playerCtrl->getPlayerId(), containerId);
     }
 
-    // Check that the container exists
-    if (containers_.count(containerId.getContainerId()) == 0)
+    // Verify that the container exists
+    if (containers_.count(containerId) == 0)
     {
-      LOG_ERROR("%s: no container found with id: %d", __func__, containerId.getContainerId());
+      LOG_ERROR("%s: no container found with id: %d", __func__, containerId);
       return nullptr;
     }
 
-    return &containers_[containerId.getContainerId()];
+    return &containers_[containerId];
   }
 
-  Item* getItem(PlayerCtrl* playerCtrl, ContainerId containerId, int containerSlot)
+  Item* getItem(PlayerCtrl* playerCtrl, int containerId, int containerSlot)
   {
     auto* container = getContainer(playerCtrl, containerId);
     if (!container)
     {
-      LOG_ERROR("%s: no container found with id: %d", __func__, containerId.getContainerId());
+      // getContainer logs on error
       return nullptr;
     }
 
@@ -98,7 +97,7 @@ class ContainerManager
       return;
     }
 
-    if (item->getContainerId() == ContainerId::INVALID_ID)
+    if (item->getContainerId() == Container::INVALID_ID)
     {
       // Create new Container
       auto& container = containers_[nextContainerId_];
@@ -108,13 +107,13 @@ class ContainerManager
       if (itemPosition.getGamePosition().isPosition() ||
           itemPosition.getGamePosition().isInventory())
       {
-        container.parentContainerId = ContainerId();
+        container.parentContainerId = Container::INVALID_ID;
         container.rootItemPosition = itemPosition;
       }
       else  // isContainer
       {
         const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
-        container.parentContainerId = ContainerId(parentContainer->id);
+        container.parentContainerId = parentContainer->id;
         container.rootItemPosition = parentContainer->rootItemPosition;
       }
       container.items = {};
@@ -150,7 +149,7 @@ class ContainerManager
 
     // Check if Player has this Container open
     const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), container.id);
-    if (clientContainerId == ContainerId::INVALID_ID)
+    if (clientContainerId == Container::INVALID_ID)
     {
       openContainer(playerCtrl, &container, newClientContainerId, *item);
     }
@@ -161,9 +160,9 @@ class ContainerManager
     }
   }
 
-  void closeContainer(PlayerCtrl* playerCtrl, ContainerId containerId)
+  void closeContainer(PlayerCtrl* playerCtrl, int containerId)
   {
-    if (!containerId.isClientContainerId())
+    if (!isClientContainerId(containerId))
     {
       LOG_ERROR("%s: must be called with clientContainerId", __func__);
       return;
@@ -172,16 +171,16 @@ class ContainerManager
     auto* container = getContainer(playerCtrl, containerId);
     if (!container)
     {
-      LOG_ERROR("%s: could not find container with clientContainerId: %d", __func__, containerId.getContainerId());
+      LOG_ERROR("%s: could not find container with clientContainerId: %d", __func__, containerId);
       return;
     }
 
-    closeContainer(playerCtrl, container, containerId.getContainerId());
+    closeContainer(playerCtrl, container, containerId);
   }
 
-  void openParentContainer(PlayerCtrl* playerCtrl, ContainerId containerId)
+  void openParentContainer(PlayerCtrl* playerCtrl, int containerId)
   {
-    if (!containerId.isClientContainerId())
+    if (!isClientContainerId(containerId))
     {
       LOG_ERROR("%s: must be called with clientContainerId", __func__);
       return;
@@ -190,7 +189,7 @@ class ContainerManager
     auto* currentContainer = getContainer(playerCtrl, containerId);
     if (!currentContainer)
     {
-      LOG_ERROR("%s: no container found with id: %d", __func__, containerId.getContainerId());
+      LOG_ERROR("%s: no container found with id: %d", __func__, containerId);
       return;
     }
 
@@ -202,7 +201,7 @@ class ContainerManager
     }
 
     const auto parentContainerItem = Item(parentContainer->itemId);
-    openContainer(playerCtrl, parentContainer, containerId.getContainerId(), parentContainerItem);
+    openContainer(playerCtrl, parentContainer, containerId, parentContainerItem);
   }
 
   void playerDisconnected(PlayerCtrl* playerCtrl)
@@ -233,6 +232,11 @@ class ContainerManager
   }
 
  private:
+  bool isClientContainerId(int containerId) const
+  {
+    return containerId >= 0 && containerId < 64;
+  }
+
   void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item)
   {
     LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",
@@ -269,7 +273,7 @@ class ContainerManager
     container->relatedPlayers.erase(it);
 
     // Unset clientContainerId
-    setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, ContainerId::INVALID_ID);
+    setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, Container::INVALID_ID);
 
     // Send onCloseContainer
     playerCtrl->onCloseContainer(clientContainerId);
@@ -283,6 +287,12 @@ class ContainerManager
 
   int getClientContainerId(CreatureId playerId, int containerId)
   {
+    if (isClientContainerId(containerId))
+    {
+      LOG_ERROR("%s: called with clientContainerId: %d", __func__, containerId);
+      return Container::INVALID_ID;
+    }
+
     const auto& clientContainerIds = clientContainerIds_[playerId];
     const auto it = std::find(clientContainerIds.cbegin(),
                               clientContainerIds.cend(),
@@ -293,8 +303,20 @@ class ContainerManager
     }
     else
     {
-      return ContainerId::INVALID_ID;
+      return Container::INVALID_ID;
     }
+  }
+
+  int getContainerId(CreatureId playerId, int clientContainerId)
+  {
+    if (!isClientContainerId(clientContainerId))
+    {
+      LOG_ERROR("%s: called with (global) containerId: %d", __func__, clientContainerId);
+      return Container::INVALID_ID;
+    }
+
+    const auto& clientContainerIds = clientContainerIds_[playerId];
+    return clientContainerIds[clientContainerId];
   }
 
   int nextContainerId_;

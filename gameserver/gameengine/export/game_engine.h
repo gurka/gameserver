@@ -66,8 +66,8 @@ class GameEngine
   void useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId);
   void lookAt(CreatureId creatureId, const ItemPosition& position);
 
-  void closeContainer(CreatureId creatureId, ContainerId containerId);
-  void openParentContainer(CreatureId creatureId, ContainerId containerId);
+  void closeContainer(CreatureId creatureId, int containerId);
+  void openParentContainer(CreatureId creatureId, int containerId);
 
  private:
   Item* getItem(CreatureId creatureId, const ItemPosition& position);

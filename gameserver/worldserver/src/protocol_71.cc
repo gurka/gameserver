@@ -535,7 +535,7 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
   addItem(item, &packet);
   packet.addString(item.getName());
   packet.addU8(item.getAttribute<int>("maxitems"));
-  packet.addU8(container.parentContainerId.isValid() ? 0x01 : 0x00);
+  packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
   packet.addU8(container.items.size());
   for (const auto& item : container.items)
   {
@@ -866,7 +866,7 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
 
   gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
   {
-    gameEngine->closeContainer(playerId_, ContainerId(clientContainerId));
+    gameEngine->closeContainer(playerId_, clientContainerId);
   });
 }
 
@@ -878,7 +878,7 @@ void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
 
   gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
   {
-    gameEngine->openParentContainer(playerId_, ContainerId(clientContainerId));
+    gameEngine->openParentContainer(playerId_, clientContainerId);
   });
 }
 
@@ -948,7 +948,7 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     // Container id is lower 6 bits in y
     // Container slot is z
     const auto clientContainerId = y & ~0x40;
-    return GamePosition(ContainerId(clientContainerId), z);
+    return GamePosition(clientContainerId, z);
   }
 }
 
