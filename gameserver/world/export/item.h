@@ -68,7 +68,7 @@ class Item
     : id_(INVALID_ID),
       count_(0),
       itemData_(&itemDatas_[id_]),  // Valid pointer to an invalid ItemData
-      containerId_(INVALID_ID)
+      containerId_(-1)
   {
   }
 
@@ -76,7 +76,7 @@ class Item
     : id_(itemId),
       count_(1),
       itemData_(&itemDatas_[id_]),
-      containerId_(INVALID_ID)
+      containerId_(-1)
   {
   }
 
@@ -135,6 +135,8 @@ class Item
   ItemData* itemData_;
 
   // TODO(simon): Try to refactor everything below as only certain types of items uses these values
+  //              If all items have a unique id (not to be confused with ItemId), then GameEngine can map
+  //              id to containerId (plus tracability on items)
   int containerId_;
 };
 

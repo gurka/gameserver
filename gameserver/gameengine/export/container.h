@@ -27,22 +27,23 @@
 
 #include <vector>
 
+#include "container_id.h"
 #include "item.h"
 #include "game_position.h"
 #include "creature.h"
 
+class PlayerCtrl;
+
 struct Container
 {
   Container()
-    : id(INVALID_ID),
+    : id(ContainerId::INVALID_ID),
       weight(0),
       itemPosition(),
       items(),
       relatedPlayers()
   {
   }
-
-  static constexpr int INVALID_ID = Item::INVALID_ID;
 
   // This Container's id
   int id;
@@ -57,7 +58,7 @@ struct Container
   std::vector<Item> items;
 
   // List of Players that have this Container open
-  std::vector<CreatureId> relatedPlayers;
+  std::vector<PlayerCtrl*> relatedPlayers;
 };
 
 #endif // GAMEENGINE_CONTAINER_H_

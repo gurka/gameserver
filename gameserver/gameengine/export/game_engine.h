@@ -66,12 +66,11 @@ class GameEngine
   void useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId);
   void lookAt(CreatureId creatureId, const ItemPosition& position);
 
-  void closeContainer(CreatureId creatureId, int clientContainerId);
-  void openParentContainer(CreatureId creatureId, int clientContainerId);
+  void closeContainer(CreatureId creatureId, ContainerId containerId);
+  void openParentContainer(CreatureId creatureId, ContainerId containerId);
 
  private:
   Item* getItem(CreatureId creatureId, const ItemPosition& position);
-  void useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId);
   bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
   void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
   void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
@@ -88,9 +87,6 @@ class GameEngine
   {
     Player player;
     PlayerCtrl* player_ctrl;
-
-    // Maps client container id (index in vector) to global container id
-    std::array<int, 64> openContainers;
   };
   std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
 

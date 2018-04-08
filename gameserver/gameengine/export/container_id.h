@@ -22,37 +22,31 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PLAYERCTRL_H_
-#define GAMEENGINE_PLAYERCTRL_H_
+#ifndef GAMEENGINE_CONTAINERID_H_
+#define GAMEENGINE_CONTAINERID_H_
 
-#include <string>
-#include <vector>
-
-#include "creature_ctrl.h"
-#include "player.h"
-#include "position.h"
-#include "item.h"
-#include "container.h"
-
-class PlayerCtrl : public CreatureCtrl
+class ContainerId
 {
  public:
-  PlayerCtrl() = default;
-  virtual ~PlayerCtrl() = default;
+  ContainerId()
+    : containerId_(INVALID_ID)
+  {
+  }
 
-  // Delete copy constructors
-  PlayerCtrl(const PlayerCtrl&) = delete;
-  PlayerCtrl& operator=(const PlayerCtrl&) = delete;
+  explicit ContainerId(int containerId)
+    : containerId_(containerId)
+  {
+  }
 
-  // Called by GameEngine
-  virtual CreatureId getPlayerId() const = 0;
-  virtual void setPlayerId(CreatureId playerId) = 0;
-  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
-  virtual void onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item) = 0;
-  virtual void onCloseContainer(uint8_t clientContainerId) = 0;
-  virtual void sendTextMessage(uint8_t message_type, const std::string& message) = 0;
-  virtual void sendCancel(const std::string& message) = 0;
-  virtual void cancelMove() = 0;
+  bool isValid() const { return containerId_ != INVALID_ID; }
+  bool isClientContainerId() const { return containerId_ >= 0 && containerId_ < 64; }
+
+  int getContainerId() const { return containerId_; }
+
+  static constexpr int INVALID_ID = -1;
+
+ private:
+  int containerId_;
 };
 
-#endif  // GAMEENGINE_PLAYERCTRL_H_
+#endif  // GAMEENGINE_CONTAINERID_H_

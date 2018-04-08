@@ -26,12 +26,15 @@
 #define GAMEENGINE_CONTAINERMANAGER_H_
 
 #include <algorithm>
+#include <array>
+#include <iterator>
 #include <unordered_map>
 
 #include "item.h"
 #include "position.h"
 #include "logger.h"
 #include "container.h"
+#include "player_ctrl.h"
 
 class ContainerManager
 {
@@ -40,32 +43,9 @@ class ContainerManager
     : nextContainerId_(100),  // Container id starts at 100 so that we can catch errors where
                               // client container id (0..63) are accidentally used as a regular
                               // container id
-      containers_()
+      containers_(),
+      clientContainerIds_()
   {
-  }
-
-  int createContainer(const ItemPosition& itemPosition)
-  {
-    LOG_DEBUG("%s: containerId: %d itemPosition: %s", __func__, nextContainerId_, itemPosition.toString().c_str());
-
-    auto& container = containers_[nextContainerId_];
-    container.id = nextContainerId_;
-    container.weight = 0;  // TODO(simon): fix
-    container.itemPosition = itemPosition;
-
-    // Until we have a database with containers...
-    if (container.id == 100)
-    {
-      container.items = { Item(1712), Item(1745), Item(1411) };
-    }
-    else if (container.id == 101)
-    {
-      container.items = { Item(1560) };
-    }
-
-    nextContainerId_ += 1;
-
-    return container.id;
   }
 
   Container* getContainer(int containerId)
@@ -104,54 +84,152 @@ class ContainerManager
     return &container->items[containerSlot];
   }
 
-  void addPlayer(int containerId, CreatureId playerId)
+  Item* getItem(PlayerCtrl* playerCtrl, const ItemPosition& itemPosition)
   {
-    auto* container = getContainer(containerId);
-    if (!container)
+    return nullptr;
+  }
+
+  void useContainer(PlayerCtrl* playerCtrl, Item* item, int newClientContainerId)
+  {
+    if (!item->isContainer())
     {
-      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
+      LOG_ERROR("%s: item with id %d is not a container", __func__, item->getItemId());
       return;
     }
 
-    container->relatedPlayers.push_back(playerId);
-  }
-
-  void removePlayer(int containerId, CreatureId playerId)
-  {
-    auto* container = getContainer(containerId);
-    if (!container)
+    if (item->getContainerId() == ContainerId::INVALID_ID)
     {
-      LOG_ERROR("%s: container with id: %d not found", __func__, containerId);
+      // Create new Container
+      LOG_DEBUG("%s: creating new Container with id %d", __func__, nextContainerId_);
+      auto& container = containers_[nextContainerId_];
+      container.id = nextContainerId_;
+      item->setContainerId(nextContainerId_);
+      nextContainerId_ += 1;
+
+      // Until we have a database with containers...
+      if (container.id == 100)
+      {
+        container.items = { Item(1712), Item(1745), Item(1411) };
+      }
+      else if (container.id == 101)
+      {
+        container.items = { Item(1560) };
+      }
+    }
+
+    if (containers_.count(item->getContainerId()) == 0)
+    {
+      LOG_ERROR("%s: item has invalid containerId (%d)", __func__, item->getContainerId());
       return;
     }
 
-    auto it = std::find_if(container->relatedPlayers.begin(),
-                           container->relatedPlayers.end(),
-                           [playerId](CreatureId id){ return id == playerId; });
-    if (it == container->relatedPlayers.end())
+    auto& container = containers_[item->getContainerId()];
+
+    // Check if Player has this Container open
+    const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), container.id);
+    if (clientContainerId == ContainerId::INVALID_ID)
     {
-      LOG_ERROR("%s: playerId: %d not found in relatedPlayers", __func__, playerId);
+      openContainer(playerCtrl, &container, newClientContainerId, item);
+    }
+    else
+    {
+      // Do not close the Container here, the client will ack this by sending closeContainer
+      playerCtrl->onCloseContainer(clientContainerId);
+    }
+  }
+
+  void closeContainer(PlayerCtrl* playerCtrl, ContainerId containerId)
+  {
+    if (!containerId.isClientContainerId())
+    {
+      LOG_ERROR("%s: must be called with clientContainerId", __func__);
       return;
     }
 
-    container->relatedPlayers.erase(it);
+    const auto& clientContainerIds = clientContainerIds_[playerCtrl->getPlayerId()];
+    if (clientContainerIds[containerId.getContainerId()] == ContainerId::INVALID_ID)
+    {
+      LOG_ERROR("%s: clientContainerId: %d is invalid", __func__, containerId.getContainerId());
+      return;
+    }
+
+    auto* container = getContainer(clientContainerIds[containerId.getContainerId()]);
+
+    closeContainer(playerCtrl, container, containerId.getContainerId());
   }
 
-  void useContainer(Item* item, PlayerCtrl* playerCtrl)
-  {
-  }
-
-  void closeContainer(Item* item, PlayerCtrl* playerCtrl)
-  {
-  }
-
-  void openParentContainer(Item* item, PlayerCtrl* playerCtrl)
+  void openParentContainer(PlayerCtrl* playerCtrl, ContainerId containerId)
   {
   }
 
  private:
+  void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, Item* item)
+  {
+    LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",
+              __func__,
+              playerCtrl->getPlayerId(),
+              container->id,
+              clientContainerId,
+              item->getItemId());
+
+    // Add player to related players
+    container->relatedPlayers.push_back(playerCtrl);
+
+    // Set clientContainerId
+    setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, container->id);
+
+    // Send onOpenContainer
+    playerCtrl->onOpenContainer(clientContainerId, *container, *item);
+  }
+
+  void closeContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId)
+  {
+    LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d",
+              __func__,
+              playerCtrl->getPlayerId(),
+              container->id,
+              clientContainerId);
+
+    // Remove player from related players
+    const auto it = std::find(container->relatedPlayers.cbegin(), container->relatedPlayers.cend(), playerCtrl);
+    if (it == container->relatedPlayers.cend())
+    {
+      LOG_ERROR("%s: player: %d not found in relatedPlayers", __func__, playerCtrl->getPlayerId());
+    }
+    container->relatedPlayers.erase(it);
+
+    // Unset clientContainerId
+    setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, ContainerId::INVALID_ID);
+
+    // Send onCloseContainer
+    playerCtrl->onCloseContainer(clientContainerId);
+  }
+
+  void setClientContainerId(CreatureId playerId, int clientContainerId, int containerId)
+  {
+    auto& clientContainerIds = clientContainerIds_[playerId];
+    clientContainerIds[clientContainerId] = containerId;
+  }
+
+  int getClientContainerId(CreatureId playerId, int containerId)
+  {
+    const auto& clientContainerIds = clientContainerIds_[playerId];
+    const auto it = std::find(clientContainerIds.cbegin(),
+                              clientContainerIds.cend(),
+                              containerId);
+    if (it != clientContainerIds.cend())
+    {
+      return std::distance(clientContainerIds.cbegin(), it);
+    }
+    else
+    {
+      return ContainerId::INVALID_ID;
+    }
+  }
+
   int nextContainerId_;
   std::unordered_map<int, Container> containers_;
+  std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
 };
 
 #endif  // GAMEENGINE_CONTAINERMANAGER_H_

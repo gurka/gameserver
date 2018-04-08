@@ -60,9 +60,6 @@ struct RecursiveTask
 
 }
 
-// TODO(simon): Fix this
-constexpr int Container::INVALID_ID;
-
 GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage)
   : gameEngineQueue_(gameEngineQueue),
     world_(world),
@@ -78,8 +75,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   auto creatureId = newPlayer.getCreatureId();
 
   // Store the Player and the PlayerCtrl
-  playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl, {}});
-  playerPlayerCtrl_.at(creatureId).openContainers.fill(Container::INVALID_ID);
+  playerPlayerCtrl_.emplace(creatureId, PlayerPlayerCtrl{std::move(newPlayer), player_ctrl});
 
   // Get the Player again, since newPlayed is moved from
   auto& player = getPlayer(creatureId);
@@ -344,7 +340,7 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   if (item->isContainer())
   {
-    useContainer(creatureId, item, position, newContainerId);
+    containerManager_.useContainer(getPlayerCtrl(creatureId), item, newContainerId);
   }
 }
 
@@ -403,79 +399,16 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
   }
 }
 
-void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
+void GameEngine::closeContainer(CreatureId creatureId, ContainerId containerId)
 {
-  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-
-  // Verify that the Player actually have this container open
-  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-  if (static_cast<int>(openContainers.size()) <= clientContainerId ||
-      openContainers[clientContainerId] == Container::INVALID_ID)
-  {
-    LOG_ERROR("%s: player does not have the given Container open", __func__);
-    return;
-  }
-
-  // Remove this Player from Container's list of Players
-  containerManager_.removePlayer(openContainers[clientContainerId], creatureId);
-
-  // Remove the local to global container id mapping
-  openContainers[clientContainerId] = Container::INVALID_ID;
-
-  // Send onCloseContainer to player again (???)
-//  getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
+  LOG_DEBUG("%s: creatureId: %d containerId: %d", __func__, creatureId, containerId.getContainerId());
+  containerManager_.closeContainer(getPlayerCtrl(creatureId), containerId);
 }
 
-void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerId)
+void GameEngine::openParentContainer(CreatureId creatureId, ContainerId containerId)
 {
-  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-
-  return;
-
-  // Below does not work since a Container's itemPosition (if container) uses containerId = clientContainerId
-  // If a child contianer has been opened, this id is no longer valid
-  // We need to convert ItemPosition with clientContainerId to ItemPosition with containerId
-#if 0
-
-  // Verify that the Player actually have this container open
-  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-  if (static_cast<int>(openContainers.size()) <= clientContainerId ||
-      openContainers[clientContainerId] == Container::INVALID_ID)
-  {
-    LOG_ERROR("%s: player does not have the given Container open", __func__);
-    return;
-  }
-
-  // Get current Container
-  const auto currentContainerId = openContainers[clientContainerId];
-  auto* currentContainer = containerManager_.getContainer(currentContainerId);
-  if (!currentContainer)
-  {
-    LOG_ERROR("%s: could not find container with id: %d", __func__, currentContainerId);
-    return;
-  }
-
-  // Verify that current Container has a parent
-  if (!currentContainer->itemPosition.getGamePosition().isContainer())
-  {
-    LOG_ERROR("%s: current Container does not have parent Container", __func__);
-    return;
-  }
-
-  // Close current Container
-  containerManager_.removePlayer(currentContainerId, creatureId);
-
-  // Open parent Container
-  LOG_DEBUG("%s: currentContainer->itemPosition: %s", __func__, currentContainer->itemPosition.toString().c_str());
-  const auto parentContainerId = currentContainer->itemPosition.getGamePosition().getContainerId();
-  auto* parentContainer = containerManager_.getContainer(parentContainerId);
-  containerManager_.addPlayer(parentContainerId, creatureId);
-  openContainers[clientContainerId] = parentContainerId;
-
-  // Update client
-  auto* item = getItem(creatureId, parentContainer->itemPosition);
-  getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, *parentContainer, *item);
-#endif
+  LOG_DEBUG("%s: creatureId: %d containerId: %d", __func__, creatureId, containerId.getContainerId());
+  containerManager_.openParentContainer(getPlayerCtrl(creatureId), containerId);
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
@@ -496,54 +429,11 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 
   if (gamePosition.isContainer())
   {
-    // TODO(simon): getContainer()
-    const auto clientContainerId = gamePosition.getContainerId();
-    const auto containerId = playerPlayerCtrl_.at(creatureId).openContainers[clientContainerId];
-    auto* item = containerManager_.getItem(containerId, gamePosition.getContainerSlot());
-    return item;
+    return containerManager_.getItem(getPlayerCtrl(creatureId), position);
   }
 
   LOG_ERROR("%s: GamePosition: %s, is invalid", __func__, gamePosition.toString().c_str());
   return nullptr;
-}
-
-void GameEngine::useContainer(CreatureId creatureId, Item* item, const ItemPosition& itemPosition, int newContainerId)
-{
-  // Check if this Item has a corresponding Container object
-  if (item->getContainerId() == Container::INVALID_ID)
-  {
-    // Create Container for this Item
-    item->setContainerId(containerManager_.createContainer(itemPosition));
-  }
-
-  const auto containerId = item->getContainerId();
-
-  // Check if player already have this container open
-  auto& openContainers = playerPlayerCtrl_.at(creatureId).openContainers;
-  int clientContainerId = -1;
-  for (auto i = 0u; i < openContainers.size(); i++)
-  {
-    if (openContainers[i] == containerId)
-    {
-      clientContainerId = i;
-      break;
-    }
-  }
-
-  if (clientContainerId == -1)
-  {
-    // Container not yet open, so open it
-    clientContainerId = newContainerId;
-    openContainers[clientContainerId] = containerId;
-    containerManager_.addPlayer(containerId, creatureId);
-    auto* container = containerManager_.getContainer(containerId);
-    getPlayerCtrl(creatureId)->onOpenContainer(clientContainerId, *container, *item);
-  }
-  else
-  {
-    // Container already open, so close it
-    getPlayerCtrl(creatureId)->onCloseContainer(clientContainerId);
-  }
 }
 
 bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)

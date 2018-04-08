@@ -54,7 +54,6 @@ Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
     accountReader_(accountReader)
 {
   knownCreatures_.fill(Creature::INVALID_ID);
-  containerMap_.fill(Container::INVALID_ID);
 }
 
 void Protocol71::disconnected()
@@ -498,17 +497,6 @@ void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Posit
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::setContainerMap(int clientContainerId, int containerId)
-{
-  LOG_DEBUG("%s: playerId: %d clientContainerId: %d containerId: %d",
-            __func__,
-            playerId_,
-            clientContainerId,
-            containerId);
-
-  containerMap_[clientContainerId] = containerId;
-}
-
 void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
 {
   if (!isConnected())
@@ -878,7 +866,7 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
 
   gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
   {
-    gameEngine->closeContainer(playerId_, clientContainerId);
+    gameEngine->closeContainer(playerId_, ContainerId(clientContainerId));
   });
 }
 
@@ -890,7 +878,7 @@ void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
 
   gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
   {
-    gameEngine->openParentContainer(playerId_, clientContainerId);
+    gameEngine->openParentContainer(playerId_, ContainerId(clientContainerId));
   });
 }
 
@@ -960,14 +948,7 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     // Container id is lower 6 bits in y
     // Container slot is z
     const auto clientContainerId = y & ~0x40;
-    if (containerMap_[clientContainerId] == Container::INVALID_ID)
-    {
-      LOG_ERROR("%s: playerId: %d, could not find clientContainerId: %d in map",
-                __func__,
-                playerId_,
-                clientContainerId);
-    }
-    return GamePosition(containerMap_[clientContainerId], z);
+    return GamePosition(ContainerId(clientContainerId), z);
   }
 }
 
