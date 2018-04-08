@@ -85,6 +85,9 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   // Tell PlayerCtrl its CreatureId
   player_ctrl->setPlayerId(player.getCreatureId());
 
+  // Inform ContainerManager of the new player
+  containerManager_.playerSpawn(player_ctrl);
+
   // Spawn the player
   auto rc = world_->addCreature(&player, player_ctrl, Position(222, 222, 7));
   if (rc != World::ReturnCode::OK)
@@ -105,7 +108,7 @@ void GameEngine::despawn(CreatureId creatureId)
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
 
   // Inform ContainerManager
-  containerManager_.playerDisconnected(getPlayerCtrl(creatureId));
+  containerManager_.playerDespawn(getPlayerCtrl(creatureId));
 
   // Remove any queued tasks for this player
   gameEngineQueue_->cancelAllTasks(creatureId);

@@ -8,6 +8,7 @@ set(src
   "export/player_ctrl.h"
   "export/game_engine.h"
   "export/game_engine_queue.h"
+  "src/container_manager.cc"
   "src/container_manager.h"
   "src/game_engine.cc"
   "src/player.cc"

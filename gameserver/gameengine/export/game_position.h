@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <string>
 
+#include "position.h"
+
 class GamePosition
 {
  public:
