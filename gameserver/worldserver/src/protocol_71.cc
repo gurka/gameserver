@@ -535,7 +535,7 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
   addItem(item, &packet);
   packet.addString(item.getName());
   packet.addU8(item.getAttribute<int>("maxitems"));
-  packet.addU8(container.itemPosition.getGamePosition().isContainer());  // Has parent container or not
+  packet.addU8(container.parentContainerId.isValid() ? 0x01 : 0x00);
   packet.addU8(container.items.size());
   for (const auto& item : container.items)
   {

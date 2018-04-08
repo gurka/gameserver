@@ -39,7 +39,9 @@ struct Container
   Container()
     : id(ContainerId::INVALID_ID),
       weight(0),
-      itemPosition(),
+      itemId(0),
+      parentContainerId(ContainerId::INVALID_ID),
+      rootItemPosition(),
       items(),
       relatedPlayers()
   {
@@ -51,8 +53,16 @@ struct Container
   // The total weight of this Container and all Items in it (including other Containers)
   int weight;
 
-  // ItemPosition of the Item that this Container belongs to
-  ItemPosition itemPosition;
+  // Id of the Item that corresponds to this Container (e.g. itemId of a backpack)
+  int itemId;
+
+  // Container id of the parent container, or ContainerId::INVALID_ID if no parent
+  // This id must NOT be a clientContainerId
+  ContainerId parentContainerId;
+
+  // ItemPosition of the root item that this Container belongs to
+  // Is either a world position or a inventory position
+  ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
   std::vector<Item> items;

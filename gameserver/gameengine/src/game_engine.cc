@@ -103,13 +103,19 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 void GameEngine::despawn(CreatureId creatureId)
 {
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
+
+  // Inform ContainerManager
+  containerManager_.playerDisconnected(getPlayerCtrl(creatureId));
+
+  // Remove any queued tasks for this player
+  gameEngineQueue_->cancelAllTasks(creatureId);
+
+  // Finally despawn the player from the World
+  // Note: this will free the PlayerCtrl, but requires Player to still be allocated
   world_->removeCreature(creatureId);
 
   // Remove Player and PlayerCtrl
   playerPlayerCtrl_.erase(creatureId);
-
-  // Remove any queued tasks for this player
-  gameEngineQueue_->cancelAllTasks(creatureId);
 }
 
 void GameEngine::move(CreatureId creatureId, Direction direction)
@@ -340,7 +346,7 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   if (item->isContainer())
   {
-    containerManager_.useContainer(getPlayerCtrl(creatureId), item, newContainerId);
+    containerManager_.useContainer(getPlayerCtrl(creatureId), item, position, newContainerId);
   }
 }
 
@@ -429,7 +435,9 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 
   if (gamePosition.isContainer())
   {
-    return containerManager_.getItem(getPlayerCtrl(creatureId), position);
+    return containerManager_.getItem(getPlayerCtrl(creatureId),
+                                     gamePosition.getContainerId(),
+                                     gamePosition.getContainerSlot());
   }
 
   LOG_ERROR("%s: GamePosition: %s, is invalid", __func__, gamePosition.toString().c_str());
