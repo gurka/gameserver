@@ -309,13 +309,10 @@ void ContainerManager::removeItem(const PlayerCtrl* playerCtrl, int containerId,
   container->items.erase(container->items.begin() + containerSlot);
 
   // Inform players that have this contianer open about the change
-  for (auto* playerCtrl : container->relatedPlayers)
+  for (auto* relatedPlayerCtrl : container->relatedPlayers)
   {
-    (void)playerCtrl;
-
-    // TODO(simon): fix
-    // get this player's clientContainerId for this container
-    // send onContainerUpdated
+    const auto clientContainerId = getClientContainerId(relatedPlayerCtrl->getPlayerId(), container->id);
+    relatedPlayerCtrl->onContainerRemoveItem(clientContainerId, containerSlot);
   }
 }
 
@@ -364,13 +361,10 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
   container->items.insert(container->items.begin(), item);
 
   // Inform players that have this contianer open about the change
-  for (auto* playerCtrl : container->relatedPlayers)
+  for (auto* relatedPlayerCtrl : container->relatedPlayers)
   {
-    (void)playerCtrl;
-
-    // TODO(simon): fix
-    // get this player's clientContainerId for this container
-    // send onContainerUpdated
+    const auto clientContainerId = getClientContainerId(relatedPlayerCtrl->getPlayerId(), container->id);
+    relatedPlayerCtrl->onContainerAddItem(clientContainerId, item);
   }
 }
 
