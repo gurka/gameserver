@@ -465,11 +465,10 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
   else if (position.isContainer())
   {
     // TODO(simon): check capacity of Player if root Container is in Player inventory
-    // Note: if non-container item or no item at all in container slot, then Item can be added
-    //       and should go to first slot in the container
-    //       if there is a container in the container slot, then we need to check that container
-    LOG_ERROR("%s: container TODO", __func__);
-    return false;
+    return containerManager_.canAddItem(getPlayerCtrl(creatureId),
+                                        position.getContainerId(),
+                                        position.getContainerSlot(),
+                                        item);
   }
 
   LOG_ERROR("%s: invalid position: %s", __func__, position.toString().c_str());

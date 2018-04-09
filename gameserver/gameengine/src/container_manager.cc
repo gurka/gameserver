@@ -33,13 +33,13 @@
 
 constexpr int Container::INVALID_ID;
 
-void ContainerManager::playerSpawn(PlayerCtrl* playerCtrl)
+void ContainerManager::playerSpawn(const PlayerCtrl* playerCtrl)
 {
   auto& clientContainerIds = clientContainerIds_[playerCtrl->getPlayerId()];
   clientContainerIds.fill(Container::INVALID_ID);
 }
 
-void ContainerManager::playerDespawn(PlayerCtrl* playerCtrl)
+void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
 {
   const auto playerId = playerCtrl->getPlayerId();
   if (clientContainerIds_.count(playerId) == 1)
@@ -64,7 +64,7 @@ void ContainerManager::playerDespawn(PlayerCtrl* playerCtrl)
   }
 }
 
-Container* ContainerManager::getContainer(PlayerCtrl* playerCtrl, int containerId)
+const Container* ContainerManager::getContainer(const PlayerCtrl* playerCtrl, int containerId) const
 {
   if (containerId == Container::INVALID_ID)
   {
@@ -85,10 +85,17 @@ Container* ContainerManager::getContainer(PlayerCtrl* playerCtrl, int containerI
     return nullptr;
   }
 
-  return &containers_[containerId];
+  return &containers_.at(containerId);
 }
 
-Item* ContainerManager::getItem(PlayerCtrl* playerCtrl, int containerId, int containerSlot)
+Container* ContainerManager::getContainer(const PlayerCtrl* playerCtrl, int containerId)
+{
+  // According to https://stackoverflow.com/a/123995/969365
+  const auto* container = static_cast<const ContainerManager*>(this)->getContainer(playerCtrl, containerId);
+  return const_cast<Container*>(container);
+}
+
+Item* ContainerManager::getItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot)
 {
   auto* container = getContainer(playerCtrl, containerId);
   if (!container)
@@ -219,6 +226,58 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int container
 
   const auto parentContainerItem = Item(parentContainer->itemId);
   openContainer(playerCtrl, parentContainer, containerId, parentContainerItem);
+}
+
+bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item) const
+{
+  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d, itemId: %d",
+            __func__,
+            playerCtrl->getPlayerId(),
+            containerId,
+            containerSlot,
+            item.getItemId());
+
+  auto* container = getContainer(playerCtrl, containerId);
+  if (!container)
+  {
+    // getContainer logs error
+    return false;
+  }
+
+  // Make sure that the containerSlot is valid
+  if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
+  {
+    LOG_ERROR("%s: invalid containerSlot: %d, container->items.size(): %d",
+              __func__,
+              containerSlot,
+              static_cast<int>(container->items.size()));
+    return false;
+  }
+
+  // Check if the item at the containerSlot is a container, then we should check that inner container
+  if (container->items[containerSlot].isContainer())
+  {
+    // We might need to make a new Container object for the inner container
+    if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
+    {
+      LOG_ERROR("%s: create new Container for inner container NOT YET IMPLEMENTED", __func__);
+      return false;
+    }
+
+    // Just reset input parameters
+    containerId = container->items[containerSlot].getContainerId();
+    container = getContainer(playerCtrl, containerId);
+  }
+
+  // Just make sure that there is room for the item
+  // GameEngine is responsible for checking the weight and player capacity
+  const auto containerItem = Item(container->itemId);
+  const auto containerItemMaxItems = containerItem.getAttribute<int>("maxitems");
+  LOG_DEBUG("%s: container->items.size(): %d, containerItemMaxItems: %d",
+            __func__,
+            container->items.size(),
+            containerItemMaxItems);
+  return static_cast<int>(container->items.size()) < containerItemMaxItems;
 }
 
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item)
