@@ -122,7 +122,7 @@ bool AccountReader::loadFile(std::istream* accountsFileStream)
       free(xmlString);
       return false;
     }
-    auto password = numberAttr->value();
+    auto password = passwordAttr->value();
 
     // Get account paid days
     auto* paidDaysAttr = accountNode->first_attribute("paid_days");
@@ -190,6 +190,7 @@ bool AccountReader::loadFile(std::istream* accountsFileStream)
     }
 
     // Insert account and password
+    LOG_DEBUG("%s: Adding account: %d, password: %s", __func__, number, password);
     accounts_.insert(std::make_pair(number, account));
     passwords_.insert(std::make_pair(number, password));
   }
