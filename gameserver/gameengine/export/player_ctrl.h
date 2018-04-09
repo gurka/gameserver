@@ -47,10 +47,19 @@ class PlayerCtrl : public CreatureCtrl
   // Called by GameEngine
   virtual CreatureId getPlayerId() const = 0;
   virtual void setPlayerId(CreatureId playerId) = 0;
+
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
+
+  // TODO(simon): use int here instead of uint8_t
   virtual void onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item) = 0;
   virtual void onCloseContainer(uint8_t clientContainerId) = 0;
+
+  virtual void onContainerAddItem(uint8_t clientContainerId, const Item& item) = 0;
+  virtual void onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item) = 0;
+  virtual void onContainerRemoveItem(uint8_t clientContainerId, int containerSlot) = 0;
+
   virtual void sendTextMessage(uint8_t message_type, const std::string& message) = 0;
+
   virtual void sendCancel(const std::string& message) = 0;
   virtual void cancelMove() = 0;
 };

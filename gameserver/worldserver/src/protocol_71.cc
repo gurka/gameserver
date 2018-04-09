@@ -305,16 +305,13 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface, const 
   }
 
   OutgoingPacket packet;
-
   // Logout poff
   packet.addU8(0x83);
   addPosition(position, &packet);
   packet.addU8(0x02);
-
   packet.addU8(0x6C);
   addPosition(position, &packet);
   packet.addU8(stackPos);
-
   server_->sendPacket(connectionId_, std::move(packet));
 
   if (creature.getCreatureId() == playerId_)
@@ -413,16 +410,13 @@ void Protocol71::onCreatureTurn(const WorldInterface& world_interface, const Cre
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0x6B);
   addPosition(position, &packet);
   packet.addU8(stackPos);
-
   packet.addU8(0x63);
   packet.addU8(0x00);
   packet.addU32(creature.getCreatureId());
   packet.addU8(static_cast<uint8_t>(creature.getDirection()));
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -434,16 +428,12 @@ void Protocol71::onCreatureSay(const WorldInterface& world_interface, const Crea
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0xAA);
   packet.addString(creature.getName());
   packet.addU8(0x01);  // Say type
-
   // if type <= 3
   addPosition(position, &packet);
-
   packet.addString(message);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -455,11 +445,9 @@ void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Posi
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0x6C);
   addPosition(position, &packet);
   packet.addU8(stackPos);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -471,11 +459,9 @@ void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& 
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0x6A);
   addPosition(position, &packet);
   addItem(item, &packet);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -487,13 +473,11 @@ void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Posit
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0x69);
   addPosition(position, &packet);
   addMapData(world_interface, position, 1, 1, &packet);
   packet.addU8(0x00);
   packet.addU8(0xFF);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -505,13 +489,9 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   }
 
   OutgoingPacket packet;
-
   addEquipment(player.getEquipment(), inventoryIndex, &packet);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
-
-// onOpen/onClose, change clientContainerId to containerId and search map for clientContainerId
 
 void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item)
 {
@@ -529,7 +509,6 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
   LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
 
   OutgoingPacket packet;
-
   packet.addU8(0x6E);
   packet.addU8(clientContainerId);
   addItem(item, &packet);
@@ -545,7 +524,6 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
       packet.addU8(item.getCount());
     }
   }
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -559,10 +537,64 @@ void Protocol71::onCloseContainer(uint8_t clientContainerId)
   LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
 
   OutgoingPacket packet;
-
   packet.addU8(0x6F);
   packet.addU8(clientContainerId);
+  server_->sendPacket(connectionId_, std::move(packet));
+}
 
+void Protocol71::onContainerAddItem(uint8_t clientContainerId, const Item& item)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, itemId: %d", __func__, clientContainerId, item.getItemId());
+
+  OutgoingPacket packet;
+  packet.addU8(0x70);
+  packet.addU8(clientContainerId);
+  addItem(item, &packet);
+  server_->sendPacket(connectionId_, std::move(packet));
+}
+
+void Protocol71::onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemId: %d",
+            __func__,
+            clientContainerId,
+            containerSlot,
+            item.getItemId());
+
+  OutgoingPacket packet;
+  packet.addU8(0x71);
+  packet.addU8(clientContainerId);
+  packet.addU8(containerSlot);
+  addItem(item, &packet);
+  server_->sendPacket(connectionId_, std::move(packet));
+}
+
+void Protocol71::onContainerRemoveItem(uint8_t clientContainerId, int containerSlot)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d",
+            __func__,
+            clientContainerId,
+            containerSlot);
+
+  OutgoingPacket packet;
+  packet.addU8(0x72);
+  packet.addU8(clientContainerId);
+  packet.addU8(containerSlot);
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -575,11 +607,9 @@ void Protocol71::sendTextMessage(uint8_t message_type, const std::string& messag
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0xB4);
   packet.addU8(message_type);
   packet.addString(message);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -591,11 +621,9 @@ void Protocol71::sendCancel(const std::string& message)
   }
 
   OutgoingPacket packet;
-
   packet.addU8(0xB4);
   packet.addU8(0x14);
   packet.addString(message);
-
   server_->sendPacket(connectionId_, std::move(packet));
 }
 

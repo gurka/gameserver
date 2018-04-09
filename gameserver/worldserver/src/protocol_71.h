@@ -86,6 +86,9 @@ class Protocol71 : public Protocol
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
   void onOpenContainer(uint8_t localContainerId, const Container& container, const Item& item) override;
   void onCloseContainer(uint8_t localContainerId) override;
+  void onContainerAddItem(uint8_t clientContainerId, const Item& item) override;
+  void onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item) override;
+  void onContainerRemoveItem(uint8_t clientContainerId, int containerSlot) override;
   void sendTextMessage(uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
