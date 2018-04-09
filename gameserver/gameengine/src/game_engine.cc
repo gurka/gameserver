@@ -447,7 +447,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
   return nullptr;
 }
 
-bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
+bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const
 {
   if (position.isPosition())
   {
@@ -458,6 +458,7 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
     // TODO(simon): check capacity of Player and weight of Item
     // TODO(simon): if there is a Container item at the inventorySlot, then check if we
     //              can add the Item to that Container
+    // TODO(simon): decide if empty inventory slot should be nullptr or an invalid item
     return getPlayer(creatureId).getEquipment().getItem(position.getInventorySlot()) == nullptr ||
            !getPlayer(creatureId).getEquipment().getItem(position.getInventorySlot())->isValid();
   }
