@@ -408,16 +408,16 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
   }
 }
 
-void GameEngine::closeContainer(CreatureId creatureId, int containerId)
+void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 {
-  LOG_DEBUG("%s: creatureId: %d containerId: %d", __func__, creatureId, containerId);
-  containerManager_.closeContainer(getPlayerCtrl(creatureId), containerId);
+  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
+  containerManager_.closeContainer(getPlayerCtrl(creatureId), clientContainerId);
 }
 
-void GameEngine::openParentContainer(CreatureId creatureId, int containerId)
+void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerId)
 {
-  LOG_DEBUG("%s: creatureId: %d containerId: %d", __func__, creatureId, containerId);
-  containerManager_.openParentContainer(getPlayerCtrl(creatureId), containerId);
+  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
+  containerManager_.openParentContainer(getPlayerCtrl(creatureId), clientContainerId);
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
