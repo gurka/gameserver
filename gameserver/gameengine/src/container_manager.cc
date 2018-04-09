@@ -280,6 +280,45 @@ bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId,
   return static_cast<int>(container->items.size()) < containerItemMaxItems;
 }
 
+void ContainerManager::removeItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot)
+{
+  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d",
+            __func__,
+            playerCtrl->getPlayerId(),
+            containerId,
+            containerSlot);
+
+  auto* container = getContainer(playerCtrl, containerId);
+  if (!container)
+  {
+    // getContainer logs error
+    return;
+  }
+
+  // Make sure that the containerSlot is valid
+  if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
+  {
+    LOG_ERROR("%s: invalid containerSlot: %d, container->items.size(): %d",
+              __func__,
+              containerSlot,
+              static_cast<int>(container->items.size()));
+    return;
+  }
+
+  // Remove the item
+  container->items.erase(container->items.begin() + containerSlot);
+
+  // Inform players that have this contianer open about the change
+  for (auto* playerCtrl : container->relatedPlayers)
+  {
+    (void)playerCtrl;
+
+    // TODO(simon): fix
+    // get this player's clientContainerId for this container
+    // send onContainerUpdated
+  }
+}
+
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item)
 {
   LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",

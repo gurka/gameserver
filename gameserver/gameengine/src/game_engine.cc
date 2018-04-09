@@ -449,6 +449,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 
 bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const
 {
+  // TODO(simon): count
   if (position.isPosition())
   {
     return world_->canAddItem(item, position.getPosition());
@@ -477,6 +478,8 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
 
 void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position, int count)
 {
+  // TODO(simon): count
+  // TODO(simon): verify itemId? verify success of removal?
   if (position.getGamePosition().isPosition())
   {
     world_->removeItem(position.getItemId(), 0, position.getGamePosition().getPosition(), position.getStackPosition());
@@ -489,15 +492,17 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
   }
   else if (position.getGamePosition().isContainer())
   {
-    LOG_ERROR("%s: container TODO", __func__);
+    containerManager_.removeItem(getPlayerCtrl(creatureId),
+                                 position.getGamePosition().getContainerId(),
+                                 position.getGamePosition().getContainerSlot());
   }
 }
 
 void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
+  // TODO(simon): count
   if (position.isPosition())
   {
-    // TODO(simon): count?
     world_->addItem(item, position.getPosition());
   }
   else if (position.isInventory())
