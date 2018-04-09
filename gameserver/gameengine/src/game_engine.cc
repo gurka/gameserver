@@ -328,6 +328,9 @@ void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPositio
 
   // Add Item to toPosition
   addItem(creatureId, toPosition, item, count);
+
+  // TODO(simon): move of Container requires ContainerManager to recalculate and
+  //              modify parentContainerId and rootItemPosition
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
@@ -501,6 +504,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
 void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
   // TODO(simon): count
+  // TODO(simon): verify success? But how do we handle failure, rollback?
   if (position.isPosition())
   {
     world_->addItem(item, position.getPosition());
@@ -513,6 +517,12 @@ void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, co
   }
   else if (position.isContainer())
   {
-    LOG_ERROR("%s: container TODO", __func__);
+    // Note: We cannot assume that the item is added to the container referenced in position
+    //       If the containerSlot points to a container-item than the item will be added
+    //       to that inner container
+    containerManager_.addItem(getPlayerCtrl(creatureId),
+                              position.getContainerId(),
+                              position.getContainerSlot(),
+                              item);
   }
 }

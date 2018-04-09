@@ -319,6 +319,61 @@ void ContainerManager::removeItem(const PlayerCtrl* playerCtrl, int containerId,
   }
 }
 
+void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item)
+{
+  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d, itemId: %d",
+            __func__,
+            playerCtrl->getPlayerId(),
+            containerId,
+            containerSlot,
+            item.getItemId());
+
+  auto* container = getContainer(playerCtrl, containerId);
+  if (!container)
+  {
+    // getContainer logs error
+    return;
+  }
+
+  // Make sure that the containerSlot is valid
+  if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
+  {
+    LOG_ERROR("%s: invalid containerSlot: %d, container->items.size(): %d",
+              __func__,
+              containerSlot,
+              static_cast<int>(container->items.size()));
+    return;
+  }
+
+  // Check if the item at the containerSlot is a container, then we should check that inner container
+  if (container->items[containerSlot].isContainer())
+  {
+    // We might need to make a new Container object for the inner container
+    if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
+    {
+      LOG_ERROR("%s: create new Container for inner container NOT YET IMPLEMENTED", __func__);
+      return;
+    }
+
+    // Just reset input parameters
+    containerId = container->items[containerSlot].getContainerId();
+    container = getContainer(playerCtrl, containerId);
+  }
+
+  // Add the item at the front
+  container->items.insert(container->items.begin(), item);
+
+  // Inform players that have this contianer open about the change
+  for (auto* playerCtrl : container->relatedPlayers)
+  {
+    (void)playerCtrl;
+
+    // TODO(simon): fix
+    // get this player's clientContainerId for this container
+    // send onContainerUpdated
+  }
+}
+
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item)
 {
   LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",

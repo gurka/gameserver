@@ -57,6 +57,7 @@ class ContainerManager
 
   bool canAddItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item) const;
   void removeItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
+  void addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item);
 
  private:
   void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item);
