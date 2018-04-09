@@ -44,20 +44,17 @@ void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
   const auto playerId = playerCtrl->getPlayerId();
   if (clientContainerIds_.count(playerId) == 1)
   {
-    for (const auto containerId : clientContainerIds_[playerId])
+    auto& clientContainerIds = clientContainerIds_[playerId];
+    for (auto i = 0u; i < clientContainerIds.size(); i++)
     {
+      const auto containerId = clientContainerIds[i];
       if (containerId == Container::INVALID_ID)
       {
         continue;
       }
 
       auto& container = containers_.at(containerId);
-      const auto it = std::find(container.relatedPlayers.cbegin(), container.relatedPlayers.cend(), playerCtrl);
-      if (it == container.relatedPlayers.cend())
-      {
-        LOG_ERROR("%s: player: %d not found in relatedPlayers", __func__, playerId);
-      }
-      container.relatedPlayers.erase(it);
+      removeRelatedPlayer(&container, playerCtrl, i);
     }
 
     clientContainerIds_.erase(playerId);
@@ -224,6 +221,7 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int container
     return;
   }
 
+  // Open parent container
   const auto parentContainerItem = Item(parentContainer->itemId);
   openContainer(playerCtrl, parentContainer, containerId, parentContainerItem);
 }
@@ -244,18 +242,10 @@ bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId,
     return false;
   }
 
-  // Make sure that the containerSlot is valid
-  if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
-  {
-    LOG_ERROR("%s: invalid containerSlot: %d, container->items.size(): %d",
-              __func__,
-              containerSlot,
-              static_cast<int>(container->items.size()));
-    return false;
-  }
-
-  // Check if the item at the containerSlot is a container, then we should check that inner container
-  if (container->items[containerSlot].isContainer())
+  // If the containerSlot is valid, then check if the item it points to is a container
+  if (containerSlot >= 0 &&
+      containerSlot < static_cast<int>(container->items.size()) &&
+      container->items[containerSlot].isContainer())
   {
     // We might need to make a new Container object for the inner container
     if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
@@ -264,9 +254,8 @@ bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId,
       return false;
     }
 
-    // Just reset input parameters
-    containerId = container->items[containerSlot].getContainerId();
-    container = getContainer(playerCtrl, containerId);
+    // Change the container pointer to the inner container
+    container = &containers_.at(container->items[containerSlot].getContainerId());
   }
 
   // Just make sure that there is room for the item
@@ -309,10 +298,9 @@ void ContainerManager::removeItem(const PlayerCtrl* playerCtrl, int containerId,
   container->items.erase(container->items.begin() + containerSlot);
 
   // Inform players that have this contianer open about the change
-  for (auto* relatedPlayerCtrl : container->relatedPlayers)
+  for (auto& relatedPlayer : container->relatedPlayers)
   {
-    const auto clientContainerId = getClientContainerId(relatedPlayerCtrl->getPlayerId(), container->id);
-    relatedPlayerCtrl->onContainerRemoveItem(clientContainerId, containerSlot);
+    relatedPlayer.playerCtrl->onContainerRemoveItem(relatedPlayer.clientContainerId, containerSlot);
   }
 }
 
@@ -332,18 +320,10 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
     return;
   }
 
-  // Make sure that the containerSlot is valid
-  if (containerSlot < 0 || containerSlot >= static_cast<int>(container->items.size()))
-  {
-    LOG_ERROR("%s: invalid containerSlot: %d, container->items.size(): %d",
-              __func__,
-              containerSlot,
-              static_cast<int>(container->items.size()));
-    return;
-  }
-
-  // Check if the item at the containerSlot is a container, then we should check that inner container
-  if (container->items[containerSlot].isContainer())
+  // If the containerSlot is valid, then check if the item it points to is a container
+  if (containerSlot >= 0 &&
+      containerSlot < static_cast<int>(container->items.size()) &&
+      container->items[containerSlot].isContainer())
   {
     // We might need to make a new Container object for the inner container
     if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
@@ -352,19 +332,17 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
       return;
     }
 
-    // Just reset input parameters
-    containerId = container->items[containerSlot].getContainerId();
-    container = getContainer(playerCtrl, containerId);
+    // Change the container pointer to the inner container
+    container = &containers_.at(container->items[containerSlot].getContainerId());
   }
 
   // Add the item at the front
   container->items.insert(container->items.begin(), item);
 
   // Inform players that have this contianer open about the change
-  for (auto* relatedPlayerCtrl : container->relatedPlayers)
+  for (auto& relatedPlayer : container->relatedPlayers)
   {
-    const auto clientContainerId = getClientContainerId(relatedPlayerCtrl->getPlayerId(), container->id);
-    relatedPlayerCtrl->onContainerAddItem(clientContainerId, item);
+    relatedPlayer.playerCtrl->onContainerAddItem(relatedPlayer.clientContainerId, item);
   }
 }
 
@@ -377,8 +355,17 @@ void ContainerManager::openContainer(PlayerCtrl* playerCtrl, Container* containe
             clientContainerId,
             item.getItemId());
 
+  // Check if there already is an open container at the given clientContainerId
+  const auto currentContainerId = getContainerId(playerCtrl->getPlayerId(), clientContainerId);
+  if (currentContainerId != Container::INVALID_ID)
+  {
+    // Remove player from relatedPlayers
+    auto& currentContainer = containers_.at(currentContainerId);
+    removeRelatedPlayer(&currentContainer, playerCtrl, clientContainerId);
+  }
+
   // Add player to related players
-  container->relatedPlayers.push_back(playerCtrl);
+  addRelatedPlayer(container, playerCtrl, clientContainerId);
 
   // Set clientContainerId
   setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, container->id);
@@ -396,12 +383,7 @@ void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, Container* contain
             clientContainerId);
 
   // Remove player from related players
-  const auto it = std::find(container->relatedPlayers.cbegin(), container->relatedPlayers.cend(), playerCtrl);
-  if (it == container->relatedPlayers.cend())
-  {
-    LOG_ERROR("%s: player: %d not found in relatedPlayers", __func__, playerCtrl->getPlayerId());
-  }
-  container->relatedPlayers.erase(it);
+  removeRelatedPlayer(container, playerCtrl, clientContainerId);
 
   // Unset clientContainerId
   setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, Container::INVALID_ID);
@@ -453,4 +435,31 @@ int ContainerManager::getContainerId(CreatureId playerId, int clientContainerId)
 
   const auto& clientContainerIds = clientContainerIds_.at(playerId);
   return clientContainerIds[clientContainerId];
+}
+
+void ContainerManager::addRelatedPlayer(Container* container, PlayerCtrl* playerCtrl, int clientContainerId)
+{
+  container->relatedPlayers.emplace_back(playerCtrl, clientContainerId);
+}
+
+void ContainerManager::removeRelatedPlayer(Container* container, const PlayerCtrl* playerCtrl, int clientContainerId)
+{
+  auto it = std::find_if(container->relatedPlayers.begin(),
+                         container->relatedPlayers.end(),
+                         [playerCtrl, clientContainerId](const auto& relatedPlayer)
+  {
+    return relatedPlayer.playerCtrl->getPlayerId() == playerCtrl->getPlayerId() &&
+           relatedPlayer.clientContainerId == clientContainerId;
+  });
+  if (it == container->relatedPlayers.end())
+  {
+    LOG_ERROR("%s: could not find RelatedPlayer with playerId: %d, clientContainerId: %d in container: %d",
+              __func__,
+              playerCtrl->getPlayerId(),
+              clientContainerId,
+              container->id);
+    return;
+  }
+
+  container->relatedPlayers.erase(it);
 }

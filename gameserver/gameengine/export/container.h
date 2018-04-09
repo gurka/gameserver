@@ -72,7 +72,18 @@ struct Container
   std::vector<Item> items;
 
   // List of Players that have this Container open
-  std::vector<PlayerCtrl*> relatedPlayers;
+  struct RelatedPlayer
+  {
+    RelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId)
+      : playerCtrl(playerCtrl),
+        clientContainerId(clientContainerId)
+    {
+    }
+
+    PlayerCtrl* playerCtrl;
+    int clientContainerId;
+  };
+  std::vector<RelatedPlayer> relatedPlayers;
 };
 
 #endif // GAMEENGINE_CONTAINER_H_

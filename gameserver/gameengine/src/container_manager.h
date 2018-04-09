@@ -68,6 +68,9 @@ class ContainerManager
   int getClientContainerId(CreatureId playerId, int containerId) const;
   int getContainerId(CreatureId playerId, int clientContainerId) const;
 
+  void addRelatedPlayer(Container* container, PlayerCtrl* playerCtrl, int clientContainerId);
+  void removeRelatedPlayer(Container* container, const PlayerCtrl* playerCtrl, int clientContainerId);
+
   int nextContainerId_;
   std::unordered_map<int, Container> containers_;
   std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
