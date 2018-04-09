@@ -304,6 +304,7 @@ void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPositio
   {
     // Move Creature
     getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+    return;
   }
 
   // Verify that the Item is at fromPosition and can be moved
@@ -313,7 +314,19 @@ void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPositio
     return;
   }
   const auto item = *getItem(creatureId, fromPosition);
+
   // TODO(simon): verify that Item is movable
+
+  // TODO(simon): check if toPosition points to a container item, and in that case change toPosition
+  //              to point inside that container (if applicable)
+
+  if (item.isContainer())
+  {
+    // TODO(simon): move of Container requires ContainerManager to recalculate and
+    //              modify parentContainerId and rootItemPosition
+    getPlayerCtrl(creatureId)->sendTextMessage(0x13, "Not yet implemented.");
+    return;
+  }
 
   // Verify that the Item can be added to toPosition
   if (!canAddItem(creatureId, toPosition, item, count))
@@ -328,9 +341,6 @@ void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPositio
 
   // Add Item to toPosition
   addItem(creatureId, toPosition, item, count);
-
-  // TODO(simon): move of Container requires ContainerManager to recalculate and
-  //              modify parentContainerId and rootItemPosition
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
@@ -453,18 +463,14 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const
 {
   // TODO(simon): count
+
   if (position.isPosition())
   {
     return world_->canAddItem(item, position.getPosition());
   }
   else if (position.isInventory())
   {
-    // TODO(simon): check capacity of Player and weight of Item
-    // TODO(simon): if there is a Container item at the inventorySlot, then check if we
-    //              can add the Item to that Container
-    // TODO(simon): decide if empty inventory slot should be nullptr or an invalid item
-    return getPlayer(creatureId).getEquipment().getItem(position.getInventorySlot()) == nullptr ||
-           !getPlayer(creatureId).getEquipment().getItem(position.getInventorySlot())->isValid();
+    return getPlayer(creatureId).getEquipment().canAddItem(item, position.getInventorySlot());
   }
   else if (position.isContainer())
   {
@@ -483,6 +489,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
 {
   // TODO(simon): count
   // TODO(simon): verify itemId? verify success of removal?
+
   if (position.getGamePosition().isPosition())
   {
     world_->removeItem(position.getItemId(), 0, position.getGamePosition().getPosition(), position.getStackPosition());

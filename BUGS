@@ -1,9 +1,0 @@
-Item movement / ContainerManager:
-  - Item is removed but not added if canAddItem returns false (item vanishes).
-    - Check order of removeItem, canAddItem and addItem.
-
-  - If toPosition points to a Container (e.g. we should add the item to the inner container),
-    and the inner container moves (changes containerSlot) when the item is removed, then it won't
-    be added to the inner container.
-    - Move "check if toPosition is inner container" to GameEngine.
-      We need that functionality for inventory too, but _not_ for World!
