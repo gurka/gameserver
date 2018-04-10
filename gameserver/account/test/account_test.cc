@@ -29,17 +29,26 @@
 class AccountTest : public ::testing::Test
 {
  public:
+
+  static constexpr auto ACCOUNT_1 = 123456;
+  static constexpr auto ACCOUNT_2 = 0;
+  static constexpr auto ACCOUNT_INVALID = 1337;
+
+  static constexpr auto PASSWORD_1 = "hunter2";
+  static constexpr auto PASSWORD_2 = "root";
+  static constexpr auto PASSWORD_INVALID = "god";
+
   AccountTest()
   {
     // Create valid xml-file stream
     xmlStream <<
     "<?xml version=\"1.0\"?>\n"
     "<accounts>\n"
-    "  <account number=\"1\" password=\"1\" paid_days=\"90\">\n"
+    "  <account number=\"" << ACCOUNT_1 << "\" password=\"" << PASSWORD_1 << "\" paid_days=\"90\">\n"
     "    <character name=\"Alice\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
     "    <character name=\"Bob\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
     "  </account>\n"
-    "  <account number=\"2\" password=\"2\" paid_days=\"1337\">\n"
+    "  <account number=\"" << ACCOUNT_2 << "\" password=\"" << PASSWORD_2 << "\" paid_days=\"1337\">\n"
     "    <character name=\"Gamemaster\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
     "  </account>\n"
     "</accounts>\n";
@@ -60,22 +69,22 @@ TEST_F(AccountTest, Accounts)
   AccountReader accountReader;
   accountReader.loadFile(&xmlStream);
 
-  EXPECT_TRUE(accountReader.accountExists(1));
-  EXPECT_TRUE(accountReader.accountExists(2));
-  EXPECT_FALSE(accountReader.accountExists(3));
+  EXPECT_TRUE(accountReader.accountExists(ACCOUNT_1));
+  EXPECT_TRUE(accountReader.accountExists(ACCOUNT_2));
+  EXPECT_FALSE(accountReader.accountExists(ACCOUNT_INVALID));
 
-  EXPECT_TRUE(accountReader.verifyPassword(1, "1"));
-  EXPECT_TRUE(accountReader.verifyPassword(2, "2"));
-  EXPECT_FALSE(accountReader.verifyPassword(3, "3"));
-  EXPECT_FALSE(accountReader.verifyPassword(1, "2"));
-  EXPECT_FALSE(accountReader.verifyPassword(2, "1"));
+  EXPECT_TRUE(accountReader.verifyPassword(ACCOUNT_1, PASSWORD_1));
+  EXPECT_TRUE(accountReader.verifyPassword(ACCOUNT_2, PASSWORD_2));
+  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_INVALID, PASSWORD_INVALID));
+  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_1, PASSWORD_2));
+  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_2, PASSWORD_1));
 
-  EXPECT_NE(nullptr, accountReader.getAccount(1));
-  EXPECT_NE(nullptr, accountReader.getAccount(2));
-  EXPECT_EQ(nullptr, accountReader.getAccount(3));
+  EXPECT_NE(nullptr, accountReader.getAccount(ACCOUNT_1));
+  EXPECT_NE(nullptr, accountReader.getAccount(ACCOUNT_2));
+  EXPECT_EQ(nullptr, accountReader.getAccount(ACCOUNT_INVALID));
 
-  EXPECT_EQ(90, accountReader.getAccount(1)->premiumDays);
-  EXPECT_EQ(1337, accountReader.getAccount(2)->premiumDays);
+  EXPECT_EQ(90, accountReader.getAccount(ACCOUNT_1)->premiumDays);
+  EXPECT_EQ(1337, accountReader.getAccount(ACCOUNT_2)->premiumDays);
 }
 
 TEST_F(AccountTest, Characters)
@@ -88,12 +97,12 @@ TEST_F(AccountTest, Characters)
   EXPECT_TRUE(accountReader.characterExists("Gamemaster"));
   EXPECT_FALSE(accountReader.characterExists("Simon"));
 
-  EXPECT_TRUE(accountReader.verifyPassword("Alice", "1"));
-  EXPECT_TRUE(accountReader.verifyPassword("Bob", "1"));
-  EXPECT_TRUE(accountReader.verifyPassword("Gamemaster", "2"));
-  EXPECT_FALSE(accountReader.verifyPassword("Simon", "3"));
-  EXPECT_FALSE(accountReader.verifyPassword("Alice", "2"));
-  EXPECT_FALSE(accountReader.verifyPassword("Gamemaster", "1"));
+  EXPECT_TRUE(accountReader.verifyPassword("Alice", PASSWORD_1));
+  EXPECT_TRUE(accountReader.verifyPassword("Bob", PASSWORD_1));
+  EXPECT_TRUE(accountReader.verifyPassword("Gamemaster", PASSWORD_2));
+  EXPECT_FALSE(accountReader.verifyPassword("Simon", PASSWORD_INVALID));
+  EXPECT_FALSE(accountReader.verifyPassword("Alice", PASSWORD_2));
+  EXPECT_FALSE(accountReader.verifyPassword("Gamemaster", PASSWORD_1));
 
   EXPECT_NE(nullptr, accountReader.getCharacter("Alice"));
   EXPECT_NE(nullptr, accountReader.getCharacter("Bob"));
