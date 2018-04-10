@@ -10,7 +10,7 @@ set -e
   tools/cmake test
 
   # Go to build_test
-  pushd "build_test"
+  pushd "test"
   make || exit 1
 
   # Run tests

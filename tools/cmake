@@ -5,7 +5,7 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIR_RELEASE="$DIR/../build_release"
 DIR_DEBUG="$DIR/../build_debug"
-DIR_TEST="$DIR/../build_test"
+DIR_TEST="$DIR/../test"
 DIR_ECLIPSE="$DIR/../eclipse"
 
 case $1 in
