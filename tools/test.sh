@@ -7,12 +7,5 @@ set -e
 
   tools/cmake debug
   pushd "debug"
-  make tests
-
-  bin/account_test
-  bin/network_test
-  bin/utils_test
-  bin/world_test
-
-  echo "All tests ran OK"
+  ctest -V
 )

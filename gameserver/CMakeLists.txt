@@ -71,6 +71,10 @@ target_include_directories(world SYSTEM PRIVATE
 
 # -- Unit tests --
 
+enable_testing()
+
+add_test(build_tests "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target tests)
+
 add_custom_target(tests DEPENDS
   account_test
   network_test
@@ -95,6 +99,8 @@ target_include_directories(account_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
+add_test(account bin/account_test)
+set_tests_properties(account PROPERTIES DEPENDS build_tests)
 
 add_subdirectory("network/test")
 target_compile_definitions(network_test PRIVATE UNITTEST)
@@ -107,6 +113,8 @@ target_include_directories(network_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
+add_test(network bin/network_test)
+set_tests_properties(network PROPERTIES DEPENDS build_tests)
 
 add_subdirectory("utils/test")
 target_compile_definitions(utils_test PRIVATE UNITTEST)
@@ -119,6 +127,8 @@ target_include_directories(utils_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
+add_test(world bin/world_test)
+set_tests_properties(world PROPERTIES DEPENDS build_tests)
 
 add_subdirectory("world/test")
 target_compile_definitions(world_test PRIVATE UNITTEST)
@@ -131,3 +141,5 @@ target_include_directories(world_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
+add_test(utils bin/utils_test)
+set_tests_properties(utils PROPERTIES DEPENDS build_tests)
