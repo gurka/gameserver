@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gurka/gameserver.svg?branch=master)](https://travis-ci.org/gurka/gameserver)
+
 ```
 The MIT License (MIT)
 
