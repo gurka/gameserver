@@ -65,7 +65,7 @@ TEST_F(TileTest, Constructor)
   Item groundItem(itemIdA);
   Tile tileA(groundItem);
 
-  ASSERT_EQ(tileA.getItem(0).getItemId(), groundItem.getItemId());
+  ASSERT_EQ(tileA.getItem(0)->getItemId(), groundItem.getItemId());
   ASSERT_EQ(tileA.getNumberOfThings(), 1u);  // Only ground item
 }
 
