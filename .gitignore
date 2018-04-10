@@ -1,5 +1,6 @@
 *.swp
 build_*/
+test/
 eclipse/
 data/
 doc/
