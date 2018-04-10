@@ -17,62 +17,62 @@ set(LIBRARIES boost_system pthread)
 
 if (NOT unittest)
   # Loginserver
-  add_subdirectory("loginserver")
+  add_subdirectory("gameserver/loginserver")
   target_include_directories(loginserver PUBLIC
-    "account/export"
-    "network/export"
-    "utils/export"
+    "gameserver/account/export"
+    "gameserver/network/export"
+    "gameserver/utils/export"
   )
 
   # Worldserver
-  add_subdirectory("worldserver")
+  add_subdirectory("gameserver/worldserver")
   target_include_directories(worldserver PUBLIC
-    "account/export"
-    "network/export"
-    "utils/export"
-    "world/export"
+    "gameserver/account/export"
+    "gameserver/network/export"
+    "gameserver/utils/export"
+    "gameserver/world/export"
   )
 endif()
 
 # Account
-add_subdirectory("account")
+add_subdirectory("gameserver/account")
 target_include_directories(account PUBLIC
-  "account/export"
-  "utils/export"
+  "gameserver/account/export"
+  "gameserver/utils/export"
 )
 target_include_directories(account SYSTEM PRIVATE
   "external/rapidxml"
 )
 
 # Utils
-add_subdirectory("utils")
+add_subdirectory("gameserver/utils")
 target_include_directories(utils PUBLIC
-  "utils/export"
+  "gameserver/utils/export"
 )
 
 # Network
-add_subdirectory("network")
+add_subdirectory("gameserver/network")
 target_include_directories(network PUBLIC
-  "network/src"
-  "network/export"
-  "utils/export"
+  "gameserver/network/src"
+  "gameserver/network/export"
+  "gameserver/utils/export"
 )
 
 # GameEngine
-add_subdirectory("gameengine")
+add_subdirectory("gameserver/gameengine")
 target_include_directories(gameengine PUBLIC
-  "gameengine/src"
-  "gameengine/export"
-  "utils/export"
-  "world/export"
+  "gameserver/gameengine/src"
+  "gameserver/gameengine/export"
+  "gameserver/utils/export"
+  "gameserver/world/export"
 )
 
 # World
-add_subdirectory("world")
+add_subdirectory("gameserver/world")
 target_include_directories(world PUBLIC
-  "world/src"
-  "world/export"
-  "utils/export"
+  "gameserver/world/src"
+  "gameserver/world/export"
+  "gameserver/utils/export"
 )
 target_include_directories(world SYSTEM PRIVATE
   "external/rapidxml"
@@ -86,7 +86,7 @@ if (unittest)
 
   # Utils stub
   target_include_directories(utils_test_stubs PUBLIC
-    "utils/export"
+    "gameserver/utils/export"
   )
 
   # Account test
