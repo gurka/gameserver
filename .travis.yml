@@ -8,7 +8,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-6
-      - libboost-all-dev
+      - libboost-system-dev
 
 script:
   - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/test.sh
