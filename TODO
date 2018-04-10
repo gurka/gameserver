@@ -13,4 +13,4 @@
 
 * Fix moving creatures (PlayerManager::moveItemFromPosToPos)
 
-* Refactor cmake files
+* Use CMake to run tests instead of tools/test.sh

@@ -28,7 +28,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include "mocks/creaturectrl_mock.h"
+#include "creaturectrl_mock.h"
 #include "world.h"
 #include "creature.h"
 #include "creature_ctrl.h"

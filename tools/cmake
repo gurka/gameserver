@@ -3,76 +3,62 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-CMAKE_DIR="$SCRIPT_DIR/.."
-
-RELEASE_DIR="$CMAKE_DIR/build_release"
-DEBUG_DIR="$CMAKE_DIR/build_debug"
-TEST_DIR="$CMAKE_DIR/test"
-ECLIPSE_DIR="$CMAKE_DIR/../gameserver-eclipse"
+SOURCE_DIR="$SCRIPT_DIR/../gameserver"
+DATA_DIR="$SCRIPT_DIR/../data"
+RELEASE_DIR="$SCRIPT_DIR/../release"
+DEBUG_DIR="$SCRIPT_DIR/../debug"
+ECLIPSE_DIR="$SCRIPT_DIR/../eclipse"
 
 case $1 in
   'all')
     mkdir -p "$RELEASE_DIR"
     pushd "$RELEASE_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -s ../data data
+    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
+    ln -s "$DATA_DIR" data
     popd
 
     mkdir -p "$DEBUG_DIR"
     pushd "$DEBUG_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -s ../data data
-    popd
-
-    mkdir -p "$TEST_DIR"
-    pushd "$TEST_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=debug -Dunittest=ON
+    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
+    ln -s "$DATA_DIR" data
     popd
 
     mkdir -p "$ECLIPSE_DIR"
     pushd "$ECLIPSE_DIR"
-    cmake "$CMAKE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.2 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -s ../data data
+    cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+    ln -s "$DATA_DIR" data
     popd
     ;;
 
   'release')
     mkdir -p "$RELEASE_DIR"
     pushd "$RELEASE_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -s ../data data
+    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
+    ln -s "$DATA_DIR" data
     popd
     ;;
 
   'debug')
     mkdir -p "$DEBUG_DIR"
     pushd "$DEBUG_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -s ../data data
-    popd
-    ;;
-
-  'test')
-    mkdir -p "$TEST_DIR"
-    pushd "$TEST_DIR"
-    cmake "$CMAKE_DIR" -DCMAKE_BUILD_TYPE=debug -Dunittest=ON
+    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
+    ln -s "$DATA_DIR" data
     popd
     ;;
 
   'eclipse')
     mkdir -p "$ECLIPSE_DIR"
     pushd "$ECLIPSE_DIR"
-    cmake "$CMAKE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.2 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -s ../data data
+    cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+    ln -s "$DATA_DIR" data
     popd
     ;;
 
   'clean')
-    rm -rf "$RELEASE_DIR" "$DEBUG_DIR" "$TEST_DIR" "$ECLIPSE_DIR"
+    rm -rf "$RELEASE_DIR" "$DEBUG_DIR" "$ECLIPSE_DIR"
     ;;
 
   *)
-    echo "Usage: $0 [all | release | debug | test | eclipse | clean]"
+    echo "Usage: $0 [all | release | debug |eclipse | clean]"
     ;;
 esac

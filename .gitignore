@@ -1,5 +1,6 @@
 *.swp
-build_*/
-test/
-data/
-doc/
+/debug/
+/release/
+/eclipse/
+/data/
+/doc/

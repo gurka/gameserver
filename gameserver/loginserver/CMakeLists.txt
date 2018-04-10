@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.0)
 
 project(loginserver)
 
-set(src
+add_executable(loginserver
   "src/loginserver.cc"
 )
 
-add_executable(loginserver ${src})
 target_link_libraries(loginserver
-  "account"
-  "network"
-  "utils"
-  ${LIBRARIES}
+  account
+  network
+  utils
+  boost_system
+  pthread
 )

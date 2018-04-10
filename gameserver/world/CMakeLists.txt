@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(world)
 
-set(src
+add_library(world
   "export/creature_ctrl.h"
   "export/creature.h"
   "export/direction.h"
@@ -19,25 +19,3 @@ set(src
   "src/world_factory.cc"
   "src/world.cc"
 )
-
-add_library(world ${src})
-
-if (unittest)
-  set(src_test
-    "test/mocks/creaturectrl_mock.h"
-    "test/position_test.cc"
-    "test/creature_test.cc"
-    "test/item_test.cc"
-    "test/world_test.cc"
-    "test/tile_test.cc"
-  )
-
-  add_executable(world_test ${src_test})
-  target_compile_definitions(world_test PRIVATE "UNITTEST")
-  target_link_libraries(world_test
-    gtest_main
-    gmock_main
-    world
-    utils_test_stubs
-  )
-endif()

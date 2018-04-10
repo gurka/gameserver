@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(gameengine)
 
-set(src
+add_library(gameengine
   "export/container.h"
   "export/game_position.h"
   "export/player_ctrl.h"
@@ -15,5 +15,3 @@ set(src
   "src/player.h"
   "src/game_engine_queue.cc"
 )
-
-add_library(gameengine ${src})
