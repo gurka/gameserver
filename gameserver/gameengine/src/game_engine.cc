@@ -362,6 +362,14 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   if (item->isContainer())
   {
+    // Create a new Container if this is the first time that this item is used
+    if (item->getContainerId() == Container::INVALID_ID)
+    {
+      item->setContainerId(containerManager_.createContainer(getPlayerCtrl(creatureId),
+                                                             item->getItemId(),
+                                                             position));
+    }
+
     containerManager_.useContainer(getPlayerCtrl(creatureId), item, position, newContainerId);
   }
 }

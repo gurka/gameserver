@@ -78,6 +78,7 @@ add_test(build_tests "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target t
 
 add_custom_target(tests DEPENDS
   account_test
+  gameengine_test
   network_test
   utils_test
   world_test
@@ -102,6 +103,20 @@ target_include_directories(account_test SYSTEM PRIVATE
 )
 add_test(account bin/account_test)
 set_tests_properties(account PROPERTIES DEPENDS build_tests)
+
+add_subdirectory("gameengine/test")
+target_compile_definitions(gameengine_test PRIVATE UNITTEST)
+set_target_properties(gameengine_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
+target_include_directories(gameengine_test PUBLIC
+  "gameengine/export"
+  "gameengine/src"
+)
+target_include_directories(gameengine_test SYSTEM PRIVATE
+  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
+  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
+)
+add_test(gameengine bin/gameengine_test)
+set_tests_properties(gameengine PROPERTIES DEPENDS build_tests)
 
 add_subdirectory("network/test")
 target_compile_definitions(network_test PRIVATE UNITTEST)

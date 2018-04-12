@@ -61,11 +61,42 @@ void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
   }
 }
 
+const Container* ContainerManager::getContainer(int containerId) const
+{
+  if (containerId == Container::INVALID_ID)
+  {
+    LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
+    return nullptr;
+  }
+
+  if (isClientContainerId(containerId))
+  {
+    LOG_ERROR("%s: containerId: %d is a clientContainerId", __func__, containerId);
+    return nullptr;
+  }
+
+  // Verify that the container exists
+  if (containers_.count(containerId) == 0)
+  {
+    LOG_ERROR("%s: no container found with id: %d", __func__, containerId);
+    return nullptr;
+  }
+
+  return &containers_.at(containerId);
+}
+
+Container* ContainerManager::getContainer(int containerId)
+{
+  // According to https://stackoverflow.com/a/123995/969365
+  const auto* container = static_cast<const ContainerManager*>(this)->getContainer(containerId);
+  return const_cast<Container*>(container);
+}
+
 const Container* ContainerManager::getContainer(const PlayerCtrl* playerCtrl, int containerId) const
 {
   if (containerId == Container::INVALID_ID)
   {
-    LOG_ERROR("%s: invalid containerId", __func__);
+    LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
     return nullptr;
   }
 
@@ -110,54 +141,55 @@ Item* ContainerManager::getItem(const PlayerCtrl* playerCtrl, int containerId, i
   return &container->items[containerSlot];
 }
 
+int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition)
+{
+  const auto containerId = nextContainerId_;
+  nextContainerId_ += 1;
+
+  auto& container = containers_[containerId];
+  container.id = containerId;
+  container.weight = 0;
+  container.itemId = itemId;
+  if (itemPosition.getGamePosition().isPosition() ||
+      itemPosition.getGamePosition().isInventory())
+  {
+    container.parentContainerId = Container::INVALID_ID;
+    container.rootItemPosition = itemPosition;
+  }
+  else  // isContainer
+  {
+    const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
+    container.parentContainerId = parentContainer->id;
+    container.rootItemPosition = parentContainer->rootItemPosition;
+  }
+  container.items = {};
+  container.relatedPlayers = {};
+
+  LOG_DEBUG("%s: created new Container with id %d, parentContainerId: %d, rootItemPosition: %s",
+            __func__,
+            container.id,
+            container.parentContainerId,
+            container.rootItemPosition.toString().c_str());
+
+  // Until we have a database with containers...
+  if (container.id == 64)
+  {
+    container.items = { Item(1712), Item(1745), Item(1411) };
+  }
+  else if (container.id == 65)
+  {
+    container.items = { Item(1560) };
+  }
+
+  return containerId;
+}
+
 void ContainerManager::useContainer(PlayerCtrl* playerCtrl, Item* item, const ItemPosition& itemPosition, int newClientContainerId)
 {
   if (!item->isContainer())
   {
     LOG_ERROR("%s: item with id %d is not a container", __func__, item->getItemId());
     return;
-  }
-
-  if (item->getContainerId() == Container::INVALID_ID)
-  {
-    // Create new Container
-    auto& container = containers_[nextContainerId_];
-    container.id = nextContainerId_;
-    container.weight = 0;
-    container.itemId = item->getItemId();
-    if (itemPosition.getGamePosition().isPosition() ||
-        itemPosition.getGamePosition().isInventory())
-    {
-      container.parentContainerId = Container::INVALID_ID;
-      container.rootItemPosition = itemPosition;
-    }
-    else  // isContainer
-    {
-      const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
-      container.parentContainerId = parentContainer->id;
-      container.rootItemPosition = parentContainer->rootItemPosition;
-    }
-    container.items = {};
-    container.relatedPlayers = {};
-
-    LOG_DEBUG("%s: created new Container with id %d, parentContainerId: %d, rootItemPosition: %s",
-              __func__,
-              container.id,
-              container.parentContainerId,
-              container.rootItemPosition.toString().c_str());
-
-    item->setContainerId(nextContainerId_);
-    nextContainerId_ += 1;
-
-    // Until we have a database with containers...
-    if (container.id == 64)
-    {
-      container.items = { Item(1712), Item(1745), Item(1411) };
-    }
-    else if (container.id == 65)
-    {
-      container.items = { Item(1560) };
-    }
   }
 
   if (containers_.count(item->getContainerId()) == 0)

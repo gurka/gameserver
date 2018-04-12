@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
-#define COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
+#ifndef GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_
+#define GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_
 
 #include "gmock/gmock.h"
 
-#include "creature_ctrl.h"
+#include "player_ctrl.h"
 
-class MockCreatureCtrl : public CreatureCtrl
+class PlayerCtrlMock : public PlayerCtrl
 {
  public:
   MOCK_METHOD3(onCreatureSpawn, void(const WorldInterface& world_interface,
@@ -68,6 +68,23 @@ class MockCreatureCtrl : public CreatureCtrl
 
   MOCK_METHOD2(onTileUpdate, void(const WorldInterface& world_interface,
                                   const Position& position));
+
+  MOCK_CONST_METHOD0(getPlayerId, CreatureId());
+  MOCK_METHOD1(setPlayerId, void(CreatureId playerId));
+
+  MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, int inventoryIndex));
+
+  MOCK_METHOD3(onOpenContainer, void(uint8_t clientContainerId, const Container& container, const Item& item));
+  MOCK_METHOD1(onCloseContainer, void(uint8_t clientContainerId));
+
+  MOCK_METHOD2(onContainerAddItem, void(uint8_t clientContainerId, const Item& item));
+  MOCK_METHOD3(onContainerUpdateItem, void(uint8_t clientContainerId, int containerSlot, const Item& item));
+  MOCK_METHOD2(onContainerRemoveItem, void(uint8_t clientContainerId, int containerSlot));
+
+  MOCK_METHOD2(sendTextMessage, void(uint8_t message_type, const std::string& message));
+
+  MOCK_METHOD1(sendCancel, void(const std::string& message));
+  MOCK_METHOD0(cancelMove, void());
 };
 
-#endif  // COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
+#endif  // GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_

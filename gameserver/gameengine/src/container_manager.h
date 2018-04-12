@@ -47,9 +47,13 @@ class ContainerManager
   void playerSpawn(const PlayerCtrl* playerCtrl);
   void playerDespawn(const PlayerCtrl* playerCtrl);
 
+  const Container* getContainer(int containerId) const;
+  Container* getContainer(int containerId);
   const Container* getContainer(const PlayerCtrl* playerCtrl, int containerId) const;
   Container* getContainer(const PlayerCtrl* playerCtrl, int containerId);
   Item* getItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
+
+  int createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition);
 
   void useContainer(PlayerCtrl* playerCtrl, Item* item, const ItemPosition& itemPosition, int newClientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, int containerId);
