@@ -184,27 +184,27 @@ int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemId itemId, con
   return containerId;
 }
 
-void ContainerManager::useContainer(PlayerCtrl* playerCtrl, Item* item, const ItemPosition& itemPosition, int newClientContainerId)
+void ContainerManager::useContainer(PlayerCtrl* playerCtrl, const Item& item, const ItemPosition& itemPosition, int newClientContainerId)
 {
-  if (!item->isContainer())
+  if (!item.isContainer())
   {
-    LOG_ERROR("%s: item with id %d is not a container", __func__, item->getItemId());
+    LOG_ERROR("%s: item with id %d is not a container", __func__, item.getItemId());
     return;
   }
 
-  if (containers_.count(item->getContainerId()) == 0)
+  if (containers_.count(item.getContainerId()) == 0)
   {
-    LOG_ERROR("%s: item has invalid containerId (%d)", __func__, item->getContainerId());
+    LOG_ERROR("%s: item has invalid containerId (%d)", __func__, item.getContainerId());
     return;
   }
 
-  auto& container = containers_[item->getContainerId()];
+  auto& container = containers_[item.getContainerId()];
 
   // Check if Player has this Container open
   const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), container.id);
   if (clientContainerId == Container::INVALID_ID)
   {
-    openContainer(playerCtrl, &container, newClientContainerId, *item);
+    openContainer(playerCtrl, &container, newClientContainerId, item);
   }
   else
   {
@@ -213,36 +213,36 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl, Item* item, const It
   }
 }
 
-void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, int containerId)
+void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, int clientContainerId)
 {
-  if (!isClientContainerId(containerId))
+  if (!isClientContainerId(clientContainerId))
   {
     LOG_ERROR("%s: must be called with clientContainerId", __func__);
     return;
   }
 
-  auto* container = getContainer(playerCtrl, containerId);
+  auto* container = getContainer(playerCtrl, clientContainerId);
   if (!container)
   {
-    LOG_ERROR("%s: could not find container with clientContainerId: %d", __func__, containerId);
+    LOG_ERROR("%s: could not find container with clientContainerId: %d", __func__, clientContainerId);
     return;
   }
 
-  closeContainer(playerCtrl, container, containerId);
+  closeContainer(playerCtrl, container, clientContainerId);
 }
 
-void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int containerId)
+void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientContainerId)
 {
-  if (!isClientContainerId(containerId))
+  if (!isClientContainerId(clientContainerId))
   {
     LOG_ERROR("%s: must be called with clientContainerId", __func__);
     return;
   }
 
-  auto* currentContainer = getContainer(playerCtrl, containerId);
+  auto* currentContainer = getContainer(playerCtrl, clientContainerId);
   if (!currentContainer)
   {
-    LOG_ERROR("%s: no container found with id: %d", __func__, containerId);
+    LOG_ERROR("%s: no container found with id: %d", __func__, clientContainerId);
     return;
   }
 
@@ -255,7 +255,7 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int container
 
   // Open parent container
   const auto parentContainerItem = Item(parentContainer->itemId);
-  openContainer(playerCtrl, parentContainer, containerId, parentContainerItem);
+  openContainer(playerCtrl, parentContainer, clientContainerId, parentContainerItem);
 }
 
 bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item) const
