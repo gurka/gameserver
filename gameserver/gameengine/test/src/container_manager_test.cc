@@ -321,7 +321,9 @@ TEST_F(ContainerManagerTest, addItemToContainerInContainer)
 
   // Create a container located in the first container
   auto container_item2 = Item(backpack_item_id);
-  const auto container_item_position2 = ItemPosition(GamePosition(0), container_item2.getItemId(), 0);
+  const auto container_item_position2 = ItemPosition(GamePosition(container_item1.getContainerId(), 0),
+                                                     container_item2.getItemId(),
+                                                     0);
   container_item2.setContainerId(container_manager_.createContainer(&player_ctrl_mock_,
                                                                     container_item2.getItemId(),
                                                                     container_item_position2));
@@ -379,7 +381,7 @@ TEST_F(ContainerManagerTest, addItemToContainerInContainer)
   EXPECT_TRUE(container_manager_.canAddItem(&player_ctrl_mock_, clientContainerId1, 1, item3));
 
   // Open container2
-  const auto clientContainerId2 = 0;
+  const auto clientContainerId2 = 1;
   EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId2, Ref(*container2), Ref(container_item2)));
   container_manager_.useContainer(&player_ctrl_mock_, container_item2, clientContainerId2);
 
@@ -398,4 +400,58 @@ TEST_F(ContainerManagerTest, addItemToContainerInContainer)
   ASSERT_EQ(2u, container2->items.size());
   EXPECT_EQ(item3.getItemId(), container2->items[0].getItemId());
   EXPECT_EQ(item1.getItemId(), container2->items[1].getItemId());
+
+  // Remove all items
+  // Note: second item in container2 will be moved to slot 0 before it's being removed
+  EXPECT_CALL(player_ctrl_mock_, onContainerRemoveItem(clientContainerId1, 0));
+  EXPECT_CALL(player_ctrl_mock_, onContainerRemoveItem(clientContainerId2, 0)).Times(2);
+  container_manager_.removeItem(&player_ctrl_mock_, clientContainerId1, 0);
+  container_manager_.removeItem(&player_ctrl_mock_, clientContainerId2, 0);
+  container_manager_.removeItem(&player_ctrl_mock_, clientContainerId2, 0);
+
+  // We now have:
+  // container1 slot0: container2
+  // container1 slot1: empty
+  // container2 slot0: empty
+  // container2 slot1: empty
+  ASSERT_EQ(1u, container1->items.size());
+  EXPECT_EQ(container2->id, container1->items[0].getContainerId());
+  ASSERT_EQ(0u, container2->items.size());
+
+  // Create a third container, located in the second container
+  auto container_item3 = Item(backpack_item_id);
+  const auto container_item_position3 = ItemPosition(GamePosition(container_item2.getContainerId(), 0),
+                                                     container_item3.getItemId(),
+                                                     0);
+  container_item3.setContainerId(container_manager_.createContainer(&player_ctrl_mock_,
+                                                                    container_item3.getItemId(),
+                                                                    container_item_position3));
+  const auto* container3 = container_manager_.getContainer(container_item3.getContainerId());
+
+  // Open container3
+  const auto clientContainerId3 = 2;
+  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId3, Ref(*container3), Ref(container_item3)));
+  container_manager_.useContainer(&player_ctrl_mock_, container_item3, clientContainerId3);
+
+  // Add container_item3 to container2
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId2, Ref(container_item3)));
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerId2, 0, container_item3);
+
+  // We now have:
+  // container1 slot0: container2
+  // container1 slot1: empty
+  // container2 slot0: container3
+  // container2 slot1: empty
+  // container3 slot0: empty
+  // container3 slot1: empty
+  ASSERT_EQ(1u, container1->items.size());
+  EXPECT_EQ(container2->id, container1->items[0].getContainerId());
+  ASSERT_EQ(1u, container2->items.size());
+  EXPECT_EQ(container3->id, container2->items[0].getContainerId());
+  ASSERT_EQ(0u, container3->items.size());
+
+  // Add an item to container1 slot 0 and make sure that it is inserted
+  // into container2, and _not_ into container3
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId2, Ref(item1)));
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerId1, 0, item1);
 }

@@ -350,6 +350,14 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
     return;
   }
 
+  if (containerId != container->id)
+  {
+    LOG_DEBUG("%s: clientContainerId: %d -> containerId: %d",
+              __func__,
+              containerId,
+              container->id);
+  }
+
   // If the containerSlot is valid, then check if the item it points to is a container
   if (containerSlot >= 0 &&
       containerSlot < static_cast<int>(container->items.size()) &&
