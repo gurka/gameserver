@@ -55,11 +55,11 @@ class ContainerManager
 
   int createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition);
 
-  void useContainer(PlayerCtrl* playerCtrl, const Item& item, const ItemPosition& itemPosition, int newClientContainerId);
+  void useContainer(PlayerCtrl* playerCtrl, const Item& item, int newClientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, int clientContainerId);
   void openParentContainer(PlayerCtrl* playerCtrl, int clientContainerId);
 
-  bool canAddItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item) const;
+  bool canAddItem(const PlayerCtrl* playerCtrl, int clientContainerId, int containerSlot, const Item& item) const;
   void removeItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
   void addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item);
 

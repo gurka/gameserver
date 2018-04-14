@@ -171,20 +171,10 @@ int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemId itemId, con
             container.parentContainerId,
             container.rootItemPosition.toString().c_str());
 
-  // Until we have a database with containers...
-  if (container.id == 64)
-  {
-    container.items = { Item(1712), Item(1745), Item(1411) };
-  }
-  else if (container.id == 65)
-  {
-    container.items = { Item(1560) };
-  }
-
   return containerId;
 }
 
-void ContainerManager::useContainer(PlayerCtrl* playerCtrl, const Item& item, const ItemPosition& itemPosition, int newClientContainerId)
+void ContainerManager::useContainer(PlayerCtrl* playerCtrl, const Item& item, int newClientContainerId)
 {
   if (!item.isContainer())
   {
@@ -258,16 +248,24 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientCon
   openContainer(playerCtrl, parentContainer, clientContainerId, parentContainerItem);
 }
 
-bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item) const
+bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int clientContainerId, int containerSlot, const Item& item) const
 {
-  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d, itemId: %d",
+  LOG_DEBUG("%s: playerId: %d, clientContainerId: %d, containerSlot: %d, itemId: %d",
             __func__,
             playerCtrl->getPlayerId(),
-            containerId,
+            clientContainerId,
             containerSlot,
             item.getItemId());
 
-  auto* container = getContainer(playerCtrl, containerId);
+  // Note: using clientContainerId implies that the player has this container
+  //       open, which we other would have to check
+  if (!isClientContainerId(clientContainerId))
+  {
+    LOG_ERROR("%s: must be called with clientContainerId", __func__);
+    return false;
+  }
+
+  auto* container = getContainer(playerCtrl, clientContainerId);
   if (!container)
   {
     // getContainer logs error

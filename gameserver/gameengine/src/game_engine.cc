@@ -370,7 +370,7 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
                                                              position));
     }
 
-    containerManager_.useContainer(getPlayerCtrl(creatureId), *item, position, newContainerId);
+    containerManager_.useContainer(getPlayerCtrl(creatureId), *item, newContainerId);
   }
 }
 
