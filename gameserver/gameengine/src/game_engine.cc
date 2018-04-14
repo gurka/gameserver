@@ -136,6 +136,7 @@ void GameEngine::move(CreatureId creatureId, Direction direction)
                               creature.getNextWalkTick() - Tick::now(),
                               [this, creatureId, direction](GameEngine* gameEngine)
     {
+      (void)gameEngine;
       move(creatureId, direction);
     });
   }
@@ -151,6 +152,8 @@ void GameEngine::movePath(CreatureId creatureId, std::deque<Direction>&& path)
 
   const auto task = RecursiveTask([this, creatureId](const RecursiveTask& task, GameEngine* gameEngine)
   {
+    (void)gameEngine;
+
     auto& player = getPlayer(creatureId);
 
     // Make sure that the queued moves hasn't been canceled
@@ -202,8 +205,17 @@ void GameEngine::turn(CreatureId creatureId, Direction direction)
   world_->creatureTurn(creatureId, direction);
 }
 
-void GameEngine::say(CreatureId creatureId, uint8_t type, const std::string& message, const std::string& receiver, uint16_t channelId)
+void GameEngine::say(CreatureId creatureId,
+                     uint8_t type,
+                     const std::string& message,
+                     const std::string& receiver,
+                     uint16_t channelId)
 {
+  // TODO(simon): care about these
+  (void)type;
+  (void)receiver;
+  (void)channelId;
+
   LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
 
   // Check if message is a command
@@ -471,6 +483,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const
 {
   // TODO(simon): count
+  (void)count;
 
   if (position.isPosition())
   {
@@ -496,6 +509,8 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
 void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position, int count)
 {
   // TODO(simon): count
+  (void)count;
+
   // TODO(simon): verify itemId? verify success of removal?
 
   if (position.getGamePosition().isPosition())
@@ -519,6 +534,8 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
 void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
   // TODO(simon): count
+  (void)count;
+
   // TODO(simon): verify success? But how do we handle failure, rollback?
   if (position.isPosition())
   {

@@ -41,12 +41,11 @@ class PlayerCtrlMock : public PlayerCtrl
                                        const Position& position,
                                        uint8_t stackPos));
 
-  MOCK_METHOD6(onCreatureMove, void(const WorldInterface& world_interface,
+  MOCK_METHOD5(onCreatureMove, void(const WorldInterface& world_interface,
                                     const Creature& creature,
                                     const Position& oldPosition,
                                     uint8_t oldStackPos,
-                                    const Position& newPosition,
-                                    uint8_t newStackPos));
+                                    const Position& newPosition));
 
   MOCK_METHOD4(onCreatureTurn, void(const WorldInterface& world_interface,
                                     const Creature& creature,

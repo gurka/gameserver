@@ -55,8 +55,7 @@ class CreatureCtrl
                               const Creature& creature,
                               const Position& oldPosition,
                               uint8_t oldStackPos,
-                              const Position& newPosition,
-                              uint8_t newStackPos) = 0;
+                              const Position& newPosition) = 0;
 
   // Called when a creature has turned
   virtual void onCreatureTurn(const WorldInterface& world_interface,

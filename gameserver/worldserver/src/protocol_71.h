@@ -64,14 +64,18 @@ class Protocol71 : public Protocol
   void parsePacket(IncomingPacket* packet) override;
 
   // Called by World (from CreatureCtrl)
-  void onCreatureSpawn(const WorldInterface& world_interface, const Creature& creature, const Position& position) override;
-  void onCreatureDespawn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos) override;
+  void onCreatureSpawn(const WorldInterface& world_interface,
+                       const Creature& creature,
+                       const Position& position) override;
+  void onCreatureDespawn(const WorldInterface& world_interface,
+                         const Creature& creature,
+                         const Position& position,
+                         uint8_t stackPos) override;
   void onCreatureMove(const WorldInterface& world_interface,
                       const Creature& creature,
                       const Position& oldPosition,
                       uint8_t oldStackPos,
-                      const Position& newPosition,
-                      uint8_t newStackPos) override;
+                      const Position& newPosition) override;
   void onCreatureTurn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos) override;
   void onCreatureSay(const WorldInterface& world_interface, const Creature& creature, const Position& position, const std::string& message) override;
 

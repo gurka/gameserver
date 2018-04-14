@@ -197,13 +197,13 @@ TEST_F(WorldTest, CreatureMoveSingleCreature)
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
 
   // Test with Direction
-  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _, _));
+  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _));
   Direction direction(Direction::EAST);
   world->creatureMove(creatureOne.getCreatureId(), direction);
   EXPECT_EQ(creaturePositionOne.addDirection(direction), world->getCreaturePosition(creatureOne.getCreatureId()));
 
   // Test with Position, from (193, 192, 7) to (193, 193, 7)
-  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _, _));
+  EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _, _));
   Position position(193, 193, 7);
   world->creatureMove(creatureOne.getCreatureId(), position);
   EXPECT_EQ(position, world->getCreaturePosition(creatureOne.getCreatureId()));

@@ -164,9 +164,20 @@ class Connection
 
   void onPacketHeaderSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode)
+    if (errorCode || len != 2u)
     {
-      LOG_DEBUG("%s: could not send packet header", __func__);
+      if (errorCode)
+      {
+        LOG_DEBUG("%s: could not send packet header: %s",
+                  __func__,
+                  errorCode.message().c_str());
+      }
+      else  // if (len != 2u)
+      {
+        LOG_DEBUG("%s: could not send packet header: bytes sent: %d, expected: 2",
+                  __func__,
+                  len);
+      }
 
       if (state_ != CLOSED)
       {
@@ -198,9 +209,21 @@ class Connection
 
   void onPacketDataSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode)
+    if (errorCode || len != outgoingPackets_.front().getLength())
     {
-      LOG_DEBUG("%s: could not send packet", __func__);
+      if (errorCode)
+      {
+        LOG_DEBUG("%s: could not send packet: %s",
+                  __func__,
+                  errorCode.message().c_str());
+      }
+      else  // if (len != outgoingPackets_.front().getLength())
+      {
+        LOG_DEBUG("%s: could not send packet, bytes sent: %d, expected: %d",
+                  __func__,
+                  len,
+                  outgoingPackets_.front().getLength());
+      }
 
       if (state_ != CLOSED)
       {
@@ -248,10 +271,20 @@ class Connection
 
   void onPacketHeaderReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
   {
-    if (errorCode)
+    if (errorCode || len != 2u)
     {
-      LOG_DEBUG("%s: could not receive packet header: %s",
-                __func__, errorCode.message().c_str());
+      if (errorCode)
+      {
+        LOG_DEBUG("%s: could not receive packet header: %s",
+                  __func__,
+                  errorCode.message().c_str());
+      }
+      else  // if (len != 2u)
+      {
+        LOG_DEBUG("%s: could not receive packet header: bytes received: %d, expected: 2",
+                  __func__,
+                  len);
+      }
 
       if (state_ != CLOSED)
       {
@@ -261,7 +294,8 @@ class Connection
 
       return;
     }
-    else if (state_ != CONNECTED)
+
+    if (state_ != CONNECTED)
     {
       // Don't continue if we are CLOSING or CLOSED
       return;

@@ -214,7 +214,6 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   fromTile.removeCreature(creatureId);
 
   toTile.addCreature(creatureId);
-  auto toStackPos = toTile.getCreatureStackPos(creatureId);
   creaturePositions_.at(creatureId) = toPosition;
 
   // Set new nextWalkTime for this Creature
@@ -270,7 +269,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       const auto& nearCreatureIds = tile.getCreatureIds();
       for (const auto nearCreatureId : nearCreatureIds)
       {
-        getCreatureCtrl(nearCreatureId).onCreatureMove(*this, creature, fromPosition, fromStackPos, toPosition, toStackPos);
+        getCreatureCtrl(nearCreatureId).onCreatureMove(*this, creature, fromPosition, fromStackPos, toPosition);
       }
     }
   }
@@ -330,6 +329,9 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
 
 bool World::canAddItem(const Item& item, const Position& position) const
 {
+  // TODO(simon): are there cases where only specific items can be added to certain tiles?
+  (void)item;
+
   if (!positionIsValid(position))
   {
     LOG_ERROR("%s: Invalid position: %s", __func__, position.toString().c_str());
@@ -376,6 +378,9 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
 
 World::ReturnCode World::removeItem(int itemId, int count, const Position& position, int stackPos)
 {
+  // TODO(simon): implement count
+  (void)count;
+
   if (!positionIsValid(position))
   {
     LOG_ERROR("moveItem(): Invalid position: %s", position.toString().c_str());
@@ -414,6 +419,9 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
 World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
                                   int itemId, int count, const Position& toPosition)
 {
+  // TODO(simon): implement count
+  (void)count;
+
   if (!creatureExists(creatureId))
   {
     LOG_ERROR("moveItem(): called with non-existent CreatureId");
@@ -513,7 +521,10 @@ Item* World::getItem(const Position& position, int stackPosition)
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const
 {
-  return true;  // TODO(simon): Fix
+  // TODO(simon): Fix
+  (void)creatureId;
+  (void)position;
+  return true;
 }
 
 bool World::creatureCanReach(CreatureId creatureId, const Position& position) const

@@ -135,7 +135,7 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
   }
 }
 
-int main(int argc, char* argv[])
+int main()
 {
   // Read configuration
   auto config = ConfigParser::parseFile("data/loginserver.cfg");
@@ -205,11 +205,15 @@ int main(int argc, char* argv[])
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   signals.async_wait([&io_service](const boost::system::error_code& error, int signal_number)
   {
+    LOG_INFO("%s: received error: %s, signal_number: %d, stopping io_service",
+             __func__,
+             error.message().c_str(),
+             signal_number);
     io_service.stop();
   });
   io_service.run();
 
-  LOG_INFO("Stopping WorldServer!");
+  LOG_INFO("Stopping LoginServer!");
 
   // Deallocate things
   server.reset();

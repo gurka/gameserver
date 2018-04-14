@@ -209,7 +209,9 @@ void Protocol71::parsePacket(IncomingPacket* packet)
   }
 }
 
-void Protocol71::onCreatureSpawn(const WorldInterface& world_interface, const Creature& creature, const Position& position)
+void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
+                                 const Creature& creature,
+                                 const Position& position)
 {
   if (!isConnected())
   {
@@ -292,8 +294,13 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface, const Cr
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onCreatureDespawn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos)
+void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
+                                   const Creature& creature,
+                                   const Position& position,
+                                   uint8_t stackPos)
 {
+  (void)world_interface;
+
   if (!isConnected())
   {
     if (creature.getCreatureId() == playerId_)
@@ -326,8 +333,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
                                 const Creature& creature,
                                 const Position& oldPosition,
                                 uint8_t oldStackPos,
-                                const Position& newPosition,
-                                uint8_t newStackPos)
+                                const Position& newPosition)
 {
   if (!isConnected())
   {
@@ -402,8 +408,13 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onCreatureTurn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos)
+void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
+                                const Creature& creature,
+                                const Position& position,
+                                uint8_t stackPos)
 {
+  (void)world_interface;
+
   if (!isConnected())
   {
     return;
@@ -420,8 +431,13 @@ void Protocol71::onCreatureTurn(const WorldInterface& world_interface, const Cre
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onCreatureSay(const WorldInterface& world_interface, const Creature& creature, const Position& position, const std::string& message)
+void Protocol71::onCreatureSay(const WorldInterface& world_interface,
+                               const Creature& creature,
+                               const Position& position,
+                               const std::string& message)
 {
+  (void)world_interface;
+
   if (!isConnected())
   {
     return;
@@ -439,6 +455,8 @@ void Protocol71::onCreatureSay(const WorldInterface& world_interface, const Crea
 
 void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, uint8_t stackPos)
 {
+  (void)world_interface;
+
   if (!isConnected())
   {
     return;
@@ -453,6 +471,8 @@ void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Posi
 
 void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
 {
+  (void)world_interface;
+
   if (!isConnected())
   {
     return;
