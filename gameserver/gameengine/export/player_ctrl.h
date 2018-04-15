@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PLAYERCTRL_H_
-#define GAMEENGINE_PLAYERCTRL_H_
+#ifndef GAMEENGINE_EXPORT_PLAYER_CTRL_H_
+#define GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 
 #include <string>
 #include <vector>
@@ -64,4 +64,4 @@ class PlayerCtrl : public CreatureCtrl
   virtual void cancelMove() = 0;
 };
 
-#endif  // GAMEENGINE_PLAYERCTRL_H_
+#endif  // GAMEENGINE_EXPORT_PLAYER_CTRL_H_

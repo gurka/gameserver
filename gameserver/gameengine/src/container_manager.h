@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_CONTAINERMANAGER_H_
-#define GAMEENGINE_CONTAINERMANAGER_H_
+#ifndef GAMEENGINE_SRC_CONTAINER_MANAGER_H_
+#define GAMEENGINE_SRC_CONTAINER_MANAGER_H_
 
 #include <array>
 #include <unordered_map>
@@ -80,4 +80,4 @@ class ContainerManager
   std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
 };
 
-#endif  // GAMEENGINE_CONTAINERMANAGER_H_
+#endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

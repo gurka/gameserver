@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PROTOCOL_H_
-#define WORLDSERVER_PROTOCOL_H_
+#ifndef WORLDSERVER_SRC_PROTOCOL_H_
+#define WORLDSERVER_SRC_PROTOCOL_H_
 
 #include <string>
 
@@ -52,4 +52,4 @@ class Protocol : public PlayerCtrl
   virtual void parsePacket(IncomingPacket* packet) = 0;
 };
 
-#endif  // WORLDSERVER_PROTOCOL_H_
+#endif  // WORLDSERVER_SRC_PROTOCOL_H_

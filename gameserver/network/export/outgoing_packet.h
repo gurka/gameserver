@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_OUTGOINGPACKET_H_
-#define NETWORK_OUTGOINGPACKET_H_
+#ifndef NETWORK_EXPORT_OUTGOING_PACKET_H_
+#define NETWORK_EXPORT_OUTGOING_PACKET_H_
 
 #include <cstdint>
 #include <string>
@@ -60,4 +60,4 @@ class OutgoingPacket
   static std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> buffer_pool_;
 };
 
-#endif  // NETWORK_OUTGOINGPACKET_H_
+#endif  // NETWORK_EXPORT_OUTGOING_PACKET_H_

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_PROTOCOL71_H_
-#define WORLDSERVER_PROTOCOL71_H_
+#ifndef WORLDSERVER_SRC_PROTOCOL_71_H_
+#define WORLDSERVER_SRC_PROTOCOL_71_H_
 
 #include "protocol.h"
 
@@ -134,4 +134,4 @@ class Protocol71 : public Protocol
   std::array<CreatureId, 64> knownCreatures_;
 };
 
-#endif  // WORLDSERVER_PROTOCOL71_H_
+#endif  // WORLDSERVER_SRC_PROTOCOL_71_H_

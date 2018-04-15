@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_POSITION_H_
-#define WORLD_POSITION_H_
+#ifndef WORLD_EXPORT_POSITION_H_
+#define WORLD_EXPORT_POSITION_H_
 
 #include <string>
 #include "direction.h"
@@ -57,4 +57,4 @@ class Position
   uint8_t  z_;
 };
 
-#endif  // WORLD_POSITION_H_
+#endif  // WORLD_EXPORT_POSITION_H_

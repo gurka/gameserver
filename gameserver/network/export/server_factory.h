@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SERVERFACTORY_H_
-#define NETWORK_SERVERFACTORY_H_
+#ifndef NETWORK_EXPORT_SERVER_FACTORY_H_
+#define NETWORK_EXPORT_SERVER_FACTORY_H_
 
 #include <memory>
 
@@ -45,4 +45,4 @@ class ServerFactory
                                               const Server::Callbacks& callbacks);
 };
 
-#endif  // NETWORK_SERVERFACTORY_H_
+#endif  // NETWORK_EXPORT_SERVER_FACTORY_H_

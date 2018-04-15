@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_PLAYER_H_
-#define GAMEENGINE_PLAYER_H_
+#ifndef GAMEENGINE_SRC_PLAYER_H_
+#define GAMEENGINE_SRC_PLAYER_H_
 
 #include <deque>
 #include <string>
@@ -148,4 +148,4 @@ class Player : public Creature
   std::deque<Direction> queuedMoves_;
 };
 
-#endif  // GAMEENGINE_PLAYER_H_
+#endif  // GAMEENGINE_SRC_PLAYER_H_

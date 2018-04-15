@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_CREATURE_H_
-#define WORLD_CREATURE_H_
+#ifndef WORLD_EXPORT_CREATURE_H_
+#define WORLD_EXPORT_CREATURE_H_
 
 #include <cstdint>
 #include <string>
@@ -100,4 +100,4 @@ class Creature
   static CreatureId nextCreatureId_;
 };
 
-#endif  // WORLD_CREATURE_H_
+#endif  // WORLD_EXPORT_CREATURE_H_

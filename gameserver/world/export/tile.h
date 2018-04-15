@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_TILE_H_
-#define WORLD_TILE_H_
+#ifndef WORLD_EXPORT_TILE_H_
+#define WORLD_EXPORT_TILE_H_
 
 #include <vector>
 
@@ -67,4 +67,4 @@ class Tile
   std::vector<CreatureId> creatureIds_;
 };
 
-#endif  // WORLD_TILE_H_
+#endif  // WORLD_EXPORT_TILE_H_

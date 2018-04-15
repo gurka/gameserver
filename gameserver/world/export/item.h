@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_ITEM_H_
-#define WORLD_ITEM_H_
+#ifndef WORLD_EXPORT_ITEM_H_
+#define WORLD_EXPORT_ITEM_H_
 
 #include <cstdint>
 #include <array>
@@ -140,4 +140,4 @@ class Item
   int containerId_;
 };
 
-#endif  // WORLD_ITEM_H_
+#endif  // WORLD_EXPORT_ITEM_H_

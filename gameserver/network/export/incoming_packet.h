@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_INCOMINGPACKET_H_
-#define NETWORK_INCOMINGPACKET_H_
+#ifndef NETWORK_EXPORT_INCOMING_PACKET_H_
+#define NETWORK_EXPORT_INCOMING_PACKET_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -60,4 +60,4 @@ class IncomingPacket
   std::size_t position_;
 };
 
-#endif  // NETWORK_INCOMINGPACKET_H_
+#endif  // NETWORK_EXPORT_INCOMING_PACKET_H_

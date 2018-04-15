@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SERVERIMPL_H_
-#define NETWORK_SERVERIMPL_H_
+#ifndef NETWORK_SRC_SERVER_IMPL_H_
+#define NETWORK_SRC_SERVER_IMPL_H_
 
 #include <unordered_map>
 #include <utility>
@@ -132,4 +132,4 @@ class ServerImpl : public Server
   std::unordered_map<ConnectionId, Connection<Backend>> connections_;  // TODO(simon): vector/array?
 };
 
-#endif  // NETWORK_SERVERIMPL_H_
+#endif  // NETWORK_SRC_SERVER_IMPL_H_

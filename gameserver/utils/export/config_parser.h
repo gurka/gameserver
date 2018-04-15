@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef UTILS_CONFIGPARSER_H_
-#define UTILS_CONFIGPARSER_H_
+#ifndef UTILS_EXPORT_CONFIG_PARSER_H_
+#define UTILS_EXPORT_CONFIG_PARSER_H_
 
 #include <algorithm>
 #include <cctype>
@@ -252,4 +252,4 @@ class ConfigParser
                      std::unordered_map<std::string, std::string>> values_;
 };
 
-#endif  // UTILS_CONFIGPARSER_H_
+#endif  // UTILS_EXPORT_CONFIG_PARSER_H_

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_WORLDFACTORY_H_
-#define WORLD_WORLDFACTORY_H_
+#ifndef WORLD_EXPORT_WORLD_FACTORY_H_
+#define WORLD_EXPORT_WORLD_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -43,4 +43,4 @@ class WorldFactory
   static const int worldSizeStart_ = 192;
 };
 
-#endif  // WORLD_WORLDFACTORY_H_
+#endif  // WORLD_EXPORT_WORLD_FACTORY_H_

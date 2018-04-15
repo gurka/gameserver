@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_GAMEPOSITION_H_
-#define GAMEENGINE_GAMEPOSITION_H_
+#ifndef GAMEENGINE_EXPORT_GAME_POSITION_H_
+#define GAMEENGINE_EXPORT_GAME_POSITION_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -142,4 +142,4 @@ class ItemPosition
   int stackPosition_;
 };
 
-#endif  // GAMEENGINE_GAMEPOSITION_H_
+#endif  // GAMEENGINE_EXPORT_GAME_POSITION_H_

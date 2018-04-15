@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_DIRECTION_H_
-#define WORLD_DIRECTION_H_
+#ifndef WORLD_EXPORT_DIRECTION_H_
+#define WORLD_EXPORT_DIRECTION_H_
 
 #include <cstdint>
 
@@ -35,4 +35,4 @@ enum class Direction : uint8_t
   WEST  = 3
 };
 
-#endif  // WORLD_DIRECTION_H_
+#endif  // WORLD_EXPORT_DIRECTION_H_

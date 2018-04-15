@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_WORLDINTERFACE_H_
-#define WORLD_WORLDINTERFACE_H_
+#ifndef WORLD_EXPORT_WORLD_INTERFACE_H_
+#define WORLD_EXPORT_WORLD_INTERFACE_H_
 
 #include <string>
 #include <vector>
@@ -44,4 +44,4 @@ class WorldInterface
   virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
 };
 
-#endif  // WORLD_WORLDINTERFACE_H_
+#endif  // WORLD_EXPORT_WORLD_INTERFACE_H_

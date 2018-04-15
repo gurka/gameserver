@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_ACCEPTOR_H_
-#define NETWORK_ACCEPTOR_H_
+#ifndef NETWORK_SRC_ACCEPTOR_H_
+#define NETWORK_SRC_ACCEPTOR_H_
 
 #include <functional>
 #include <memory>
@@ -84,4 +84,4 @@ class Acceptor
   std::function<void(typename Backend::Socket)> onAccept_;
 };
 
-#endif  // NETWORK_ACCEPTOR_H_
+#endif  // NETWORK_SRC_ACCEPTOR_H_

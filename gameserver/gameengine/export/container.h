@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_CONTAINER_H_
-#define GAMEENGINE_CONTAINER_H_
+#ifndef GAMEENGINE_EXPORT_CONTAINER_H_
+#define GAMEENGINE_EXPORT_CONTAINER_H_
 
 #include <vector>
 
@@ -86,4 +86,4 @@ struct Container
   std::vector<RelatedPlayer> relatedPlayers;
 };
 
-#endif  // GAMEENGINE_CONTAINER_H_
+#endif  // GAMEENGINE_EXPORT_CONTAINER_H_

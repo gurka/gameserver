@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SERVER_H_
-#define NETWORK_SERVER_H_
+#ifndef NETWORK_EXPORT_SERVER_H_
+#define NETWORK_EXPORT_SERVER_H_
 
 #include <functional>
 
@@ -53,4 +53,4 @@ class Server
   virtual void closeConnection(ConnectionId connectionId, bool force) = 0;
 };
 
-#endif  // NETWORK_SERVER_H_
+#endif  // NETWORK_EXPORT_SERVER_H_

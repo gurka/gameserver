@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_GAMEENGINEQUEUE_H_
-#define GAMEENGINE_GAMEENGINEQUEUE_H_
+#ifndef GAMEENGINE_EXPORT_GAME_ENGINE_QUEUE_H_
+#define GAMEENGINE_EXPORT_GAME_ENGINE_QUEUE_H_
 
 #include <functional>
 #include <vector>
@@ -79,4 +79,4 @@ class GameEngineQueue
   bool timer_started_;
 };
 
-#endif  // GAMEENGINE_GAMEENGINEQUEUE_H_
+#endif  // GAMEENGINE_EXPORT_GAME_ENGINE_QUEUE_H_

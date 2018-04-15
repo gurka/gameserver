@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef UTILS_TICK_H_
-#define UTILS_TICK_H_
+#ifndef UTILS_EXPORT_TICK_H_
+#define UTILS_EXPORT_TICK_H_
 
 #include <cstdint>
 
@@ -33,4 +33,4 @@ class Tick
   static uint32_t now();
 };
 
-#endif  // UTILS_TICK_H_
+#endif  // UTILS_EXPORT_TICK_H_

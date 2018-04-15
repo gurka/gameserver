@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_WORLD_H_
-#define WORLD_WORLD_H_
+#ifndef WORLD_EXPORT_WORLD_H_
+#define WORLD_EXPORT_WORLD_H_
 
 #include <memory>
 #include <string>
@@ -124,4 +124,4 @@ class World : public WorldInterface
   std::unordered_map<int, Position> creaturePositions_;
 };
 
-#endif  // WORLD_WORLD_H_
+#endif  // WORLD_EXPORT_WORLD_H_

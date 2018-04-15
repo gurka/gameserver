@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_GAMEENGINE_H_
-#define GAMEENGINE_GAMEENGINE_H_
+#ifndef GAMEENGINE_EXPORT_GAME_ENGINE_H_
+#define GAMEENGINE_EXPORT_GAME_ENGINE_H_
 
 #include <array>
 #include <deque>
@@ -100,4 +100,4 @@ class GameEngine
   ContainerManager containerManager_;
 };
 
-#endif  // GAMEENGINE_GAMEENGINE_H_
+#endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_

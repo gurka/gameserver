@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_CONNECTION_H_
-#define NETWORK_CONNECTION_H_
+#ifndef NETWORK_SRC_CONNECTION_H_
+#define NETWORK_SRC_CONNECTION_H_
 
 #include <deque>
 #include <memory>
@@ -375,4 +375,4 @@ class Connection
   std::deque<OutgoingPacket> outgoingPackets_;
 };
 
-#endif  // NETWORK_CONNECTION_H_
+#endif  // NETWORK_SRC_CONNECTION_H_

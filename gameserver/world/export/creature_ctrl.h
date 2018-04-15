@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_CREATURECTRL_H_
-#define WORLD_CREATURECTRL_H_
+#ifndef WORLD_EXPORT_CREATURE_CTRL_H_
+#define WORLD_EXPORT_CREATURE_CTRL_H_
 
 #include <string>
 
@@ -84,4 +84,4 @@ class CreatureCtrl
                             const Position& position) = 0;
 };
 
-#endif  // WORLD_CREATURECTRL_H_
+#endif  // WORLD_EXPORT_CREATURE_CTRL_H_
