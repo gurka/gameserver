@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-# Go to repo root
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-cd "$SCRIPT_DIR"/../..
+cd "$(git rev-parse --show-toplevel)"
 
 # Build 'travis_debug_asan* and run tests
 tools/cmake travis_debug_asan
