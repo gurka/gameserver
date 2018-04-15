@@ -9,6 +9,6 @@ pushd build/travis_debug
 make unittest
 for test_bin in bin/*_test
 do
-  valgrind ./"$test_bin"
+  valgrind --error-exitcode=1 --leak-check=full ./"$test_bin"
 done
 popd
