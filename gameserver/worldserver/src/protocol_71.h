@@ -140,7 +140,6 @@ class Protocol71 : public Protocol
   Server* server_;
   AccountReader* accountReader_;
 
-  // TODO(simon) vector to save space?
   std::array<CreatureId, 64> knownCreatures_;
 };
 

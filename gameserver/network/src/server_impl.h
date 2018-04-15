@@ -129,7 +129,10 @@ class ServerImpl : public Server
   Callbacks callbacks_;
 
   ConnectionId nextConnectionId_;
-  std::unordered_map<ConnectionId, Connection<Backend>> connections_;  // TODO(simon): vector/array?
+
+  // We always access single elements with id and only iterate over the container
+  // when the server is shutting down, so use unordered_map
+  std::unordered_map<ConnectionId, Connection<Backend>> connections_;
 };
 
 #endif  // NETWORK_SRC_SERVER_IMPL_H_

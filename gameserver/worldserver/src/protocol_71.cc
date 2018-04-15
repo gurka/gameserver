@@ -192,7 +192,8 @@ void Protocol71::parsePacket(IncomingPacket* packet)
 
       case 0xBE:
       {
-        // TODO(simon): This packet more likely means "stop all actions", not only moving
+        // Note: this packet more likely means "stop all actions", not only moving
+        //       so, maybe we should cancel all player's task here?
         gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
         {
           gameEngine->cancelMove(playerId_);
@@ -753,7 +754,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
     if (unused == knownCreatures_.end())
     {
       // No empty spot!
-      // TODO(simon): Figure out how to handle this
+      // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
       LOG_ERROR("%s: knownCreatures_ is full!");
     }
     else
