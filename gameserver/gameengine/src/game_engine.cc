@@ -303,7 +303,10 @@ void GameEngine::say(CreatureId creatureId,
   }
 }
 
-void GameEngine::moveItem(CreatureId creatureId, const ItemPosition& fromPosition, const GamePosition& toPosition, int count)
+void GameEngine::moveItem(CreatureId creatureId,
+                          const ItemPosition& fromPosition,
+                          const GamePosition& toPosition,
+                          int count)
 {
   LOG_DEBUG("%s: creatureId: %d fromPosition: %s toPosition: %s count: %d",
             __func__,

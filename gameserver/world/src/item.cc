@@ -265,7 +265,9 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
     itemData.name = xmlAttrName->value();
 
     // Iterate over all rest of attributes
-    for (auto* xmlAttrOther = itemNode->first_attribute(); xmlAttrOther != nullptr; xmlAttrOther = xmlAttrOther->next_attribute())
+    for (auto* xmlAttrOther = itemNode->first_attribute();
+         xmlAttrOther != nullptr;
+         xmlAttrOther = xmlAttrOther->next_attribute())
     {
       std::string attrName(xmlAttrOther->name());
       if (attrName == "id" || attrName == "name")

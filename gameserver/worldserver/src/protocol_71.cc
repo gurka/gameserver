@@ -669,7 +669,11 @@ void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) c
   packet->addU8(position.getZ());
 }
 
-void Protocol71::addMapData(const WorldInterface& world_interface, const Position& position, int width, int height, OutgoingPacket* packet)
+void Protocol71::addMapData(const WorldInterface& world_interface,
+                            const Position& position,
+                            int width,
+                            int height,
+                            OutgoingPacket* packet)
 {
   auto tiles = world_interface.getMapBlock(position, width, height);
   decltype(tiles)::const_iterator it = tiles.begin();
@@ -885,7 +889,11 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
   const auto toGamePosition = getGamePosition(packet);
   const auto count = packet->getU8();
 
-  LOG_DEBUG("%s: from: %s, to: %s, count: %u", __func__, fromItemPosition.toString().c_str(), toGamePosition.toString().c_str(), count);
+  LOG_DEBUG("%s: from: %s, to: %s, count: %u",
+            __func__,
+            fromItemPosition.toString().c_str(),
+            toGamePosition.toString().c_str(),
+            count);
 
   gameEngineQueue_->addTask(playerId_, [this, fromItemPosition, toGamePosition, count](GameEngine* gameEngine)
   {

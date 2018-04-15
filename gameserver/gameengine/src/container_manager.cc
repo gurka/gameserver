@@ -248,7 +248,10 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientCon
   openContainer(playerCtrl, parentContainer, clientContainerId, parentContainerItem);
 }
 
-bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl, int clientContainerId, int containerSlot, const Item& item) const
+bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl,
+                                  int clientContainerId,
+                                  int containerSlot,
+                                  const Item& item) const
 {
   LOG_DEBUG("%s: playerId: %d, clientContainerId: %d, containerSlot: %d, itemId: %d",
             __func__,
@@ -384,7 +387,10 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
   }
 }
 
-void ContainerManager::openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item)
+void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
+                                     Container* container,
+                                     int clientContainerId,
+                                     const Item& item)
 {
   LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",
             __func__,

@@ -26,9 +26,10 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
 
-static const decltype(boost::posix_time::microsec_clock::universal_time()) start = boost::posix_time::microsec_clock::universal_time();
+using ms_clock = boost::posix_time::microsec_clock;
+static const decltype(ms_clock::universal_time()) start = ms_clock::universal_time();
 
 uint32_t Tick::now()
 {
-  return (boost::posix_time::microsec_clock::universal_time() - start).total_milliseconds();
+  return (ms_clock::universal_time() - start).total_milliseconds();
 }

@@ -76,8 +76,14 @@ class Protocol71 : public Protocol
                       const Position& oldPosition,
                       uint8_t oldStackPos,
                       const Position& newPosition) override;
-  void onCreatureTurn(const WorldInterface& world_interface, const Creature& creature, const Position& position, uint8_t stackPos) override;
-  void onCreatureSay(const WorldInterface& world_interface, const Creature& creature, const Position& position, const std::string& message) override;
+  void onCreatureTurn(const WorldInterface& world_interface,
+                      const Creature& creature,
+                      const Position& position,
+                      uint8_t stackPos) override;
+  void onCreatureSay(const WorldInterface& world_interface,
+                     const Creature& creature,
+                     const Position& position,
+                     const std::string& message) override;
 
   void onItemRemoved(const WorldInterface& world_interface, const Position& position, uint8_t stackPos) override;
   void onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position) override;
@@ -104,7 +110,11 @@ class Protocol71 : public Protocol
   // Helper functions for creating OutgoingPackets
   bool canSee(const Position& from_position, const Position& to_position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
-  void addMapData(const WorldInterface& world_interface, const Position& position, int width, int height, OutgoingPacket* packet);
+  void addMapData(const WorldInterface& world_interface,
+                  const Position& position,
+                  int width,
+                  int height,
+                  OutgoingPacket* packet);
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
   void addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const;
