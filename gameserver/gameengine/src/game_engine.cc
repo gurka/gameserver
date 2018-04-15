@@ -45,7 +45,7 @@ namespace
 
 struct RecursiveTask
 {
-  RecursiveTask(const std::function<void(const RecursiveTask&, GameEngine* gameEngine)>& func)
+  explicit RecursiveTask(const std::function<void(const RecursiveTask&, GameEngine* gameEngine)>& func)
     : func_(func)
   {
   }
@@ -58,7 +58,7 @@ struct RecursiveTask
   std::function<void(const RecursiveTask&, GameEngine* gameEngine)> func_;
 };
 
-}
+}  // namespace
 
 GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage)
   : gameEngineQueue_(gameEngineQueue),

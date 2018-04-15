@@ -86,4 +86,4 @@ struct Container
   std::vector<RelatedPlayer> relatedPlayers;
 };
 
-#endif // GAMEENGINE_CONTAINER_H_
+#endif  // GAMEENGINE_CONTAINER_H_

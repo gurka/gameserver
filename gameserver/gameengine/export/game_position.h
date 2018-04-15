@@ -39,13 +39,13 @@ class GamePosition
   {
   }
 
-  GamePosition(const Position& position)
+  explicit GamePosition(const Position& position)
     : type_(Type::POSITION),
       position_(position)
   {
   }
 
-  GamePosition(int inventorySlot)
+  explicit GamePosition(int inventorySlot)
     : type_(Type::INVENTORY),
       inventorySlot_(inventorySlot)
   {

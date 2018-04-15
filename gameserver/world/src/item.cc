@@ -304,3 +304,8 @@ float Item::getAttribute(const std::string& name) const
 {
   return std::stof(itemData_->attributes.at(name));
 }
+
+int Item::getWeight() const
+{
+  return hasAttribute("weight") ? getAttribute<int>("weight") : 0;
+}

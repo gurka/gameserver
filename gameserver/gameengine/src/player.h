@@ -28,6 +28,7 @@
 #include <deque>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "creature.h"
 #include "direction.h"

@@ -116,7 +116,7 @@ class Item
   T getAttribute(const std::string& name) const;
 
   // Common attributes
-  int getWeight() const { return 1; }//hasAttribute("weight") ? getAttribute<int>("weight") : 0; }
+  int getWeight() const;
 
   void setContainerId(int containerId) { containerId_ = containerId; }
   int getContainerId() const { return containerId_; }

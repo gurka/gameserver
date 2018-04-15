@@ -39,7 +39,7 @@ class GameEngineQueue
  public:
   using Task = std::function<void(GameEngine*)>;
 
-  GameEngineQueue(boost::asio::io_service* io_service);
+  explicit GameEngineQueue(boost::asio::io_service* io_service);
 
   // Delete copy constructors
   GameEngineQueue(const GameEngineQueue&) = delete;
