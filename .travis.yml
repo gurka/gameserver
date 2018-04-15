@@ -15,6 +15,7 @@ jobs:
   include:
     - stage: unittest
       script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/unittest_valgrind.sh
+    - stage: unittest
       script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/unittest_asan.sh
     - stage: cpplint
       script: tools/cpplint.sh
