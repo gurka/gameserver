@@ -11,5 +11,9 @@ addons:
       - libboost-system-dev
       - valgrind
 
-script:
-  - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis.sh
+jobs:
+  include:
+    - stage: unittest_valgrind
+      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/unittest_valgrind.sh
+    - stage: unittest_asan
+      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/unittest_asan.sh
