@@ -455,15 +455,3 @@ TEST_F(ContainerManagerTest, addItemToContainerInContainer)
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId2, Ref(item1)));
   container_manager_.addItem(&player_ctrl_mock_, clientContainerId1, 0, item1);
 }
-
-TEST_F(ContainerManagerTest, multiplePlayers)
-{
-  // Create and add another player
-  PlayerCtrlMock player_ctrl_mock2;
-  EXPECT_CALL(player_ctrl_mock2, getPlayerId()).WillRepeatedly(Return(player_id + 1));
-  container_manager_.playerSpawn(&player_ctrl_mock2);
-
-  // TODO
-
-  container_manager_.playerDespawn(&player_ctrl_mock2);
-}
