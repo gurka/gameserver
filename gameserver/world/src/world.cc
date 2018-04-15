@@ -468,7 +468,13 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   }
 
   // Take a copy of the Item from fromTile
-  auto item = *fromTile.getItem(fromStackPos);
+  auto* item_ptr = fromTile.getItem(fromStackPos);
+  if (!item_ptr)
+  {
+    LOG_ERROR("%s: Could not find the item to move", __func__);
+    return ReturnCode::ITEM_NOT_FOUND;
+  }
+  auto item = *item_ptr;
 
   // Try to remove Item from fromTile
   if (!fromTile.removeItem(itemId, fromStackPos))

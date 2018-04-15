@@ -36,7 +36,12 @@ const Item* Equipment::getItem(int inventorySlot) const
     return nullptr;
   }
 
-  return &items_[inventorySlot];
+  if (items_[inventorySlot].isValid())
+  {
+    return &items_[inventorySlot];
+  }
+
+  return nullptr;
 }
 
 Item* Equipment::getItem(int inventorySlot)

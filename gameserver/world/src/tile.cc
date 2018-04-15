@@ -145,9 +145,6 @@ bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
 
 const Item* Tile::getItem(uint8_t stackPosition) const
 {
-  // TODO(simon): remove and return nullptr?
-  static const Item INVALID_ITEM = Item();
-
   if (stackPosition == 0)
   {
     // Ground Item
@@ -164,7 +161,7 @@ const Item* Tile::getItem(uint8_t stackPosition) const
   {
     // Creature
     LOG_ERROR("%s: Stackposition is Creature", __func__);
-    return &INVALID_ITEM;
+    return nullptr;
   }
   else if (stackPosition < 1 + items_.size() + creatureIds_.size())
   {
@@ -177,22 +174,14 @@ const Item* Tile::getItem(uint8_t stackPosition) const
   {
     // Invalid stackpos
     LOG_ERROR("%s: Stackposition is invalid", __func__);
-    return &INVALID_ITEM;
+    return nullptr;
   }
 }
 
 Item* Tile::getItem(uint8_t stackPosition)
 {
-  // Ugly but correct according to https://stackoverflow.com/a/123995/969365
   const auto* item = static_cast<const Tile*>(this)->getItem(stackPosition);
-  if (item->isValid())
-  {
-    return const_cast<Item*>(item);
-  }
-  else
-  {
-    return nullptr;
-  }
+  return const_cast<Item*>(item);
 }
 
 std::size_t Tile::getNumberOfThings() const
