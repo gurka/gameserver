@@ -82,6 +82,13 @@ class GameEngine
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
   {
+    PlayerData(Player&& player, PlayerCtrl* player_ctrl)
+      : player(std::move(player)),
+        player_ctrl(player_ctrl),
+        queued_moves()
+    {
+    }
+
     Player player;
     PlayerCtrl* player_ctrl;
     std::deque<Direction> queued_moves;

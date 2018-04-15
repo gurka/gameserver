@@ -75,8 +75,9 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   auto creatureId = newPlayer.getCreatureId();
 
   // Store the Player and the PlayerCtrl
-  // TODO(simon): bitwise_emplace?
-  playerData_.emplace(creatureId, PlayerData{std::move(newPlayer), player_ctrl, {}});
+  playerData_.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(creatureId),
+                      std::forward_as_tuple(std::move(newPlayer), player_ctrl));
 
   // Get the Player again, since newPlayed is moved from
   auto& player = getPlayerData(creatureId).player;
