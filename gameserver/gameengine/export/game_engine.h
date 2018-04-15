@@ -79,20 +79,19 @@ class GameEngine
   void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
   void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
 
-  // Use these instead of the unordered_maps directly
-  Player& getPlayer(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player; }
-  const Player& getPlayer(CreatureId creatureId) const { return playerPlayerCtrl_.at(creatureId).player; }
-  PlayerCtrl* getPlayerCtrl(CreatureId creatureId) { return playerPlayerCtrl_.at(creatureId).player_ctrl; }
-  const PlayerCtrl* getPlayerCtrl(CreatureId creatureId) const { return playerPlayerCtrl_.at(creatureId).player_ctrl; }
-
-  // Player + PlayerCtrl
-  // TODO(simon): PlayerData
-  struct PlayerPlayerCtrl
+  // This structure holds all player data that shouldn't go into Player
+  struct PlayerData
   {
     Player player;
     PlayerCtrl* player_ctrl;
+    std::deque<Direction> queued_moves;
   };
-  std::unordered_map<CreatureId, PlayerPlayerCtrl> playerPlayerCtrl_;
+
+  // Use these instead of the unordered_map directly
+  PlayerData& getPlayerData(CreatureId creatureId) { return playerData_.at(creatureId); }
+  const PlayerData& getPlayerData(CreatureId creatureId) const { return playerData_.at(creatureId); }
+
+  std::unordered_map<CreatureId, PlayerData> playerData_;
 
   GameEngineQueue* gameEngineQueue_;
   World* world_;

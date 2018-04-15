@@ -99,12 +99,6 @@ class Player : public Creature
     return equipment_;
   }
 
-  void queueMoves(std::deque<Direction>&& moves) { queuedMoves_ = std::move(moves); }
-  Direction getNextQueuedMove() const { return queuedMoves_.front(); }
-  void popNextQueuedMove() { queuedMoves_.pop_front(); }
-  bool hasQueuedMove() const { return !queuedMoves_.empty(); }
-  void clearQueuedMoves() { queuedMoves_.clear(); }
-
  private:
   int maxMana_;
   int mana_;
@@ -113,9 +107,6 @@ class Player : public Creature
   int magicLevel_;
   int partyShield_;
   Equipment equipment_;
-
-  // TODO(simon): Move to PlayerPlayerCtrl?
-  std::deque<Direction> queuedMoves_;
 };
 
 #endif  // GAMEENGINE_SRC_PLAYER_H_

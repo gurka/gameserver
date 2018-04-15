@@ -183,8 +183,7 @@ Player::Player(const std::string& name)
     capacity_(300),
     experience_(4200),
     magicLevel_(1),
-    partyShield_(0),
-    queuedMoves_()
+    partyShield_(0)
 {
 }
 
