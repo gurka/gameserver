@@ -28,28 +28,35 @@
 
 #include "logger.h"
 
-Equipment::Equipment()
+const Item* Equipment::getItem(int inventorySlot) const
 {
-  items_.insert(std::make_pair(Slot::HELMET,     Item()));
-  items_.insert(std::make_pair(Slot::AMULET,     Item()));
-  items_.insert(std::make_pair(Slot::BACKPACK,   Item(1411)));  // Backpack
-  items_.insert(std::make_pair(Slot::ARMOR,      Item()));
-  items_.insert(std::make_pair(Slot::RIGHT_HAND, Item()));
-  items_.insert(std::make_pair(Slot::LEFT_HAND,  Item()));
-  items_.insert(std::make_pair(Slot::LEGS,       Item()));
-  items_.insert(std::make_pair(Slot::FEET,       Item()));
-  items_.insert(std::make_pair(Slot::RING,       Item()));
-  items_.insert(std::make_pair(Slot::AMMO,       Item()));
+  if (inventorySlot < 1 || inventorySlot > 10)
+  {
+    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    return nullptr;
+  }
+
+  return &items_[inventorySlot];
 }
 
-bool Equipment::canAddItem(const Item& item, uint8_t inventoryIndex) const
+Item* Equipment::getItem(int inventorySlot)
 {
-  Slot slot = static_cast<Slot>(inventoryIndex);
+  const auto* item = static_cast<const Equipment*>(this)->getItem(inventorySlot);
+  return const_cast<Item*>(item);
+}
+
+bool Equipment::canAddItem(const Item& item, int inventorySlot) const
+{
+  if (inventorySlot < 1 || inventorySlot > 10)
+  {
+    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    return false;
+  }
 
   // TODO(simon): Check capacity
 
   // First check if the slot is empty
-  if (items_.at(slot).isValid())
+  if (items_[inventorySlot].isValid())
   {
     return false;
   }
@@ -70,67 +77,62 @@ bool Equipment::canAddItem(const Item& item, uint8_t inventoryIndex) const
 
   LOG_DEBUG("canAddItem(): Item: %d Type: %s Positon: %s", item.getItemId(), itemType.c_str(), itemPosition.c_str());
 
-  switch (slot)
+  switch (inventorySlot)
   {
-    case Slot::HELMET:
+    case HELMET:
     {
       return itemType == "armor" && itemPosition == "helmet";
     }
 
-    case Slot::AMULET:
+    case AMULET:
     {
       return itemType == "armor" && itemPosition == "amulet";
     }
 
-    case Slot::BACKPACK:
+    case BACKPACK:
     {
       return itemType == "container";
     }
 
-    case Slot::ARMOR:
+    case ARMOR:
     {
       return itemType == "armor" && itemPosition == "body";
     }
 
-    case Slot::RIGHT_HAND:
-    case Slot::LEFT_HAND:
+    case RIGHT_HAND:
+    case LEFT_HAND:
     {
       // Just check that we don't equip an 2-hander if other hand is not empty
-      if (item.hasAttribute("handed"))
+      if (item.hasAttribute("handed") && item.getAttribute<int>("handed") == 2)
       {
-        // Actually we could stop here, since only 2-handers have this attribute
-        // But anyway ...
-        if (item.getAttribute<int>("handed") == 2)
+        if (inventorySlot == RIGHT_HAND)
         {
-          if (slot == Slot::RIGHT_HAND)
-          {
-            return !items_.at(Slot::LEFT_HAND).isValid();
-          }
-          else
-          {
-            return !items_.at(Slot::RIGHT_HAND).isValid();
-          }
+          return !items_.at(LEFT_HAND).isValid();
+        }
+        else
+        {
+          return !items_.at(RIGHT_HAND).isValid();
         }
       }
       return true;
     }
 
-    case Slot::LEGS:
+    case LEGS:
     {
       return itemType == "armor" && itemPosition == "legs";
     }
 
-    case Slot::FEET:
+    case FEET:
     {
       return itemType == "armor" && itemPosition == "boots";
     }
 
-    case Slot::RING:
+    case RING:
     {
       return itemType == "armor" && itemPosition == "ring";
     }
 
-    case Slot::AMMO:
+    case AMMO:
     {
       // TODO(simon): Not yet in items.xml
       return itemType == "ammo";
@@ -140,31 +142,38 @@ bool Equipment::canAddItem(const Item& item, uint8_t inventoryIndex) const
   return false;
 }
 
-bool Equipment::addItem(const Item& item, uint8_t inventoryIndex)
+bool Equipment::addItem(const Item& item, int inventorySlot)
 {
-  if (canAddItem(item, inventoryIndex))
+  if (inventorySlot < 1 || inventorySlot > 10)
   {
-    items_.at(static_cast<Slot>(inventoryIndex)) = item;
-    return true;
+    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    return false;
   }
-  else
+
+  if (!canAddItem(item, inventorySlot))
   {
     return false;
   }
+
+  items_[inventorySlot] = item;
+  return true;
 }
 
-bool Equipment::removeItem(ItemId itemId, uint8_t inventoryIndex)
+bool Equipment::removeItem(ItemId itemId, int inventorySlot)
 {
-  Slot slot = static_cast<Slot>(inventoryIndex);
-  if (items_.at(slot).getItemId() == itemId)
+  if (inventorySlot < 1 || inventorySlot > 10)
   {
-    items_.at(slot) = Item();
-    return true;
+    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    return false;
   }
-  else
+
+  if (items_[inventorySlot].getItemId() != itemId)
   {
     return false;
   }
+
+  items_[inventorySlot] = Item();
+  return true;
 }
 
 Player::Player(const std::string& name)

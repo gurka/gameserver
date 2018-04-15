@@ -37,7 +37,16 @@
 class Equipment
 {
  public:
-  enum class Slot : uint8_t
+  const Item* getItem(int inventorySlot) const;
+  Item* getItem(int inventorySlot);
+
+  bool canAddItem(const Item& item, int inventorySlot) const;
+  bool addItem(const Item& item, int inventorySlot);
+  bool removeItem(ItemId itemId, int inventorySlot);
+
+ private:
+  std::array<Item, 11> items_;  // index 0 is invalid
+  enum InventorySlotInfo
   {
     HELMET     = 1,
     AMULET     = 2,
@@ -48,47 +57,8 @@ class Equipment
     LEGS       = 7,
     FEET       = 8,
     RING       = 9,
-    AMMO       = 10
+    AMMO       = 10,
   };
-
-  Equipment();
-
-  const Item* getItem(uint8_t inventoryIndex) const
-  {
-    return getItem(static_cast<Slot>(inventoryIndex));
-  }
-
-  const Item* getItem(Slot slot) const
-  {
-    return &(items_.at(slot));
-  }
-
-  Item* getItem(uint8_t inventoryIndex)
-  {
-    return getItem(static_cast<Slot>(inventoryIndex));
-  }
-
-  Item* getItem(Slot slot)
-  {
-    return &(items_.at(slot));
-  }
-
-  bool addItem(const Item& item, uint8_t inventoryIndex);
-  bool removeItem(ItemId itemId, uint8_t inventoryIndex);
-
-  bool canAddItem(const Item& item, uint8_t inventoryIndex) const;
-
- private:
-  struct SlotHash
-  {
-    std::size_t operator()(const Slot& slot) const
-    {
-      return static_cast<std::size_t>(slot);
-    }
-  };
-
-  // TODO(simon): std::array<Item, 10> items_;
-  std::unordered_map<Slot, Item, SlotHash> items_;
 };
 
 class Player : public Creature

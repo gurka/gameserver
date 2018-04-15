@@ -145,6 +145,7 @@ bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
 
 const Item* Tile::getItem(uint8_t stackPosition) const
 {
+  // TODO(simon): remove and return nullptr?
   static const Item INVALID_ITEM = Item();
 
   if (stackPosition == 0)
@@ -162,7 +163,7 @@ const Item* Tile::getItem(uint8_t stackPosition) const
   else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
   {
     // Creature
-    LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
+    LOG_ERROR("%s: Stackposition is Creature", __func__);
     return &INVALID_ITEM;
   }
   else if (stackPosition < 1 + items_.size() + creatureIds_.size())
