@@ -46,11 +46,6 @@ class Position
   uint16_t getY() const { return y_; }
   uint8_t getZ() const { return z_; }
 
-  struct Hash
-  {
-    std::size_t operator()(const Position& position) const;
-  };
-
  private:
   uint16_t x_;
   uint16_t y_;

@@ -54,7 +54,7 @@ class World : public WorldInterface
 
   World(int worldSizeX,
         int worldSizeY,
-        std::unordered_map<Position, Tile, Position::Hash> tiles);
+        std::vector<Tile> tiles);
 
   // Delete copy constructors
   World(const World&) = delete;
@@ -95,7 +95,7 @@ class World : public WorldInterface
   // Helper functions
   std::vector<CreatureId> getVisibleCreatureIds(const Position& position) const;
 
-  // Functions to use instead of accessing the unordered_maps directly
+  // Functions to use instead of accessing the containers directly
   Tile& internalGetTile(const Position& position);
   Creature& internalGetCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
@@ -104,24 +104,13 @@ class World : public WorldInterface
   int worldSizeX_;
   int worldSizeY_;
 
-  // Offset for world size, since the client doesn't like too low positions
-  const int worldSizeStart_ = 192;
+  // No z axis yet
+  // index = (((y - position_offset) * worldSizeX_) + (x - position_offset))
+  std::vector<Tile> tiles_;
 
-  // TODO(simon): Use std::vector or std::array since pointer access is slow,
-  //              and contiguous memory is cache friendly.
-  //              Changing tiles_ to vector/array is not easy:
-  //                Make sure access is always done in same order, e.g.
-  //                for each z:
-  //                  for each y:
-  //                    for each x:
-  //                Figure out limits (should be easy, given worldSizeX/Y_ & worldSizeStart_)
-  //              Profile!
-  //              Add profiler test case that does lots of actions in the world?
-  //                (Moves around creatures / items, non-randomly)
-  std::unordered_map<Position, Tile, Position::Hash> tiles_;
-  std::unordered_map<int, Creature*> creatures_;
-  std::unordered_map<int, CreatureCtrl*> creatureCtrls_;
-  std::unordered_map<int, Position> creaturePositions_;
+  std::unordered_map<CreatureId, Creature*> creatures_;
+  std::unordered_map<CreatureId, CreatureCtrl*> creatureCtrls_;
+  std::unordered_map<CreatureId, Position> creaturePositions_;
 };
 
 #endif  // WORLD_EXPORT_WORLD_H_

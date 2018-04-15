@@ -75,20 +75,3 @@ Position Position::addDirection(const Direction& direction) const
 
   return Position();
 }
-
-std::size_t Position::Hash::operator()(const Position& position) const
-{
-  // Create 32-bit integer from x, y and z:
-  // x is cut to 15 bytes, y is cut to 15 bytes and z (0..15) is cut to 2 bytes:
-  // zzyyyyyyyyyyyyyyyxxxxxxxxxxxxxxx
-  uint32_t n = position.x_ & 0x7FFF;
-  n |= ((position.y_ & 0x7FFF) << 15);
-  n |= ((position.z_ & 0x2) << 30);
-
-  // Use hash function from: http://stackoverflow.com/a/12996028
-  n = ((n >> 16) ^ n) * 0x45d9f3b;
-  n = ((n >> 16) ^ n) * 0x45d9f3b;
-  n = ((n >> 16) ^ n);
-
-  return static_cast<std::size_t>(n);  // std::size_t should be same as uint32_t
-}

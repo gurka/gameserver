@@ -43,6 +43,10 @@ class Tile
   Tile(const Tile&) = delete;
   Tile& operator=(const Tile&) = delete;
 
+  // Move is OK
+  Tile(Tile&&) = default;
+  Tile& operator=(Tile&&) = default;
+
   // Creatures
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);

@@ -33,10 +33,11 @@
 
 #include "logger.h"
 #include "tick.h"
+#include "constants.h"
 
 World::World(int worldSizeX,
              int worldSizeY,
-             std::unordered_map<Position, Tile, Position::Hash> tiles)
+             std::vector<Tile> tiles)
   : worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
     tiles_(std::move(tiles))
@@ -551,10 +552,10 @@ const std::vector<const Tile*> World::getMapBlock(const Position& position, int 
 
 bool World::positionIsValid(const Position& position) const
 {
-  return position.getX() >= worldSizeStart_ &&
-         position.getX() < worldSizeStart_ + worldSizeX_ &&
-         position.getY() >= worldSizeStart_ &&
-         position.getY() < worldSizeStart_ + worldSizeY_ &&
+  return position.getX() >= Constants::position_offset               &&
+         position.getX() <  Constants::position_offset + worldSizeX_ &&
+         position.getY() >= Constants::position_offset               &&
+         position.getY() <  Constants::position_offset + worldSizeY_ &&
          position.getZ() == 7;
 }
 
@@ -587,7 +588,9 @@ Tile& World::internalGetTile(const Position& position)
   {
     LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
-  return tiles_.at(position);
+  const auto index = ((position.getY() - Constants::position_offset) * worldSizeX_) +
+                     (position.getX() - Constants::position_offset);
+  return tiles_[index];
 }
 
 const Tile& World::getTile(const Position& position) const
@@ -596,7 +599,9 @@ const Tile& World::getTile(const Position& position) const
   {
     LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
-  return tiles_.at(position);
+  const auto index = ((position.getY() - Constants::position_offset) * worldSizeX_) +
+                     (position.getX() - Constants::position_offset);
+  return tiles_[index];
 }
 
 Creature& World::internalGetCreature(CreatureId creatureId)

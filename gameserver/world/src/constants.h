@@ -22,20 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_WORLD_FACTORY_H_
-#define WORLD_EXPORT_WORLD_FACTORY_H_
+#ifndef WORLD_SRC_CONSTANTS_H_
+#define WORLD_SRC_CONSTANTS_H_
 
-#include <memory>
-#include <string>
-
-class World;
-
-class WorldFactory
+namespace Constants
 {
- public:
-  static std::unique_ptr<World> createWorld(const std::string& dataFilename,
-                                            const std::string& itemsFilename,
-                                            const std::string& worldFilename);
-};
 
-#endif  // WORLD_EXPORT_WORLD_FACTORY_H_
+static constexpr int position_offset = 192;
+
+}  // namespace Constants
+
+#endif  // WORLD_SRC_CONSTANTS_H_

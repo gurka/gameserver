@@ -47,15 +47,12 @@ class WorldTest : public ::testing::Test
     // We need to build a small simple map, currently with invalid ground items
     // TODO(simon): MockItem
     // Valid positions are (192, 192, 7) to (207, 207, 7)
-    std::unordered_map<Position, Tile, Position::Hash> tiles;
+    std::vector<Tile> tiles;
     for (auto x = 0; x < 16; x++)
     {
       for (auto y = 0; y < 16; y++)
       {
-        // TODO(simon): This damn 192 constant again...
-        tiles.emplace(std::piecewise_construct,
-                      std::forward_as_tuple(Position(192 + x, 192 + y, 7)),
-                      std::forward_as_tuple(Item()));
+        tiles.emplace_back(Item());
       }
     }
 

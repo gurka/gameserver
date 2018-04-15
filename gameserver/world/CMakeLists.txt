@@ -12,6 +12,7 @@ add_library(world
   "export/world_factory.h"
   "export/world_interface.h"
   "export/world.h"
+  "src/constants.h"
   "src/creature.cc"
   "src/item.cc"
   "src/position.cc"

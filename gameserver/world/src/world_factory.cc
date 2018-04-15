@@ -34,6 +34,7 @@
 #include "tile.h"
 #include "world.h"
 #include "logger.h"
+#include "constants.h"
 #include "rapidxml.hpp"
 
 std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename,
@@ -87,14 +88,13 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   const auto worldSizeY = std::stoi(heightAttr->value());
 
   // Read tiles
-  std::unordered_map<Position, Tile, Position::Hash> tiles;
+  std::vector<Tile> tiles;
+  tiles.reserve(worldSizeX * worldSizeY);
   const auto* tileNode = mapNode->first_node();
-  for (int y = worldSizeStart_; y < worldSizeStart_ + worldSizeY; y++)
+  for (int y = Constants::position_offset; y < Constants::position_offset + worldSizeY; y++)
   {
-    for (int x = worldSizeStart_; x < worldSizeStart_ + worldSizeX; x++)
+    for (int x = Constants::position_offset; x < Constants::position_offset + worldSizeX; x++)
     {
-      const Position position(x, y, 7);
-
       if (tileNode == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing <tile>-node", __func__);
@@ -129,9 +129,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
         return std::unique_ptr<World>();
       }
 
-      tiles.emplace(std::piecewise_construct,
-                    std::forward_as_tuple(position),
-                    std::forward_as_tuple(groundItem));
+      tiles.emplace_back(groundItem);
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -154,7 +152,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
           return std::unique_ptr<World>();
         }
 
-        tiles.at(position).addItem(item);
+        tiles.back().addItem(item);
       }
 
       // Go to next <tile> in XML

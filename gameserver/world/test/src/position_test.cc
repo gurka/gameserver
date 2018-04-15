@@ -74,23 +74,6 @@ TEST(PositionTest, Equals)
   ASSERT_EQ(fourth, third);
 }
 
-TEST(PositionTest, Hash)
-{
-  Position first(1, 2, 3);
-  Position second(1, 2, 3);
-  Position third(2, 3, 4);
-
-  Position::Hash hash;
-
-  std::size_t firstHash = hash(first);
-  std::size_t secondHash = hash(second);
-  std::size_t thirdHash = hash(third);
-
-  ASSERT_EQ(firstHash, secondHash);
-  ASSERT_NE(firstHash, thirdHash);
-  ASSERT_NE(secondHash, thirdHash);
-}
-
 TEST(PositionTest, AddDirection)
 {
   Position position(5, 5, 5);
