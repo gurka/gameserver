@@ -2,7 +2,11 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+function realpath {
+  cd "$1" && pwd
+}
+
+SCRIPT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 REPOROOT_DIR=$(realpath "$SCRIPT_DIR"/..)
 BUILD_DIR="$REPOROOT_DIR"/build
 GAMESERVER_DIR="$REPOROOT_DIR"/gameserver
