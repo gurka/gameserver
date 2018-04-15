@@ -13,3 +13,6 @@ target_link_libraries(gameengine_test
   gtest_main
   gmock_main
 )
+
+target_compile_definitions(gameengine_test PRIVATE UNITTEST)
+set_target_properties(gameengine_test PROPERTIES EXCLUDE_FROM_ALL TRUE)

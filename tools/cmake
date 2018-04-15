@@ -3,62 +3,98 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$SCRIPT_DIR/../gameserver"
-DATA_DIR="$SCRIPT_DIR/../data"
-RELEASE_DIR="$SCRIPT_DIR/../release"
-DEBUG_DIR="$SCRIPT_DIR/../debug"
-ECLIPSE_DIR="$SCRIPT_DIR/../eclipse"
+REPOROOT_DIR=$(realpath "$SCRIPT_DIR"/..)
+BUILD_DIR="$REPOROOT_DIR"/build
+GAMESERVER_DIR="$REPOROOT_DIR"/gameserver
+DATA_DIR="$REPOROOT_DIR"/data
+
+function release {
+  mkdir -p "$BUILD_DIR"/release
+  pushd "$BUILD_DIR"/release
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=release
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+function debug {
+  mkdir -p "$BUILD_DIR"/debug
+  pushd "$BUILD_DIR"/debug
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+# Same as debug, but with ASAN
+function debug_asan {
+  mkdir -p "$BUILD_DIR"/debug_asan
+  pushd "$BUILD_DIR"/debug_asan
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+# Same as debug, but with ld=gold for travis
+function travis_debug {
+  mkdir -p "$BUILD_DIR"/travis_debug
+  pushd "$BUILD_DIR"/travis_debug
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_LD_GOLD=ON
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+# Same as debug_asan, but with ld=gold for travis
+function travis_debug_asan {
+  mkdir -p "$BUILD_DIR"/travis_debug_asan
+  pushd "$BUILD_DIR"/travis_debug_asan
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DGAMESERVER_USE_LD_GOLD=ON
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+# Same as debug_asan, but for Eclipse CDT
+function eclipse {
+  mkdir -p "$BUILD_DIR"/eclipse
+  pushd "$BUILD_DIR"/eclipse
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+  ln -sf "$DATA_DIR" data
+  popd
+}
 
 case $1 in
   'all')
-    mkdir -p "$RELEASE_DIR"
-    pushd "$RELEASE_DIR"
-    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -sf "$DATA_DIR" data
-    popd
-
-    mkdir -p "$DEBUG_DIR"
-    pushd "$DEBUG_DIR"
-    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -sf "$DATA_DIR" data
-    popd
-
-    mkdir -p "$ECLIPSE_DIR"
-    pushd "$ECLIPSE_DIR"
-    cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -sf "$DATA_DIR" data
-    popd
+    release
+    debug
+    debug_asan
+    travis_debug
+    travis_debug_asan
+    eclipse
     ;;
 
   'release')
-    mkdir -p "$RELEASE_DIR"
-    pushd "$RELEASE_DIR"
-    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -sf "$DATA_DIR" data
-    popd
+    release
     ;;
 
   'debug')
-    mkdir -p "$DEBUG_DIR"
-    pushd "$DEBUG_DIR"
-    cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -sf "$DATA_DIR" data
-    popd
+    debug
+    ;;
+
+  'debug_asan')
+    debug_asan
+    ;;
+
+  'travis_debug')
+    travis_debug
+    ;;
+
+  'travis_debug_asan')
+    travis_debug_asan
     ;;
 
   'eclipse')
-    mkdir -p "$ECLIPSE_DIR"
-    pushd "$ECLIPSE_DIR"
-    cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -sf "$DATA_DIR" data
-    popd
-    ;;
-
-  'clean')
-    rm -rf "$RELEASE_DIR" "$DEBUG_DIR" "$ECLIPSE_DIR"
+    eclipse
     ;;
 
   *)
-    echo "Usage: $0 [all | release | debug |eclipse | clean]"
+    echo "Usage: $0 [all | release | debug | debug_asan | travis_debug | travis_debug_asan | eclipse]"
     ;;
 esac

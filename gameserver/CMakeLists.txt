@@ -3,14 +3,22 @@ cmake_minimum_required(VERSION 3.0)
 project(gameserver)
 
 # -- Options --
+option(GAMESERVER_USE_LD_GOLD "Pass -fuse-ld=gold to compiler" OFF)
+option(GAMESERVER_USE_ASAN "Compile with ASAN" OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# -fuse-ld=gold is for Travis
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++14 -pedantic -pthread -fuse-ld=gold")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++14 -pedantic -pthread")
+
+if(GAMESERVER_USE_LD_GOLD)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
+endif()
+
+if(GAMESERVER_USE_ASAN)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
+endif()
 
 # -- Binaries --
 
@@ -72,27 +80,15 @@ target_include_directories(world SYSTEM PRIVATE
 
 # -- Unit tests --
 
-enable_testing()
-
-add_test(build_tests "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target tests)
-
-add_custom_target(tests DEPENDS
-  account_test
-  gameengine_test
-  network_test
-  utils_test
-  world_test
-)
-
+# Google Test
 add_subdirectory(../external/googletest external/googletest)
 set_target_properties(gtest PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gmock PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gtest_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gmock_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
+# Account test
 add_subdirectory("account/test")
-target_compile_definitions(account_test PRIVATE UNITTEST)
-set_target_properties(account_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_include_directories(account_test PUBLIC
   "account/export"
   "account/src"
@@ -101,12 +97,9 @@ target_include_directories(account_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
-add_test(account bin/account_test)
-set_tests_properties(account PROPERTIES DEPENDS build_tests)
 
+# Gameengine test
 add_subdirectory("gameengine/test")
-target_compile_definitions(gameengine_test PRIVATE UNITTEST)
-set_target_properties(gameengine_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_include_directories(gameengine_test PUBLIC
   "gameengine/export"
   "gameengine/src"
@@ -115,12 +108,9 @@ target_include_directories(gameengine_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
-add_test(gameengine bin/gameengine_test)
-set_tests_properties(gameengine PROPERTIES DEPENDS build_tests)
 
+# Network test
 add_subdirectory("network/test")
-target_compile_definitions(network_test PRIVATE UNITTEST)
-set_target_properties(network_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_include_directories(network_test PUBLIC
   "network/export"
   "network/src"
@@ -129,12 +119,9 @@ target_include_directories(network_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
-add_test(network bin/network_test)
-set_tests_properties(network PROPERTIES DEPENDS build_tests)
 
+# Utils test
 add_subdirectory("utils/test")
-target_compile_definitions(utils_test PRIVATE UNITTEST)
-set_target_properties(utils_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_include_directories(utils_test PUBLIC
   "utils/export"
   "utils/src"
@@ -143,12 +130,9 @@ target_include_directories(utils_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
-add_test(world bin/world_test)
-set_tests_properties(world PROPERTIES DEPENDS build_tests)
 
+# World test
 add_subdirectory("world/test")
-target_compile_definitions(world_test PRIVATE UNITTEST)
-set_target_properties(world_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_include_directories(world_test PUBLIC
   "world/export"
   "world/src"
@@ -157,5 +141,12 @@ target_include_directories(world_test SYSTEM PRIVATE
   ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
   ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
 )
-add_test(utils bin/utils_test)
-set_tests_properties(utils PROPERTIES DEPENDS build_tests)
+
+# Build all tests with target 'unittest'
+add_custom_target(unittest DEPENDS
+  account_test
+  gameengine_test
+  network_test
+  utils_test
+  world_test
+)

@@ -11,3 +11,6 @@ target_link_libraries(utils_test
   gtest_main
   gmock_main
 )
+
+target_compile_definitions(utils_test PRIVATE UNITTEST)
+set_target_properties(utils_test PROPERTIES EXCLUDE_FROM_ALL TRUE)

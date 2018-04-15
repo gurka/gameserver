@@ -17,3 +17,6 @@ target_link_libraries(world_test
   gtest_main
   gmock_main
 )
+
+target_compile_definitions(world_test PRIVATE UNITTEST)
+set_target_properties(world_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
