@@ -14,19 +14,19 @@ case $1 in
     mkdir -p "$RELEASE_DIR"
     pushd "$RELEASE_DIR"
     cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
 
     mkdir -p "$DEBUG_DIR"
     pushd "$DEBUG_DIR"
     cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
 
     mkdir -p "$ECLIPSE_DIR"
     pushd "$ECLIPSE_DIR"
     cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
     ;;
 
@@ -34,7 +34,7 @@ case $1 in
     mkdir -p "$RELEASE_DIR"
     pushd "$RELEASE_DIR"
     cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=release
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
     ;;
 
@@ -42,7 +42,7 @@ case $1 in
     mkdir -p "$DEBUG_DIR"
     pushd "$DEBUG_DIR"
     cmake "$SOURCE_DIR" -DCMAKE_BUILD_TYPE=debug
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
     ;;
 
@@ -50,7 +50,7 @@ case $1 in
     mkdir -p "$ECLIPSE_DIR"
     pushd "$ECLIPSE_DIR"
     cmake "$SOURCE_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.7.3 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
-    ln -s "$DATA_DIR" data
+    ln -sf "$DATA_DIR" data
     popd
     ;;
 
