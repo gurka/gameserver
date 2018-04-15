@@ -12,4 +12,4 @@ addons:
       - valgrind
 
 script:
-  - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/test.sh
+  - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis.sh
