@@ -41,7 +41,7 @@ class ContainerManagerTest : public ::testing::Test
     ItemData item_data;
     item_data.valid = true;
     item_data.isContainer = true;
-    item_data.attributes["maxitems"] = "2";
+    item_data.attributes.emplace_back("maxitems", "2");
     Item::setItemData(backpack_item_id, item_data);
 
     EXPECT_CALL(player_ctrl_mock_, getPlayerId()).WillRepeatedly(Return(player_id));

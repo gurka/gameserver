@@ -32,6 +32,26 @@
 #include "rapidxml.hpp"
 #include "logger.h"
 
+namespace
+{
+
+auto findAttribute(const std::vector<ItemData::Attribute>& attributes, const std::string& name)
+{
+  auto it = attributes.begin();
+  while (it != attributes.end())
+  {
+    if (it->name == name)
+    {
+      return it;
+    }
+
+    ++it;
+  }
+  return it;
+}
+
+}  // namespace
+
 std::array<ItemData, Item::MAX_ITEM_DATAS> Item::itemDatas_;
 
 bool Item::loadItemData(const std::string& dataFilename, const std::string& itemsFilename)
@@ -278,7 +298,7 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
 
       std::string attrValue(xmlAttrOther->value());
 
-      itemData.attributes.insert(std::make_pair(attrName, attrValue));
+      itemData.attributes.emplace_back(attrName, attrValue);
     }
   }
 
@@ -289,22 +309,27 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
   return true;
 }
 
+bool Item::hasAttribute(const std::string& name) const
+{
+  return findAttribute(itemData_->attributes, name) != itemData_->attributes.end();
+}
+
 template<>
 std::string Item::getAttribute(const std::string& name) const
 {
-  return itemData_->attributes.at(name);
+  return findAttribute(itemData_->attributes, name)->value;
 }
 
 template<>
 int Item::getAttribute(const std::string& name) const
 {
-  return std::stoi(itemData_->attributes.at(name));
+  return std::stoi(findAttribute(itemData_->attributes, name)->value);
 }
 
 template<>
 float Item::getAttribute(const std::string& name) const
 {
-  return std::stof(itemData_->attributes.at(name));
+  return std::stof(findAttribute(itemData_->attributes, name)->value);
 }
 
 int Item::getWeight() const

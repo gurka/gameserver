@@ -28,12 +28,24 @@
 #include <cstdint>
 #include <array>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 using ItemId = int;
 
 struct ItemData
 {
+  struct Attribute
+  {
+    Attribute(const std::string& name, const std::string& value)
+      : name(name),
+        value(value)
+    {
+    }
+
+    std::string name;
+    std::string value;
+  };
+
   bool valid        = false;
 
   // Loaded from data file
@@ -50,9 +62,7 @@ struct ItemData
 
   // Loaded from item file
   std::string name = "";
-
-  // TODO(simon): Change to std::vector ?
-  std::unordered_map<std::string, std::string> attributes;
+  std::vector<Attribute> attributes;
 };
 
 class Item
@@ -110,7 +120,7 @@ class Item
   // Loaded from items.xml
   const std::string& getName() const { return itemData_->name; }
 
-  bool hasAttribute(const std::string& name) const { return itemData_->attributes.count(name) == 1; }
+  bool hasAttribute(const std::string& name) const;
 
   template<typename T>
   T getAttribute(const std::string& name) const;

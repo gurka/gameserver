@@ -39,9 +39,9 @@ class ItemTest : public ::testing::Test
     ItemData itemDataB;
     itemDataB.valid = true;
     itemDataB.name = "Item B";
-    itemDataB.attributes.insert(std::make_pair("string", "test"));
-    itemDataB.attributes.insert(std::make_pair("integer", "1234"));
-    itemDataB.attributes.insert(std::make_pair("float", "3.14"));
+    itemDataB.attributes.emplace_back("string", "test");
+    itemDataB.attributes.emplace_back("integer", "1234");
+    itemDataB.attributes.emplace_back("float", "3.14");
     Item::setItemData(itemIdB, itemDataB);
   }
 
@@ -63,6 +63,11 @@ TEST_F(ItemTest, Attribute)
 {
   Item item(itemIdB);
   ASSERT_TRUE(item.isValid());
+
+  ASSERT_TRUE(item.hasAttribute("string"));
+  ASSERT_TRUE(item.hasAttribute("integer"));
+  ASSERT_TRUE(item.hasAttribute("float"));
+  ASSERT_FALSE(item.hasAttribute("boolean"));
 
   ASSERT_EQ(item.getAttribute<std::string>("string"), "test");
   ASSERT_EQ(item.getAttribute<int>("integer"), 1234);
