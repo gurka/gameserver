@@ -1,16 +1,16 @@
-* Add NPCManager (it manages npc <-> world interaction, spawns NPCs, adds OnThink tasks periodically?)
+General:
+  * Remove all usage of uint8_t, uint16_t, etc. unless where it's necessary (e.g. in network/)
+  * Remove all unnecessary usage of unsigned integers
+  * Fix TODOs in the code
 
-* Add simple NPC that responds on talk, walk around spawn point with max radius
+ContainerManager:
+  * Add support for moving container items (might need to update rootItemPosition and parentContainerId)
+  * Add support for weight calculation
 
-* Implement combat
-
-* TODO in world.h
-
-* Figure out exactly, and document in README.md, what each module should and should not do.
-  Especially World and Worldserver. How much logic and knowledge should World have?
-
-* Check/fix/sort/remove #includes and include guard names
-
-* Fix moving creatures (PlayerManager::moveItemFromPosToPos)
-
-* Use CMake to run tests instead of tools/test.sh
+Item:
+  * Refactor ItemId into ItemDataId
+  * Make ItemId be unique per actual item -> Item objects needs to be handled by a single instance (GameEngine?)
+                                             Cannot be copied
+                                             Moved in World/Equipment/Container by moving a pointer
+                                             Only certain things can create an Item: monster loot or NPCs (via selling or giving)
+                                             Can only be destroyed if thrown in water or dustbin, or if inside a corpse that vanishes
