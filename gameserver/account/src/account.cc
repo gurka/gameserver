@@ -202,12 +202,12 @@ bool AccountReader::loadFile(std::istream* accountsFileStream)
   return true;
 }
 
-bool AccountReader::accountExists(uint32_t accountNumber) const
+bool AccountReader::accountExists(int accountNumber) const
 {
   return accounts_.count(accountNumber) == 1;
 }
 
-bool AccountReader::verifyPassword(uint32_t accountNumber, const std::string& password) const
+bool AccountReader::verifyPassword(int accountNumber, const std::string& password) const
 {
   if (passwords_.count(accountNumber) == 1)
   {
@@ -216,7 +216,7 @@ bool AccountReader::verifyPassword(uint32_t accountNumber, const std::string& pa
   return false;
 }
 
-const Account* AccountReader::getAccount(uint32_t accountNumber) const
+const Account* AccountReader::getAccount(int accountNumber) const
 {
   if (accountExists(accountNumber))
   {

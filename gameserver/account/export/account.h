@@ -35,7 +35,7 @@ struct Character
   std::string name;
   std::string worldName;
   uint32_t worldIp;
-  uint16_t worldPort;
+  int worldPort;
 };
 
 struct Account
@@ -56,9 +56,9 @@ class AccountReader
   bool loadFile(const std::string& accountsFilename);
   bool loadFile(std::istream* accountsFileStream);
 
-  bool accountExists(uint32_t accountNumber) const;
-  bool verifyPassword(uint32_t accountNumber, const std::string& password) const;
-  const Account* getAccount(uint32_t accountNumber) const;
+  bool accountExists(int accountNumber) const;
+  bool verifyPassword(int accountNumber, const std::string& password) const;
+  const Account* getAccount(int accountNumber) const;
 
   bool characterExists(const std::string& characterName) const;
   bool verifyPassword(const std::string& characterName, const std::string& password) const;
@@ -66,9 +66,9 @@ class AccountReader
   const Account* getAccount(const std::string& characterName) const;
 
  private:
-  std::unordered_map<uint32_t, Account> accounts_;
-  std::unordered_map<uint32_t, std::string> passwords_;
-  std::unordered_map<std::string, uint32_t> characterToAccountNumber_;
+  std::unordered_map<int, Account> accounts_;
+  std::unordered_map<int, std::string> passwords_;
+  std::unordered_map<std::string, int> characterToAccountNumber_;
 };
 
 #endif  // ACCOUNT_EXPORT_ACCOUNT_H_
