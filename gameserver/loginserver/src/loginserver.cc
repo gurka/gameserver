@@ -61,24 +61,24 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 
   while (!packet->isEmpty())
   {
-    uint8_t packetId = packet->getU8();
+    const auto packetId = packet->getU8();
     switch (packetId)
     {
       case 0x01:
       {
         LOG_DEBUG("Parsing login packet from connection id: %d", connectionId);
 
-        uint16_t clientOs = packet->getU16();       // Client OS
-        uint16_t clientVersion = packet->getU16();  // Client version
-        packet->getBytes(12);                       // Client OS info
-        uint32_t accountNumber = packet->getU32();
+        const auto clientOs = packet->getU16();       // Client OS
+        const auto clientVersion = packet->getU16();  // Client version
+        packet->getBytes(12);                         // Client OS info
+        const auto accountNumber = packet->getU32();
         std::string password = packet->getString();
 
         LOG_DEBUG("Client OS: %d Client version: %d Account number: %d Password: %s",
-                    clientOs,
-                    clientVersion,
-                    accountNumber,
-                    password.c_str());
+                  clientOs,
+                  clientVersion,
+                  accountNumber,
+                  password.c_str());
 
         // Send outgoing packet
         OutgoingPacket response;

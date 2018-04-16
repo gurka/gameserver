@@ -103,7 +103,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
 
   while (!packet->isEmpty())
   {
-    uint8_t packetId = packet->getU8();
+    const auto packetId = packet->getU8();
     switch (packetId)
     {
       case 0x14:
@@ -822,8 +822,8 @@ void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, Ou
 void Protocol71::parseLogin(IncomingPacket* packet)
 {
   packet->getU8();  // Unknown (0x02)
-  uint8_t client_os = packet->getU8();
-  uint16_t client_version = packet->getU16();
+  const auto client_os = packet->getU8();
+  const auto client_version = packet->getU16();
   packet->getU8();  // Unknown
   std::string character_name = packet->getString();
   std::string password = packet->getString();
@@ -865,7 +865,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
 void Protocol71::parseMoveClick(IncomingPacket* packet)
 {
   std::deque<Direction> moves;
-  uint8_t pathLength = packet->getU8();
+  const auto pathLength = packet->getU8();
 
   if (pathLength == 0)
   {
@@ -953,10 +953,10 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
 
 void Protocol71::parseSay(IncomingPacket* packet)
 {
-  uint8_t type = packet->getU8();
+  const auto type = packet->getU8();
 
   std::string receiver = "";
-  uint16_t channelId = 0;
+  const auto channelId = 0;
 
   switch (type)
   {
@@ -972,7 +972,7 @@ void Protocol71::parseSay(IncomingPacket* packet)
       break;
   }
 
-  std::string message = packet->getString();
+  const auto message = packet->getString();
 
   gameEngineQueue_->addTask(playerId_, [this, type, message, receiver, channelId](GameEngine* gameEngine)
   {
