@@ -302,7 +302,7 @@ class Connection
     }
 
     // Receive data
-    uint16_t dataLength = (readBuffer_[1] << 8) | readBuffer_[0];
+    const auto dataLength = (readBuffer_[1] << 8) | readBuffer_[0];
 
     LOG_DEBUG("%s: received packet header, data length: %d", __func__, dataLength);
 
