@@ -14,11 +14,9 @@ addons:
 
 jobs:
   include:
-    - stage: unittest
-      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/unittest_valgrind.sh
-    - stage: unittest
-      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/unittest_asan.sh
-    - stage: cpplint
-      script: tools/cpplint.sh
-    - stage: cppcheck
-      script: tools/cppcheck.sh
+    - stage: build
+      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/build.sh
+    - stage: test
+      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/test.sh
+    - stage: lint
+      script: tools/travis/lint.sh
