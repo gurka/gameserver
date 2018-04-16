@@ -10,6 +10,7 @@ addons:
       - g++-6
       - libboost-system-dev
       - valgrind
+      - cppcheck
 
 jobs:
   include:
