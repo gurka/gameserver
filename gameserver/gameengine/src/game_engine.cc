@@ -60,10 +60,10 @@ struct RecursiveTask
 
 }  // namespace
 
-GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage)
+GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, const std::string& loginMessage)
   : gameEngineQueue_(gameEngineQueue),
     world_(world),
-    loginMessage_(std::move(loginMessage)),
+    loginMessage_(loginMessage),
     containerManager_()
 {
 }

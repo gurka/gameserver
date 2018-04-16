@@ -46,7 +46,7 @@ class World;
 class GameEngine
 {
  public:
-  GameEngine(GameEngineQueue* gameEngineQueue, World* world, std::string loginMessage);
+  GameEngine(GameEngineQueue* gameEngineQueue, World* world, const std::string& loginMessage);
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;

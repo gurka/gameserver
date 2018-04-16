@@ -212,7 +212,7 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
 
     // Add ItemData and increase next item id
     itemDatas_[nextItemId] = itemData;
-    nextItemId++;
+    ++nextItemId;
   }
 
   LOG_INFO("%s: Successfully loaded %d items", __func__, nextItemId - 100);

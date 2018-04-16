@@ -37,7 +37,7 @@
 
 World::World(int worldSizeX,
              int worldSizeY,
-             std::vector<Tile> tiles)
+             std::vector<Tile>&& tiles)
   : worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
     tiles_(std::move(tiles))

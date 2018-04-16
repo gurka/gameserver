@@ -54,7 +54,7 @@ class World : public WorldInterface
 
   World(int worldSizeX,
         int worldSizeY,
-        std::vector<Tile> tiles);
+        std::vector<Tile>&& tiles);
 
   // Delete copy constructors
   World(const World&) = delete;
