@@ -50,15 +50,14 @@ class PlayerCtrl : public CreatureCtrl
 
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
 
-  // TODO(simon): use int here instead of uint8_t
-  virtual void onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item) = 0;
-  virtual void onCloseContainer(uint8_t clientContainerId) = 0;
+  virtual void onOpenContainer(int clientContainerId, const Container& container, const Item& item) = 0;
+  virtual void onCloseContainer(int clientContainerId) = 0;
 
-  virtual void onContainerAddItem(uint8_t clientContainerId, const Item& item) = 0;
-  virtual void onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item) = 0;
-  virtual void onContainerRemoveItem(uint8_t clientContainerId, int containerSlot) = 0;
+  virtual void onContainerAddItem(int clientContainerId, const Item& item) = 0;
+  virtual void onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item) = 0;
+  virtual void onContainerRemoveItem(int clientContainerId, int containerSlot) = 0;
 
-  virtual void sendTextMessage(uint8_t message_type, const std::string& message) = 0;
+  virtual void sendTextMessage(int message_type, const std::string& message) = 0;
 
   virtual void sendCancel(const std::string& message) = 0;
   virtual void cancelMove() = 0;

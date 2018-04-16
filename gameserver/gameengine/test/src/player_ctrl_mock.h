@@ -73,14 +73,14 @@ class PlayerCtrlMock : public PlayerCtrl
 
   MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, int inventoryIndex));
 
-  MOCK_METHOD3(onOpenContainer, void(uint8_t clientContainerId, const Container& container, const Item& item));
-  MOCK_METHOD1(onCloseContainer, void(uint8_t clientContainerId));
+  MOCK_METHOD3(onOpenContainer, void(int clientContainerId, const Container& container, const Item& item));
+  MOCK_METHOD1(onCloseContainer, void(int clientContainerId));
 
-  MOCK_METHOD2(onContainerAddItem, void(uint8_t clientContainerId, const Item& item));
-  MOCK_METHOD3(onContainerUpdateItem, void(uint8_t clientContainerId, int containerSlot, const Item& item));
-  MOCK_METHOD2(onContainerRemoveItem, void(uint8_t clientContainerId, int containerSlot));
+  MOCK_METHOD2(onContainerAddItem, void(int clientContainerId, const Item& item));
+  MOCK_METHOD3(onContainerUpdateItem, void(int clientContainerId, int containerSlot, const Item& item));
+  MOCK_METHOD2(onContainerRemoveItem, void(int clientContainerId, int containerSlot));
 
-  MOCK_METHOD2(sendTextMessage, void(uint8_t message_type, const std::string& message));
+  MOCK_METHOD2(sendTextMessage, void(int message_type, const std::string& message));
 
   MOCK_METHOD1(sendCancel, void(const std::string& message));
   MOCK_METHOD0(cancelMove, void());

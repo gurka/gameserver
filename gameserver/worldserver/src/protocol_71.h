@@ -70,22 +70,22 @@ class Protocol71 : public Protocol
   void onCreatureDespawn(const WorldInterface& world_interface,
                          const Creature& creature,
                          const Position& position,
-                         uint8_t stackPos) override;
+                         int stackPos) override;
   void onCreatureMove(const WorldInterface& world_interface,
                       const Creature& creature,
                       const Position& oldPosition,
-                      uint8_t oldStackPos,
+                      int oldStackPos,
                       const Position& newPosition) override;
   void onCreatureTurn(const WorldInterface& world_interface,
                       const Creature& creature,
                       const Position& position,
-                      uint8_t stackPos) override;
+                      int stackPos) override;
   void onCreatureSay(const WorldInterface& world_interface,
                      const Creature& creature,
                      const Position& position,
                      const std::string& message) override;
 
-  void onItemRemoved(const WorldInterface& world_interface, const Position& position, uint8_t stackPos) override;
+  void onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos) override;
   void onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position) override;
 
   void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
@@ -94,12 +94,12 @@ class Protocol71 : public Protocol
   CreatureId getPlayerId() const override { return playerId_; }
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
-  void onOpenContainer(uint8_t localContainerId, const Container& container, const Item& item) override;
-  void onCloseContainer(uint8_t localContainerId) override;
-  void onContainerAddItem(uint8_t clientContainerId, const Item& item) override;
-  void onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item) override;
-  void onContainerRemoveItem(uint8_t clientContainerId, int containerSlot) override;
-  void sendTextMessage(uint8_t message_type, const std::string& message) override;
+  void onOpenContainer(int localContainerId, const Container& container, const Item& item) override;
+  void onCloseContainer(int localContainerId) override;
+  void onContainerAddItem(int clientContainerId, const Item& item) override;
+  void onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item) override;
+  void onContainerRemoveItem(int clientContainerId, int containerSlot) override;
+  void sendTextMessage(int message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
 

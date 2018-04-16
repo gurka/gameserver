@@ -61,10 +61,10 @@ class GameEngine
   void turn(CreatureId creatureId, Direction direction);
 
   void say(CreatureId creatureId,
-           uint8_t type,
+           int type,
            const std::string& message,
            const std::string& receiver,
-           uint16_t channelId);
+           int channelId);
 
   void moveItem(CreatureId creatureId, const ItemPosition& fromPosition, const GamePosition& toPosition, int count);
   void useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId);

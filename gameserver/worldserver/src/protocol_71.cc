@@ -298,7 +298,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
 void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
                                    const Creature& creature,
                                    const Position& position,
-                                   uint8_t stackPos)
+                                   int stackPos)
 {
   (void)world_interface;
 
@@ -333,7 +333,7 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
 void Protocol71::onCreatureMove(const WorldInterface& world_interface,
                                 const Creature& creature,
                                 const Position& oldPosition,
-                                uint8_t oldStackPos,
+                                int oldStackPos,
                                 const Position& newPosition)
 {
   if (!isConnected())
@@ -412,7 +412,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
 void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
                                 const Creature& creature,
                                 const Position& position,
-                                uint8_t stackPos)
+                                int stackPos)
 {
   (void)world_interface;
 
@@ -454,7 +454,7 @@ void Protocol71::onCreatureSay(const WorldInterface& world_interface,
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, uint8_t stackPos)
+void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
 {
   (void)world_interface;
 
@@ -514,7 +514,7 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& container, const Item& item)
+void Protocol71::onOpenContainer(int clientContainerId, const Container& container, const Item& item)
 {
   if (!isConnected())
   {
@@ -548,7 +548,7 @@ void Protocol71::onOpenContainer(uint8_t clientContainerId, const Container& con
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onCloseContainer(uint8_t clientContainerId)
+void Protocol71::onCloseContainer(int clientContainerId)
 {
   if (!isConnected())
   {
@@ -563,7 +563,7 @@ void Protocol71::onCloseContainer(uint8_t clientContainerId)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onContainerAddItem(uint8_t clientContainerId, const Item& item)
+void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
 {
   if (!isConnected())
   {
@@ -579,7 +579,7 @@ void Protocol71::onContainerAddItem(uint8_t clientContainerId, const Item& item)
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onContainerUpdateItem(uint8_t clientContainerId, int containerSlot, const Item& item)
+void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item)
 {
   if (!isConnected())
   {
@@ -600,7 +600,7 @@ void Protocol71::onContainerUpdateItem(uint8_t clientContainerId, int containerS
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
-void Protocol71::onContainerRemoveItem(uint8_t clientContainerId, int containerSlot)
+void Protocol71::onContainerRemoveItem(int clientContainerId, int containerSlot)
 {
   if (!isConnected())
   {
@@ -620,7 +620,7 @@ void Protocol71::onContainerRemoveItem(uint8_t clientContainerId, int containerS
 }
 
 // 0x13 default text, 0x11 login text
-void Protocol71::sendTextMessage(uint8_t message_type, const std::string& message)
+void Protocol71::sendTextMessage(int message_type, const std::string& message)
 {
   if (!isConnected())
   {

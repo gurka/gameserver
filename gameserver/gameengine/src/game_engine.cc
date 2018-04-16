@@ -207,10 +207,10 @@ void GameEngine::turn(CreatureId creatureId, Direction direction)
 }
 
 void GameEngine::say(CreatureId creatureId,
-                     uint8_t type,
+                     int type,
                      const std::string& message,
                      const std::string& receiver,
-                     uint16_t channelId)
+                     int channelId)
 {
   // TODO(simon): care about these
   (void)type;
