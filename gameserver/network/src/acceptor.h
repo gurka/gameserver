@@ -36,7 +36,7 @@ class Acceptor
 {
  public:
   Acceptor(typename Backend::Service* io_service,
-           unsigned short port,
+           int port,
            const std::function<void(typename Backend::Socket)>& onAccept)
     : acceptor_(*io_service, port),
       socket_(*io_service),

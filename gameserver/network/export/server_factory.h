@@ -41,7 +41,7 @@ class ServerFactory
 {
  public:
   static std::unique_ptr<Server> createServer(boost::asio::io_service* io_service,
-                                              unsigned short port,
+                                              int port,
                                               const Server::Callbacks& callbacks);
 };
 

@@ -44,7 +44,7 @@ class ServerImpl : public Server
 {
  public:
   ServerImpl(typename Backend::Service* io_service,
-             unsigned short port,
+             int port,
              const Callbacks& callbacks)
     : acceptor_(io_service,
                 port,
