@@ -1,7 +1,8 @@
 #!/bin/bash
+set -e
 
-echo "Disabled"
-exit 1
-#SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-#INCLUDE_DIRS=$(find "$SCRIPT_DIR"/../gameserver/ -type d -name 'src' -or -name 'export' | grep -v '/test/' | sed 's/^/-I/')
-#cppcheck --std=c++11 --enable=all $INCLUDE_DIRS "$SCRIPT_DIR"/../gameserver
+cd "$(git rev-parse --show-toplevel)"
+
+INCLUDE_DIRS=$(find gameserver/ -type d -name 'src' -or -name 'export' | grep -v '/test/' | sed 's/^/-I/')
+IGNORE_DIRS=$(find gameserver/ -type d -name 'test' | sed 's/^/-i/')
+cppcheck --std=c++11 --enable=all --error-exitcode=2 --quiet $IGNORE_DIRS $INCLUDE_DIRS gameserver/

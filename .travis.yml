@@ -19,3 +19,5 @@ jobs:
       script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/unittest_asan.sh
     - stage: cpplint
       script: tools/cpplint.sh
+    - stage: cppcheck
+      script: tools/cppcheck.sh
