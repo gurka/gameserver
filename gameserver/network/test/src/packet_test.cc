@@ -39,7 +39,7 @@ class PacketTest : public ::testing::Test
 
 TEST_F(PacketTest, IncomingPacket)
 {
-  const uint8_t packetBuffer[] =
+  const std::uint8_t packetBuffer[] =
   {
     // 1 byte value 0x11
     0x11,
@@ -69,29 +69,29 @@ TEST_F(PacketTest, IncomingPacket)
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Peek uint8_t
-  EXPECT_EQ(static_cast<uint8_t>(0x11), packet.peekU8());
+  EXPECT_EQ(static_cast<std::uint8_t>(0x11), packet.peekU8());
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Get uint8_t
-  EXPECT_EQ(static_cast<uint8_t>(0x11), packet.getU8());
+  EXPECT_EQ(static_cast<std::uint8_t>(0x11), packet.getU8());
   bytesLeft -= 1;
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Peek uint16_t
-  EXPECT_EQ(static_cast<uint16_t>(0x3322), packet.peekU16());
+  EXPECT_EQ(static_cast<std::uint16_t>(0x3322), packet.peekU16());
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Get uint16_t
-  EXPECT_EQ(static_cast<uint16_t>(0x3322), packet.getU16());
+  EXPECT_EQ(static_cast<std::uint16_t>(0x3322), packet.getU16());
   bytesLeft -= 2;
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Peek uint32_t
-  EXPECT_EQ(static_cast<uint32_t>(0x77665544), packet.peekU32());
+  EXPECT_EQ(static_cast<std::uint32_t>(0x77665544), packet.peekU32());
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
   // Get uint32_t
-  EXPECT_EQ(static_cast<uint32_t>(0x77665544), packet.getU32());
+  EXPECT_EQ(static_cast<std::uint32_t>(0x77665544), packet.getU32());
   bytesLeft -= 4;
   EXPECT_EQ(bytesLeft, packet.bytesLeft());
 
@@ -129,7 +129,7 @@ TEST_F(PacketTest, OutgoingPacket)
   // 1 + 2 + 4 + 2 + 4 + 2 + 1 = 16
   EXPECT_EQ(16u, packet.getLength());
 
-  const uint8_t* packetBuffer = packet.getBuffer();
+  const std::uint8_t* packetBuffer = packet.getBuffer();
 
   // 0x11
   EXPECT_EQ(0x11, packetBuffer[0]);

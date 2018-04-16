@@ -167,7 +167,7 @@ TEST_F(ServerTest, OnPacketReceived)
   // Server should call onClientConnected callback and call async_accept again
   // Connection should call async_read
   ConnectionId connectionId;
-  uint8_t* readBuffer = nullptr;
+  std::uint8_t* readBuffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(callbacksMock_, onClientConnected(_)).WillOnce(SaveArg<0>(&connectionId));
   EXPECT_CALL(service_, acceptor_async_accept(_, _));

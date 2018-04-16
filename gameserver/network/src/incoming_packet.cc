@@ -27,49 +27,49 @@
 #include <algorithm>
 #include <vector>
 
-IncomingPacket::IncomingPacket(const uint8_t* buffer, std::size_t length)
+IncomingPacket::IncomingPacket(const std::uint8_t* buffer, std::size_t length)
   : buffer_(buffer),
     length_(length),
     position_(0)
 {
 }
 
-uint8_t IncomingPacket::peekU8() const
+std::uint8_t IncomingPacket::peekU8() const
 {
   return buffer_[position_];
 }
 
-uint8_t IncomingPacket::getU8()
+std::uint8_t IncomingPacket::getU8()
 {
   auto value = peekU8();
   position_ += 1;
   return value;
 }
 
-uint16_t IncomingPacket::peekU16() const
+std::uint16_t IncomingPacket::peekU16() const
 {
-  uint16_t value = buffer_[position_];
-  value |= ((uint16_t)buffer_[position_ + 1] << 8) & 0xFF00;
+  std::uint16_t value = buffer_[position_];
+  value |= (static_cast<std::uint16_t>(buffer_[position_ + 1]) << 8) & 0xFF00;
   return value;
 }
 
-uint16_t IncomingPacket::getU16()
+std::uint16_t IncomingPacket::getU16()
 {
   auto value = peekU16();
   position_ += 2;
   return value;
 }
 
-uint32_t IncomingPacket::peekU32() const
+std::uint32_t IncomingPacket::peekU32() const
 {
-  uint32_t value = buffer_[position_];
-  value |= ((uint32_t)buffer_[position_ + 1] << 8) & 0xFF00;
-  value |= ((uint32_t)buffer_[position_ + 2] << 16) & 0xFF0000;
-  value |= ((uint32_t)buffer_[position_ + 3] << 24) & 0xFF000000;
+  std::uint32_t value = buffer_[position_];
+  value |= (static_cast<std::uint32_t>(buffer_[position_ + 1]) << 8)  & 0xFF00;
+  value |= (static_cast<std::uint32_t>(buffer_[position_ + 2]) << 16) & 0xFF0000;
+  value |= (static_cast<std::uint32_t>(buffer_[position_ + 3]) << 24) & 0xFF000000;
   return value;
 }
 
-uint32_t IncomingPacket::getU32()
+std::uint32_t IncomingPacket::getU32()
 {
   auto value = peekU32();
   position_ += 4;
@@ -78,19 +78,19 @@ uint32_t IncomingPacket::getU32()
 
 std::string IncomingPacket::getString()
 {
-  uint16_t length = getU16();
+  std::uint16_t length = getU16();
   int temp = position_;
   position_ += length;
   return std::string(&buffer_[temp], &buffer_[temp + length]);
 }
 
-std::vector<uint8_t> IncomingPacket::peekBytes(int num_bytes) const
+std::vector<std::uint8_t> IncomingPacket::peekBytes(int num_bytes) const
 {
-  std::vector<uint8_t> bytes(&buffer_[position_], &buffer_[position_ + num_bytes]);
+  std::vector<std::uint8_t> bytes(&buffer_[position_], &buffer_[position_ + num_bytes]);
   return bytes;
 }
 
-std::vector<uint8_t> IncomingPacket::getBytes(int num_bytes)
+std::vector<std::uint8_t> IncomingPacket::getBytes(int num_bytes)
 {
   auto bytes = peekBytes(num_bytes);
   position_ += num_bytes;

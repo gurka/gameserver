@@ -34,28 +34,28 @@
 class IncomingPacket
 {
  public:
-  IncomingPacket(const uint8_t* buffer, std::size_t length);
+  IncomingPacket(const std::uint8_t* buffer, std::size_t length);
 
   std::size_t getLength() const { return length_; }
   bool isEmpty() const { return position_ >= length_; }
   std::size_t bytesLeft() const { return length_ - position_; }
 
-  uint8_t peekU8() const;
-  uint8_t getU8();
+  std::uint8_t peekU8() const;
+  std::uint8_t getU8();
 
-  uint16_t peekU16() const;
-  uint16_t getU16();
+  std::uint16_t peekU16() const;
+  std::uint16_t getU16();
 
-  uint32_t peekU32() const;
-  uint32_t getU32();
+  std::uint32_t peekU32() const;
+  std::uint32_t getU32();
 
   std::string getString();
 
-  std::vector<uint8_t> peekBytes(int num_bytes) const;
-  std::vector<uint8_t> getBytes(int numBytes);
+  std::vector<std::uint8_t> peekBytes(int num_bytes) const;
+  std::vector<std::uint8_t> getBytes(int numBytes);
 
  private:
-  const uint8_t* buffer_;
+  const std::uint8_t* buffer_;
   std::size_t length_;
   std::size_t position_;
 };

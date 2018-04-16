@@ -47,7 +47,7 @@ struct Backend
   using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
 
   static void async_write(Socket& socket,  //NOLINT
-                          const uint8_t* buffer,
+                          const std::uint8_t* buffer,
                           std::size_t length,
                           const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
   {
@@ -55,7 +55,7 @@ struct Backend
   }
 
   static void async_read(Socket& socket,  //NOLINT
-                         uint8_t* buffer,
+                         std::uint8_t* buffer,
                          std::size_t length,
                          const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
   {

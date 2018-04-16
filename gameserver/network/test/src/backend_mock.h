@@ -61,12 +61,12 @@ struct Backend
 
     // Calls from static functions
     MOCK_METHOD4(async_write, void(Socket&,
-                                   const uint8_t*,
+                                   const std::uint8_t*,
                                    std::size_t,
                                    const std::function<void(const ErrorCode&, std::size_t)>&));
 
     MOCK_METHOD4(async_read, void(Socket&,
-                                  uint8_t*,
+                                  std::uint8_t*,
                                   std::size_t,
                                   const std::function<void(const ErrorCode&, std::size_t)>&));
   };
@@ -103,7 +103,7 @@ struct Backend
   };
 
   static void async_write(Socket& socket,
-                          const uint8_t* buffer,
+                          const std::uint8_t* buffer,
                           std::size_t length,
                           const std::function<void(const ErrorCode&, std::size_t)>& handler)
   {
@@ -111,7 +111,7 @@ struct Backend
   }
 
   static void async_read(Socket& socket,
-                         uint8_t* buffer,
+                         std::uint8_t* buffer,
                          std::size_t length,
                          const std::function<void(const ErrorCode&, std::size_t)>& handler)
   {

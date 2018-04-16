@@ -34,31 +34,33 @@
 
 namespace
 {
-  // Converts an IP address on the form "xxx.xxx.xxx.xxx" to uint32
-  uint32_t ipAddressToUint32(const std::string& ipAddress)
-  {
-    // We can't use uint8_t since the istringstream will read only one
-    // character instead of a number (since uint8_t == char)
-    uint16_t a;
-    uint16_t b;
-    uint16_t c;
-    uint16_t d;
 
-    std::istringstream ss(ipAddress);
-    ss >> a;
-    ss.ignore(1, '.');
-    ss >> b;
-    ss.ignore(1, '.');
-    ss >> c;
-    ss.ignore(1, '.');
-    ss >> d;
-    ss.ignore(1, '.');
+// Converts an IP address on the form "xxx.xxx.xxx.xxx" to uint32
+std::uint32_t ipAddressToUint32(const std::string& ipAddress)
+{
+  // We can't use uint8_t since the istringstream will read only one
+  // character instead of a number (since uint8_t == char)
+  std::uint16_t a;
+  std::uint16_t b;
+  std::uint16_t c;
+  std::uint16_t d;
 
-    return ((d & 0xFF) << 24) |
-           ((c & 0xFF) << 16) |
-           ((b & 0xFF) << 8)  |
-           ((a & 0xFF) << 0);
-  }
+  std::istringstream ss(ipAddress);
+  ss >> a;
+  ss.ignore(1, '.');
+  ss >> b;
+  ss.ignore(1, '.');
+  ss >> c;
+  ss.ignore(1, '.');
+  ss >> d;
+  ss.ignore(1, '.');
+
+  return ((d & 0xFF) << 24) |
+         ((c & 0xFF) << 16) |
+         ((b & 0xFF) << 8)  |
+         ((a & 0xFF) << 0);
+}
+
 }  // namespace
 
 bool AccountReader::loadFile(const std::string& accountsFilename)

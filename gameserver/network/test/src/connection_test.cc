@@ -143,7 +143,7 @@ TEST_F(ConnectionTest, SendPacket)
   outgoingPacket.addU32(0x12345678);
 
   // Connection should send packet header first (2 bytes)
-  const uint8_t* buffer = nullptr;
+  const std::uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> writeHandler;
   EXPECT_CALL(service_, async_write(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&writeHandler)));
   connection_->sendPacket(std::move(outgoingPacket));
@@ -179,7 +179,7 @@ TEST_F(ConnectionTest, ReceivePacket)
   using ::testing::Pointee;
 
   // We need to capture the variables in the async_read call
-  uint8_t* buffer = nullptr;
+  std::uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
   connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
@@ -202,7 +202,7 @@ TEST_F(ConnectionTest, ReceivePacket)
 
   // When Connection receives packet data it should call onPacketReceived callback
   // and call async_read again to receive next packet header
-  const uint8_t expectedPacketData[4] = { 0x12, 0x34, 0x56, 0x78 };
+  const std::uint8_t expectedPacketData[4] = { 0x12, 0x34, 0x56, 0x78 };
   IncomingPacket expectedPacket { expectedPacketData, 4u };
   EXPECT_CALL(callbacksMock_, onPacketReceived(Pointee(expectedPacket)));
   EXPECT_CALL(service_, async_read(_, _, 2, _));
@@ -246,7 +246,7 @@ TEST_F(ConnectionTest, Disconnect_2)
   using ::testing::SaveArg;
 
   // We need to capture the callback in the async_read call
-  uint8_t* buffer = nullptr;
+  std::uint8_t* buffer = nullptr;
   std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
   connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);

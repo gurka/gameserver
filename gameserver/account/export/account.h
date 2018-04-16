@@ -34,7 +34,7 @@ struct Character
 {
   std::string name;
   std::string worldName;
-  uint32_t worldIp;
+  std::uint32_t worldIp;
   int worldPort;
 };
 

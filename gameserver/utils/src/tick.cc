@@ -29,7 +29,7 @@
 using ms_clock = boost::posix_time::microsec_clock;
 static const decltype(ms_clock::universal_time()) start = ms_clock::universal_time();
 
-uint32_t Tick::now()
+std::uint32_t Tick::now()
 {
   return (ms_clock::universal_time() - start).total_milliseconds();
 }

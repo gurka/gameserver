@@ -428,7 +428,7 @@ void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
   packet.addU8(0x63);
   packet.addU8(0x00);
   packet.addU32(creature.getCreatureId());
-  packet.addU8(static_cast<uint8_t>(creature.getDirection()));
+  packet.addU8(static_cast<std::uint8_t>(creature.getDirection()));
   server_->sendPacket(connectionId_, std::move(packet));
 }
 
@@ -777,7 +777,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
   }
 
   packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
-  packet->addU8(static_cast<uint8_t>(creature.getDirection()));
+  packet->addU8(static_cast<std::uint8_t>(creature.getDirection()));
   packet->addU8(creature.getOutfit().type);
   packet->addU8(creature.getOutfit().head);
   packet->addU8(creature.getOutfit().body);
@@ -956,7 +956,7 @@ void Protocol71::parseSay(IncomingPacket* packet)
   const auto type = packet->getU8();
 
   std::string receiver = "";
-  const auto channelId = 0;
+  auto channelId = 0;
 
   switch (type)
   {

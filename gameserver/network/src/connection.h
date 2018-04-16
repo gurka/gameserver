@@ -369,9 +369,9 @@ class Connection
   State state_;
 
   // I/O Buffers
-  std::array<uint8_t, 8192> readBuffer_;
+  std::array<std::uint8_t, 8192> readBuffer_;
 
-  std::array<uint8_t, 2> outgoingHeaderBuffer_;
+  std::array<std::uint8_t, 2> outgoingHeaderBuffer_;
   std::deque<OutgoingPacket> outgoingPackets_;
 };
 

@@ -78,8 +78,8 @@ class Creature
   int getLightLevel() const { return lightLevel_; }
   void setLightLevel(int lightLevel) { lightLevel_ = lightLevel; }
 
-  uint32_t getNextWalkTick() const { return nextWalkTick_; }
-  void setNextWalkTick(uint32_t tick) { nextWalkTick_ = tick; }
+  std::uint32_t getNextWalkTick() const { return nextWalkTick_; }
+  void setNextWalkTick(std::uint32_t tick) { nextWalkTick_ = tick; }
 
   static const CreatureId INVALID_ID;
   static int getFreeCreatureId() { return Creature::nextCreatureId_++; }
@@ -95,7 +95,7 @@ class Creature
   int lightColor_;
   int lightLevel_;
 
-  uint32_t nextWalkTick_;
+  std::uint32_t nextWalkTick_;
 
   static CreatureId nextCreatureId_;
 };

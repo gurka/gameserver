@@ -29,14 +29,14 @@
 #include "logger.h"
 
 // Initialize static packet pool
-std::stack<std::unique_ptr<std::array<uint8_t, 8192>>> OutgoingPacket::buffer_pool_;
+std::stack<std::unique_ptr<std::array<std::uint8_t, 8192>>> OutgoingPacket::buffer_pool_;
 
 OutgoingPacket::OutgoingPacket()
   : position_(0)
 {
   if (buffer_pool_.empty())
   {
-    buffer_ = std::make_unique<std::array<uint8_t, 8192>>();
+    buffer_ = std::make_unique<std::array<std::uint8_t, 8192>>();
     LOG_DEBUG("Allocated new buffer");
   }
   else
@@ -64,18 +64,18 @@ void OutgoingPacket::skipBytes(std::size_t num_bytes)
   position_ += num_bytes;
 }
 
-void OutgoingPacket::addU8(uint8_t val)
+void OutgoingPacket::addU8(std::uint8_t val)
 {
   buffer_->at(position_++) = val;
 }
 
-void OutgoingPacket::addU16(uint16_t val)
+void OutgoingPacket::addU16(std::uint16_t val)
 {
   buffer_->at(position_++) = val;
   buffer_->at(position_++) = val >> 8;
 }
 
-void OutgoingPacket::addU32(uint32_t val)
+void OutgoingPacket::addU32(std::uint32_t val)
 {
   buffer_->at(position_++) = val;
   buffer_->at(position_++) = val >> 8;
