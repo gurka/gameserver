@@ -48,7 +48,7 @@ class GameEngineQueue
   void setGameEngine(GameEngine* gameEngine) { gameEngine_ = gameEngine; }
 
   void addTask(int tag, const Task& task);
-  void addTask(int tag, unsigned expire_ms, const Task& task);
+  void addTask(int tag, std::int64_t expire_ms, const Task& task);
   void cancelAllTasks(int tag);
 
  private:

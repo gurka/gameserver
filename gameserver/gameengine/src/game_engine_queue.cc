@@ -33,10 +33,10 @@ GameEngineQueue::GameEngineQueue(boost::asio::io_service* io_service)
 
 void GameEngineQueue::addTask(int tag, const Task& task)
 {
-  addTask(tag, 0u, task);
+  addTask(tag, 0, task);
 }
 
-void GameEngineQueue::addTask(int tag, unsigned expire_ms, const Task& task)
+void GameEngineQueue::addTask(int tag, std::int64_t expire_ms, const Task& task)
 {
   auto expire = boost::posix_time::ptime(boost::posix_time::microsec_clock::universal_time()) +
                 boost::posix_time::millisec(expire_ms);

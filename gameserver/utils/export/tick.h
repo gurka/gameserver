@@ -30,7 +30,7 @@
 class Tick
 {
  public:
-  static std::uint32_t now();
+  static std::int64_t now();
 };
 
 #endif  // UTILS_EXPORT_TICK_H_

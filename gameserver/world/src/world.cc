@@ -201,7 +201,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   auto current_tick = Tick::now();
   if (creature.getNextWalkTick() > current_tick)
   {
-    LOG_DEBUG("%s: current_tick = %u nextWalkTick = %u => MAY_NOT_MOVE_YET",
+    LOG_DEBUG("%s: current_tick = %d nextWalkTick = %d => MAY_NOT_MOVE_YET",
               __func__,
               current_tick,
               creature.getNextWalkTick());

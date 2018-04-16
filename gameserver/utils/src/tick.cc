@@ -29,7 +29,9 @@
 using ms_clock = boost::posix_time::microsec_clock;
 static const decltype(ms_clock::universal_time()) start = ms_clock::universal_time();
 
-std::uint32_t Tick::now()
+std::int64_t Tick::now()
 {
+  static_assert(sizeof(std::int64_t) == sizeof(boost::posix_time::microsec_clock::time_duration_type::tick_type),
+                "boost::posix_time::microsec_clock::time_duration_type::tick_type needs to be 64 bits");
   return (ms_clock::universal_time() - start).total_milliseconds();
 }
