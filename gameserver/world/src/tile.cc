@@ -63,7 +63,7 @@ CreatureId Tile::getCreatureId(int stackPosition) const
   return *creatureIt;
 }
 
-uint8_t Tile::getCreatureStackPos(CreatureId creatureId) const
+int Tile::getCreatureStackPos(CreatureId creatureId) const
 {
   // Find where in creatureIds_ the creatureId is
   auto it = std::find(creatureIds_.cbegin(), creatureIds_.cend(), creatureId);
@@ -92,7 +92,7 @@ void Tile::addItem(const Item& item)
   items_.insert(itemIt, item);
 }
 
-bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
+bool Tile::removeItem(ItemId itemId, int stackPosition)
 {
   if (stackPosition == 0)
   {
@@ -114,12 +114,12 @@ bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
       LOG_ERROR("%s: Given ItemId does not match Item at given stackpos", __func__);
     }
   }
-  else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
+  else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
   {
     // Creature
     LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
   }
-  else if (stackPosition < 1 + items_.size() + creatureIds_.size())
+  else if (stackPosition < 1 + static_cast<int>(items_.size() + creatureIds_.size()))
   {
     // Bottom Item
     auto itemIt = items_.cbegin();
@@ -143,7 +143,7 @@ bool Tile::removeItem(ItemId itemId, uint8_t stackPosition)
   return false;
 }
 
-const Item* Tile::getItem(uint8_t stackPosition) const
+const Item* Tile::getItem(int stackPosition) const
 {
   if (stackPosition == 0)
   {
@@ -157,13 +157,13 @@ const Item* Tile::getItem(uint8_t stackPosition) const
     std::advance(itemIt, stackPosition);
     return &(*itemIt);
   }
-  else if (stackPosition < 1 + numberOfTopItems + creatureIds_.size())
+  else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
   {
     // Creature
     LOG_ERROR("%s: Stackposition is Creature", __func__);
     return nullptr;
   }
-  else if (stackPosition < 1 + items_.size() + creatureIds_.size())
+  else if (stackPosition < 1 + static_cast<int>(items_.size() + creatureIds_.size()))
   {
     // Bottom Item
     auto itemIt = items_.cbegin();
@@ -178,7 +178,7 @@ const Item* Tile::getItem(uint8_t stackPosition) const
   }
 }
 
-Item* Tile::getItem(uint8_t stackPosition)
+Item* Tile::getItem(int stackPosition)
 {
   const auto* item = static_cast<const Tile*>(this)->getItem(stackPosition);
   return const_cast<Item*>(item);

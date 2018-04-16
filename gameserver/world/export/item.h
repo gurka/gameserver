@@ -102,7 +102,7 @@ class Item
 
   // Specific for this distinct Item
   ItemId getItemId() const { return id_; }
-  uint8_t getCount() const { return count_; }
+  int getCount() const { return count_; }
 
   // Loaded from data file
   bool isGround()     const { return itemData_->ground; }
@@ -141,7 +141,7 @@ class Item
 
   // TODO(simon): Move id_ to ItemData
   ItemId id_;
-  uint8_t count_;
+  int count_;
   ItemData* itemData_;
 
   // TODO(simon): Try to refactor everything below as only certain types of items uses these values

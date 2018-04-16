@@ -34,12 +34,12 @@ using CreatureId = int;
 
 struct Outfit
 {
-  uint8_t type;
-  uint8_t ext;  // item
-  uint8_t head;
-  uint8_t body;
-  uint8_t legs;
-  uint8_t feet;
+  int type;
+  int ext;  // item
+  int head;
+  int body;
+  int legs;
+  int feet;
 };
 
 class Creature

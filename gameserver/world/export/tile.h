@@ -52,13 +52,13 @@ class Tile
   bool removeCreature(CreatureId creatureId);
   CreatureId getCreatureId(int stackPosition) const;
   const std::vector<CreatureId>& getCreatureIds() const { return creatureIds_; }
-  uint8_t getCreatureStackPos(CreatureId creatureId) const;
+  int getCreatureStackPos(CreatureId creatureId) const;
 
   // Items
   void addItem(const Item& item);
-  bool removeItem(ItemId itemId, uint8_t stackPosition);
-  const Item* getItem(uint8_t stackPosition) const;
-  Item* getItem(uint8_t stackPosition);
+  bool removeItem(ItemId itemId, int stackPosition);
+  const Item* getItem(int stackPosition) const;
+  Item* getItem(int stackPosition);
   const std::vector<Item>& getItems() const { return items_; }
 
   // Other

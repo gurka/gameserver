@@ -35,7 +35,7 @@ Position::Position()
 {
 }
 
-Position::Position(uint16_t x, uint16_t y, uint8_t z)
+Position::Position(int x, int y, int z)
   : x_(x),
     y_(y),
     z_(z)
@@ -55,7 +55,7 @@ bool Position::operator!=(const Position& other) const
 std::string Position::toString() const
 {
   std::ostringstream ss;
-  ss << "(" << x_ << ", " << y_ << ", " << static_cast<uint16_t>(z_) << ")";
+  ss << "(" << x_ << ", " << y_ << ", " << z_ << ")";
   return ss.str();
 }
 

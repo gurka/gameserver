@@ -39,18 +39,18 @@ class MockCreatureCtrl : public CreatureCtrl
   MOCK_METHOD4(onCreatureDespawn, void(const WorldInterface& world_interface,
                                        const Creature& creature,
                                        const Position& position,
-                                       uint8_t stackPos));
+                                       int stackPos));
 
   MOCK_METHOD5(onCreatureMove, void(const WorldInterface& world_interface,
                                     const Creature& creature,
                                     const Position& oldPosition,
-                                    uint8_t oldStackPos,
+                                    int oldStackPos,
                                     const Position& newPosition));
 
   MOCK_METHOD4(onCreatureTurn, void(const WorldInterface& world_interface,
                                     const Creature& creature,
                                     const Position& position,
-                                    uint8_t stackPos));
+                                    int stackPos));
 
   MOCK_METHOD4(onCreatureSay, void(const WorldInterface& world_interface,
                                    const Creature& creature,
@@ -59,7 +59,7 @@ class MockCreatureCtrl : public CreatureCtrl
 
   MOCK_METHOD3(onItemRemoved, void(const WorldInterface& world_interface,
                                    const Position& position,
-                                   uint8_t stackPos));
+                                   int stackPos));
 
   MOCK_METHOD3(onItemAdded, void (const WorldInterface& world_interface,
                                   const Item& item,
