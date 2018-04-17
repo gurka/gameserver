@@ -61,7 +61,7 @@ ItemUniqueId ItemManager::createItem(ItemTypeId itemTypeId)
   ++nextItemUniqueId_;
 
   items_.emplace(itemUniqueId, ItemImpl(itemUniqueId, &itemTypes_[itemTypeId]));
-  LOG_DEBUG("%s: created Item with itemUniqueId: %ul, itemTypeId: %d", __func__, itemUniqueId, itemTypeId);
+  LOG_DEBUG("%s: created Item with itemUniqueId: %lu, itemTypeId: %d", __func__, itemUniqueId, itemTypeId);
 
   return itemUniqueId;
 }
@@ -70,11 +70,11 @@ void ItemManager::destroyItem(ItemUniqueId itemUniqueId)
 {
   if (items_.count(itemUniqueId) == 0)
   {
-    LOG_ERROR("%s: could not find Item with itemUniqueId: %ul", __func__, itemUniqueId);
+    LOG_ERROR("%s: could not find Item with itemUniqueId: %lu", __func__, itemUniqueId);
     return;
   }
 
-  LOG_DEBUG("%s: destroying Item with itemUniqueId: %ul", __func__, itemUniqueId);
+  LOG_DEBUG("%s: destroying Item with itemUniqueId: %lu", __func__, itemUniqueId);
   items_.erase(itemUniqueId);
 }
 
