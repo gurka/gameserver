@@ -371,7 +371,7 @@ World::ReturnCode World::addItem(Item* item, const Position& position)
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::removeItem(ItemId itemId, int count, const Position& position, int stackPos)
+World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos)
 {
   // TODO(simon): implement count
   (void)count;
@@ -384,9 +384,9 @@ World::ReturnCode World::removeItem(ItemId itemId, int count, const Position& po
 
   // Try to remove Item from fromTile
   auto& fromTile = internalGetTile(position);
-  if (!fromTile.removeItem(itemId, stackPos))
+  if (!fromTile.removeItem(itemTypeId, stackPos))
   {
-    LOG_ERROR("moveItem(): Could not remove item %d from %s", itemId, position.toString().c_str());
+    LOG_ERROR("moveItem(): Could not remove item with itemTypeId %d from %s", itemTypeId, position.toString().c_str());
     return ReturnCode::ITEM_NOT_FOUND;
   }
 
@@ -411,8 +411,12 @@ World::ReturnCode World::removeItem(ItemId itemId, int count, const Position& po
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                  ItemId itemId, int count, const Position& toPosition)
+World::ReturnCode World::moveItem(CreatureId creatureId,
+                                  const Position& fromPosition,
+                                  int fromStackPos,
+                                  ItemTypeId itemTypeId,
+                                  int count,
+                                  const Position& toPosition)
 {
   // TODO(simon): implement count
   (void)count;
@@ -469,9 +473,12 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
     return ReturnCode::ITEM_NOT_FOUND;
   }
   // Try to remove Item from fromTile
-  if (!fromTile.removeItem(itemId, fromStackPos))
+  if (!fromTile.removeItem(itemTypeId, fromStackPos))
   {
-    LOG_DEBUG("%s: Could not remove item %d from %s", __func__, itemId, fromPosition.toString().c_str());
+    LOG_DEBUG("%s: Could not remove item with itemTypeId %d from %s",
+              __func__,
+              itemTypeId,
+              fromPosition.toString().c_str());
     return ReturnCode::ITEM_NOT_FOUND;
   }
 

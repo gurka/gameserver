@@ -75,9 +75,13 @@ class World : public WorldInterface
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
   ReturnCode addItem(Item* item, const Position& position);
-  ReturnCode removeItem(ItemId itemId, int count, const Position& position, int stackPos);
-  ReturnCode moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                      ItemId itemId, int count, const Position& toPosition);
+  ReturnCode removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos);
+  ReturnCode moveItem(CreatureId creatureId,
+                      const Position& fromPosition,
+                      int fromStackPos,
+                      ItemTypeId itemTypeId,
+                      int count,
+                      const Position& toPosition);
   Item* getItem(const Position& position, int stackPosition);
 
   // Creature checks

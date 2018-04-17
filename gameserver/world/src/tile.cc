@@ -92,7 +92,7 @@ void Tile::addItem(Item* item)
   items_.insert(itemIt, item);
 }
 
-bool Tile::removeItem(ItemId itemId, int stackPosition)
+bool Tile::removeItem(ItemTypeId itemTypeId, int stackPosition)
 {
   if (stackPosition == 0)
   {
@@ -104,14 +104,14 @@ bool Tile::removeItem(ItemId itemId, int stackPosition)
     // Top Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition);
-    if ((*itemIt)->getItemId() == itemId)
+    if ((*itemIt)->getItemTypeId() == itemTypeId)
     {
       items_.erase(itemIt);
       return true;
     }
     else
     {
-      LOG_ERROR("%s: Given ItemId does not match Item at given stackpos", __func__);
+      LOG_ERROR("%s: Given ItemTypeId does not match Item at given stackpos", __func__);
     }
   }
   else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
@@ -124,14 +124,14 @@ bool Tile::removeItem(ItemId itemId, int stackPosition)
     // Bottom Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition - creatureIds_.size());
-    if ((*itemIt)->getItemId() == itemId)
+    if ((*itemIt)->getItemTypeId() == itemTypeId)
     {
       items_.erase(itemIt);
       return true;
     }
     else
     {
-      LOG_ERROR("%s: Given ItemId does not match Item at given stackpos", __func__);
+      LOG_ERROR("%s: Given ItemTypeId does not match Item at given stackpos", __func__);
     }
   }
   else

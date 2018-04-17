@@ -47,7 +47,7 @@ class Equipment
 
   bool canAddItem(const Item& item, int inventorySlot) const;
   bool addItem(Item* item, int inventorySlot);
-  bool removeItem(ItemId itemId, int inventorySlot);
+  bool removeItem(ItemTypeId itemTypeId, int inventorySlot);
 
  private:
   std::array<Item*, 11> items_;  // index 0 is invalid

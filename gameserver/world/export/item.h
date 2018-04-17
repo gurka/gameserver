@@ -28,7 +28,7 @@
 #include <cstdint>
 #include <string>
 
-using ItemId = std::uint64_t;
+using ItemUniqueId = std::uint64_t;
 using ItemTypeId = int;
 
 struct ItemType;
@@ -38,7 +38,9 @@ class Item
  public:
   virtual ~Item() = default;
 
-  virtual ItemId getItemId() const = 0;
+  virtual ItemUniqueId getItemUniqueId() const = 0;
+  virtual ItemTypeId getItemTypeId() const = 0;
+
   virtual const ItemType& getItemType() const = 0;
 
   virtual int getCount() const = 0;

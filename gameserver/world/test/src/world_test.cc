@@ -36,6 +36,7 @@
 #include "position.h"
 #include "item.h"
 
+using ::testing::ReturnRef;
 using ::testing::AtLeast;
 using ::testing::_;
 
@@ -45,8 +46,7 @@ class WorldTest : public ::testing::Test
   WorldTest()
   {
 
-    // We need to build a small simple map, currently with invalid ground items
-    // TODO(simon): MockItem
+    // We need to build a small simple map
     // Valid positions are (192, 192, 7) to (207, 207, 7)
     std::vector<Tile> tiles;
     for (auto x = 0; x < 16; x++)
@@ -57,10 +57,17 @@ class WorldTest : public ::testing::Test
       }
     }
 
+    // Have all ground items be non-blocking
+    itemType_.ground = true;
+    itemType_.speed = 0;
+    itemType_.isBlocking = false;
+    EXPECT_CALL(itemMock_, getItemType()).WillRepeatedly(ReturnRef(itemType_));
+
     world = std::make_unique<World>(16, 16, std::move(tiles));
   }
 
   ItemMock itemMock_;
+  ItemType itemType_;
   std::unique_ptr<World> world;
 };
 

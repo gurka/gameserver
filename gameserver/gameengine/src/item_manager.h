@@ -36,7 +36,7 @@ class ItemManager
  public:
   ItemManager()
     : items_(),
-      nextItemId_(1),  // TODO(simon): 0 is used as invalid itemId in game_position.h
+      nextItemUniqueId_(1),  // TODO(simon): 0 is used as invalid itemId in game_position.h
       itemTypes_(),
       itemTypesIdFirst_(0),
       itemTypesIdLast_(0)
@@ -45,10 +45,10 @@ class ItemManager
 
   bool loadItemTypes(const std::string& dataFilename, const std::string& itemsFilename);
 
-  ItemId createItem(ItemTypeId itemTypeId);
-  void destroyItem(ItemId itemId);
+  ItemUniqueId createItem(ItemTypeId itemTypeId);
+  void destroyItem(ItemUniqueId itemUniqueId);
 
-  Item* getItem(ItemId itemId);
+  Item* getItem(ItemUniqueId itemUniqueId);
 
  private:
   bool loadItemTypesDataFile(const std::string& dataFilename);
@@ -57,27 +57,29 @@ class ItemManager
   class ItemImpl : public Item
   {
    public:
-    ItemImpl(ItemId itemId, const ItemType* itemType)
-      : itemId_(itemId),
+    ItemImpl(ItemUniqueId itemUniqueId, const ItemType* itemType)
+      : itemUniqueId_(itemUniqueId),
         itemType_(itemType),
         count_(1)
     {
     }
 
-    ItemId getItemId() const override { return itemId_; }
+    ItemUniqueId getItemUniqueId() const override { return itemUniqueId_; }
+    ItemTypeId getItemTypeId() const override { return itemType_->id; }
+
     const ItemType& getItemType() const override { return *itemType_; }
 
     int getCount() const override { return count_; }
     void setCount(int count) override { count_ = count; }
 
    private:
-    ItemId itemId_;
+    ItemUniqueId itemUniqueId_;
     const ItemType* itemType_;
     int count_;
   };
 
-  std::unordered_map<ItemId, ItemImpl> items_;
-  ItemId nextItemId_;
+  std::unordered_map<ItemUniqueId, ItemImpl> items_;
+  ItemUniqueId nextItemUniqueId_;
 
   std::array<ItemType, 4096> itemTypes_;
   ItemTypeId itemTypesIdFirst_;

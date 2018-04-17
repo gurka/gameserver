@@ -69,7 +69,10 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
     itemPosition = item.getItemType().position;
   }
 
-  LOG_DEBUG("canAddItem(): Item: %d Type: %s Positon: %s", item.getItemId(), itemType.c_str(), itemPosition.c_str());
+  LOG_DEBUG("canAddItem(): ItemTypeId: %d Type: %s Positon: %s",
+            item.getItemTypeId(),
+            itemType.c_str(),
+            itemPosition.c_str());
 
   switch (inventorySlot)
   {
@@ -153,7 +156,7 @@ bool Equipment::addItem(Item* item, int inventorySlot)
   return true;
 }
 
-bool Equipment::removeItem(ItemId itemId, int inventorySlot)
+bool Equipment::removeItem(ItemTypeId itemTypeId, int inventorySlot)
 {
   if (inventorySlot < 1 || inventorySlot > 10)
   {
@@ -161,7 +164,7 @@ bool Equipment::removeItem(ItemId itemId, int inventorySlot)
     return false;
   }
 
-  if (items_[inventorySlot]->getItemId() != itemId)
+  if (items_[inventorySlot]->getItemTypeId() != itemTypeId)
   {
     return false;
   }

@@ -115,30 +115,30 @@ class ItemPosition
  public:
   ItemPosition()
     : gamePosition_(),
-      itemId_(0),  // TODO(simon): Item::INVALID_ID ?
+      itemTypeId_(0),  // TODO(simon): Item::INVALID_ID ?
       stackPosition_(0)
   {
   }
 
-  ItemPosition(const GamePosition& gamePosition, ItemId itemId, int stackPosition)
+  ItemPosition(const GamePosition& gamePosition, ItemTypeId itemTypeId, int stackPosition)
     : gamePosition_(gamePosition),
-      itemId_(itemId),
+      itemTypeId_(itemTypeId),
       stackPosition_(stackPosition)
   {
   }
 
   std::string toString() const
   {
-    return gamePosition_.toString() + ", " + std::to_string(itemId_) + ", " + std::to_string(stackPosition_);
+    return gamePosition_.toString() + ", " + std::to_string(itemTypeId_) + ", " + std::to_string(stackPosition_);
   }
 
   const GamePosition& getGamePosition() const { return gamePosition_; }
-  ItemId getItemId() const { return itemId_; }
+  ItemTypeId getItemTypeId() const { return itemTypeId_; }
   int getStackPosition() const { return stackPosition_; }
 
  private:
   GamePosition gamePosition_;
-  ItemId itemId_;
+  ItemTypeId itemTypeId_;
   int stackPosition_;
 };
 

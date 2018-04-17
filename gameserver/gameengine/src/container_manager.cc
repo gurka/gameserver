@@ -141,7 +141,7 @@ Item* ContainerManager::getItem(const PlayerCtrl* playerCtrl, int containerId, i
   return &container->items[containerSlot];
 }
 
-int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition)
+int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemTypeId itemTypeId, const ItemPosition& itemPosition)
 {
   const auto containerId = nextContainerId_;
   nextContainerId_ += 1;

@@ -31,7 +31,9 @@
 class ItemMock : public Item
 {
  public:
-  MOCK_CONST_METHOD0(getItemId, ItemId());
+  MOCK_CONST_METHOD0(getItemUniqueId, ItemUniqueId());
+  MOCK_CONST_METHOD0(getItemTypeId, ItemTypeId());
+
   MOCK_CONST_METHOD0(getItemType, const ItemType&());
 
   MOCK_CONST_METHOD0(getCount, int());

@@ -288,7 +288,7 @@ void GameEngine::say(CreatureId creatureId,
 
       for (const auto* item : tile.getItems())
       {
-        oss << "Item: " << item->getItemId() << " (" << item->getItemType().name << ")\n";
+        oss << "Item: " << item->getItemTypeId() << " (" << item->getItemType().name << ")\n";
       }
 
       for (const auto& creatureId : tile.getCreatureIds())
@@ -342,7 +342,7 @@ void GameEngine::moveItem(CreatureId creatureId,
 
   auto& playerData = getPlayerData(creatureId);
 
-  if (fromPosition.getItemId() == 0x63)
+  if (fromPosition.getItemTypeId() == 0x63)
   {
     // Move Creature
     playerData.player_ctrl->sendTextMessage(0x13, "Not yet implemented.");
@@ -453,7 +453,7 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
   }
   else
   {
-    ss << "You see an item with id " << item->getItemId() << ".";
+    ss << "You see an item with ItemTypeId: " << item->getItemTypeId() << ".";
   }
 
   // TODO(simon): only if standing next to the item
@@ -548,11 +548,15 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
 
   if (position.getGamePosition().isPosition())
   {
-    world_->removeItem(position.getItemId(), 0, position.getGamePosition().getPosition(), position.getStackPosition());
+    world_->removeItem(position.getItemTypeId(),
+                       1,
+                       position.getGamePosition().getPosition(),
+                       position.getStackPosition());
   }
   else if (position.getGamePosition().isInventory())
   {
-    playerData.player.getEquipment().removeItem(position.getItemId(), position.getGamePosition().getInventorySlot());
+    playerData.player.getEquipment().removeItem(position.getItemTypeId(),
+                                                position.getGamePosition().getInventorySlot());
     playerData.player_ctrl->onEquipmentUpdated(playerData.player, position.getGamePosition().getInventorySlot());
   }
 //  else if (position.getGamePosition().isContainer())

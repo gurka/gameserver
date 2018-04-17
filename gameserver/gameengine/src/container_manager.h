@@ -53,7 +53,7 @@ class ContainerManager
   Container* getContainer(const PlayerCtrl* playerCtrl, int containerId);
   Item* getItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
 
-  int createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition);
+  int createContainer(PlayerCtrl* playerCtrl, ItemTypeId itemTypeId, const ItemPosition& itemPosition);
 
   void useContainer(PlayerCtrl* playerCtrl, const Item& item, int newClientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, int clientContainerId);

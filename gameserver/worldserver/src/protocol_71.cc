@@ -523,7 +523,7 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
 
   if (item.getItemType().maxitems == 0)
   {
-    LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemType().id);
+    LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
     return;
   }
 
@@ -539,7 +539,7 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
   packet.addU8(container.items.size());
   for (const auto& item : container.items)
   {
-    packet.addU16(item.getItemId());
+    packet.addU16(item.getItemTypeId());
     if (item.getItemType().isStackable)  // or splash or fluid container?
     {
       packet.addU8(item.getCount());
@@ -570,7 +570,7 @@ void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, itemId: %d", __func__, clientContainerId, item.getItemId());
+  LOG_DEBUG("%s: clientContainerId: %u, itemTypeId: %d", __func__, clientContainerId, item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x70);
@@ -586,11 +586,11 @@ void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot,
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemId: %d",
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemTypeId: %d",
             __func__,
             clientContainerId,
             containerSlot,
-            item.getItemId());
+            item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x71);
@@ -792,7 +792,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
 
 void Protocol71::addItem(const Item& item, OutgoingPacket* packet) const
 {
-  packet->addU16(item.getItemType().id);
+  packet->addU16(item.getItemTypeId());
   if (item.getItemType().isStackable)
   {
     packet->addU8(item.getCount());

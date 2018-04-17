@@ -56,7 +56,7 @@ class Tile
 
   // Items
   void addItem(Item* item);
-  bool removeItem(ItemId itemId, int stackPosition);
+  bool removeItem(ItemTypeId itemTypeId, int stackPosition);
   const Item* getItem(int stackPosition) const;
   Item* getItem(int stackPosition);
   const std::vector<Item*>& getItems() const { return items_; }

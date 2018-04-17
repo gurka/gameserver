@@ -58,7 +58,7 @@ class ContainerManagerTest : public ::testing::Test
   PlayerCtrlMock player_ctrl_mock_;
   ContainerManager container_manager_;
   const CreatureId player_id = 123;
-  const ItemId backpack_item_id = 456;
+  const ItemTypeId backpack_item_type_id = 456;
 };
 
 //TEST_F(ContainerManagerTest, containerCreation)

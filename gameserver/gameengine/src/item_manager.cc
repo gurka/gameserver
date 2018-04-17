@@ -49,7 +49,7 @@ bool ItemManager::loadItemTypes(const std::string& dataFilename, const std::stri
   return true;
 }
 
-ItemId ItemManager::createItem(ItemTypeId itemTypeId)
+ItemUniqueId ItemManager::createItem(ItemTypeId itemTypeId)
 {
   if (itemTypeId < itemTypesIdFirst_ || itemTypeId > itemTypesIdLast_)
   {
@@ -57,35 +57,35 @@ ItemId ItemManager::createItem(ItemTypeId itemTypeId)
     return 0;  // TODO(simon): invalid ItemId (see header and game_position.h)
   }
 
-  const auto itemId = nextItemId_;
-  ++nextItemId_;
+  const auto itemUniqueId = nextItemUniqueId_;
+  ++nextItemUniqueId_;
 
-  items_.emplace(itemId, ItemImpl(itemId, &itemTypes_[itemTypeId]));
-  LOG_DEBUG("%s: created Item with itemId: %ul, itemTypeId: %d", __func__, itemId, itemTypeId);
+  items_.emplace(itemUniqueId, ItemImpl(itemUniqueId, &itemTypes_[itemTypeId]));
+  LOG_DEBUG("%s: created Item with itemUniqueId: %ul, itemTypeId: %d", __func__, itemUniqueId, itemTypeId);
 
-  return itemId;
+  return itemUniqueId;
 }
 
-void ItemManager::destroyItem(ItemId itemId)
+void ItemManager::destroyItem(ItemUniqueId itemUniqueId)
 {
-  if (items_.count(itemId) == 0)
+  if (items_.count(itemUniqueId) == 0)
   {
-    LOG_ERROR("%s: could not find Item with itemId: %ul", __func__, itemId);
+    LOG_ERROR("%s: could not find Item with itemUniqueId: %ul", __func__, itemUniqueId);
     return;
   }
 
-  LOG_DEBUG("%s: destroying Item with itemId: %ul", __func__, itemId);
-  items_.erase(itemId);
+  LOG_DEBUG("%s: destroying Item with itemUniqueId: %ul", __func__, itemUniqueId);
+  items_.erase(itemUniqueId);
 }
 
-Item* ItemManager::getItem(ItemId itemId)
+Item* ItemManager::getItem(ItemUniqueId itemUniqueId)
 {
-  if (items_.count(itemId) == 0)
+  if (items_.count(itemUniqueId) == 0)
   {
     return nullptr;
   }
 
-  return &items_.at(itemId);
+  return &items_.at(itemUniqueId);
 }
 
 bool ItemManager::loadItemTypesDataFile(const std::string& dataFilename)

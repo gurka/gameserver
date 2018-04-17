@@ -27,6 +27,7 @@
 
 #include "gtest/gtest.h"
 
+using ::testing::Return;
 using ::testing::ReturnRef;
 
 class TileTest : public ::testing::Test
@@ -36,21 +37,17 @@ class TileTest : public ::testing::Test
 TEST_F(TileTest, Constructor)
 {
   ItemType groundItemType;
-  groundItemType.id = 123;
-
   ItemMock groundItem;
   const auto tile = Tile(&groundItem);
 
-  EXPECT_CALL(groundItem, getItemType()).WillOnce(ReturnRef(groundItemType));
-  ASSERT_EQ(123, tile.getItem(0)->getItemType().id);
+  EXPECT_CALL(groundItem, getItemTypeId()).WillOnce(Return(123));
+  ASSERT_EQ(123, tile.getItem(0)->getItemTypeId());
   ASSERT_EQ(1u, tile.getNumberOfThings());  // Only ground item
 }
 
 TEST_F(TileTest, AddRemoveCreatures)
 {
   ItemType groundItemType;
-  groundItemType.id = 123;
-
   ItemMock groundItem;
   auto tile = Tile(&groundItem);
 
@@ -92,20 +89,29 @@ TEST_F(TileTest, AddRemoveCreatures)
 TEST_F(TileTest, AddRemoveItems)
 {
   ItemType groundItemType;
-  groundItemType.id = 123;
-
   ItemMock groundItem;
   auto tile = Tile(&groundItem);
 
+  ItemType itemTypeA;
   ItemMock itemA;
+  EXPECT_CALL(itemA, getItemTypeId()).WillRepeatedly(Return(1));
+  EXPECT_CALL(itemA, getItemType()).WillRepeatedly(ReturnRef(itemTypeA));
+
+  ItemType itemTypeB;
   ItemMock itemB;
+  EXPECT_CALL(itemB, getItemTypeId()).WillRepeatedly(Return(2));
+  EXPECT_CALL(itemB, getItemType()).WillRepeatedly(ReturnRef(itemTypeB));
+
+  ItemType itemTypeC;
   ItemMock itemC;
+  EXPECT_CALL(itemC, getItemTypeId()).WillRepeatedly(Return(3));
+  EXPECT_CALL(itemC, getItemType()).WillRepeatedly(ReturnRef(itemTypeC));
 
   // Add an item and remove it
   tile.addItem(&itemA);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);  // Ground item + item
 
-  auto result = tile.removeItem(itemA.getItemId(), 1);  // Only item => stackpos = 1
+  auto result = tile.removeItem(itemA.getItemTypeId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 
@@ -116,18 +122,18 @@ TEST_F(TileTest, AddRemoveItems)
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 3u);
 
   // Remove itemA and itemC
-  result = tile.removeItem(itemA.getItemId(), 3);  // Two items were added after itemA => stackpos = 3
+  result = tile.removeItem(itemA.getItemTypeId(), 3);  // Two items were added after itemA => stackpos = 3
   ASSERT_TRUE(result);
-  result = tile.removeItem(itemC.getItemId(), 1);  // itemC was added last => stackpos = 1
+  result = tile.removeItem(itemC.getItemTypeId(), 1);  // itemC was added last => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);
 
   // Try to remove itemA again
-  result = tile.removeItem(itemA.getItemId(), 1);
+  result = tile.removeItem(itemA.getItemTypeId(), 1);
   ASSERT_FALSE(result);
 
   // Remove last item
-  result = tile.removeItem(itemB.getItemId(), 1);  // Only item => stackpos = 1
+  result = tile.removeItem(itemB.getItemTypeId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 }
