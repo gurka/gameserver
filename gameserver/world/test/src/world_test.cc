@@ -29,6 +29,7 @@
 #include "gmock/gmock.h"
 
 #include "creaturectrl_mock.h"
+#include "item_mock.h"
 #include "world.h"
 #include "creature.h"
 #include "creature_ctrl.h"
@@ -52,13 +53,14 @@ class WorldTest : public ::testing::Test
     {
       for (auto y = 0; y < 16; y++)
       {
-        tiles.emplace_back(Item());
+        tiles.emplace_back(&itemMock_);
       }
     }
 
     world = std::make_unique<World>(16, 16, std::move(tiles));
   }
 
+  ItemMock itemMock_;
   std::unique_ptr<World> world;
 };
 

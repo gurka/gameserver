@@ -23,56 +23,37 @@
  */
 
 #include "tile.h"
-#include "item.h"
+#include "item_mock.h"
 
 #include "gtest/gtest.h"
 
+using ::testing::ReturnRef;
+
 class TileTest : public ::testing::Test
 {
- public:
-  TileTest()
-  {
-    ItemData itemDataA;
-    itemDataA.valid = true;
-    itemDataA.name = "Item A";
-    Item::setItemData(itemIdA, itemDataA);
-
-    ItemData itemDataB;
-    itemDataB.valid = true;
-    itemDataB.name = "Item B";
-    Item::setItemData(itemIdB, itemDataB);
-
-    ItemData itemDataC;
-    itemDataC.valid = true;
-    itemDataC.name = "Item C";
-    Item::setItemData(itemIdC, itemDataC);
-
-    ItemData itemDataD;
-    itemDataD.valid = true;
-    itemDataD.name = "Item D";
-    Item::setItemData(itemIdD, itemDataD);
-  }
-
- protected:
-  static constexpr ItemId itemIdA = 1;
-  static constexpr ItemId itemIdB = 2;
-  static constexpr ItemId itemIdC = 3;
-  static constexpr ItemId itemIdD = 4;
 };
 
 TEST_F(TileTest, Constructor)
 {
-  Item groundItem(itemIdA);
-  Tile tileA(groundItem);
+  ItemType groundItemType;
+  groundItemType.id = 123;
 
-  ASSERT_EQ(tileA.getItem(0)->getItemId(), groundItem.getItemId());
-  ASSERT_EQ(tileA.getNumberOfThings(), 1u);  // Only ground item
+  ItemMock groundItem;
+  const auto tile = Tile(&groundItem);
+
+  EXPECT_CALL(groundItem, getItemType()).WillOnce(ReturnRef(groundItemType));
+  ASSERT_EQ(123, tile.getItem(0)->getItemType().id);
+  ASSERT_EQ(1u, tile.getNumberOfThings());  // Only ground item
 }
 
 TEST_F(TileTest, AddRemoveCreatures)
 {
-  Item groundItem(itemIdA);
-  Tile tile(groundItem);
+  ItemType groundItemType;
+  groundItemType.id = 123;
+
+  ItemMock groundItem;
+  auto tile = Tile(&groundItem);
+
   CreatureId creatureA(1);
   CreatureId creatureB(2);
   CreatureId creatureC(3);
@@ -110,15 +91,18 @@ TEST_F(TileTest, AddRemoveCreatures)
 
 TEST_F(TileTest, AddRemoveItems)
 {
-  Item groundItem(itemIdD);
-  Tile tile(groundItem);
+  ItemType groundItemType;
+  groundItemType.id = 123;
 
-  Item itemA(itemIdA);
-  Item itemB(itemIdB);
-  Item itemC(itemIdC);
+  ItemMock groundItem;
+  auto tile = Tile(&groundItem);
+
+  ItemMock itemA;
+  ItemMock itemB;
+  ItemMock itemC;
 
   // Add an item and remove it
-  tile.addItem(itemA);
+  tile.addItem(&itemA);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);  // Ground item + item
 
   auto result = tile.removeItem(itemA.getItemId(), 1);  // Only item => stackpos = 1
@@ -126,9 +110,9 @@ TEST_F(TileTest, AddRemoveItems)
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 
   // Add all three items
-  tile.addItem(itemA);
-  tile.addItem(itemB);
-  tile.addItem(itemC);
+  tile.addItem(&itemA);
+  tile.addItem(&itemB);
+  tile.addItem(&itemC);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 3u);
 
   // Remove itemA and itemC
