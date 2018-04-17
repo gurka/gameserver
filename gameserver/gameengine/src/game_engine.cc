@@ -68,6 +68,11 @@ GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, const std
 {
 }
 
+bool GameEngine::init(const std::string& dataFilename, const std::string& itemsFilename)
+{
+  return itemManager_.loadItemTypes(dataFilename, itemsFilename);
+}
+
 void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   // Create the Player

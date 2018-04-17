@@ -67,6 +67,9 @@ target_include_directories(gameengine PUBLIC
   "utils/export"
   "world/export"
 )
+target_include_directories(gameengine SYSTEM PRIVATE
+  "../external/rapidxml"
+)
 
 add_subdirectory("world")
 target_include_directories(world PUBLIC

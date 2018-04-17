@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "item_manager.h"
 #include "game_engine_queue.h"
 #include "player.h"
 #include "position.h"
@@ -51,6 +52,8 @@ class GameEngine
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
+
+  bool init(const std::string& dataFilename, const std::string& itemsFilename);
 
   void spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
@@ -100,6 +103,7 @@ class GameEngine
 
   std::unordered_map<CreatureId, PlayerData> playerData_;
 
+  new_item::ItemManager itemManager_;
   GameEngineQueue* gameEngineQueue_;
   World* world_;
   std::string loginMessage_;

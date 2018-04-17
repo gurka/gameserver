@@ -158,12 +158,17 @@ int main()
   if (!world)
   {
     LOG_ERROR("World could not be loaded");
-    return -1;
+    return 1;
   }
 
   // Create GameEngine and GameEngineQueue
   gameEngineQueue = std::make_unique<GameEngineQueue>(&io_service);
   gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), world.get(), loginMessage);
+  if (!gameEngine->init(dataFilename, itemsFilename))
+  {
+    LOG_ERROR("Could not initialize GameEngine");
+    return 1;
+  }
   gameEngineQueue->setGameEngine(gameEngine.get());
 
   // Create and load AccountReader
@@ -171,7 +176,7 @@ int main()
   if (!accountReader->loadFile(accountsFilename))
   {
     LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
-    return -2;
+    return 1;
   }
 
   // Create Server

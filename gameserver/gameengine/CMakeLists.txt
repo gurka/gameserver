@@ -11,6 +11,8 @@ add_library(gameengine
   "src/container_manager.cc"
   "src/container_manager.h"
   "src/game_engine.cc"
+  "src/item_manager.cc"
+  "src/item_manager.h"
   "src/player.cc"
   "src/player.h"
   "src/game_engine_queue.cc"
