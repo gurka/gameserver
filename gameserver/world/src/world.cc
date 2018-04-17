@@ -33,7 +33,6 @@
 
 #include "logger.h"
 #include "tick.h"
-#include "constants.h"
 
 World::World(int worldSizeX,
              int worldSizeY,
@@ -183,9 +182,9 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
 
   // Check if toTile is blocking or not
   auto& toTile = internalGetTile(toPosition);
-  for (const auto& item : toTile.getItems())
+  for (const auto* item : toTile.getItems())
   {
-    if (item.isBlocking())
+    if (item->getItemType().isBlocking)
     {
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
@@ -339,9 +338,9 @@ bool World::canAddItem(const Item& item, const Position& position) const
     return false;
   }
 
-  for (const auto& item : getTile(position).getItems())
+  for (const auto* item : getTile(position).getItems())
   {
-    if (item.isBlocking())
+    if (item->getItemType().isBlocking)
     {
       return false;
     }
@@ -350,12 +349,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
   return true;
 }
 
-World::ReturnCode World::addItem(ItemId itemId, const Position& position)
-{
-  return addItem(Item(itemId), position);
-}
-
-World::ReturnCode World::addItem(const Item& item, const Position& position)
+World::ReturnCode World::addItem(Item* item, const Position& position)
 {
   if (!positionIsValid(position))
   {
@@ -371,13 +365,13 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
   auto nearCreatureIds = getVisibleCreatureIds(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(*this, item, position);
+    getCreatureCtrl(nearCreatureId).onItemAdded(*this, *item, position);
   }
 
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::removeItem(int itemId, int count, const Position& position, int stackPos)
+World::ReturnCode World::removeItem(ItemId itemId, int count, const Position& position, int stackPos)
 {
   // TODO(simon): implement count
   (void)count;
@@ -418,7 +412,7 @@ World::ReturnCode World::removeItem(int itemId, int count, const Position& posit
 }
 
 World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                                  int itemId, int count, const Position& toPosition)
+                                  ItemId itemId, int count, const Position& toPosition)
 {
   // TODO(simon): implement count
   (void)count;
@@ -458,24 +452,22 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   auto& toTile = internalGetTile(toPosition);
 
   // Check if we can add Item to toTile
-  for (const auto& item : toTile.getItems())
+  for (const auto* item : toTile.getItems())
   {
-    if (item.isBlocking())
+    if (item->getItemType().isBlocking)
     {
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
 
-  // Take a copy of the Item from fromTile
-  auto* item_ptr = fromTile.getItem(fromStackPos);
-  if (!item_ptr)
+  // Get the Item from fromTile
+  auto* item = fromTile.getItem(fromStackPos);
+  if (!item)
   {
     LOG_ERROR("%s: Could not find the item to move", __func__);
     return ReturnCode::ITEM_NOT_FOUND;
   }
-  auto item = *item_ptr;
-
   // Try to remove Item from fromTile
   if (!fromTile.removeItem(itemId, fromStackPos))
   {
@@ -497,7 +489,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId, const Position& fromPos
   nearCreatureIds = getVisibleCreatureIds(toPosition);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(*this, item, toPosition);
+    getCreatureCtrl(nearCreatureId).onItemAdded(*this, *item, toPosition);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
@@ -558,10 +550,10 @@ const std::vector<const Tile*> World::getMapBlock(const Position& position, int 
 
 bool World::positionIsValid(const Position& position) const
 {
-  return position.getX() >= Constants::position_offset               &&
-         position.getX() <  Constants::position_offset + worldSizeX_ &&
-         position.getY() >= Constants::position_offset               &&
-         position.getY() <  Constants::position_offset + worldSizeY_ &&
+  return position.getX() >= position_offset               &&
+         position.getX() <  position_offset + worldSizeX_ &&
+         position.getY() >= position_offset               &&
+         position.getY() <  position_offset + worldSizeY_ &&
          position.getZ() == 7;
 }
 
@@ -594,8 +586,8 @@ Tile& World::internalGetTile(const Position& position)
   {
     LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
-  const auto index = ((position.getY() - Constants::position_offset) * worldSizeX_) +
-                     (position.getX() - Constants::position_offset);
+  const auto index = ((position.getY() - position_offset) * worldSizeX_) +
+                      (position.getX() - position_offset);
   return tiles_[index];
 }
 
@@ -605,8 +597,8 @@ const Tile& World::getTile(const Position& position) const
   {
     LOG_ERROR("%s: called with invalid Position: %s", __func__, position.toString().c_str());
   }
-  const auto index = ((position.getY() - Constants::position_offset) * worldSizeX_) +
-                     (position.getX() - Constants::position_offset);
+  const auto index = ((position.getY() - position_offset) * worldSizeX_) +
+                      (position.getX() - position_offset);
   return tiles_[index];
 }
 

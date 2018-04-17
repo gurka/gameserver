@@ -29,62 +29,14 @@
 #include <array>
 #include <unordered_map>
 
-namespace new_item
-{
-
-using ItemId = std::uint64_t;
-using ItemTypeId = int;
-
-struct ItemType;
-
-class Item
-{
- public:
-  virtual ~Item() = default;
-
-  virtual ItemId getItemId() const = 0;
-  virtual const ItemType& getItemType() const = 0;
-};
-
-struct ItemType
-{
-  // Loaded from data file
-  bool ground       = false;
-  int  speed        = 0;
-  bool isBlocking   = false;
-  bool alwaysOnTop  = false;
-  bool isContainer  = false;
-  bool isStackable  = false;
-  bool isUsable     = false;
-  bool isMultitype  = false;
-  bool isNotMovable = false;
-  bool isEquipable  = false;
-
-  // Loaded from xml file
-  std::string name     = "";
-  int weight           = 0;
-  int decayto          = 0;
-  int decaytime        = 0;
-  int damage           = 0;
-  int maxitems         = 0;
-  std::string type     = "";
-  std::string position = "";
-  int attack           = 0;
-  int defence          = 0;
-  int arm              = 0;
-  std::string skill    = "";
-  std::string descr    = "";
-  int handed           = 0;
-  int shottype         = 0;
-  std::string amutype  = "";
-};
+#include "item.h"
 
 class ItemManager
 {
  public:
   ItemManager()
     : items_(),
-      nextItemId_(0),
+      nextItemId_(1),  // TODO(simon): 0 is used as invalid itemId in game_position.h
       itemTypes_(),
       itemTypesIdFirst_(0),
       itemTypesIdLast_(0)
@@ -107,16 +59,21 @@ class ItemManager
    public:
     ItemImpl(ItemId itemId, const ItemType* itemType)
       : itemId_(itemId),
-        itemType_(itemType)
+        itemType_(itemType),
+        count_(1)
     {
     }
 
     ItemId getItemId() const override { return itemId_; }
     const ItemType& getItemType() const override { return *itemType_; }
 
+    int getCount() const override { return count_; }
+    void setCount(int count) override { count_ = count; }
+
    private:
     ItemId itemId_;
     const ItemType* itemType_;
+    int count_;
   };
 
   std::unordered_map<ItemId, ItemImpl> items_;
@@ -126,7 +83,5 @@ class ItemManager
   ItemTypeId itemTypesIdFirst_;
   ItemTypeId itemTypesIdLast_;
 };
-
-}
 
 #endif  // GAMEENGINE_SRC_ITEM_MANAGER_H_

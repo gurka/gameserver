@@ -32,9 +32,6 @@
 #include "rapidxml.hpp"
 #include "logger.h"
 
-namespace new_item
-{
-
 bool ItemManager::loadItemTypes(const std::string& dataFilename, const std::string& itemsFilename)
 {
   if (!loadItemTypesDataFile(dataFilename))
@@ -57,7 +54,7 @@ ItemId ItemManager::createItem(ItemTypeId itemTypeId)
   if (itemTypeId < itemTypesIdFirst_ || itemTypeId > itemTypesIdLast_)
   {
     LOG_ERROR("%s: itemTypeId: %d out of range", __func__, itemTypeId);
-    return 0;
+    return 0;  // TODO(simon): invalid ItemId (see header and game_position.h)
   }
 
   const auto itemId = nextItemId_;
@@ -95,7 +92,7 @@ bool ItemManager::loadItemTypesDataFile(const std::string& dataFilename)
 {
   // 100 is the first item id
   itemTypesIdFirst_ = 100;
-  auto nextItemId = itemTypesIdFirst_;
+  auto nextItemTypeId = itemTypesIdFirst_;
 
   // TODO(simon): Use std::ifstream?
   FILE* f = fopen(dataFilename.c_str(), "rb");
@@ -113,6 +110,7 @@ bool ItemManager::loadItemTypesDataFile(const std::string& dataFilename)
   while (ftell(f) < size)
   {
     ItemType itemType;
+    itemType.id = nextItemTypeId;
 
     int optByte = fgetc(f);
     while (optByte  >= 0 && optByte != 0xFF)
@@ -247,11 +245,11 @@ bool ItemManager::loadItemTypesDataFile(const std::string& dataFilename)
     fseek(f, width * height * blendFrames * xdiv * ydiv * animCount * 2, SEEK_CUR);
 
     // Add ItemData and increase next item id
-    itemTypes_[nextItemId] = itemType;
-    ++nextItemId;
+    itemTypes_[nextItemTypeId] = itemType;
+    ++nextItemTypeId;
   }
 
-  itemTypesIdLast_ = nextItemId - 1;
+  itemTypesIdLast_ = nextItemTypeId - 1;
 
   LOG_INFO("%s: Successfully loaded %d items", __func__, itemTypesIdLast_ - itemTypesIdFirst_ + 1);
   LOG_DEBUG("%s: Last itemId = %d", __func__, itemTypesIdLast_);
@@ -415,6 +413,4 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
   free(xmlString);
 
   return true;
-}
-
 }

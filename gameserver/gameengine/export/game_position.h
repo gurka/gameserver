@@ -115,7 +115,7 @@ class ItemPosition
  public:
   ItemPosition()
     : gamePosition_(),
-      itemId_(Item::INVALID_ID),
+      itemId_(0),  // TODO(simon): Item::INVALID_ID ?
       stackPosition_(0)
   {
   }

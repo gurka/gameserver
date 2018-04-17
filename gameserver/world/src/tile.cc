@@ -75,11 +75,11 @@ int Tile::getCreatureStackPos(CreatureId creatureId) const
   return 1 + numberOfTopItems + std::distance(creatureIds_.cbegin(), it);
 }
 
-void Tile::addItem(const Item& item)
+void Tile::addItem(Item* item)
 {
   auto itemIt = items_.cbegin();
 
-  if (item.alwaysOnTop())
+  if (item->getItemType().alwaysOnTop)
   {
     std::advance(itemIt, 1);
     numberOfTopItems++;
@@ -104,7 +104,7 @@ bool Tile::removeItem(ItemId itemId, int stackPosition)
     // Top Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition);
-    if (itemIt->getItemId() == itemId)
+    if ((*itemIt)->getItemId() == itemId)
     {
       items_.erase(itemIt);
       return true;
@@ -124,7 +124,7 @@ bool Tile::removeItem(ItemId itemId, int stackPosition)
     // Bottom Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition - creatureIds_.size());
-    if (itemIt->getItemId() == itemId)
+    if ((*itemIt)->getItemId() == itemId)
     {
       items_.erase(itemIt);
       return true;
@@ -148,14 +148,14 @@ const Item* Tile::getItem(int stackPosition) const
   if (stackPosition == 0)
   {
     // Ground Item
-    return &(items_.front());
+    return items_.front();
   }
   else if (stackPosition < 1 + numberOfTopItems)
   {
     // Top Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition);
-    return &(*itemIt);
+    return *itemIt;
   }
   else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
   {
@@ -168,7 +168,7 @@ const Item* Tile::getItem(int stackPosition) const
     // Bottom Item
     auto itemIt = items_.cbegin();
     std::advance(itemIt, stackPosition - creatureIds_.size());
-    return &(*itemIt);
+    return *itemIt;
   }
   else
   {
@@ -197,5 +197,5 @@ int Tile::getGroundSpeed() const
     return 0;
   }
 
-  return items_.front().getSpeed();
+  return items_.front()->getItemType().speed;
 }

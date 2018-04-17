@@ -40,20 +40,17 @@
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
-// world
-#include "world.h"
-#include "world_factory.h"
+// gameengine
+#include "game_engine.h"
+#include "game_engine_queue.h"
 
 // worldserver
-#include "game_engine.h"
 #include "protocol.h"
 #include "protocol_71.h"
-#include "game_engine_queue.h"
 
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<World> world;
 static std::unique_ptr<GameEngineQueue> gameEngineQueue;
 static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
@@ -153,18 +150,10 @@ int main()
 
   boost::asio::io_service io_service;
 
-  // Create World
-  world = WorldFactory::createWorld(dataFilename, itemsFilename, worldFilename);
-  if (!world)
-  {
-    LOG_ERROR("World could not be loaded");
-    return 1;
-  }
-
   // Create GameEngine and GameEngineQueue
   gameEngineQueue = std::make_unique<GameEngineQueue>(&io_service);
-  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), world.get(), loginMessage);
-  if (!gameEngine->init(dataFilename, itemsFilename))
+  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), loginMessage);
+  if (!gameEngine->init(dataFilename, itemsFilename, worldFilename))
   {
     LOG_ERROR("Could not initialize GameEngine");
     return 1;
@@ -209,7 +198,6 @@ int main()
   accountReader.reset();
   gameEngine.reset();
   gameEngineQueue.reset();
-  world.reset();
 
   return 0;
 }

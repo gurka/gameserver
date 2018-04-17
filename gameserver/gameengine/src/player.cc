@@ -36,12 +36,7 @@ const Item* Equipment::getItem(int inventorySlot) const
     return nullptr;
   }
 
-  if (items_[inventorySlot].isValid())
-  {
-    return &items_[inventorySlot];
-  }
-
-  return nullptr;
+  return items_[inventorySlot];
 }
 
 Item* Equipment::getItem(int inventorySlot)
@@ -60,24 +55,18 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
 
   // TODO(simon): Check capacity
 
-  // First check if the slot is empty
-  if (items_[inventorySlot].isValid())
-  {
-    return false;
-  }
-
   // Get Item attributes
   std::string itemType;
   std::string itemPosition;
 
-  if (item.hasAttribute("type"))
+  if (!item.getItemType().type.empty())
   {
-    itemType = item.getAttribute<std::string>("type");
+    itemType = item.getItemType().type;
   }
 
-  if (item.hasAttribute("position"))
+  if (!item.getItemType().position.empty())
   {
-    itemPosition = item.getAttribute<std::string>("position");
+    itemPosition = item.getItemType().position;
   }
 
   LOG_DEBUG("canAddItem(): Item: %d Type: %s Positon: %s", item.getItemId(), itemType.c_str(), itemPosition.c_str());
@@ -108,15 +97,15 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
     case LEFT_HAND:
     {
       // Just check that we don't equip an 2-hander if other hand is not empty
-      if (item.hasAttribute("handed") && item.getAttribute<int>("handed") == 2)
+      if (item.getItemType().handed == 2)
       {
         if (inventorySlot == RIGHT_HAND)
         {
-          return !items_.at(LEFT_HAND).isValid();
+          return items_.at(LEFT_HAND) == nullptr;
         }
         else
         {
-          return !items_.at(RIGHT_HAND).isValid();
+          return items_.at(RIGHT_HAND) == nullptr;
         }
       }
       return true;
@@ -147,7 +136,7 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
   return false;
 }
 
-bool Equipment::addItem(const Item& item, int inventorySlot)
+bool Equipment::addItem(Item* item, int inventorySlot)
 {
   if (inventorySlot < 1 || inventorySlot > 10)
   {
@@ -155,7 +144,7 @@ bool Equipment::addItem(const Item& item, int inventorySlot)
     return false;
   }
 
-  if (!canAddItem(item, inventorySlot))
+  if (!canAddItem(*item, inventorySlot))
   {
     return false;
   }
@@ -172,12 +161,12 @@ bool Equipment::removeItem(ItemId itemId, int inventorySlot)
     return false;
   }
 
-  if (items_[inventorySlot].getItemId() != itemId)
+  if (items_[inventorySlot]->getItemId() != itemId)
   {
     return false;
   }
 
-  items_[inventorySlot] = Item();
+  items_[inventorySlot] = nullptr;
   return true;
 }
 

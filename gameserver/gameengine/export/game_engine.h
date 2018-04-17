@@ -33,27 +33,28 @@
 #include <unordered_map>
 #include <utility>
 
+#include "world.h"
 #include "item_manager.h"
 #include "game_engine_queue.h"
 #include "player.h"
 #include "position.h"
-#include "container_manager.h"
 #include "game_position.h"
 
 class OutgoingPacket;
 class PlayerCtrl;
-class World;
 
 class GameEngine
 {
  public:
-  GameEngine(GameEngineQueue* gameEngineQueue, World* world, const std::string& loginMessage);
+  GameEngine(GameEngineQueue* gameEngineQueue, const std::string& loginMessage);
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 
-  bool init(const std::string& dataFilename, const std::string& itemsFilename);
+  bool init(const std::string& dataFilename,
+            const std::string& itemsFilename,
+            const std::string& worldFilename);
 
   void spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
@@ -80,7 +81,7 @@ class GameEngine
   Item* getItem(CreatureId creatureId, const ItemPosition& position);
   bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const;
   void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
-  void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
+  void addItem(CreatureId creatureId, const GamePosition& position, Item* item, int count);
 
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
@@ -103,11 +104,13 @@ class GameEngine
 
   std::unordered_map<CreatureId, PlayerData> playerData_;
 
-  new_item::ItemManager itemManager_;
+  ItemManager itemManager_;
+
+  // TODO(simon): refactor away unique_ptr
+  std::unique_ptr<World> world_;
+
   GameEngineQueue* gameEngineQueue_;
-  World* world_;
   std::string loginMessage_;
-  ContainerManager containerManager_;
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_

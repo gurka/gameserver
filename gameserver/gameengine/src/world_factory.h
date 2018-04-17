@@ -29,13 +29,13 @@
 #include <string>
 
 class World;
+class ItemManager;
 
 class WorldFactory
 {
  public:
-  static std::unique_ptr<World> createWorld(const std::string& dataFilename,
-                                            const std::string& itemsFilename,
-                                            const std::string& worldFilename);
+  static std::unique_ptr<World> createWorld(const std::string& worldFilename,
+                                            ItemManager* itemManager);
 };
 
 #endif  // WORLD_EXPORT_WORLD_FACTORY_H_

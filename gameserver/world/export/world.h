@@ -33,12 +33,15 @@
 #include "world_interface.h"
 #include "creature.h"
 #include "creature_ctrl.h"
+#include "item.h"
 #include "tile.h"
 #include "position.h"
 
 class World : public WorldInterface
 {
  public:
+  static constexpr int position_offset = 192;
+
   enum class ReturnCode
   {
     OK,
@@ -71,11 +74,10 @@ class World : public WorldInterface
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
-  ReturnCode addItem(ItemId itemId, const Position& position);
-  ReturnCode addItem(const Item& item, const Position& position);
-  ReturnCode removeItem(int itemId, int count, const Position& position, int stackPos);
+  ReturnCode addItem(Item* item, const Position& position);
+  ReturnCode removeItem(ItemId itemId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId, const Position& fromPosition, int fromStackPos,
-                      int itemId, int count, const Position& toPosition);
+                      ItemId itemId, int count, const Position& toPosition);
   Item* getItem(const Position& position, int stackPosition);
 
   // Creature checks
