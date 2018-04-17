@@ -27,6 +27,7 @@
 
 #include <cstdint>
 #include <array>
+#include <string>
 #include <unordered_map>
 
 #include "item.h"

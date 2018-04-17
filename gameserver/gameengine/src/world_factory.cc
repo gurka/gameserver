@@ -27,7 +27,8 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "item_manager.h"
 #include "item.h"

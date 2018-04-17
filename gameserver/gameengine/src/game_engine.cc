@@ -109,7 +109,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   player_ctrl->setPlayerId(player.getCreatureId());
 
   // Inform ContainerManager of the new player
-  //containerManager_.playerSpawn(player_ctrl);
+  // containerManager_.playerSpawn(player_ctrl);
 
   // Spawn the player
   auto rc = world_->addCreature(&player, player_ctrl, Position(222, 222, 7));
@@ -131,7 +131,7 @@ void GameEngine::despawn(CreatureId creatureId)
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creatureId);
 
   // Inform ContainerManager
-  //containerManager_.playerDespawn(getPlayerData(creatureId).player_ctrl);
+  // containerManager_.playerDespawn(getPlayerData(creatureId).player_ctrl);
 
   // Remove any queued tasks for this player
   gameEngineQueue_->cancelAllTasks(creatureId);
@@ -473,13 +473,13 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
 void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
 {
   LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-  //containerManager_.closeContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
+  // containerManager_.closeContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
 }
 
 void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerId)
 {
   LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-  //containerManager_.openParentContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
+  // containerManager_.openParentContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)

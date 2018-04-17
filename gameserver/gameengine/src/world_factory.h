@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_WORLD_FACTORY_H_
-#define WORLD_EXPORT_WORLD_FACTORY_H_
+#ifndef GAMEENGINE_SRC_WORLD_FACTORY_H_
+#define GAMEENGINE_SRC_WORLD_FACTORY_H_
 
 #include <memory>
 #include <string>
@@ -38,4 +38,4 @@ class WorldFactory
                                             ItemManager* itemManager);
 };
 
-#endif  // WORLD_EXPORT_WORLD_FACTORY_H_
+#endif  // GAMEENGINE_SRC_WORLD_FACTORY_H_
