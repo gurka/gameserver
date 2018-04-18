@@ -362,13 +362,13 @@ void GameEngine::moveItem(CreatureId creatureId,
   // TODO(simon): check if toPosition points to a container item, and in that case change toPosition
   //              to point inside that container (if applicable)
 
-//  if (item.isContainer())
-//  {
-//    // TODO(simon): move of Container requires ContainerManager to recalculate and
-//    //              modify parentContainerId and rootItemPosition
-//    playerData.player_ctrl->sendTextMessage(0x13, "Not yet implemented.");
-//    return;
-//  }
+  if (item->getItemType().isContainer)
+  {
+    // TODO(simon): move of Container requires ContainerManager to recalculate and
+    //              modify parentContainerId and rootItemPosition
+    playerData.player_ctrl->sendTextMessage(0x13, "Not yet implemented.");
+    return;
+  }
 
   // Verify that the Item can be added to toPosition
   if (!canAddItem(creatureId, toPosition, *item, count))
@@ -406,7 +406,7 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   if (item->getItemType().isContainer)
   {
-    containerManager_.useContainer(playerData.player_ctrl, *item, newContainerId);
+    containerManager_.useContainer(playerData.player_ctrl, *item, position, newContainerId);
   }
 }
 

@@ -57,7 +57,7 @@ struct Container
   int weight;
 
   // The Item that corresponds to this Container
-  Item* item;
+  const Item* item;
 
   // Container id of the parent container, or INVALID_ID if no parent
   // This id must NOT be a clientContainerId
