@@ -403,14 +403,13 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
       else
       {
         LOG_ERROR("%s: unhandled attribute name: %s", __func__, attrName.c_str());
+        free(xmlString);
         return false;
       }
     }
   }
 
   LOG_INFO("%s: Successfully loaded %d items", __func__, numberOfItems);
-
   free(xmlString);
-
   return true;
 }
