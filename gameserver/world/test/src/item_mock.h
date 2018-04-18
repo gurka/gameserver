@@ -22,14 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_SRC_CONSTANTS_H_
-#define WORLD_SRC_CONSTANTS_H_
+#ifndef WORLD_TEST_SRC_ITEM_MOCK_H_
+#define WORLD_TEST_SRC_ITEM_MOCK_H_
 
-namespace Constants
+#include "item.h"
+#include "gmock/gmock.h"
+
+class ItemMock : public Item
 {
+ public:
+  MOCK_CONST_METHOD0(getItemUniqueId, ItemUniqueId());
+  MOCK_CONST_METHOD0(getItemTypeId, ItemTypeId());
 
-static constexpr int position_offset = 192;
+  MOCK_CONST_METHOD0(getItemType, const ItemType&());
 
-}  // namespace Constants
+  MOCK_CONST_METHOD0(getCount, int());
+  MOCK_METHOD1(setCount, void(int count));
+};
 
-#endif  // WORLD_SRC_CONSTANTS_H_
+#endif  // WORLD_TEST_SRC_ITEM_MOCK_H_

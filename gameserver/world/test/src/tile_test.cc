@@ -23,56 +23,34 @@
  */
 
 #include "tile.h"
-#include "item.h"
+#include "item_mock.h"
 
 #include "gtest/gtest.h"
 
+using ::testing::Return;
+using ::testing::ReturnRef;
+
 class TileTest : public ::testing::Test
 {
- public:
-  TileTest()
-  {
-    ItemData itemDataA;
-    itemDataA.valid = true;
-    itemDataA.name = "Item A";
-    Item::setItemData(itemIdA, itemDataA);
-
-    ItemData itemDataB;
-    itemDataB.valid = true;
-    itemDataB.name = "Item B";
-    Item::setItemData(itemIdB, itemDataB);
-
-    ItemData itemDataC;
-    itemDataC.valid = true;
-    itemDataC.name = "Item C";
-    Item::setItemData(itemIdC, itemDataC);
-
-    ItemData itemDataD;
-    itemDataD.valid = true;
-    itemDataD.name = "Item D";
-    Item::setItemData(itemIdD, itemDataD);
-  }
-
- protected:
-  static constexpr ItemId itemIdA = 1;
-  static constexpr ItemId itemIdB = 2;
-  static constexpr ItemId itemIdC = 3;
-  static constexpr ItemId itemIdD = 4;
 };
 
 TEST_F(TileTest, Constructor)
 {
-  Item groundItem(itemIdA);
-  Tile tileA(groundItem);
+  ItemType groundItemType;
+  ItemMock groundItem;
+  const auto tile = Tile(&groundItem);
 
-  ASSERT_EQ(tileA.getItem(0)->getItemId(), groundItem.getItemId());
-  ASSERT_EQ(tileA.getNumberOfThings(), 1u);  // Only ground item
+  EXPECT_CALL(groundItem, getItemTypeId()).WillOnce(Return(123));
+  ASSERT_EQ(123, tile.getItem(0)->getItemTypeId());
+  ASSERT_EQ(1u, tile.getNumberOfThings());  // Only ground item
 }
 
 TEST_F(TileTest, AddRemoveCreatures)
 {
-  Item groundItem(itemIdA);
-  Tile tile(groundItem);
+  ItemType groundItemType;
+  ItemMock groundItem;
+  auto tile = Tile(&groundItem);
+
   CreatureId creatureA(1);
   CreatureId creatureB(2);
   CreatureId creatureC(3);
@@ -110,40 +88,52 @@ TEST_F(TileTest, AddRemoveCreatures)
 
 TEST_F(TileTest, AddRemoveItems)
 {
-  Item groundItem(itemIdD);
-  Tile tile(groundItem);
+  ItemType groundItemType;
+  ItemMock groundItem;
+  auto tile = Tile(&groundItem);
 
-  Item itemA(itemIdA);
-  Item itemB(itemIdB);
-  Item itemC(itemIdC);
+  ItemType itemTypeA;
+  ItemMock itemA;
+  EXPECT_CALL(itemA, getItemTypeId()).WillRepeatedly(Return(1));
+  EXPECT_CALL(itemA, getItemType()).WillRepeatedly(ReturnRef(itemTypeA));
+
+  ItemType itemTypeB;
+  ItemMock itemB;
+  EXPECT_CALL(itemB, getItemTypeId()).WillRepeatedly(Return(2));
+  EXPECT_CALL(itemB, getItemType()).WillRepeatedly(ReturnRef(itemTypeB));
+
+  ItemType itemTypeC;
+  ItemMock itemC;
+  EXPECT_CALL(itemC, getItemTypeId()).WillRepeatedly(Return(3));
+  EXPECT_CALL(itemC, getItemType()).WillRepeatedly(ReturnRef(itemTypeC));
 
   // Add an item and remove it
-  tile.addItem(itemA);
+  tile.addItem(&itemA);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);  // Ground item + item
 
-  auto result = tile.removeItem(itemA.getItemId(), 1);  // Only item => stackpos = 1
+  auto result = tile.removeItem(itemA.getItemTypeId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 
   // Add all three items
-  tile.addItem(itemA);
-  tile.addItem(itemB);
-  tile.addItem(itemC);
+  tile.addItem(&itemA);
+  tile.addItem(&itemB);
+  tile.addItem(&itemC);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 3u);
 
   // Remove itemA and itemC
-  result = tile.removeItem(itemA.getItemId(), 3);  // Two items were added after itemA => stackpos = 3
+  result = tile.removeItem(itemA.getItemTypeId(), 3);  // Two items were added after itemA => stackpos = 3
   ASSERT_TRUE(result);
-  result = tile.removeItem(itemC.getItemId(), 1);  // itemC was added last => stackpos = 1
+  result = tile.removeItem(itemC.getItemTypeId(), 1);  // itemC was added last => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 1u);
 
   // Try to remove itemA again
-  result = tile.removeItem(itemA.getItemId(), 1);
+  result = tile.removeItem(itemA.getItemTypeId(), 1);
   ASSERT_FALSE(result);
 
   // Remove last item
-  result = tile.removeItem(itemB.getItemId(), 1);  // Only item => stackpos = 1
+  result = tile.removeItem(itemB.getItemTypeId(), 1);  // Only item => stackpos = 1
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 }

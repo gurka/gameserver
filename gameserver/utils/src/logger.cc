@@ -61,6 +61,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "game_engine.cc",       Module::GAMEENGINE  },
   { "game_engine_queue.cc", Module::GAMEENGINE  },
   { "player.cc",            Module::GAMEENGINE  },
+  { "item_manager.cc",      Module::GAMEENGINE  },
 
   // worldserver
   { "protocol_71.cc",       Module::WORLDSERVER },

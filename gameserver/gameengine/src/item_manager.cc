@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "item.h"
+#include "item_manager.h"
 
 #include <cstdio>
 #include <cstring>
@@ -32,38 +32,73 @@
 #include "rapidxml.hpp"
 #include "logger.h"
 
-namespace
+bool ItemManager::loadItemTypes(const std::string& dataFilename, const std::string& itemsFilename)
 {
-
-auto findAttribute(const std::vector<ItemData::Attribute>& attributes, const std::string& name)
-{
-  auto it = attributes.begin();
-  while (it != attributes.end())
+  if (!loadItemTypesDataFile(dataFilename))
   {
-    if (it->name == name)
-    {
-      return it;
-    }
-
-    ++it;
+    LOG_ERROR("%s: could not load datafile: %s", __func__, dataFilename.c_str());
+    return false;
   }
-  return it;
+
+  if (!loadItemTypesItemsFile(itemsFilename))
+  {
+    LOG_ERROR("%s: could not load itemsfile: %s", __func__, itemsFilename.c_str());
+    return false;
+  }
+
+  return true;
 }
 
-}  // namespace
-
-std::array<ItemData, Item::MAX_ITEM_DATAS> Item::itemDatas_;
-
-bool Item::loadItemData(const std::string& dataFilename, const std::string& itemsFilename)
+ItemUniqueId ItemManager::createItem(ItemTypeId itemTypeId)
 {
-  // Load from data file
-  ItemId nextItemId = 100;  // 100 is the first item id
+  if (itemTypeId < itemTypesIdFirst_ || itemTypeId > itemTypesIdLast_)
+  {
+    LOG_ERROR("%s: itemTypeId: %d out of range", __func__, itemTypeId);
+    return 0;  // TODO(simon): invalid ItemId (see header and game_position.h)
+  }
+
+  const auto itemUniqueId = nextItemUniqueId_;
+  ++nextItemUniqueId_;
+
+  items_.emplace(itemUniqueId, ItemImpl(itemUniqueId, &itemTypes_[itemTypeId]));
+  LOG_DEBUG("%s: created Item with itemUniqueId: %lu, itemTypeId: %d", __func__, itemUniqueId, itemTypeId);
+
+  return itemUniqueId;
+}
+
+void ItemManager::destroyItem(ItemUniqueId itemUniqueId)
+{
+  if (items_.count(itemUniqueId) == 0)
+  {
+    LOG_ERROR("%s: could not find Item with itemUniqueId: %lu", __func__, itemUniqueId);
+    return;
+  }
+
+  LOG_DEBUG("%s: destroying Item with itemUniqueId: %lu", __func__, itemUniqueId);
+  items_.erase(itemUniqueId);
+}
+
+Item* ItemManager::getItem(ItemUniqueId itemUniqueId)
+{
+  if (items_.count(itemUniqueId) == 0)
+  {
+    return nullptr;
+  }
+
+  return &items_.at(itemUniqueId);
+}
+
+bool ItemManager::loadItemTypesDataFile(const std::string& dataFilename)
+{
+  // 100 is the first item id
+  itemTypesIdFirst_ = 100;
+  auto nextItemTypeId = itemTypesIdFirst_;
 
   // TODO(simon): Use std::ifstream?
   FILE* f = fopen(dataFilename.c_str(), "rb");
   if (f == nullptr)
   {
-    LOG_ERROR("%s: Could not open file: %s", __func__, dataFilename.c_str());
+    LOG_ERROR("%s: could not open file: %s", __func__, dataFilename.c_str());
     return false;
   }
 
@@ -74,9 +109,8 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
 
   while (ftell(f) < size)
   {
-    ItemData itemData;
-
-    itemData.valid = true;
+    ItemType itemType;
+    itemType.id = nextItemTypeId;
 
     int optByte = fgetc(f);
     while (optByte  >= 0 && optByte != 0xFF)
@@ -86,11 +120,11 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
         case 0x00:
         {
           // Ground item
-          itemData.ground = true;
-          itemData.speed = fgetc(f);
-          if (itemData.speed == 0)
+          itemType.ground = true;
+          itemType.speed = fgetc(f);
+          if (itemType.speed == 0)
           {
-            itemData.isBlocking = true;
+            itemType.isBlocking = true;
           }
           fgetc(f);  // ??
           break;
@@ -100,56 +134,56 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
         case 0x02:
         {
           // What's the diff ?
-          itemData.alwaysOnTop = true;
+          itemType.alwaysOnTop = true;
           break;
         }
 
         case 0x03:
         {
           // Container
-          itemData.isContainer = true;
+          itemType.isContainer = true;
           break;
         }
 
         case 0x04:
         {
           // Stackable
-          itemData.isStackable = true;
+          itemType.isStackable = true;
           break;
         }
 
         case 0x05:
         {
           // Usable
-          itemData.isUsable = true;
+          itemType.isUsable = true;
           break;
         }
 
         case 0x0A:
         {
           // Is multitype
-          itemData.isMultitype = true;
+          itemType.isMultitype = true;
           break;
         }
 
         case 0x0B:
         {
           // Blocks
-          itemData.isBlocking = true;
+          itemType.isBlocking = true;
           break;
         }
 
         case 0x0C:
         {
           // Movable
-          itemData.isNotMovable = true;
+          itemType.isNotMovable = true;
           break;
         }
 
         case 0x0F:
         {
           // Equipable
-          itemData.isEquipable = true;
+          itemType.isEquipable = true;
           break;
         }
 
@@ -211,16 +245,22 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
     fseek(f, width * height * blendFrames * xdiv * ydiv * animCount * 2, SEEK_CUR);
 
     // Add ItemData and increase next item id
-    itemDatas_[nextItemId] = itemData;
-    ++nextItemId;
+    itemTypes_[nextItemTypeId] = itemType;
+    ++nextItemTypeId;
   }
 
-  LOG_INFO("%s: Successfully loaded %d items", __func__, nextItemId - 100);
-  LOG_DEBUG("%s: Last itemId = %d", __func__, nextItemId - 1);
+  itemTypesIdLast_ = nextItemTypeId - 1;
+
+  LOG_INFO("%s: Successfully loaded %d items", __func__, itemTypesIdLast_ - itemTypesIdFirst_ + 1);
+  LOG_DEBUG("%s: Last itemId = %d", __func__, itemTypesIdLast_);
 
   fclose(f);
 
-  // Load from XML
+  return true;
+}
+
+bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
+{
   std::ifstream xmlFile(itemsFilename);
   if (!xmlFile.is_open())
   {
@@ -266,13 +306,14 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
       return false;
     }
     auto itemId = std::stoi(xmlAttrId->value());
-    auto& itemData = itemDatas_[itemId];
 
     // Verify that this item has been loaded
-    if (!itemData.valid)
+    if (itemId < itemTypesIdFirst_ || itemId > itemTypesIdLast_)
     {
       LOG_ERROR("%s: WARNING: Parsed data for Item with id: %d, but that Item does not exist", __func__, itemId);
     }
+
+    auto& itemType = itemTypes_[itemId];
 
     // Get name
     auto* xmlAttrName = itemNode->first_attribute("name");
@@ -282,7 +323,7 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
       free(xmlString);
       return false;
     }
-    itemData.name = xmlAttrName->value();
+    itemType.name = xmlAttrName->value();
 
     // Iterate over all rest of attributes
     for (auto* xmlAttrOther = itemNode->first_attribute();
@@ -298,41 +339,77 @@ bool Item::loadItemData(const std::string& dataFilename, const std::string& item
 
       std::string attrValue(xmlAttrOther->value());
 
-      itemData.attributes.emplace_back(attrName, attrValue);
+      // Handle attributes here
+      if (attrName == "weight")
+      {
+        itemType.weight = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "decayto")
+      {
+        itemType.decayto = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "decaytime")
+      {
+        itemType.decaytime = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "damage")
+      {
+        itemType.damage = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "maxitems")
+      {
+        itemType.maxitems = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "type")
+      {
+        itemType.type = attrValue;
+      }
+      else if (attrName == "position")
+      {
+        itemType.position = attrValue;
+      }
+      else if (attrName == "attack")
+      {
+        itemType.attack = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "defence")
+      {
+        itemType.defence = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "arm")
+      {
+        itemType.arm = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "skill")
+      {
+        itemType.skill = attrValue;
+      }
+      else if (attrName == "descr")
+      {
+        itemType.descr = attrValue;
+      }
+      else if (attrName == "handed")
+      {
+        itemType.handed = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "shottype")
+      {
+        itemType.shottype = std::stoi(attrValue.c_str());
+      }
+      else if (attrName == "amutype")
+      {
+        itemType.amutype = attrValue;
+      }
+      else
+      {
+        LOG_ERROR("%s: unhandled attribute name: %s", __func__, attrName.c_str());
+        free(xmlString);
+        return false;
+      }
     }
   }
 
   LOG_INFO("%s: Successfully loaded %d items", __func__, numberOfItems);
-
   free(xmlString);
-
   return true;
-}
-
-bool Item::hasAttribute(const std::string& name) const
-{
-  return findAttribute(itemData_->attributes, name) != itemData_->attributes.end();
-}
-
-template<>
-std::string Item::getAttribute(const std::string& name) const
-{
-  return findAttribute(itemData_->attributes, name)->value;
-}
-
-template<>
-int Item::getAttribute(const std::string& name) const
-{
-  return std::stoi(findAttribute(itemData_->attributes, name)->value);
-}
-
-template<>
-float Item::getAttribute(const std::string& name) const
-{
-  return std::stof(findAttribute(itemData_->attributes, name)->value);
-}
-
-int Item::getWeight() const
-{
-  return hasAttribute("weight") ? getAttribute<int>("weight") : 0;
 }

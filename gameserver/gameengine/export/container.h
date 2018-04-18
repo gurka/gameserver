@@ -27,10 +27,9 @@
 
 #include <vector>
 
-#include "item.h"
 #include "game_position.h"
-#include "creature.h"
 
+class Item;
 class PlayerCtrl;
 
 struct Container
@@ -38,7 +37,7 @@ struct Container
   Container()
     : id(INVALID_ID),
       weight(0),
-      itemId(0),
+      item(nullptr),
       parentContainerId(INVALID_ID),
       rootItemPosition(),
       items(),
@@ -57,8 +56,8 @@ struct Container
   // The total weight of this Container and all Items in it (including other Containers)
   int weight;
 
-  // Id of the Item that corresponds to this Container (e.g. itemId of a backpack)
-  int itemId;
+  // The Item that corresponds to this Container
+  const Item* item;
 
   // Container id of the parent container, or INVALID_ID if no parent
   // This id must NOT be a clientContainerId
@@ -69,7 +68,7 @@ struct Container
   ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
-  std::vector<Item> items;
+  std::vector<Item*> items;
 
   // List of Players that have this Container open
   struct RelatedPlayer

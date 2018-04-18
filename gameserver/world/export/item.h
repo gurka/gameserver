@@ -26,27 +26,30 @@
 #define WORLD_EXPORT_ITEM_H_
 
 #include <cstdint>
-#include <array>
 #include <string>
-#include <vector>
 
-using ItemId = int;
+using ItemUniqueId = std::uint64_t;
+using ItemTypeId = int;
 
-struct ItemData
+struct ItemType;
+
+class Item
 {
-  struct Attribute
-  {
-    Attribute(const std::string& name, const std::string& value)
-      : name(name),
-        value(value)
-    {
-    }
+ public:
+  virtual ~Item() = default;
 
-    std::string name;
-    std::string value;
-  };
+  virtual ItemUniqueId getItemUniqueId() const = 0;
+  virtual ItemTypeId getItemTypeId() const = 0;
 
-  bool valid        = false;
+  virtual const ItemType& getItemType() const = 0;
+
+  virtual int getCount() const = 0;
+  virtual void setCount(int count) = 0;
+};
+
+struct ItemType
+{
+  ItemTypeId id     = 0;
 
   // Loaded from data file
   bool ground       = false;
@@ -60,94 +63,23 @@ struct ItemData
   bool isNotMovable = false;
   bool isEquipable  = false;
 
-  // Loaded from item file
-  std::string name = "";
-  std::vector<Attribute> attributes;
-};
-
-class Item
-{
- public:
-  static constexpr ItemId INVALID_ID = 0;
-
-  // Loads ItemData from the data file and the item file
-  // Must be loaded (successfully) before any Item objects are created
-  static bool loadItemData(const std::string& dataFilename, const std::string& itemsFilename);
-
-  Item()
-    : id_(INVALID_ID),
-      count_(0),
-      itemData_(&itemDatas_[id_]),  // Valid pointer to an invalid ItemData
-      containerId_(-1)
-  {
-  }
-
-  explicit Item(ItemId itemId)
-    : id_(itemId),
-      count_(1),
-      itemData_(&itemDatas_[id_]),
-      containerId_(-1)
-  {
-  }
-
-  Item(ItemId itemId, int containerId)
-      : id_(itemId),
-        count_(1),
-        itemData_(&itemDatas_[id_]),
-        containerId_(containerId)
-  {
-  }
-
-  bool isValid() const { return itemData_->valid; }
-
-  // Specific for this distinct Item
-  ItemId getItemId() const { return id_; }
-  int getCount() const { return count_; }
-
-  // Loaded from data file
-  bool isGround()     const { return itemData_->ground; }
-  int getSpeed()      const { return itemData_->speed; }
-  bool isBlocking()   const { return itemData_->isBlocking; }
-  bool alwaysOnTop()  const { return itemData_->alwaysOnTop; }
-  bool isContainer()  const { return itemData_->isContainer; }
-  bool isStackable()  const { return itemData_->isStackable; }
-  bool isUsable()     const { return itemData_->isUsable; }
-  bool isMultitype()  const { return itemData_->isMultitype; }
-  bool isNotMovable() const { return itemData_->isNotMovable; }
-  bool isEquipable()  const { return itemData_->isEquipable; }
-  int getSubtype()    const { return 0; }  // TODO(simon): ??
-
-  // Loaded from items.xml
-  const std::string& getName() const { return itemData_->name; }
-
-  bool hasAttribute(const std::string& name) const;
-
-  template<typename T>
-  T getAttribute(const std::string& name) const;
-
-  // Common attributes
-  int getWeight() const;
-
-  void setContainerId(int containerId) { containerId_ = containerId; }
-  int getContainerId() const { return containerId_; }
-
-#ifdef UNITTEST
-  static void setItemData(ItemId itemId, const ItemData& itemData) { itemDatas_[itemId] = itemData; }
-#endif
-
- private:
-  static constexpr std::size_t MAX_ITEM_DATAS = 3072;
-  static std::array<ItemData, MAX_ITEM_DATAS> itemDatas_;
-
-  // TODO(simon): Move id_ to ItemData
-  ItemId id_;
-  int count_;
-  ItemData* itemData_;
-
-  // TODO(simon): Try to refactor everything below as only certain types of items uses these values
-  //              If all items have a unique id (not to be confused with ItemId), then GameEngine can map
-  //              id to containerId (plus tracability on items)
-  int containerId_;
+  // Loaded from xml file
+  std::string name     = "";
+  int weight           = 0;
+  int decayto          = 0;
+  int decaytime        = 0;
+  int damage           = 0;
+  int maxitems         = 0;
+  std::string type     = "";
+  std::string position = "";
+  int attack           = 0;
+  int defence          = 0;
+  int arm              = 0;
+  std::string skill    = "";
+  std::string descr    = "";
+  int handed           = 0;
+  int shottype         = 0;
+  std::string amutype  = "";
 };
 
 #endif  // WORLD_EXPORT_ITEM_H_

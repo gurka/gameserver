@@ -27,27 +27,21 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
+#include <utility>
+#include <vector>
 
+#include "item_manager.h"
 #include "item.h"
 #include "position.h"
 #include "tile.h"
 #include "world.h"
 #include "logger.h"
-#include "constants.h"
+
 #include "rapidxml.hpp"
 
-std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename,
-                                                 const std::string& itemsFilename,
-                                                 const std::string& worldFilename)
+std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilename,
+                                                 ItemManager* itemManager)
 {
-  // Load ItemData
-  if (!Item::loadItemData(dataFilename, itemsFilename))
-  {
-    LOG_ERROR("%s: Could not load ItemData", __func__);
-    return std::unique_ptr<World>();
-  }
-
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
   std::ifstream xmlFile(worldFilename);
@@ -91,9 +85,9 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
   std::vector<Tile> tiles;
   tiles.reserve(worldSizeX * worldSizeY);
   const auto* tileNode = mapNode->first_node();
-  for (int y = Constants::position_offset; y < Constants::position_offset + worldSizeY; y++)
+  for (int y = World::position_offset; y < World::position_offset + worldSizeY; y++)
   {
-    for (int x = Constants::position_offset; x < Constants::position_offset + worldSizeX; x++)
+    for (int x = World::position_offset; x < World::position_offset + worldSizeX; x++)
     {
       if (tileNode == nullptr)
       {
@@ -119,17 +113,16 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
         return std::unique_ptr<World>();
       }
 
-      const auto groundItemId = std::stoi(groundItemAttr->value());
-      const auto groundItem = Item(groundItemId);
-
-      if (!groundItem.isValid())
+      const auto groundItemTypeId = std::stoi(groundItemAttr->value());
+      const auto groundItemId = itemManager->createItem(groundItemTypeId);
+      if (groundItemId == 0)  // TODO(simon): invalid ItemId
       {
-        LOG_ERROR("%s: groundItemId %d is invalid", __func__, groundItemId);
+        LOG_ERROR("%s: groundItemTypeId: %d is invalid", __func__, groundItemTypeId);
         free(xmlString);
         return std::unique_ptr<World>();
       }
 
-      tiles.emplace_back(groundItem);
+      tiles.emplace_back(itemManager->getItem(groundItemId));
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -142,17 +135,16 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& dataFilename
           continue;
         }
 
-        const auto itemId = std::stoi(itemIdAttr->value());
-        const auto item = Item(itemId);
-
-        if (!item.isValid())
+        const auto itemTypeId = std::stoi(itemIdAttr->value());
+        const auto itemId = itemManager->createItem(itemTypeId);
+        if (itemId == 0)  // TODO(simon): invalid ItemId
         {
-          LOG_ERROR("%s: itemId %d is invalid", __func__, itemId);
+          LOG_ERROR("%s: itemTypeId: %d is invalid", __func__, itemTypeId);
           free(xmlString);
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addItem(item);
+        tiles.back().addItem(itemManager->getItem(itemId));
       }
 
       // Go to next <tile> in XML

@@ -32,6 +32,7 @@
 #include <utility>
 
 #include "game_engine.h"
+#include "game_engine_queue.h"
 #include "server.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
@@ -521,9 +522,9 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
     return;
   }
 
-  if (!item.hasAttribute("maxitems"))
+  if (item.getItemType().maxitems == 0)
   {
-    LOG_ERROR("%s: Container Item: %d missing \"maxitems\" attribute", __func__, item.getItemId());
+    LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
     return;
   }
 
@@ -533,16 +534,16 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
   packet.addU8(0x6E);
   packet.addU8(clientContainerId);
   addItem(item, &packet);
-  packet.addString(item.getName());
-  packet.addU8(item.getAttribute<int>("maxitems"));
+  packet.addString(item.getItemType().name);
+  packet.addU8(item.getItemType().maxitems);
   packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
   packet.addU8(container.items.size());
-  for (const auto& item : container.items)
+  for (const auto* item : container.items)
   {
-    packet.addU16(item.getItemId());
-    if (item.isStackable())  // or splash or fluid container?
+    packet.addU16(item->getItemTypeId());
+    if (item->getItemType().isStackable)  // or splash or fluid container?
     {
-      packet.addU8(item.getCount());
+      packet.addU8(item->getCount());
     }
   }
   server_->sendPacket(connectionId_, std::move(packet));
@@ -570,7 +571,7 @@ void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, itemId: %d", __func__, clientContainerId, item.getItemId());
+  LOG_DEBUG("%s: clientContainerId: %u, itemTypeId: %d", __func__, clientContainerId, item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x70);
@@ -586,11 +587,11 @@ void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot,
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemId: %d",
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemTypeId: %d",
             __func__,
             clientContainerId,
             containerSlot,
-            item.getItemId());
+            item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x71);
@@ -695,7 +696,7 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
         auto count = 0;
 
         // Add ground Item
-        addItem(*itemIt, packet);
+        addItem(*(*itemIt), packet);
         count++;
         ++itemIt;
 
@@ -704,12 +705,12 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
         // Add top Items
         while (count < 10 && itemIt != items.cend())
         {
-          if (!itemIt->alwaysOnTop())
+          if (!(*itemIt)->getItemType().alwaysOnTop)
           {
             break;
           }
 
-          addItem(*itemIt, packet);
+          addItem(*(*itemIt), packet);
           count++;
           ++itemIt;
         }
@@ -726,7 +727,7 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
         // Add bottom Item
         while (count < 10 && itemIt != items.cend())
         {
-          addItem(*itemIt, packet);
+          addItem(*(*itemIt), packet);
           count++;
           ++itemIt;
         }
@@ -792,21 +793,22 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
 
 void Protocol71::addItem(const Item& item, OutgoingPacket* packet) const
 {
-  packet->addU16(item.getItemId());
-  if (item.isStackable())
+  packet->addU16(item.getItemTypeId());
+  if (item.getItemType().isStackable)
   {
     packet->addU8(item.getCount());
   }
-  else if (item.isMultitype())
+  else if (item.getItemType().isMultitype)
   {
-    packet->addU8(item.getSubtype());
+    // TODO(simon): getSubType???
+    packet->addU8(0);
   }
 }
 
 void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const
 {
   const auto* item = equipment.getItem(inventoryIndex);
-  if (!item || !item->isValid())
+  if (!item)
   {
     packet->addU8(0x79);  // No Item in this slot
     packet->addU8(inventoryIndex);

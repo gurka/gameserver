@@ -33,7 +33,7 @@
 class Tile
 {
  public:
-  explicit Tile(const Item& groundItem)
+  explicit Tile(Item* groundItem)
     : numberOfTopItems(0),
       items_({groundItem})
   {
@@ -55,11 +55,11 @@ class Tile
   int getCreatureStackPos(CreatureId creatureId) const;
 
   // Items
-  void addItem(const Item& item);
-  bool removeItem(ItemId itemId, int stackPosition);
+  void addItem(Item* item);
+  bool removeItem(ItemTypeId itemTypeId, int stackPosition);
   const Item* getItem(int stackPosition) const;
   Item* getItem(int stackPosition);
-  const std::vector<Item>& getItems() const { return items_; }
+  const std::vector<Item*>& getItems() const { return items_; }
 
   // Other
   std::size_t getNumberOfThings() const;
@@ -67,7 +67,7 @@ class Tile
 
  private:
   int numberOfTopItems;
-  std::vector<Item> items_;
+  std::vector<Item*> items_;
   std::vector<CreatureId> creatureIds_;
 };
 

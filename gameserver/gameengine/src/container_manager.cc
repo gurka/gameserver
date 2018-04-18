@@ -138,63 +138,33 @@ Item* ContainerManager::getItem(const PlayerCtrl* playerCtrl, int containerId, i
     return nullptr;
   }
 
-  return &container->items[containerSlot];
+  return container->items[containerSlot];
 }
 
-int ContainerManager::createContainer(PlayerCtrl* playerCtrl, ItemId itemId, const ItemPosition& itemPosition)
+void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
+                                    const Item& item,
+                                    const ItemPosition& itemPosition,
+                                    int newClientContainerId)
 {
-  const auto containerId = nextContainerId_;
-  nextContainerId_ += 1;
-
-  auto& container = containers_[containerId];
-  container.id = containerId;
-  container.weight = 0;
-  container.itemId = itemId;
-  if (itemPosition.getGamePosition().isPosition() ||
-      itemPosition.getGamePosition().isInventory())
+  if (!item.getItemType().isContainer)
   {
-    container.parentContainerId = Container::INVALID_ID;
-    container.rootItemPosition = itemPosition;
-  }
-  else  // isContainer
-  {
-    const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
-    container.parentContainerId = parentContainer->id;
-    container.rootItemPosition = parentContainer->rootItemPosition;
-  }
-  container.items = {};
-  container.relatedPlayers = {};
-
-  LOG_DEBUG("%s: created new Container with id %d, parentContainerId: %d, rootItemPosition: %s",
-            __func__,
-            container.id,
-            container.parentContainerId,
-            container.rootItemPosition.toString().c_str());
-
-  return containerId;
-}
-
-void ContainerManager::useContainer(PlayerCtrl* playerCtrl, const Item& item, int newClientContainerId)
-{
-  if (!item.isContainer())
-  {
-    LOG_ERROR("%s: item with id %d is not a container", __func__, item.getItemId());
+    LOG_ERROR("%s: item with itemTypeId %d is not a container", __func__, item.getItemTypeId());
     return;
   }
 
-  if (containers_.count(item.getContainerId()) == 0)
+  if (containerIds_.count(item.getItemUniqueId()) == 0)
   {
-    LOG_ERROR("%s: item has invalid containerId (%d)", __func__, item.getContainerId());
-    return;
+    createContainer(playerCtrl, &item, itemPosition);
   }
 
-  auto& container = containers_[item.getContainerId()];
+  const auto containerId = containerIds_.at(item.getItemUniqueId());
+  auto& container = containers_.at(containerId);
 
   // Check if Player has this Container open
   const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), container.id);
   if (clientContainerId == Container::INVALID_ID)
   {
-    openContainer(playerCtrl, &container, newClientContainerId, item);
+    openContainer(playerCtrl, &container, newClientContainerId);
   }
   else
   {
@@ -244,8 +214,7 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientCon
   }
 
   // Open parent container
-  const auto parentContainerItem = Item(parentContainer->itemId);
-  openContainer(playerCtrl, parentContainer, clientContainerId, parentContainerItem);
+  openContainer(playerCtrl, parentContainer, clientContainerId);
 }
 
 bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl,
@@ -253,15 +222,15 @@ bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl,
                                   int containerSlot,
                                   const Item& item) const
 {
-  LOG_DEBUG("%s: playerId: %d, clientContainerId: %d, containerSlot: %d, itemId: %d",
+  LOG_DEBUG("%s: playerId: %d, clientContainerId: %d, containerSlot: %d, itemTypeId: %d",
             __func__,
             playerCtrl->getPlayerId(),
             clientContainerId,
             containerSlot,
-            item.getItemId());
+            item.getItemTypeId());
 
   // Note: using clientContainerId implies that the player has this container
-  //       open, which we other would have to check
+  //       open, which we other would have to check otherwise
   if (!isClientContainerId(clientContainerId))
   {
     LOG_ERROR("%s: must be called with clientContainerId", __func__);
@@ -278,23 +247,23 @@ bool ContainerManager::canAddItem(const PlayerCtrl* playerCtrl,
   // If the containerSlot is valid, then check if the item it points to is a container
   if (containerSlot >= 0 &&
       containerSlot < static_cast<int>(container->items.size()) &&
-      container->items[containerSlot].isContainer())
+      container->items[containerSlot]->getItemType().isContainer)
   {
     // We might need to make a new Container object for the inner container
-    if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
+    if (containerIds_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
     {
       LOG_ERROR("%s: create new Container for inner container NOT YET IMPLEMENTED", __func__);
       return false;
     }
 
     // Change the container pointer to the inner container
-    container = &containers_.at(container->items[containerSlot].getContainerId());
+    const auto containerId = containerIds_.at(container->items[containerSlot]->getItemUniqueId());
+    container = &containers_.at(containerId);
   }
 
   // Just make sure that there is room for the item
   // GameEngine is responsible for checking the weight and player capacity
-  const auto containerItem = Item(container->itemId);
-  const auto containerItemMaxItems = containerItem.getAttribute<int>("maxitems");
+  const auto containerItemMaxItems = container->item->getItemType().maxitems;
   LOG_DEBUG("%s: container->items.size(): %d, containerItemMaxItems: %d",
             __func__,
             container->items.size(),
@@ -337,14 +306,14 @@ void ContainerManager::removeItem(const PlayerCtrl* playerCtrl, int containerId,
   }
 }
 
-void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item)
+void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, Item* item)
 {
-  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d, itemId: %d",
+  LOG_DEBUG("%s: playerId: %d, containerId: %d, containerSlot: %d, itemTypeId: %d",
             __func__,
             playerCtrl->getPlayerId(),
             containerId,
             containerSlot,
-            item.getItemId());
+            item->getItemTypeId());
 
   auto* container = getContainer(playerCtrl, containerId);
   if (!container)
@@ -364,17 +333,18 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
   // If the containerSlot is valid, then check if the item it points to is a container
   if (containerSlot >= 0 &&
       containerSlot < static_cast<int>(container->items.size()) &&
-      container->items[containerSlot].isContainer())
+      container->items[containerSlot]->getItemType().isContainer)
   {
     // We might need to make a new Container object for the inner container
-    if (container->items[containerSlot].getContainerId() == Container::INVALID_ID)
+    if (containerIds_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
     {
       LOG_ERROR("%s: create new Container for inner container NOT YET IMPLEMENTED", __func__);
       return;
     }
 
     // Change the container pointer to the inner container
-    container = &containers_.at(container->items[containerSlot].getContainerId());
+    const auto containerId = containerIds_.at(container->items[containerSlot]->getItemUniqueId());
+    container = &containers_.at(containerId);
   }
 
   // Add the item at the front
@@ -383,21 +353,52 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
   // Inform players that have this contianer open about the change
   for (auto& relatedPlayer : container->relatedPlayers)
   {
-    relatedPlayer.playerCtrl->onContainerAddItem(relatedPlayer.clientContainerId, item);
+    relatedPlayer.playerCtrl->onContainerAddItem(relatedPlayer.clientContainerId, *item);
   }
+}
+
+void ContainerManager::createContainer(PlayerCtrl* playerCtrl, const Item* item, const ItemPosition& itemPosition)
+{
+  const auto containerId = nextContainerId_;
+  nextContainerId_ += 1;
+
+  auto& container = containers_[containerId];
+  container.id = containerId;
+  container.weight = 0;
+  container.item = item;
+  if (itemPosition.getGamePosition().isPosition() ||
+      itemPosition.getGamePosition().isInventory())
+  {
+    container.parentContainerId = Container::INVALID_ID;
+    container.rootItemPosition = itemPosition;
+  }
+  else  // isContainer
+  {
+    const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
+    container.parentContainerId = parentContainer->id;
+    container.rootItemPosition = parentContainer->rootItemPosition;
+  }
+  container.items = {};
+  container.relatedPlayers = {};
+
+  LOG_DEBUG("%s: created new Container with id %d, parentContainerId: %d, rootItemPosition: %s",
+            __func__,
+            container.id,
+            container.parentContainerId,
+            container.rootItemPosition.toString().c_str());
+
+  containerIds_[item->getItemUniqueId()] = containerId;
 }
 
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
                                      Container* container,
-                                     int clientContainerId,
-                                     const Item& item)
+                                     int clientContainerId)
 {
-  LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d, itemId: %d",
+  LOG_DEBUG("%s: playerId: %d, containerId: %d, clientContainerId: %d",
             __func__,
             playerCtrl->getPlayerId(),
             container->id,
-            clientContainerId,
-            item.getItemId());
+            clientContainerId);
 
   // Check if there already is an open container at the given clientContainerId
   const auto currentContainerId = getContainerId(playerCtrl->getPlayerId(), clientContainerId);
@@ -415,7 +416,7 @@ void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
   setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, container->id);
 
   // Send onOpenContainer
-  playerCtrl->onOpenContainer(clientContainerId, *container, item);
+  playerCtrl->onOpenContainer(clientContainerId, *container, *container->item);
 }
 
 void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId)

@@ -30,13 +30,14 @@
 #include <sstream>
 #include <utility>
 
+#include "game_engine_queue.h"
 #include "player.h"
 #include "player_ctrl.h"
 #include "creature.h"
 #include "creature_ctrl.h"
 #include "item.h"
 #include "position.h"
-#include "world.h"
+#include "world_factory.h"
 #include "logger.h"
 #include "tick.h"
 
@@ -60,12 +61,32 @@ struct RecursiveTask
 
 }  // namespace
 
-GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, World* world, const std::string& loginMessage)
-  : gameEngineQueue_(gameEngineQueue),
-    world_(world),
-    loginMessage_(loginMessage),
-    containerManager_()
+bool GameEngine::init(GameEngineQueue* gameEngineQueue,
+                      const std::string& loginMessage,
+                      const std::string& dataFilename,
+                      const std::string& itemsFilename,
+                      const std::string& worldFilename)
 {
+  gameEngineQueue_ = gameEngineQueue;
+  loginMessage_ = loginMessage;
+
+  // Load ItemManager
+  if (!itemManager_.loadItemTypes(dataFilename, itemsFilename))
+  {
+    LOG_ERROR("%s: could not load ItemManager", __func__);
+    return false;
+  }
+
+  // Load World
+  world_ = WorldFactory::createWorld(worldFilename, &itemManager_);
+  if (!world_)
+  {
+    LOG_ERROR("%s: could not load World", __func__);
+    return false;
+  }
+
+
+  return true;
 }
 
 void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
@@ -265,9 +286,9 @@ void GameEngine::say(CreatureId creatureId,
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto& item : tile.getItems())
+      for (const auto* item : tile.getItems())
       {
-        oss << "Item: " << item.getItemId() << " (" << item.getName() << ")\n";
+        oss << "Item: " << item->getItemTypeId() << " (" << item->getItemType().name << ")\n";
       }
 
       for (const auto& creatureId : tile.getCreatureIds())
@@ -280,17 +301,20 @@ void GameEngine::say(CreatureId creatureId,
     else if (command == "put")
     {
       std::istringstream iss(option);
-      int itemId = 0;
-      iss >> itemId;
+      ItemTypeId itemTypeId = 0;
+      iss >> itemTypeId;
 
-      if (itemId < 100 || itemId > 2381)
+      const auto itemId = itemManager_.createItem(itemTypeId);
+
+      if (itemId == 0)  // TODO(simon): see item_manager TODO
       {
         playerData.player_ctrl->sendTextMessage(0x13, "Invalid itemId");
       }
       else
       {
-        auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
-        world_->addItem(itemId, position);
+        auto* item = itemManager_.getItem(itemId);
+        const auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
+        world_->addItem(item, position);
       }
     }
     else
@@ -318,7 +342,7 @@ void GameEngine::moveItem(CreatureId creatureId,
 
   auto& playerData = getPlayerData(creatureId);
 
-  if (fromPosition.getItemId() == 0x63)
+  if (fromPosition.getItemTypeId() == 0x63)
   {
     // Move Creature
     playerData.player_ctrl->sendTextMessage(0x13, "Not yet implemented.");
@@ -331,14 +355,14 @@ void GameEngine::moveItem(CreatureId creatureId,
     LOG_ERROR("%s: could not find Item at fromPosition: %s", __func__, fromPosition.toString().c_str());
     return;
   }
-  const auto item = *getItem(creatureId, fromPosition);
+  auto* item = getItem(creatureId, fromPosition);
 
   // TODO(simon): verify that Item is movable
 
   // TODO(simon): check if toPosition points to a container item, and in that case change toPosition
   //              to point inside that container (if applicable)
 
-  if (item.isContainer())
+  if (item->getItemType().isContainer)
   {
     // TODO(simon): move of Container requires ContainerManager to recalculate and
     //              modify parentContainerId and rootItemPosition
@@ -347,7 +371,7 @@ void GameEngine::moveItem(CreatureId creatureId,
   }
 
   // Verify that the Item can be added to toPosition
-  if (!canAddItem(creatureId, toPosition, item, count))
+  if (!canAddItem(creatureId, toPosition, *item, count))
   {
     // TODO(simon): proper error message to player
     LOG_ERROR("%s: cannot add Item to toPosition: %s", __func__, toPosition.toString().c_str());
@@ -380,17 +404,9 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   // TODO(simon): verify that player is close enough, if item is in world
 
-  if (item->isContainer())
+  if (item->getItemType().isContainer)
   {
-    // Create a new Container if this is the first time that this item is used
-    if (item->getContainerId() == Container::INVALID_ID)
-    {
-      item->setContainerId(containerManager_.createContainer(playerData.player_ctrl,
-                                                             item->getItemId(),
-                                                             position));
-    }
-
-    containerManager_.useContainer(playerData.player_ctrl, *item, newContainerId);
+    containerManager_.useContainer(playerData.player_ctrl, *item, position, newContainerId);
   }
 }
 
@@ -412,43 +428,38 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
 
   // TODO(simon): verify that player is close enough, if item is in world
 
-  if (item->isValid())
-  {
-    std::ostringstream ss;
+  const auto& itemType = item->getItemType();
 
-    if (!item->getName().empty())
+  std::ostringstream ss;
+
+  if (!itemType.name.empty())
+  {
+    if (itemType.isStackable && item->getCount() > 1)
     {
-      if (item->isStackable() && item->getCount() > 1)
-      {
-        ss << "You see " << item->getCount() << " " << item->getName() << "s.";
-      }
-      else
-      {
-        ss << "You see a " << item->getName() << ".";
-      }
+      ss << "You see " << item->getCount() << " " << itemType.name << "s.";
     }
     else
     {
-      ss << "You see an item with id " << item->getItemId() << ".";
+      ss << "You see a " << itemType.name << ".";
     }
-
-    // TODO(simon): only if standing next to the item
-    if (item->hasAttribute("weight"))
-    {
-      ss << "\nIt weights " << item->getAttribute<float>("weight")<< " oz.";
-    }
-
-    if (item->hasAttribute("description"))
-    {
-      ss << "\n" << item->getAttribute<std::string>("description");
-    }
-
-    playerData.player_ctrl->sendTextMessage(0x13, ss.str());
   }
   else
   {
-    LOG_ERROR("%s: could not find an Item at position: %s", __func__, position.toString().c_str());
+    ss << "You see an item with ItemTypeId: " << item->getItemTypeId() << ".";
   }
+
+  // TODO(simon): only if standing next to the item
+  if (itemType.weight != 0)
+  {
+    ss << "\nIt weights " << itemType.weight << " oz.";
+  }
+
+  if (!itemType.descr.empty())
+  {
+    ss << "\n" << itemType.descr;
+  }
+
+  playerData.player_ctrl->sendTextMessage(0x13, ss.str());
 }
 
 void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
@@ -529,11 +540,15 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
 
   if (position.getGamePosition().isPosition())
   {
-    world_->removeItem(position.getItemId(), 0, position.getGamePosition().getPosition(), position.getStackPosition());
+    world_->removeItem(position.getItemTypeId(),
+                       1,
+                       position.getGamePosition().getPosition(),
+                       position.getStackPosition());
   }
   else if (position.getGamePosition().isInventory())
   {
-    playerData.player.getEquipment().removeItem(position.getItemId(), position.getGamePosition().getInventorySlot());
+    playerData.player.getEquipment().removeItem(position.getItemTypeId(),
+                                                position.getGamePosition().getInventorySlot());
     playerData.player_ctrl->onEquipmentUpdated(playerData.player, position.getGamePosition().getInventorySlot());
   }
   else if (position.getGamePosition().isContainer())
@@ -544,7 +559,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
   }
 }
 
-void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
+void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, Item* item, int count)
 {
   auto& playerData = getPlayerData(creatureId);
 

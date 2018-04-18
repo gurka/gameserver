@@ -37,15 +37,20 @@
 class Equipment
 {
  public:
+  Equipment()
+    : items_()
+  {
+  }
+
   const Item* getItem(int inventorySlot) const;
   Item* getItem(int inventorySlot);
 
   bool canAddItem(const Item& item, int inventorySlot) const;
-  bool addItem(const Item& item, int inventorySlot);
-  bool removeItem(ItemId itemId, int inventorySlot);
+  bool addItem(Item* item, int inventorySlot);
+  bool removeItem(ItemTypeId itemTypeId, int inventorySlot);
 
  private:
-  std::array<Item, 11> items_;  // index 0 is invalid
+  std::array<Item*, 11> items_;  // index 0 is invalid
   enum InventorySlotInfo
   {
     HELMET     = 1,

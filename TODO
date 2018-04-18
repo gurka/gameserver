@@ -1,14 +1,24 @@
 General:
   * Fix TODOs in the code
 
+  * We have three things where Items can be located:
+    - Tile (World)
+    - Equipment (Player, GameEngine)
+    - Container (ContainerManager, GameEngine)
+
+    All these have canAddItem, addItem and removeItem.
+    addItem and removeItem should return success/failure (bool),
+    so that we do not duplicate or make Items disappear.
+
 ContainerManager:
   * Add support for moving container items (might need to update rootItemPosition and parentContainerId)
+
   * Add support for weight calculation
 
-Item:
-  * Refactor ItemId into ItemDataId
-  * Make ItemId be unique per actual item -> Item objects needs to be handled by a single instance (GameEngine?)
-                                             Cannot be copied
-                                             Moved in World/Equipment/Container by moving a pointer
-                                             Only certain things can create an Item: monster loot or NPCs (via selling or giving)
-                                             Can only be destroyed if thrown in water or dustbin, or if inside a corpse that vanishes
+  * Fix TODOs
+
+  * Fix tests
+
+World:
+  * Look at how Tile stores Creatures (using CreatureId)
+    Why not store them as Creature pointers, just like Items?
