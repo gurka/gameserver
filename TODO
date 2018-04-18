@@ -1,78 +1,24 @@
 General:
   * Fix TODOs in the code
+
   * We have three things where Items can be located:
-  	- Tile (World)
-  	- Equipment (Player, GameEngine)
-  	- Container (ContainerManager, GameEngine)
-  	
-  	All these have canAddItem, addItem and removeItem.
-  	addItem and removeItem should return success/failure (bool),
-  	so that we do not duplicate or make Items disappear.
+    - Tile (World)
+    - Equipment (Player, GameEngine)
+    - Container (ContainerManager, GameEngine)
+
+    All these have canAddItem, addItem and removeItem.
+    addItem and removeItem should return success/failure (bool),
+    so that we do not duplicate or make Items disappear.
 
 ContainerManager:
   * Add support for moving container items (might need to update rootItemPosition and parentContainerId)
+
   * Add support for weight calculation
 
-Item:
-  * Refactor ItemId into ItemDataId
-  * Make ItemId be unique per actual item
-    * Item objects needs to be handled by a single instance (GameEngine?)
-      Cannot be copied
-      Moved in World/Equipment/Container by moving a pointer
-      Only certain things can create an Item
-      Only certain things can delete an Item
+  * Fix TODOs
 
-  * Current implementation:
-    * class ItemData
-      * Has attributes loaded from data (dat) file and item (xml) file
-      * Stored statically in Item in an array, where index = ItemId
+  * Fix tests
 
-    * class Item
-      * Member variables:
-        * id: maps to an ItemData
-        * count: number of items in this Item (e.g. 4 apples is one Item)
-        * itemData: pointer to ItemData, which is unnecessary since we
-                    have our id and the static array
-        * containerId: only valid for containers...
-
-    * Notes
-      * Items can be created simply by creating a new Item using an ItemId
-      * If we need to have an Item temporariliy, e.g. to check if certain
-        ItemId corresponds to a container, we'd just create a new Item
-        (Item(1234).isContainer())
-
-  * New implementation (goals):
-    * Items are owned by a single instance and can only be created and deleted
-      by this instance
-      -> OK
-
-    * Items should not be copyable, only movable
-      -> OK
-
-    * Each Item has a server unique identifier, to be able to map e.g.
-      Item -> ContainerId without having to add a containerId attribute to Item
-      -> OK
-
-    * It should be possible to create/get ItemData using ItemDataId if there
-      is need to just check an Item's attributes (e.g. don't create a tmp Item)
-      -> NOT OK, but is this really necessary?
-
-    * Item object shall be stored in an unordered_map<ItemId, Item>
-      We will never iterate over all items, and unordered_map never invalidates
-      references/pointers to elements, so users (World, PlayerInventory, Container)
-      can use pointers to Item
-      -> OK
-
-    * Maybe refactor Creature in World the same way, so that World owns nothing
-      Creature / Player owned by GameEngine in std::unordered_map<CreatureId, Creature/Player>
-      World only have pointers to Creature
-      -> NOT OK
-
-  * New implementation (code):
-    * Item (World): interface to make sure only pointers are used and not copyable
-    * ItemType (World): holds information about a type of item (former ItemData)
-    * ItemImpl (GameEngine): implementation of Item
-    * ItemManager (GameEngine): holds all items, loads ItemType from files
-
-    * Move WorldFactory to GameEngine, since creation of World requires creation of Items?
-      -> all file reading is in GameEngine
+World:
+  * Look at how Tile stores Creatures (using CreatureId)
+    Why not store them as Creature pointers, just like Items?
