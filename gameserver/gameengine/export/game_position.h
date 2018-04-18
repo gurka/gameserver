@@ -30,6 +30,7 @@
 #include <string>
 
 #include "position.h"
+#include "item.h"
 
 class GamePosition
 {

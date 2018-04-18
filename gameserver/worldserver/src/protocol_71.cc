@@ -537,12 +537,12 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
   packet.addU8(item.getItemType().maxitems);
   packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
   packet.addU8(container.items.size());
-  for (const auto& item : container.items)
+  for (const auto* item : container.items)
   {
-    packet.addU16(item.getItemTypeId());
-    if (item.getItemType().isStackable)  // or splash or fluid container?
+    packet.addU16(item->getItemTypeId());
+    if (item->getItemType().isStackable)  // or splash or fluid container?
     {
-      packet.addU8(item.getCount());
+      packet.addU8(item->getCount());
     }
   }
   server_->sendPacket(connectionId_, std::move(packet));

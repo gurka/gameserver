@@ -29,6 +29,8 @@
 #include <unordered_map>
 
 #include "container.h"
+#include "item.h"
+#include "creature.h"
 #include "game_position.h"
 
 class PlayerCtrl;
@@ -53,7 +55,7 @@ class ContainerManager
   Container* getContainer(const PlayerCtrl* playerCtrl, int containerId);
   Item* getItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
 
-  int createContainer(PlayerCtrl* playerCtrl, ItemTypeId itemTypeId, const ItemPosition& itemPosition);
+  int createContainer(PlayerCtrl* playerCtrl, Item* item, const ItemPosition& itemPosition);
 
   void useContainer(PlayerCtrl* playerCtrl, const Item& item, int newClientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, int clientContainerId);
@@ -61,10 +63,10 @@ class ContainerManager
 
   bool canAddItem(const PlayerCtrl* playerCtrl, int clientContainerId, int containerSlot, const Item& item) const;
   void removeItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
-  void addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, const Item& item);
+  void addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, Item* item);
 
  private:
-  void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId, const Item& item);
+  void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId);
 
   bool isClientContainerId(int containerId) const;
@@ -75,8 +77,19 @@ class ContainerManager
   void addRelatedPlayer(Container* container, PlayerCtrl* playerCtrl, int clientContainerId);
   void removeRelatedPlayer(Container* container, const PlayerCtrl* playerCtrl, int clientContainerId);
 
+  // TODO(simon): Map ItemUniqueId directly to Container
+  //              Then we won't need ContainerId (...right?)
+  //              And can then rename clientContainerId to just containerId
+
+  // Maps ItemUniqueId to ContainerId
+  std::unordered_map<ItemUniqueId, int> containerIds_;
+
+  // All containers
   int nextContainerId_;
   std::unordered_map<int, Container> containers_;
+
+  // Maps a (player's) CreatureId to an array where index is
+  // a clientContainerId and element is a (global) ContainerId
   std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
 };
 

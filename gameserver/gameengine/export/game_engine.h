@@ -38,6 +38,7 @@
 #include "game_engine_queue.h"
 #include "player.h"
 #include "position.h"
+#include "container_manager.h"
 #include "game_position.h"
 
 class OutgoingPacket;
@@ -111,6 +112,7 @@ class GameEngine
 
   GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;
+  ContainerManager containerManager_;
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_
