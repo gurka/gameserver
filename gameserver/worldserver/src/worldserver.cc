@@ -151,14 +151,15 @@ int main()
   boost::asio::io_service io_service;
 
   // Create GameEngine and GameEngineQueue
-  gameEngineQueue = std::make_unique<GameEngineQueue>(&io_service);
-  gameEngine = std::make_unique<GameEngine>(gameEngineQueue.get(), loginMessage);
-  if (!gameEngine->init(dataFilename, itemsFilename, worldFilename))
+  gameEngine = std::make_unique<GameEngine>();
+  gameEngineQueue = std::make_unique<GameEngineQueue>(gameEngine.get(), &io_service);
+
+  // Initialize GameEngine
+  if (!gameEngine->init(gameEngineQueue.get(), loginMessage, dataFilename, itemsFilename, worldFilename))
   {
     LOG_ERROR("Could not initialize GameEngine");
     return 1;
   }
-  gameEngineQueue->setGameEngine(gameEngine.get());
 
   // Create and load AccountReader
   accountReader = std::make_unique<AccountReader>();

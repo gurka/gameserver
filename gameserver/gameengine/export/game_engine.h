@@ -35,25 +35,30 @@
 
 #include "world.h"
 #include "item_manager.h"
-#include "game_engine_queue.h"
 #include "player.h"
 #include "position.h"
 #include "container_manager.h"
 #include "game_position.h"
 
+class GameEngineQueue;
 class OutgoingPacket;
 class PlayerCtrl;
 
 class GameEngine
 {
  public:
-  GameEngine(GameEngineQueue* gameEngineQueue, const std::string& loginMessage);
+  GameEngine()
+    : gameEngineQueue_(nullptr)
+  {
+  }
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 
-  bool init(const std::string& dataFilename,
+  bool init(GameEngineQueue* gameEngineQueue,
+            const std::string& loginMessage,
+            const std::string& dataFilename,
             const std::string& itemsFilename,
             const std::string& worldFilename);
 
@@ -105,13 +110,12 @@ class GameEngine
 
   std::unordered_map<CreatureId, PlayerData> playerData_;
 
-  ItemManager itemManager_;
-
   // TODO(simon): refactor away unique_ptr
   std::unique_ptr<World> world_;
 
   GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;
+  ItemManager itemManager_;
   ContainerManager containerManager_;
 };
 

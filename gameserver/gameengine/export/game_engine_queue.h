@@ -33,19 +33,16 @@
 
 class GameEngine;
 
-// TODO(simon): If we ever want to run multiple threads for network I/O this queue needs to be threadsafe
 class GameEngineQueue
 {
  public:
   using Task = std::function<void(GameEngine*)>;
 
-  explicit GameEngineQueue(boost::asio::io_service* io_service);
+  GameEngineQueue(GameEngine* gameEngine, boost::asio::io_service* io_service);
 
   // Delete copy constructors
   GameEngineQueue(const GameEngineQueue&) = delete;
   GameEngineQueue& operator=(const GameEngineQueue&) = delete;
-
-  void setGameEngine(GameEngine* gameEngine) { gameEngine_ = gameEngine; }
 
   void addTask(int tag, const Task& task);
   void addTask(int tag, std::int64_t expire_ms, const Task& task);

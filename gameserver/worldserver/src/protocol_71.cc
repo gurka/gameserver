@@ -32,6 +32,7 @@
 #include <utility>
 
 #include "game_engine.h"
+#include "game_engine_queue.h"
 #include "server.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"

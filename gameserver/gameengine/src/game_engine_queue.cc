@@ -24,8 +24,8 @@
 
 #include "game_engine_queue.h"
 
-GameEngineQueue::GameEngineQueue(boost::asio::io_service* io_service)
-  : gameEngine_(nullptr),
+GameEngineQueue::GameEngineQueue(GameEngine* gameEngine, boost::asio::io_service* io_service)
+  : gameEngine_(gameEngine),
     timer_(*io_service),
     timer_started_(false)
 {

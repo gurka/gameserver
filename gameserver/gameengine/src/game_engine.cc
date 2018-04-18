@@ -30,6 +30,7 @@
 #include <sstream>
 #include <utility>
 
+#include "game_engine_queue.h"
 #include "player.h"
 #include "player_ctrl.h"
 #include "creature.h"
@@ -60,16 +61,15 @@ struct RecursiveTask
 
 }  // namespace
 
-GameEngine::GameEngine(GameEngineQueue* gameEngineQueue, const std::string& loginMessage)
-  : gameEngineQueue_(gameEngineQueue),
-    loginMessage_(loginMessage)
-{
-}
-
-bool GameEngine::init(const std::string& dataFilename,
+bool GameEngine::init(GameEngineQueue* gameEngineQueue,
+                      const std::string& loginMessage,
+                      const std::string& dataFilename,
                       const std::string& itemsFilename,
                       const std::string& worldFilename)
 {
+  gameEngineQueue_ = gameEngineQueue;
+  loginMessage_ = loginMessage;
+
   // Load ItemManager
   if (!itemManager_.loadItemTypes(dataFilename, itemsFilename))
   {

@@ -77,9 +77,6 @@ target_include_directories(world PUBLIC
   "world/export"
   "utils/export"
 )
-target_include_directories(world SYSTEM PRIVATE
-  "../external/rapidxml"
-)
 
 # -- Unit tests --
 
