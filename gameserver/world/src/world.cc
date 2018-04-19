@@ -107,9 +107,9 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
     LOG_INFO("%s: Spawning Creature: %d at Position: %s", __func__, creatureId, adjustedPosition.toString().c_str());
     internalGetTile(adjustedPosition).addCreature(creatureId);
 
-    creatures_.insert(std::make_pair(creatureId, creature));
-    creatureCtrls_.insert(std::make_pair(creatureId, creatureCtrl));
-    creaturePositions_.insert(std::make_pair(creatureId, adjustedPosition));
+    creature_data_.emplace(std::piecewise_construct,
+                           std::forward_as_tuple(creatureId),
+                           std::forward_as_tuple(creature, creatureCtrl, adjustedPosition));
 
     // Tell near creatures that a creature has spawned
     // Including the spawned creature!
@@ -149,15 +149,13 @@ void World::removeCreature(CreatureId creatureId)
     getCreatureCtrl(nearCreatureId).onCreatureDespawn(*this, creature, position, stackPos);
   }
 
-  creatures_.erase(creatureId);
-  creatureCtrls_.erase(creatureId);
-  creaturePositions_.erase(creatureId);
+  creature_data_.erase(creatureId);
   tile.removeCreature(creatureId);
 }
 
 bool World::creatureExists(CreatureId creatureId) const
 {
-  return creatureId != Creature::INVALID_ID && creatures_.count(creatureId) == 1;
+  return creatureId != Creature::INVALID_ID && creature_data_.count(creatureId) == 1;
 }
 
 World::ReturnCode World::creatureMove(CreatureId creatureId, Direction direction)
@@ -214,7 +212,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   fromTile.removeCreature(creatureId);
 
   toTile.addCreature(creatureId);
-  creaturePositions_.at(creatureId) = toPosition;
+  creature_data_.at(creatureId).position = toPosition;
 
   // Set new nextWalkTime for this Creature
   auto groundSpeed = fromTile.getGroundSpeed();
@@ -615,7 +613,7 @@ Creature& World::internalGetCreature(CreatureId creatureId)
   {
     LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
   }
-  return *(creatures_.at(creatureId));
+  return *(creature_data_.at(creatureId).creature);
 }
 
 const Creature& World::getCreature(CreatureId creatureId) const
@@ -625,7 +623,7 @@ const Creature& World::getCreature(CreatureId creatureId) const
     LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
     return Creature::INVALID;
   }
-  return *(creatures_.at(creatureId));
+  return *(creature_data_.at(creatureId).creature);
 }
 
 CreatureCtrl& World::getCreatureCtrl(CreatureId creatureId)
@@ -634,7 +632,7 @@ CreatureCtrl& World::getCreatureCtrl(CreatureId creatureId)
   {
     LOG_ERROR("getCreatureCtrl called with non-existent CreatureId");
   }
-  return *(creatureCtrls_.at(creatureId));
+  return *(creature_data_.at(creatureId).creature_ctrl);
 }
 
 const Position& World::getCreaturePosition(CreatureId creatureId) const
@@ -644,5 +642,5 @@ const Position& World::getCreaturePosition(CreatureId creatureId) const
     LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
     return Position::INVALID;
   }
-  return creaturePositions_.at(creatureId);
+  return creature_data_.at(creatureId).position;
 }

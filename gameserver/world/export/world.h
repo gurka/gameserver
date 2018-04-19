@@ -114,9 +114,22 @@ class World : public WorldInterface
   // index = (((y - position_offset) * worldSizeX_) + (x - position_offset))
   std::vector<Tile> tiles_;
 
-  std::unordered_map<CreatureId, Creature*> creatures_;
-  std::unordered_map<CreatureId, CreatureCtrl*> creatureCtrls_;
-  std::unordered_map<CreatureId, Position> creaturePositions_;
+  struct CreatureData
+  {
+    CreatureData(Creature* creature,
+                 CreatureCtrl* creature_ctrl,
+                 const Position& position)
+      : creature(creature),
+        creature_ctrl(creature_ctrl),
+        position(position)
+    {
+    }
+
+    Creature* creature;
+    CreatureCtrl* creature_ctrl;
+    Position position;
+  };
+  std::unordered_map<CreatureId, CreatureData> creature_data_;
 };
 
 #endif  // WORLD_EXPORT_WORLD_H_
