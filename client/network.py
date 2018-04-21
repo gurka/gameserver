@@ -50,6 +50,9 @@ class OutgoingPacket():
     def add_u16(self, value):
         self.data += struct.pack('<H', value)
 
+    def add_u32(self, value):
+        self.data += struct.pack('<I', value)
+
     def add_string(self, string):
         string_bytes = bytearray(string, 'ascii')
         self.add_u16(len(string_bytes))
@@ -60,17 +63,38 @@ class IncomingPacket():
         self.data = data
         self.pos = 0
 
-    def get_u8(self):
+    def peek_u8(self):
         value, = struct.unpack('<B', self.data[self.pos:self.pos+1])
+        return value
+
+    def get_u8(self):
+        value = self.peek_u8()
         self.pos += 1
         return value
 
-    def get_u16(self):
+    def peek_u16(self):
         value, = struct.unpack('<H', self.data[self.pos:self.pos+2])
+        return value
+
+    def get_u16(self):
+        value = self.peek_u16()
         self.pos += 2
+        return value
+
+    def peek_u32(self):
+        value, = struct.unpack('<I', self.data[self.pos:self.pos+4])
+        return value
+
+    def get_u32(self):
+        value = self.peek_u32()
+        self.pos += 4
         return value
 
     def get_string(self):
         string_len = self.get_u16()
         string = self.data[self.pos:self.pos+string_len].decode('ascii')
+        self.pos += string_len
         return string
+
+    def skip(self, n):
+        self.pos += n
