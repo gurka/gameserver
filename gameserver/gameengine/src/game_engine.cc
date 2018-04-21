@@ -112,7 +112,7 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   containerManager_.playerSpawn(player_ctrl);
 
   // Spawn the player
-  auto rc = world_->addCreature(&player, player_ctrl, Position(222, 222, 7));
+  auto rc = world_->addCreature(&player, player_ctrl, Position(208, 208, 7));
   if (rc != World::ReturnCode::OK)
   {
     LOG_ERROR("%s: Could not spawn player", __func__);
