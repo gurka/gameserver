@@ -60,17 +60,20 @@ static std::unique_ptr<Server> server;
 // so use unordered_map
 static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;
 
+void onCloseProtocol(ConnectionId connectionId)
+{
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+  protocols.erase(connectionId);
+}
+
 void onClientConnected(ConnectionId connectionId)
 {
-  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
 
   // Create and store Protocol for this Connection
   // Note: we need a different solution if we want to support different protocol versions
   // as the client version is parsed in the login packet
-  auto protocol = std::make_unique<Protocol71>([connectionId]()
-                                               {
-                                                 protocols.erase(connectionId);
-                                               },
+  auto protocol = std::make_unique<Protocol71>([connectionId]() { onCloseProtocol(connectionId); },
                                                gameEngineQueue.get(),
                                                connectionId,
                                                server.get(),
@@ -83,13 +86,13 @@ void onClientConnected(ConnectionId connectionId)
 
 void onClientDisconnected(ConnectionId connectionId)
 {
-  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
   protocols.at(connectionId)->disconnected();
 }
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
-  LOG_DEBUG("%s: ConnectionId: %d", __func__, connectionId);
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
   protocols.at(connectionId)->parsePacket(packet);
 }
 

@@ -100,10 +100,6 @@ TEST_F(ConnectionTest, ConstructAndDelete)
 
   EXPECT_CALL(service_, async_read(_, _, _, _));
   connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
-
-  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
-  EXPECT_CALL(service_, socket_close(_));
-  EXPECT_CALL(callbacksMock_, onConnectionClosed());
   connection_.reset();
 }
 
@@ -111,7 +107,7 @@ TEST_F(ConnectionTest, Close)
 {
   using ::testing::_;
 
-  // Test with force == false
+  // Test with force = false
   EXPECT_CALL(service_, async_read(_, _, _, _));
   connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
@@ -120,7 +116,7 @@ TEST_F(ConnectionTest, Close)
   EXPECT_CALL(callbacksMock_, onConnectionClosed());
   connection_->close(false);
 
-  // Test with force == true
+  // Test with force = true
   EXPECT_CALL(service_, async_read(_, _, _, _));
   connection_ = std::make_unique<Connection<Backend>>(Backend::Socket(service_), callbacks_);
 
@@ -291,14 +287,7 @@ TEST_F(ConnectionTest, Disconnect_3)
   EXPECT_CALL(service_, async_write(_, _, 2, _)).WillOnce(SaveArg<3>(&writeHandler));
   connection_->sendPacket(std::move(outgoingPacket));
 
-  // onDisconnect callback should be called when async_write handler is called with error
-  EXPECT_CALL(callbacksMock_, onDisconnected());
-
-  // And the Connection should be closed
-  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
-  EXPECT_CALL(service_, socket_close(_));
-  EXPECT_CALL(callbacksMock_, onConnectionClosed());
-
+  // Nothing should happen when there occurs an error while sending a packet
   writeHandler(Backend::Error::other_error, 0);
 
   connection_.reset();  // Shouldn't have any side effects
@@ -326,14 +315,7 @@ TEST_F(ConnectionTest, Disconnect_4)
   EXPECT_CALL(service_, async_write(_, _, _, _)).WillOnce(SaveArg<3>(&writeHandler));
   writeHandler(Backend::Error::no_error, 2);
 
-  // onDisconnect callback should be called when async_write handler is called with error
-  EXPECT_CALL(callbacksMock_, onDisconnected());
-
-  // And the Connection should be closed
-  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
-  EXPECT_CALL(service_, socket_close(_));
-  EXPECT_CALL(callbacksMock_, onConnectionClosed());
-
+  // Nothing should happen when there occurs an error while sending a packet
   writeHandler(Backend::Error::other_error, 0);
 
   connection_.reset();  // Shouldn't have any side effects
