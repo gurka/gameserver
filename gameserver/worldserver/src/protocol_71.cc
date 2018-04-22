@@ -368,6 +368,15 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
     addPosition(newPosition, &packet);
     addCreature(creature, &packet);
   }
+  else
+  {
+    LOG_ERROR("%s: called, but this player cannot see neither oldPosition nor newPosition; player_position: %s, oldPosition: %s, newPosition: %s",
+              __func__,
+              player_position.toString().c_str(),
+              oldPosition.toString().c_str(),
+              newPosition.toString().c_str());
+    return;
+  }
 
   if (creature.getCreatureId() == playerId_)
   {
@@ -658,9 +667,10 @@ void Protocol71::cancelMove()
 
 bool Protocol71::canSee(const Position& from_position, const Position& to_position) const
 {
-  return to_position.getX() >  from_position.getX() - 9 &&
+  // Note: this is what the client can see, the player can only see +-8 / +-6
+  return to_position.getX() >= from_position.getX() - 9 &&
          to_position.getX() <= from_position.getX() + 9 &&
-         to_position.getY() >  from_position.getY() - 7 &&
+         to_position.getY() >= from_position.getY() - 7 &&
          to_position.getY() <= from_position.getY() + 7;
 }
 
