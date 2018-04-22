@@ -34,6 +34,48 @@
 #include "outgoing_packet.h"
 #include "logger.h"
 
+/**
+ * class Connection
+ *
+ * Callbacks:
+ *   onPacketReceived:   called when a packet has been received
+ *
+ *   onDisconnected:     called when an error occurs in the receive loop
+ *
+ *   onConnectionClosed: called when the connection is closed and can safely be deleted
+ *
+ * There are three ways a connection can be closed:
+ *   1. Owner asks to close the connection gracefully, using close(force=false).
+ *
+ *      Any queued packets will be sent before the connection is closed and the
+ *      onConnectionClosed callback is called. If there are no queued packets to
+ *      be sent the onConnectionClosed callback is directly.
+ *
+ *      No more packets are received after the call to close().
+ *
+ *      NOTE: If an error occurs while sending the queued packets the onConnectionClosed
+ *            will never be called. At least not by Connection itself.
+ *      TODO(simon): Fix this, somehow.
+ *
+ *   2. Owner asks to close the connection forcefully, using close(force=true).
+ *
+ *      The onConnectionClosed callback is called and the owner can delete the connection.
+ *      Any queued packets to send will be lost and no more packets will be received.
+ *
+ *   3. An error occurs in the receive loop.
+ *
+ *      Both the onDisconnected callback and the onConnectionClosed callback is
+ *      called (in that order).
+ *
+ * Connection handles its receive loop itself, which is started in its constructor:
+ *   1. receivePacket()
+ *   2. receivePacket lambda
+ *   3. onPacketHeaderReceived()
+ *   4. onPacketHeaderReceived lambda
+ *   5. onPacketDataReceived()
+ *
+ * Any errors that occur when sending packets are logged but not handled.
+ */
 template <typename Backend>
 class Connection
 {
@@ -48,7 +90,7 @@ class Connection
   Connection(typename Backend::Socket socket, const Callbacks& callbacks)
     : socket_(std::move(socket)),
       callbacks_(callbacks),
-      state_(CONNECTED)
+      shutdown_(false)
   {
     // Start to receive packets
     receivePacket();
@@ -56,10 +98,9 @@ class Connection
 
   virtual ~Connection()
   {
-    if (state_ != CLOSED)
+    if (!shutdown_)
     {
-      // Force a close
-      close(true);
+      LOG_ERROR("%s: called with shutdown_: false", __func__);
     }
   }
 
@@ -69,54 +110,37 @@ class Connection
 
   void close(bool force)
   {
-    if (state_ == CLOSED)
+    if (shutdown_)
     {
-      // Connection already closed
+      LOG_ERROR("%s: called with shutdown_: true", __func__);
       return;
     }
-    else if (force || outgoingPackets_.empty())
+
+    shutdown_ = true;
+
+    if (force || outgoingPackets_.empty())
     {
-      // Either we should force close the connection or we should not force close but
-      // there are not any more packets to send, so close the connection now
-
+      // Either we should force close the connection, or we should not force close but
+      // there are no queued packets to send, so close the connection now
       LOG_DEBUG("%s: closing the connection now", __func__);
-
-      typename Backend::ErrorCode error;
-
-      socket_.shutdown(Backend::shutdown_type::shutdown_both, error);
-      if (error)
-      {
-        LOG_ERROR("%s: could not shutdown socket: %s", __func__, error.message().c_str());
-      }
-
-      socket_.close(error);
-      if (error)
-      {
-        LOG_ERROR("%s: could not close socket: %s", __func__, error.message().c_str());
-      }
-
-      state_ = CLOSED;
-      callbacks_.onConnectionClosed();
+      closeConnection();
     }
-    else if (state_ != CLOSING)
+    else
     {
       // If we should not force close it and there are packets left to send, just
-      // set state to CLOSING and the sendPacket handler will call close again
+      // set shutdown_ to true and the sendPacket handler will call close again
       // when all packets have been sent
 
       LOG_DEBUG("%s: closing the connection when all queued packets have been sent", __func__);
-      state_ = CLOSING;
     }
   }
 
   void sendPacket(OutgoingPacket&& packet)
   {
-    if (state_ != CONNECTED)
+    if (shutdown_)
     {
-      // The connection is either closing or close, don't allow more packets to be sent
-      LOG_DEBUG("%s: cannot send packet, state = %s",
-                __func__,
-                state_ == CLOSING ? "CLOSING" : "CLOSED");
+      // The connection is either closing or closed, don't allow more packets to be sent
+      LOG_DEBUG("%s: cannot send packet, shutdown_: true", __func__);
       return;
     }
 
@@ -134,7 +158,7 @@ class Connection
   {
     if (outgoingPackets_.empty())
     {
-      LOG_ERROR("%s: there are no packets to send, __func__");
+      LOG_ERROR("%s: there are no packets to send", __func__);
       return;
     }
 
@@ -151,89 +175,53 @@ class Connection
                          2,
                          [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                          {
-                           // Just abort on operation_aborted, this instance might have been deleted
-                           if (errorCode == Backend::Error::operation_aborted)
+                           if (errorCode)
                            {
-                             LOG_DEBUG("%s: operation_aborted", __func__);
+                             // Let receive loop handle the disconnect
+                             LOG_DEBUG("%s: errorCode: %s", __func__, errorCode.message().c_str());
                              return;
                            }
 
-                           onPacketHeaderSent(errorCode, len);
+                           if (len != 2u)
+                           {
+                             LOG_ERROR("%s: len: %d, expected: 2", __func__, len);
+                             return;
+                           }
+
+                           onPacketHeaderSent();
                          });
   }
 
-  void onPacketHeaderSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
+  void onPacketHeaderSent()
   {
-    if (errorCode || len != 2u)
-    {
-      if (errorCode)
-      {
-        LOG_DEBUG("%s: could not send packet header: %s",
-                  __func__,
-                  errorCode.message().c_str());
-      }
-      else  // if (len != 2u)
-      {
-        LOG_DEBUG("%s: could not send packet header: bytes sent: %d, expected: 2",
-                  __func__,
-                  len);
-      }
-
-      if (state_ != CLOSED)
-      {
-        callbacks_.onDisconnected();
-        close(true);
-      }
-
-      return;
-    }
-
     LOG_DEBUG("%s: packet header sent, sending data", __func__);
 
     const auto& packet = outgoingPackets_.front();
+    auto packet_length = outgoingPackets_.front().getLength();
     Backend::async_write(socket_,
                          packet.getBuffer(),
                          packet.getLength(),
-                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                         [this, packet_length](const typename Backend::ErrorCode& errorCode, std::size_t len)
                          {
-                           // Just abort on operation_aborted, this instance might have been deleted
-                           if (errorCode == Backend::Error::operation_aborted)
+                           if (errorCode)
                            {
-                             LOG_DEBUG("%s: operation_aborted", __func__);
+                             // Let receive loop handle the disconnect
+                             LOG_DEBUG("%s: errorCode: %s", __func__, errorCode.message().c_str());
                              return;
                            }
 
-                           onPacketDataSent(errorCode, len);
+                           if (len != packet_length)
+                           {
+                             LOG_ERROR("%s: len: %d, expected: d", __func__, len, packet_length);
+                             return;
+                           }
+
+                           onPacketDataSent();
                          });
   }
 
-  void onPacketDataSent(const typename Backend::ErrorCode& errorCode, std::size_t len)
+  void onPacketDataSent()
   {
-    if (errorCode || len != outgoingPackets_.front().getLength())
-    {
-      if (errorCode)
-      {
-        LOG_DEBUG("%s: could not send packet: %s",
-                  __func__,
-                  errorCode.message().c_str());
-      }
-      else  // if (len != outgoingPackets_.front().getLength())
-      {
-        LOG_DEBUG("%s: could not send packet, bytes sent: %d, expected: %d",
-                  __func__,
-                  len,
-                  outgoingPackets_.front().getLength());
-      }
-
-      if (state_ != CLOSED)
-      {
-        callbacks_.onDisconnected();
-        close(true);
-      }
-
-      return;
-    }
-
     outgoingPackets_.pop_front();
     if (!outgoingPackets_.empty())
     {
@@ -244,10 +232,10 @@ class Connection
 
       sendPacketInternal();
     }
-    else if (state_ == CLOSING)
+    else if (shutdown_)
     {
       // The outgoing packet queue is now empty, let's close the connection
-      close(true);  // true or false doesn't really matter
+      closeConnection();
     }
   }
 
@@ -265,39 +253,33 @@ class Connection
                             return;
                           }
 
-                          onPacketHeaderReceived(errorCode, len);
+                          if (errorCode)
+                          {
+                            LOG_DEBUG("%s: errorCode: %s", __func__, errorCode.message().c_str());
+                            callbacks_.onDisconnected();
+                            shutdown_ = true;
+                            closeConnection();
+                            return;
+                          }
+
+                          if (len != 2u)
+                          {
+                            LOG_ERROR("%s: len: %d, expected: 2", __func__, len);
+                            callbacks_.onDisconnected();
+                            shutdown_ = true;
+                            closeConnection();
+                            return;
+                          }
+
+                          onPacketHeaderReceived();
                         });
   }
 
-  void onPacketHeaderReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
+  void onPacketHeaderReceived()
   {
-    if (errorCode || len != 2u)
+    if (shutdown_)
     {
-      if (errorCode)
-      {
-        LOG_DEBUG("%s: could not receive packet header: %s",
-                  __func__,
-                  errorCode.message().c_str());
-      }
-      else  // if (len != 2u)
-      {
-        LOG_DEBUG("%s: could not receive packet header: bytes received: %d, expected: 2",
-                  __func__,
-                  len);
-      }
-
-      if (state_ != CLOSED)
-      {
-        callbacks_.onDisconnected();
-        close(true);
-      }
-
-      return;
-    }
-
-    if (state_ != CONNECTED)
-    {
-      // Don't continue if we are CLOSING or CLOSED
+      // Don't continue if we are about to shut down
       return;
     }
 
@@ -309,7 +291,7 @@ class Connection
     Backend::async_read(socket_,
                         readBuffer_.data(),
                         dataLength,
-                        [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                        [this, dataLength](const typename Backend::ErrorCode& errorCode, std::size_t len)
                         {
                           // Just abort on operation_aborted, this instance might have been deleted
                           if (errorCode == Backend::Error::operation_aborted)
@@ -318,55 +300,71 @@ class Connection
                             return;
                           }
 
-                          onPacketDataReceived(errorCode, len);
+                          if (errorCode)
+                          {
+                            LOG_DEBUG("%s: errorCode: %s", __func__, errorCode.message().c_str());
+                            callbacks_.onDisconnected();
+                            shutdown_ = true;
+                            closeConnection();
+                            return;
+                          }
+
+                          if (static_cast<int>(len) != dataLength)
+                          {
+                            LOG_ERROR("%s: len: %d, expected: %d", __func__, len, dataLength);
+                            callbacks_.onDisconnected();
+                            shutdown_ = true;
+                            closeConnection();
+                            return;
+                          }
+
+                          onPacketDataReceived(len);
                         });
   }
 
-  void onPacketDataReceived(const typename Backend::ErrorCode& errorCode, std::size_t len)
+  void onPacketDataReceived(std::size_t len)
   {
-    if (errorCode)
+    if (shutdown_)
     {
-      LOG_DEBUG("%s: could not receive packet", __func__);
-
-      if (state_ != CLOSED)
-      {
-        callbacks_.onDisconnected();
-        close(true);
-      }
-
-      return;
-    }
-    else if (state_ != CONNECTED)
-    {
-      // Don't continue if we are CLOSING or CLOSED
+      // Don't continue if we are about to shut down
       return;
     }
 
     LOG_DEBUG("%s: received packet data, data length: %d", __func__, len);
 
     // Call handler
-    // Maybe it should state somewhere that the IncomingPacket is only valid to read/use
+    // Maybe it should stated somewhere that the IncomingPacket is only valid to read/use
     // during the onPacketReceived call
     IncomingPacket packet(readBuffer_.data(), len);
     callbacks_.onPacketReceived(&packet);
 
-    if (state_ == CONNECTED)
+    // Receive more packets
+    receivePacket();
+  }
+
+  void closeConnection()
+  {
+    typename Backend::ErrorCode error;
+
+    socket_.shutdown(Backend::shutdown_type::shutdown_both, error);
+    if (error)
     {
-      // Receive more packets
-      receivePacket();
+      LOG_DEBUG("%s: could not shutdown socket: %s", __func__, error.message().c_str());
     }
+
+    socket_.close(error);
+    if (error)
+    {
+      LOG_DEBUG("%s: could not close socket: %s", __func__, error.message().c_str());
+    }
+
+    callbacks_.onConnectionClosed();
   }
 
   typename Backend::Socket socket_;
   Callbacks callbacks_;
 
-  enum State
-  {
-    CONNECTED,
-    CLOSING,
-    CLOSED,
-  };
-  State state_;
+  bool shutdown_;
 
   // I/O Buffers
   std::array<std::uint8_t, 8192> readBuffer_;
