@@ -136,6 +136,7 @@ void Logger::log(const char* fileFullPath, int line, Level level, ...)
     va_end(args);
 
     printf("[%s][%s:%d] %s: %s\n", time_str, filename, line, levelToString(level).c_str(), message);
+    std::fflush(stdout);
   }
 }
 
