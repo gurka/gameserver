@@ -64,7 +64,7 @@ class Protocol():
             return False
 
         packet_type = packet.get_u8()
-        print("parse_packet: skipping unknown packet type: 0x{:02x}".format(packet_type))
+        #print("parse_packet: skipping unknown packet type: 0x{:02x}".format(packet_type))
         return True
 
     # Helpers

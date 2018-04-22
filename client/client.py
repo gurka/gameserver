@@ -73,7 +73,7 @@ if __name__ == '__main__':
             if not protocol.login("Alice", "1"):
                 sys.exit(0)
 
-            next_spawn = current_tick + 5000
+            next_spawn = current_tick + 1000
 
         # Handle each client
         for client, protocol in clients:
