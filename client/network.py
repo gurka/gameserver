@@ -9,6 +9,7 @@ class Connection():
     def connect(self):
         if self.sock is None:
             self.sock = socket.create_connection(('192.168.1.11', 7172))
+            self.sock.setblocking(0)
 
     def close(self):
         if self.sock:
@@ -31,9 +32,12 @@ class Connection():
         if self.sock is None:
             raise Exception
 
-        packet_header_bytes = self.sock.recv(2)
-        packet_header, = struct.unpack('<H', packet_header_bytes)
-        packet_bytes = self.sock.recv(packet_header)
+        try:
+            packet_header_bytes = self.sock.recv(2)
+            packet_header, = struct.unpack('<H', packet_header_bytes)
+            packet_bytes = self.sock.recv(packet_header)
+        except Exception:
+            return None
 
         print("recv_packet: header: {}".format(binascii.hexlify(packet_header_bytes)))
         print("recv_packet: packet: {}".format(binascii.hexlify(packet_bytes)))
