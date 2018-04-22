@@ -370,7 +370,8 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
   }
   else
   {
-    LOG_ERROR("%s: called, but this player cannot see neither oldPosition nor newPosition; player_position: %s, oldPosition: %s, newPosition: %s",
+    LOG_ERROR("%s: called, but this player cannot see neither oldPosition nor newPosition: "
+              "player_position: %s, oldPosition: %s, newPosition: %s",
               __func__,
               player_position.toString().c_str(),
               oldPosition.toString().c_str(),
