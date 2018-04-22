@@ -22,8 +22,8 @@ class Connection():
 
         packet_header = struct.pack('<H', len(packet.data))
 
-        print("send_packet: header: {}".format(binascii.hexlify(packet_header)))
-        print("send_packet: packet: {}".format(binascii.hexlify(packet.data)))
+        #print("send_packet: header: {}".format(binascii.hexlify(packet_header)))
+        #print("send_packet: packet: {}".format(binascii.hexlify(packet.data)))
 
         self.sock.sendall(packet_header)
         self.sock.sendall(packet.data)
@@ -39,8 +39,8 @@ class Connection():
         except Exception:
             return None
 
-        print("recv_packet: header: {}".format(binascii.hexlify(packet_header_bytes)))
-        print("recv_packet: packet: {}".format(binascii.hexlify(packet_bytes)))
+        #print("recv_packet: header: {}".format(binascii.hexlify(packet_header_bytes)))
+        #print("recv_packet: packet: {}".format(binascii.hexlify(packet_bytes)))
 
         return IncomingPacket(packet_bytes)
 
