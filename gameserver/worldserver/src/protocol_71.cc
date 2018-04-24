@@ -794,7 +794,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
     {
       // No empty spot!
       // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
-      LOG_ERROR("%s: knownCreatures_ is full!");
+      LOG_ERROR("%s: knownCreatures_ is full!", __func__);
     }
     else
     {
