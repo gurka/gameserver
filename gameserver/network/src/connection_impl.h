@@ -85,7 +85,7 @@ template <typename Backend>
 class ConnectionImpl : public Connection
 {
  public:
-  ConnectionImpl(typename Backend::Socket&& socket)
+  explicit ConnectionImpl(typename Backend::Socket&& socket)
     : socket_(std::move(socket)),
       closing_(false),
       receiveInProgress_(false),

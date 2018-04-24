@@ -25,10 +25,12 @@
 #ifndef NETWORK_SRC_SERVER_IMPL_H_
 #define NETWORK_SRC_SERVER_IMPL_H_
 
+#include "server.h"
+
+#include <memory>
 #include <unordered_map>
 #include <utility>
 
-#include "server.h"
 #include "acceptor.h"
 #include "connection_impl.h"
 #include "logger.h"
