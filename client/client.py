@@ -13,7 +13,6 @@ class Client():
         self.player_id = 0
         self.player_position = (0, 0, 0)
         self.tiles = {}
-        self.next_move = 0
 
 def print_tiles(client):
     TILE_WATER = 475
@@ -44,20 +43,8 @@ def print_tiles(client):
 def tick():
     return int(round(time.time() * 1000))
 
-if __name__ == '__main__':
-    NUM_CLIENTS = 20
-
+def scenario_movement():
     clients = []
-
-    random.seed()
-
-    def signal_handler(*args):
-        for client, protocol in clients:
-            protocol.logout()
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-
     next_spawn = tick()
     while True:
         current_tick = tick()
@@ -94,3 +81,64 @@ if __name__ == '__main__':
             time.sleep((next_event - current_tick) / 1000.0)
         else:
             print("No sleep: current_tick: {} next_event {}".format(current_tick, next_event))
+
+def scenario_connect_disconnect():
+    clients = []
+    next_spawn = tick()
+    while True:
+        current_tick = tick()
+
+        if len(clients) < NUM_CLIENTS and current_tick >= next_spawn:
+            # Spawn new player
+            client = Client()
+            client.disconnect = current_tick + random.randint(500, 4000)
+            protocol = Protocol(client)
+            clients.append((client, protocol))
+            print("Spawning new client which will disconnect in {}ms. Number of clients: {}".format(client.disconnect - current_tick,
+                                                                                                    len(clients)))
+
+            if not protocol.login("Alice", "1"):
+                sys.exit(0)
+
+            next_spawn = current_tick + 100
+
+        # Handle each client
+        for client, protocol in clients:
+            while protocol.handle_packet():
+                pass
+
+            if current_tick >= client.disconnect:
+                if random.randint(0, 1) == 0:
+                    # Gracefully logout
+                    protocol.logout()
+                else:
+                    # Just disconnect
+                    protocol.disconnect()
+
+        # Remove clients that are disconnected
+        tmp = len(clients)
+        clients = [(client, protocol) for client, protocol in clients if protocol.connected()]
+        if len(clients) != tmp:
+            print("Removed disconnected players. Number of clients: {}".format(len(clients)))
+
+        # Figure out how long to sleep
+        if clients:
+            next_event = min([client.disconnect for client, protocol in clients])
+            if len(clients) < NUM_CLIENTS:
+                next_event = min([next_event, next_spawn])
+        else:
+            next_event = next_spawn
+
+        if next_event - current_tick > 0:
+            print("Sleeping {}ms".format(next_event - current_tick))
+            time.sleep((next_event - current_tick) / 1000.0)
+        else:
+            print("No sleep: current_tick: {} next_event {}".format(current_tick, next_event))
+
+if __name__ == '__main__':
+    NUM_CLIENTS = 30
+
+    random.seed()
+
+    scenario_movement()
+    #scenario_connect_disconnect()

@@ -8,6 +8,9 @@ class Protocol():
         self._client = client
         self._conn = None
 
+    def connected(self):
+        return self._conn != None
+
     def login(self, character_name, password):
         # Connect
         self._conn = Connection()
@@ -50,8 +53,22 @@ class Protocol():
             return False
 
     def logout(self):
-        if self._conn:
-            self._conn.close()
+        # Gracefully logout
+        logout_packet = OutgoingPacket()
+        logout_packet.add_u8(0x14)
+        self._conn.send_packet(logout_packet)
+
+        # Just wait for the socket to close by the server
+        try:
+            while True:
+                handle_packet()
+        except:
+            self._conn = None
+
+    def disconnect(self):
+        # Just close the socket
+        self._conn.close()
+        self._conn = None
 
     def move(self, direction):
         packet = OutgoingPacket()
