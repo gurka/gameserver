@@ -22,40 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SRC_SERVER_IMPL_H_
-#define NETWORK_SRC_SERVER_IMPL_H_
+#ifndef NETWORK_EXPORT_CONNECTION_H_
+#define NETWORK_EXPORT_CONNECTION_H_
 
-#include <unordered_map>
-#include <utility>
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 
-#include "server.h"
-#include "acceptor.h"
-#include "connection_impl.h"
-#include "logger.h"
-
-template <typename Backend>
-class ServerImpl : public Server
+class Connection
 {
  public:
-  ServerImpl(typename Backend::Service* io_service,
-             int port,
-             const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected)
-    : acceptor_(io_service,
-                port,
-                [onClientConnected](typename Backend::Socket&& socket)
-                {
-                  LOG_DEBUG("onAccept()");
-                  onClientConnected(std::make_unique<ConnectionImpl<Backend>>(std::move(socket)));
-                })
+  struct Callbacks
   {
-  }
+    std::function<void(IncomingPacket*)> onPacketReceived;
+    std::function<void(void)> onDisconnected;
+  };
 
-  // Delete copy constructors
-  ServerImpl(const ServerImpl&) = delete;
-  ServerImpl& operator=(const ServerImpl&) = delete;
+  virtual ~Connection() = default;
 
- private:
-  Acceptor<Backend> acceptor_;
+  virtual void init(const Callbacks& callbacks) = 0;
+  virtual void close(bool force) = 0;
+  virtual void sendPacket(OutgoingPacket&& packet) = 0;
 };
 
-#endif  // NETWORK_SRC_SERVER_IMPL_H_
+#endif  // NETWORK_EXPORT_CONNECTION_H_

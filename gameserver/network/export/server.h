@@ -25,32 +25,12 @@
 #ifndef NETWORK_EXPORT_SERVER_H_
 #define NETWORK_EXPORT_SERVER_H_
 
-#include <functional>
-
-class IncomingPacket;
-class OutgoingPacket;
-
-using ConnectionId = int;
-
 class Server
 {
  public:
-  struct Callbacks
-  {
-    std::function<void(ConnectionId)> onClientConnected;
-    std::function<void(ConnectionId)> onClientDisconnected;
-    std::function<void(ConnectionId, IncomingPacket*)> onPacketReceived;
-  };
-
-  Server() = default;
   virtual ~Server() = default;
 
-  // Delete copy constructors
-  Server(const Server&) = delete;
-  Server& operator=(const Server&) = delete;
-
-  virtual void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) = 0;
-  virtual void closeConnection(ConnectionId connectionId, bool force) = 0;
+  // TODO(simon): start / stop?
 };
 
 #endif  // NETWORK_EXPORT_SERVER_H_

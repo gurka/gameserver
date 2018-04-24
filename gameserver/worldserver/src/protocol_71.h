@@ -27,19 +27,24 @@
 
 #include "protocol.h"
 
-#include <cstdint>
 #include <array>
+#include <functional>
 #include <string>
+#include <memory>
 
-#include "outgoing_packet.h"
+// gameengine
 #include "player.h"
-#include "creature.h"
-#include "position.h"
-#include "item.h"
-#include "server.h"
 #include "game_position.h"
 #include "container.h"
 
+// world
+#include "creature.h"
+#include "position.h"
+#include "item.h"
+
+class Connection;
+class IncomingPacket;
+class OutgoingPacket;
 class GameEngineQueue;
 class AccountReader;
 class WorldInterface;
@@ -48,20 +53,13 @@ class Protocol71 : public Protocol
 {
  public:
   Protocol71(const std::function<void(void)>& closeProtocol,
+             std::unique_ptr<Connection>&& connection,
              GameEngineQueue* gameEngineQueue,
-             ConnectionId connectionId,
-             Server* server,
              AccountReader* accountReader);
 
   // Delete copy constructors
   Protocol71(const Protocol71&) = delete;
   Protocol71& operator=(const Protocol71&) = delete;
-
-  // Called by WorldServer (from Protocol)
-  void disconnected() override;
-
-  // Called by Server (from Protocol)
-  void parsePacket(IncomingPacket* packet) override;
 
   // Called by World (from CreatureCtrl)
   void onCreatureSpawn(const WorldInterface& world_interface,
@@ -105,7 +103,11 @@ class Protocol71 : public Protocol
 
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
-  bool isConnected() const { return server_ != nullptr; }
+  bool isConnected() const { return static_cast<bool>(connection_); }
+
+  // Connection callbacks
+  void parsePacket(IncomingPacket* packet);
+  void onDisconnected();
 
   // Helper functions for creating OutgoingPackets
   bool canSee(const Position& from_position, const Position& to_position) const;
@@ -134,11 +136,11 @@ class Protocol71 : public Protocol
   ItemPosition getItemPosition(IncomingPacket* packet) const;
 
   std::function<void(void)> closeProtocol_;
-  CreatureId playerId_;
+  std::unique_ptr<Connection> connection_;
   GameEngineQueue* gameEngineQueue_;
-  ConnectionId connectionId_;
-  Server* server_;
   AccountReader* accountReader_;
+
+  CreatureId playerId_;
 
   std::array<CreatureId, 64> knownCreatures_;
 };

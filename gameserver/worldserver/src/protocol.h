@@ -25,31 +25,12 @@
 #ifndef WORLDSERVER_SRC_PROTOCOL_H_
 #define WORLDSERVER_SRC_PROTOCOL_H_
 
-#include <string>
-
 #include "player_ctrl.h"
-#include "player.h"
-#include "creature.h"
-#include "position.h"
-#include "item.h"
-
-class IncomingPacket;
 
 class Protocol : public PlayerCtrl
 {
  public:
-  Protocol() = default;
   virtual ~Protocol() = default;
-
-  // Delete copy constructors
-  Protocol(const Protocol&) = delete;
-  Protocol& operator=(const Protocol&) = delete;
-
-  // Called by WorldServer
-  virtual void disconnected() = 0;
-
-  // Called by Server
-  virtual void parsePacket(IncomingPacket* packet) = 0;
 };
 
 #endif  // WORLDSERVER_SRC_PROTOCOL_H_

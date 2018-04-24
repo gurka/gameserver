@@ -3,12 +3,13 @@ cmake_minimum_required(VERSION 3.0)
 project(network)
 
 add_library(network
+  "export/connection.h"
   "export/incoming_packet.h"
   "export/outgoing_packet.h"
   "export/server_factory.h"
   "export/server.h"
   "src/acceptor.h"
-  "src/connection.h"
+  "src/connection_impl.h"
   "src/incoming_packet.cc"
   "src/outgoing_packet.cc"
   "src/server_factory.cc"
