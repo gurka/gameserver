@@ -185,11 +185,10 @@ class ConnectionImpl : public Connection
                          {
                            if (errorCode || len != 2u)
                            {
-                             LOG_DEBUG("%s: errorCode: %s, len: %d, expected: 2",
+                             LOG_DEBUG("%s: errorCode: %s, len: %d (expected: 2)",
                                        __func__,
                                        errorCode.message().c_str(),
                                        len);
-                             closing_ = true;
                              sendInProgress_ = false;
                              closeSocket();  // Note that this instance might be deleted during this call
                              return;
@@ -212,12 +211,11 @@ class ConnectionImpl : public Connection
                          {
                            if (errorCode || len != packet_length)
                            {
-                             LOG_DEBUG("%s: errorCode: %s, len: %d, expected: %d",
+                             LOG_DEBUG("%s: errorCode: %s, len: %d (expected: %d)",
                                        __func__,
                                        errorCode.message().c_str(),
                                        len,
                                        packet_length);
-                             closing_ = true;
                              sendInProgress_ = false;
                              closeSocket();  // Note that this instance might be deleted during this call
                              return;
@@ -259,13 +257,13 @@ class ConnectionImpl : public Connection
                         2,
                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
                         {
-                          if (errorCode || len != 2u)
+                          if (errorCode || len != 2u || closing_)
                           {
-                            LOG_DEBUG("%s: errorCode: %s, len: %d, expected: 2",
+                            LOG_DEBUG("%s: errorCode: %s, len: %d (expected: 2), closing_: %s",
                                       __func__,
                                       errorCode.message().c_str(),
-                                      len);
-                            closing_ = true;
+                                      len,
+                                      (closing_ ? "true" : "false"));
                             receiveInProgress_ = false;
                             closeSocket();  // Note that this instance might be deleted during this call
                             return;
@@ -277,14 +275,6 @@ class ConnectionImpl : public Connection
 
   void onPacketHeaderReceived()
   {
-    if (closing_)
-    {
-      // Don't continue if we are about to shut down
-      receiveInProgress_ = false;
-      closeSocket();  // Note that this instance might be deleted during this call
-      return;
-    }
-
     // Receive data
     const auto packet_length = (readBuffer_[1] << 8) | readBuffer_[0];
 
@@ -303,16 +293,24 @@ class ConnectionImpl : public Connection
                         packet_length,
                         [this, packet_length](const typename Backend::ErrorCode& errorCode, std::size_t len)
                         {
-                          if (errorCode || static_cast<int>(len) != packet_length)
+                          if (errorCode || static_cast<int>(len) != packet_length || closing_)
                           {
-                            LOG_DEBUG("%s: errorCode: %s, len: %d, expected: %d",
+                            LOG_DEBUG("%s: errorCode: %s, len: %d (expected: %d), closing_: %s",
                                       __func__,
                                       errorCode.message().c_str(),
                                       len,
-                                      packet_length);
-                            closing_ = true;
+                                      packet_length,
+                                      (closing_ ? "true" : "false"));
                             receiveInProgress_ = false;
-                            closeSocket();  // Note that this instance might be deleted during this call
+
+                            // Only close the socket on error or if closing_ is true and send not in
+                            // progress (i.e. close(force=false))
+                            if (errorCode ||
+                                static_cast<int>(len) != packet_length ||
+                                (closing_ && !sendInProgress_))
+                            {
+                              closeSocket();  // Note that this instance might be deleted during this call
+                            }
                             return;
                           }
 
@@ -322,17 +320,6 @@ class ConnectionImpl : public Connection
 
   void onPacketDataReceived(std::size_t len)
   {
-    if (closing_)
-    {
-      // Don't continue if we are about to shut down
-      receiveInProgress_ = false;
-      if (!sendInProgress_)
-      {
-        closeSocket();  // Note that this instance might be deleted during this call
-      }
-      return;
-    }
-
     LOG_DEBUG("%s: received packet data, packet length: %d", __func__, len);
 
     // Call handler
@@ -360,6 +347,8 @@ class ConnectionImpl : public Connection
 
   void closeSocket()
   {
+    closing_ = true;
+
     if (socket_.is_open())
     {
       typename Backend::ErrorCode error;
