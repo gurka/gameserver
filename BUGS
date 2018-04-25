@@ -1,3 +1,3 @@
 * Crash if client sends a packet header with packet length = 0
-* Crash sometimes when player logins and there already is a creature at the
-  position that the player wants to spawn on
+* Client crashes if it sees a player / creature walk out from the screen either north or west
+  Walking out from the screen south or east does not cause a crash
