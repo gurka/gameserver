@@ -56,6 +56,7 @@ struct Backend
     MOCK_METHOD2(acceptor_async_accept, void(Socket&, const std::function<void(const ErrorCode&)>&));
 
     // Calls from Socket
+    MOCK_CONST_METHOD0(socket_is_open, bool());
     MOCK_METHOD2(socket_shutdown, void(shutdown_type, ErrorCode&));
     MOCK_METHOD1(socket_close, void(ErrorCode&));
 
@@ -78,6 +79,7 @@ struct Backend
     {
     }
 
+    bool is_open() const { return service_.socket_is_open(); }
     void shutdown(shutdown_type st, ErrorCode& ec) { service_.socket_shutdown(st, ec); }
     void close(ErrorCode& ec) { service_.socket_close(ec); }
 

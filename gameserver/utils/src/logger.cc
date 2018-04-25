@@ -71,11 +71,11 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_ =
 {
   // Default settings
-  { Module::ACCOUNT,     Level::ERROR },
+  { Module::ACCOUNT,     Level::DEBUG },
   { Module::GAMEENGINE,  Level::DEBUG },
-  { Module::LOGINSERVER, Level::ERROR },
-  { Module::NETWORK,     Level::ERROR },
-  { Module::UTILS,       Level::ERROR },
+  { Module::LOGINSERVER, Level::DEBUG },
+  { Module::NETWORK,     Level::DEBUG },
+  { Module::UTILS,       Level::DEBUG },
   { Module::WORLD,       Level::DEBUG },
   { Module::WORLDSERVER, Level::DEBUG },
 };

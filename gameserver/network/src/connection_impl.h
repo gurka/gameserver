@@ -95,7 +95,7 @@ class ConnectionImpl : public Connection
 
   virtual ~ConnectionImpl()
   {
-    if (!closing_ || receiveInProgress_ || sendInProgress_)
+    if (receiveInProgress_ || sendInProgress_)
     {
       LOG_ERROR("%s: called with closing_: %s, receiveInProgress_: %s, sendInProgress_: %s",
                 __func__,
