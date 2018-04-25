@@ -25,19 +25,15 @@
 #ifndef NETWORK_SRC_SERVER_IMPL_H_
 #define NETWORK_SRC_SERVER_IMPL_H_
 
+#include "server.h"
+
+#include <memory>
 #include <unordered_map>
 #include <utility>
 
-#include "server.h"
 #include "acceptor.h"
-#include "connection.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "connection_impl.h"
 #include "logger.h"
-
-// Forward declarations
-class IncomingPacket;
-class OutgoingPacket;
 
 template <typename Backend>
 class ServerImpl : public Server
@@ -45,94 +41,23 @@ class ServerImpl : public Server
  public:
   ServerImpl(typename Backend::Service* io_service,
              int port,
-             const Callbacks& callbacks)
+             const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected)
     : acceptor_(io_service,
                 port,
-                [this](typename Backend::Socket socket)
+                [onClientConnected](typename Backend::Socket&& socket)
                 {
-                  onAccept(std::move(socket));
-                }),
-      callbacks_(callbacks),
-      nextConnectionId_(0)
+                  LOG_DEBUG("onAccept()");
+                  onClientConnected(std::make_unique<ConnectionImpl<Backend>>(std::move(socket)));
+                })
   {
-  }
-
-  ~ServerImpl()
-  {
-    // Close all Connections
-    while (!connections_.empty())
-    {
-      // Connection will call the onConnectionClosed callback
-      // which erases it from connections_
-      connections_.begin()->second.close(true);
-    }
   }
 
   // Delete copy constructors
   ServerImpl(const ServerImpl&) = delete;
   ServerImpl& operator=(const ServerImpl&) = delete;
 
-  void sendPacket(ConnectionId connectionId, OutgoingPacket&& packet) override
-  {
-    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-    connections_.at(connectionId).sendPacket(std::move(packet));
-  }
-
-  void closeConnection(ConnectionId connectionId, bool force) override
-  {
-    LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-    connections_.at(connectionId).close(force);
-  }
-
  private:
-  // Handler for Acceptor
-  void onAccept(typename Backend::Socket socket)
-  {
-    LOG_DEBUG("%s: connectionId: %d num connections: %lu",
-              __func__,
-              nextConnectionId_,
-              connections_.size() + 1);
-
-    auto connectionId = nextConnectionId_;
-    nextConnectionId_ += 1;
-
-    // Create and insert Connection
-    typename Connection<Backend>::Callbacks callbacks
-    {
-      [this, connectionId](IncomingPacket* packet)
-      {
-        LOG_DEBUG("onPacketReceived: connectionId: %d", connectionId);
-        callbacks_.onPacketReceived(connectionId, packet);
-      },
-
-      [this, connectionId]()
-      {
-        LOG_DEBUG("onClientDisconnected: connectionId: %d", connectionId);
-        callbacks_.onClientDisconnected(connectionId);
-        // The Connection will call the onConnectionClosed callback after this call
-      },
-
-      [this, connectionId]()
-      {
-        LOG_DEBUG("onConnectionClosed: connectionId: %d num connections: %lu", connectionId, connections_.size() - 1);
-        connections_.erase(connectionId);
-      }
-    };
-    connections_.emplace(std::piecewise_construct,
-                         std::forward_as_tuple(connectionId),
-                         std::forward_as_tuple(std::move(socket), callbacks));
-
-    callbacks_.onClientConnected(connectionId);
-  }
-
   Acceptor<Backend> acceptor_;
-  Callbacks callbacks_;
-
-  ConnectionId nextConnectionId_;
-
-  // We always access single elements with id and only iterate over the container
-  // when the server is shutting down, so use unordered_map
-  std::unordered_map<ConnectionId, Connection<Backend>> connections_;
 };
 
 #endif  // NETWORK_SRC_SERVER_IMPL_H_

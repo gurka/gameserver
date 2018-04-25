@@ -65,7 +65,7 @@ struct Backend
 
 std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_service* io_service,
                                                     int port,
-                                                    const Server::Callbacks& callbacks)
+                                                    const OnClientConnectedCallback& onClientConnected)
 {
-  return std::make_unique<ServerImpl<Backend>>(io_service, port, callbacks);
+  return std::make_unique<ServerImpl<Backend>>(io_service, port, onClientConnected);
 }

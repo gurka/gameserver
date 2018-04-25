@@ -25,56 +25,518 @@
 #include "protocol_71.h"
 
 #include <cstdio>
-#include <cstdint>
 
 #include <algorithm>
 #include <deque>
 #include <utility>
 
-#include "game_engine.h"
-#include "game_engine_queue.h"
-#include "server.h"
+// network
+#include "connection.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
-#include "world_interface.h"
-#include "logger.h"
-#include "tile.h"
-#include "account.h"
+
+// gameengine
+#include "game_engine.h"
+#include "game_engine_queue.h"
 #include "game_position.h"
 
+// world
+#include "world_interface.h"
+#include "tile.h"
+
+// utils
+#include "logger.h"
+
+// account
+#include "account.h"
+
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
+                       std::unique_ptr<Connection>&& connection,
                        GameEngineQueue* gameEngineQueue,
-                       ConnectionId connectionId,
-                       Server* server,
                        AccountReader* accountReader)
   : closeProtocol_(closeProtocol),
-    playerId_(Creature::INVALID_ID),
+    connection_(std::move(connection)),
     gameEngineQueue_(gameEngineQueue),
-    connectionId_(connectionId),
-    server_(server),
-    accountReader_(accountReader)
+    accountReader_(accountReader),
+    playerId_(Creature::INVALID_ID)
 {
   knownCreatures_.fill(Creature::INVALID_ID);
+
+  Connection::Callbacks callbacks
+  {
+    // onPacketReceived
+    [this](IncomingPacket* packet)
+    {
+      LOG_DEBUG("onPacketReceived");
+      parsePacket(packet);
+    },
+
+    // onDisconnected
+    [this]()
+    {
+      LOG_DEBUG("onDisconnected");
+      onDisconnected();
+    }
+  };
+  connection_->init(callbacks);
 }
 
-void Protocol71::disconnected()
+void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
+                                 const Creature& creature,
+                                 const Position& position)
 {
-  // We may not send any more packets now
-  server_ = nullptr;
-
-  if (isLoggedIn())
+  if (!isConnected())
   {
-    // Despawn the player
-    gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
+    return;
+  }
+
+  OutgoingPacket packet;
+
+  if (creature.getCreatureId() == playerId_)
+  {
+    // We are spawning!
+    const auto& player = static_cast<const Player&>(creature);
+
+    packet.addU8(0x0A);  // Login
+    packet.addU32(playerId_);
+
+    packet.addU8(0x32);  // ??
+    packet.addU8(0x00);
+
+    packet.addU8(0x64);  // Full (visible) map
+    addPosition(position, &packet);  // Position
+
+    addMapData(world_interface, Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
+
+    for (auto i = 0; i < 12; i++)
     {
-      gameEngine->despawn(playerId_);
-    });
+      packet.addU8(0xFF);
+    }
+
+    packet.addU8(0xE4);  // Light?
+    packet.addU8(0xFF);
+
+    packet.addU8(0x83);  // Magic effect (login)
+    packet.addU16(position.getX());
+    packet.addU16(position.getY());
+    packet.addU8(position.getZ());
+    packet.addU8(0x0A);
+
+    // Player stats
+    packet.addU8(0xA0);
+    packet.addU16(player.getHealth());
+    packet.addU16(player.getMaxHealth());
+    packet.addU16(player.getCapacity());
+    packet.addU32(player.getExperience());
+    packet.addU8(player.getLevel());
+    packet.addU16(player.getMana());
+    packet.addU16(player.getMaxMana());
+    packet.addU8(player.getMagicLevel());
+
+    packet.addU8(0x82);  // Light?
+    packet.addU8(0x6F);
+    packet.addU8(0xD7);
+
+    // Player skills
+    packet.addU8(0xA1);
+    for (auto i = 0; i < 7; i++)
+    {
+      packet.addU8(10);
+    }
+
+
+    for (auto i = 1; i <= 10; i++)
+    {
+      addEquipment(player.getEquipment(), i, &packet);
+    }
   }
   else
   {
-    // We are not logged in to the game, close the protocol now
-    closeProtocol_();  // WARNING: This instance is deleted after this call
+    // Someone else spawned
+    packet.addU8(0x6A);
+    addPosition(position, &packet);
+    addCreature(creature, &packet);
+
+    // Spawn/login bubble
+    packet.addU8(0x83);
+    addPosition(position, &packet);
+    packet.addU8(0x0A);
   }
+
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
+                                   const Creature& creature,
+                                   const Position& position,
+                                   int stackPos)
+{
+  (void)world_interface;
+
+  if (!isConnected())
+  {
+    if (creature.getCreatureId() == playerId_)
+    {
+      // We are no longer in game and the connection has been closed, close the protocol
+      playerId_ = Creature::INVALID_ID;
+      closeProtocol_();  // WARNING: This instance is deleted after this call
+    }
+    return;
+  }
+
+  OutgoingPacket packet;
+  // Logout poff
+  packet.addU8(0x83);
+  addPosition(position, &packet);
+  packet.addU8(0x02);
+  packet.addU8(0x6C);
+  addPosition(position, &packet);
+  packet.addU8(stackPos);
+  connection_->sendPacket(std::move(packet));
+
+  if (creature.getCreatureId() == playerId_)
+  {
+    // This player despawned, close the connection gracefully
+    // The protocol will be deleted as soon as the connection has been closed
+    // (via onConnectionClosed callback)
+    playerId_ = Creature::INVALID_ID;
+    connection_->close(false);
+  }
+}
+
+void Protocol71::onCreatureMove(const WorldInterface& world_interface,
+                                const Creature& creature,
+                                const Position& oldPosition,
+                                int oldStackPos,
+                                const Position& newPosition)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  // Build outgoing packet
+  OutgoingPacket packet;
+
+  const auto& player_position = world_interface.getCreaturePosition(playerId_);
+  bool canSeeOldPos = canSee(player_position, oldPosition);
+  bool canSeeNewPos = canSee(player_position, newPosition);
+
+  if (canSeeOldPos && canSeeNewPos)
+  {
+    packet.addU8(0x6D);
+    addPosition(oldPosition, &packet);
+    packet.addU8(oldStackPos);
+    addPosition(newPosition, &packet);
+  }
+  else if (canSeeOldPos)
+  {
+    packet.addU8(0x6C);
+    addPosition(oldPosition, &packet);
+    packet.addU8(oldStackPos);
+  }
+  else if (canSeeNewPos)
+  {
+    packet.addU8(0x6A);
+    addPosition(newPosition, &packet);
+    addCreature(creature, &packet);
+  }
+  else
+  {
+    LOG_ERROR("%s: called, but this player cannot see neither oldPosition nor newPosition: "
+              "player_position: %s, oldPosition: %s, newPosition: %s",
+              __func__,
+              player_position.toString().c_str(),
+              oldPosition.toString().c_str(),
+              newPosition.toString().c_str());
+    return;
+  }
+
+  if (creature.getCreatureId() == playerId_)
+  {
+    // This player moved, send new map data
+    if (oldPosition.getY() > newPosition.getY())
+    {
+      // Get north block
+      packet.addU8(0x65);
+      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() - 6, 7), 18, 1, &packet);
+      packet.addU8(0x7E);
+      packet.addU8(0xFF);
+    }
+    else if (oldPosition.getY() < newPosition.getY())
+    {
+      // Get south block
+      packet.addU8(0x67);
+      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() + 7, 7), 18, 1, &packet);
+      packet.addU8(0x7E);
+      packet.addU8(0xFF);
+    }
+
+    if (oldPosition.getX() > newPosition.getX())
+    {
+      // Get west block
+      packet.addU8(0x68);
+      addMapData(world_interface, Position(newPosition.getX() - 8, newPosition.getY() - 6, 7), 1, 14, &packet);
+      packet.addU8(0x62);
+      packet.addU8(0xFF);
+    }
+    else if (oldPosition.getX() < newPosition.getX())
+    {
+      // Get west block
+      packet.addU8(0x66);
+      addMapData(world_interface, Position(newPosition.getX() + 9, newPosition.getY() - 6, 7), 1, 14, &packet);
+      packet.addU8(0x62);
+      packet.addU8(0xFF);
+    }
+  }
+
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
+                                const Creature& creature,
+                                const Position& position,
+                                int stackPos)
+{
+  (void)world_interface;
+
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0x6B);
+  addPosition(position, &packet);
+  packet.addU8(stackPos);
+  packet.addU8(0x63);
+  packet.addU8(0x00);
+  packet.addU32(creature.getCreatureId());
+  packet.addU8(static_cast<std::uint8_t>(creature.getDirection()));
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onCreatureSay(const WorldInterface& world_interface,
+                               const Creature& creature,
+                               const Position& position,
+                               const std::string& message)
+{
+  (void)world_interface;
+
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0xAA);
+  packet.addString(creature.getName());
+  packet.addU8(0x01);  // Say type
+  // if type <= 3
+  addPosition(position, &packet);
+  packet.addString(message);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
+{
+  (void)world_interface;
+
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0x6C);
+  addPosition(position, &packet);
+  packet.addU8(stackPos);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
+{
+  (void)world_interface;
+
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0x6A);
+  addPosition(position, &packet);
+  addItem(item, &packet);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Position& position)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0x69);
+  addPosition(position, &packet);
+  addMapData(world_interface, position, 1, 1, &packet);
+  packet.addU8(0x00);
+  packet.addU8(0xFF);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  addEquipment(player.getEquipment(), inventoryIndex, &packet);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onOpenContainer(int clientContainerId, const Container& container, const Item& item)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  if (item.getItemType().maxitems == 0)
+  {
+    LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+
+  OutgoingPacket packet;
+  packet.addU8(0x6E);
+  packet.addU8(clientContainerId);
+  addItem(item, &packet);
+  packet.addString(item.getItemType().name);
+  packet.addU8(item.getItemType().maxitems);
+  packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
+  packet.addU8(container.items.size());
+  for (const auto* item : container.items)
+  {
+    packet.addU16(item->getItemTypeId());
+    if (item->getItemType().isStackable)  // or splash or fluid container?
+    {
+      packet.addU8(item->getCount());
+    }
+  }
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onCloseContainer(int clientContainerId)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+
+  OutgoingPacket packet;
+  packet.addU8(0x6F);
+  packet.addU8(clientContainerId);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, itemTypeId: %d", __func__, clientContainerId, item.getItemTypeId());
+
+  OutgoingPacket packet;
+  packet.addU8(0x70);
+  packet.addU8(clientContainerId);
+  addItem(item, &packet);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemTypeId: %d",
+            __func__,
+            clientContainerId,
+            containerSlot,
+            item.getItemTypeId());
+
+  OutgoingPacket packet;
+  packet.addU8(0x71);
+  packet.addU8(clientContainerId);
+  packet.addU8(containerSlot);
+  addItem(item, &packet);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::onContainerRemoveItem(int clientContainerId, int containerSlot)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d",
+            __func__,
+            clientContainerId,
+            containerSlot);
+
+  OutgoingPacket packet;
+  packet.addU8(0x72);
+  packet.addU8(clientContainerId);
+  packet.addU8(containerSlot);
+  connection_->sendPacket(std::move(packet));
+}
+
+// 0x13 default text, 0x11 login text
+void Protocol71::sendTextMessage(int message_type, const std::string& message)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0xB4);
+  packet.addU8(message_type);
+  packet.addString(message);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::sendCancel(const std::string& message)
+{
+  if (!isConnected())
+  {
+    return;
+  }
+
+  OutgoingPacket packet;
+  packet.addU8(0xB4);
+  packet.addU8(0x14);
+  packet.addString(message);
+  connection_->sendPacket(std::move(packet));
+}
+
+void Protocol71::cancelMove()
+{
+  OutgoingPacket packet;
+  packet.addU8(0xB5);
+  connection_->sendPacket(std::move(packet));
 }
 
 void Protocol71::parsePacket(IncomingPacket* packet)
@@ -96,7 +558,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     else
     {
       LOG_ERROR("%s: Expected login packet but received packet type: 0x%X", __func__, packetType);
-      server_->closeConnection(connectionId_, true);
+      connection_->close(true);
     }
 
     return;
@@ -211,459 +673,24 @@ void Protocol71::parsePacket(IncomingPacket* packet)
   }
 }
 
-void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
-                                 const Creature& creature,
-                                 const Position& position)
+void Protocol71::onDisconnected()
 {
-  if (!isConnected())
+  // We are no longer connected, so erase the connection
+  connection_.reset();
+
+  // If we are not logged in to the gameworld then we can erase the protocol
+  if (!isLoggedIn())
   {
-    return;
-  }
-
-  OutgoingPacket packet;
-
-  if (creature.getCreatureId() == playerId_)
-  {
-    // We are spawning!
-    const auto& player = static_cast<const Player&>(creature);
-
-    packet.addU8(0x0A);  // Login
-    packet.addU32(playerId_);
-
-    packet.addU8(0x32);  // ??
-    packet.addU8(0x00);
-
-    packet.addU8(0x64);  // Full (visible) map
-    addPosition(position, &packet);  // Position
-
-    addMapData(world_interface, Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
-
-    for (auto i = 0; i < 12; i++)
-    {
-      packet.addU8(0xFF);
-    }
-
-    packet.addU8(0xE4);  // Light?
-    packet.addU8(0xFF);
-
-    packet.addU8(0x83);  // Magic effect (login)
-    packet.addU16(position.getX());
-    packet.addU16(position.getY());
-    packet.addU8(position.getZ());
-    packet.addU8(0x0A);
-
-    // Player stats
-    packet.addU8(0xA0);
-    packet.addU16(player.getHealth());
-    packet.addU16(player.getMaxHealth());
-    packet.addU16(player.getCapacity());
-    packet.addU32(player.getExperience());
-    packet.addU8(player.getLevel());
-    packet.addU16(player.getMana());
-    packet.addU16(player.getMaxMana());
-    packet.addU8(player.getMagicLevel());
-
-    packet.addU8(0x82);  // Light?
-    packet.addU8(0x6F);
-    packet.addU8(0xD7);
-
-    // Player skills
-    packet.addU8(0xA1);
-    for (auto i = 0; i < 7; i++)
-    {
-      packet.addU8(10);
-    }
-
-
-    for (auto i = 1; i <= 10; i++)
-    {
-      addEquipment(player.getEquipment(), i, &packet);
-    }
+    closeProtocol_();  // Note that this instance is deleted during this call
   }
   else
   {
-    // Someone else spawned
-    packet.addU8(0x6A);
-    addPosition(position, &packet);
-    addCreature(creature, &packet);
-
-    // Spawn/login bubble
-    packet.addU8(0x83);
-    addPosition(position, &packet);
-    packet.addU8(0x0A);
-  }
-
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
-                                   const Creature& creature,
-                                   const Position& position,
-                                   int stackPos)
-{
-  (void)world_interface;
-
-  if (!isConnected())
-  {
-    if (creature.getCreatureId() == playerId_)
+    // We need to tell the gameengine to despawn us
+    gameEngineQueue_->addTask(playerId_, [this](GameEngine* gameEngine)
     {
-      // We are no longer in game and the connection has been closed, close the protocol
-      closeProtocol_();  // WARNING: This instance is deleted after this call
-    }
-    return;
+      gameEngine->despawn(playerId_);
+    });
   }
-
-  OutgoingPacket packet;
-  // Logout poff
-  packet.addU8(0x83);
-  addPosition(position, &packet);
-  packet.addU8(0x02);
-  packet.addU8(0x6C);
-  addPosition(position, &packet);
-  packet.addU8(stackPos);
-  server_->sendPacket(connectionId_, std::move(packet));
-
-  if (creature.getCreatureId() == playerId_)
-  {
-    // This player despawned!
-    server_->closeConnection(connectionId_, false);
-    closeProtocol_();  // WARNING: This instance is deleted after this call
-  }
-}
-
-void Protocol71::onCreatureMove(const WorldInterface& world_interface,
-                                const Creature& creature,
-                                const Position& oldPosition,
-                                int oldStackPos,
-                                const Position& newPosition)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  // Build outgoing packet
-  OutgoingPacket packet;
-
-  const auto& player_position = world_interface.getCreaturePosition(playerId_);
-  bool canSeeOldPos = canSee(player_position, oldPosition);
-  bool canSeeNewPos = canSee(player_position, newPosition);
-
-  if (canSeeOldPos && canSeeNewPos)
-  {
-    packet.addU8(0x6D);
-    addPosition(oldPosition, &packet);
-    packet.addU8(oldStackPos);
-    addPosition(newPosition, &packet);
-  }
-  else if (canSeeOldPos)
-  {
-    packet.addU8(0x6C);
-    addPosition(oldPosition, &packet);
-    packet.addU8(oldStackPos);
-  }
-  else if (canSeeNewPos)
-  {
-    packet.addU8(0x6A);
-    addPosition(newPosition, &packet);
-    addCreature(creature, &packet);
-  }
-  else
-  {
-    LOG_ERROR("%s: called, but this player cannot see neither oldPosition nor newPosition: "
-              "player_position: %s, oldPosition: %s, newPosition: %s",
-              __func__,
-              player_position.toString().c_str(),
-              oldPosition.toString().c_str(),
-              newPosition.toString().c_str());
-    return;
-  }
-
-  if (creature.getCreatureId() == playerId_)
-  {
-    // This player moved, send new map data
-    if (oldPosition.getY() > newPosition.getY())
-    {
-      // Get north block
-      packet.addU8(0x65);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() - 6, 7), 18, 1, &packet);
-      packet.addU8(0x7E);
-      packet.addU8(0xFF);
-    }
-    else if (oldPosition.getY() < newPosition.getY())
-    {
-      // Get south block
-      packet.addU8(0x67);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() + 7, 7), 18, 1, &packet);
-      packet.addU8(0x7E);
-      packet.addU8(0xFF);
-    }
-
-    if (oldPosition.getX() > newPosition.getX())
-    {
-      // Get west block
-      packet.addU8(0x68);
-      addMapData(world_interface, Position(newPosition.getX() - 8, newPosition.getY() - 6, 7), 1, 14, &packet);
-      packet.addU8(0x62);
-      packet.addU8(0xFF);
-    }
-    else if (oldPosition.getX() < newPosition.getX())
-    {
-      // Get west block
-      packet.addU8(0x66);
-      addMapData(world_interface, Position(newPosition.getX() + 9, newPosition.getY() - 6, 7), 1, 14, &packet);
-      packet.addU8(0x62);
-      packet.addU8(0xFF);
-    }
-  }
-
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
-                                const Creature& creature,
-                                const Position& position,
-                                int stackPos)
-{
-  (void)world_interface;
-
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0x6B);
-  addPosition(position, &packet);
-  packet.addU8(stackPos);
-  packet.addU8(0x63);
-  packet.addU8(0x00);
-  packet.addU32(creature.getCreatureId());
-  packet.addU8(static_cast<std::uint8_t>(creature.getDirection()));
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onCreatureSay(const WorldInterface& world_interface,
-                               const Creature& creature,
-                               const Position& position,
-                               const std::string& message)
-{
-  (void)world_interface;
-
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0xAA);
-  packet.addString(creature.getName());
-  packet.addU8(0x01);  // Say type
-  // if type <= 3
-  addPosition(position, &packet);
-  packet.addString(message);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
-{
-  (void)world_interface;
-
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0x6C);
-  addPosition(position, &packet);
-  packet.addU8(stackPos);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
-{
-  (void)world_interface;
-
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0x6A);
-  addPosition(position, &packet);
-  addItem(item, &packet);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Position& position)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0x69);
-  addPosition(position, &packet);
-  addMapData(world_interface, position, 1, 1, &packet);
-  packet.addU8(0x00);
-  packet.addU8(0xFF);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  addEquipment(player.getEquipment(), inventoryIndex, &packet);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onOpenContainer(int clientContainerId, const Container& container, const Item& item)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  if (item.getItemType().maxitems == 0)
-  {
-    LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
-    return;
-  }
-
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-
-  OutgoingPacket packet;
-  packet.addU8(0x6E);
-  packet.addU8(clientContainerId);
-  addItem(item, &packet);
-  packet.addString(item.getItemType().name);
-  packet.addU8(item.getItemType().maxitems);
-  packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
-  packet.addU8(container.items.size());
-  for (const auto* item : container.items)
-  {
-    packet.addU16(item->getItemTypeId());
-    if (item->getItemType().isStackable)  // or splash or fluid container?
-    {
-      packet.addU8(item->getCount());
-    }
-  }
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onCloseContainer(int clientContainerId)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-
-  OutgoingPacket packet;
-  packet.addU8(0x6F);
-  packet.addU8(clientContainerId);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  LOG_DEBUG("%s: clientContainerId: %u, itemTypeId: %d", __func__, clientContainerId, item.getItemTypeId());
-
-  OutgoingPacket packet;
-  packet.addU8(0x70);
-  packet.addU8(clientContainerId);
-  addItem(item, &packet);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemTypeId: %d",
-            __func__,
-            clientContainerId,
-            containerSlot,
-            item.getItemTypeId());
-
-  OutgoingPacket packet;
-  packet.addU8(0x71);
-  packet.addU8(clientContainerId);
-  packet.addU8(containerSlot);
-  addItem(item, &packet);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::onContainerRemoveItem(int clientContainerId, int containerSlot)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d",
-            __func__,
-            clientContainerId,
-            containerSlot);
-
-  OutgoingPacket packet;
-  packet.addU8(0x72);
-  packet.addU8(clientContainerId);
-  packet.addU8(containerSlot);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-// 0x13 default text, 0x11 login text
-void Protocol71::sendTextMessage(int message_type, const std::string& message)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0xB4);
-  packet.addU8(message_type);
-  packet.addString(message);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::sendCancel(const std::string& message)
-{
-  if (!isConnected())
-  {
-    return;
-  }
-
-  OutgoingPacket packet;
-  packet.addU8(0xB4);
-  packet.addU8(0x14);
-  packet.addString(message);
-  server_->sendPacket(connectionId_, std::move(packet));
-}
-
-void Protocol71::cancelMove()
-{
-  OutgoingPacket packet;
-  packet.addU8(0xB5);
-  server_->sendPacket(connectionId_, std::move(packet));
 }
 
 bool Protocol71::canSee(const Position& from_position, const Position& to_position) const
@@ -767,7 +794,7 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
     {
       // No empty spot!
       // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
-      LOG_ERROR("%s: knownCreatures_ is full!");
+      LOG_ERROR("%s: knownCreatures_ is full!", __func__);
     }
     else
     {
@@ -853,18 +880,19 @@ void Protocol71::parseLogin(IncomingPacket* packet)
     OutgoingPacket response;
     response.addU8(0x14);
     response.addString("Invalid character.");
-    server_->sendPacket(connectionId_, std::move(response));
-    server_->closeConnection(connectionId_, false);
+    connection_->sendPacket(std::move(response));
+    connection_->close(false);
     return;
   }
+
   // Check if password is correct
-  else if (!accountReader_->verifyPassword(character_name, password))
+  if (!accountReader_->verifyPassword(character_name, password))
   {
     OutgoingPacket response;
     response.addU8(0x14);
     response.addString("Invalid password.");
-    server_->sendPacket(connectionId_, std::move(response));
-    server_->closeConnection(connectionId_, false);
+    connection_->sendPacket(std::move(response));
+    connection_->close(false);
     return;
   }
 

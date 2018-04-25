@@ -25,6 +25,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <boost/asio.hpp>  //NOLINT
 
 // utils
@@ -35,10 +36,9 @@
 #include "account.h"
 
 // network
-#include "server.h"
 #include "server_factory.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "server.h"
+#include "connection.h"
 
 // gameengine
 #include "game_engine.h"
@@ -56,44 +56,33 @@ static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
 
-// We always access elements with id and never iterate over the container
-// so use unordered_map
-static std::unordered_map<ConnectionId, std::unique_ptr<Protocol>> protocols;
+using ProtocolId = int;
+static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
 
-void onCloseProtocol(ConnectionId connectionId)
+void onClientConnected(std::unique_ptr<Connection>&& connection)
 {
-  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-  protocols.erase(connectionId);
-}
+  static ProtocolId nextProtocolId = 0;
 
-void onClientConnected(ConnectionId connectionId)
-{
-  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+  const auto protocolId = nextProtocolId;
+  nextProtocolId += 1;
+
+  LOG_DEBUG("%s: protocolId: %d", __func__, protocolId);
 
   // Create and store Protocol for this Connection
   // Note: we need a different solution if we want to support different protocol versions
   // as the client version is parsed in the login packet
-  auto protocol = std::make_unique<Protocol71>([connectionId]() { onCloseProtocol(connectionId); },
+  auto protocol = std::make_unique<Protocol71>([protocolId]()
+                                               {
+                                                 LOG_DEBUG("onCloseProtocol: protocolId: %d", protocolId);
+                                                 protocols.erase(protocolId);
+                                               },
+                                               std::move(connection),
                                                gameEngineQueue.get(),
-                                               connectionId,
-                                               server.get(),
                                                accountReader.get());
 
   protocols.emplace(std::piecewise_construct,
-                    std::forward_as_tuple(connectionId),
+                    std::forward_as_tuple(protocolId),
                     std::forward_as_tuple(std::move(protocol)));
-}
-
-void onClientDisconnected(ConnectionId connectionId)
-{
-  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-  protocols.at(connectionId)->disconnected();
-}
-
-void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
-{
-  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
-  protocols.at(connectionId)->parsePacket(packet);
 }
 
 int main()
@@ -173,13 +162,7 @@ int main()
   }
 
   // Create Server
-  const Server::Callbacks callbacks =
-  {
-    &onClientConnected,
-    &onClientDisconnected,
-    &onPacketReceived,
-  };
-  server = ServerFactory::createServer(&io_service, serverPort, callbacks);
+  server = ServerFactory::createServer(&io_service, serverPort, &onClientConnected);
 
   LOG_INFO("WorldServer started!");
 
@@ -198,6 +181,7 @@ int main()
   LOG_INFO("Stopping WorldServer!");
 
   // Deallocate things (in reverse order of construction)
+  protocols.clear();
   server.reset();
   accountReader.reset();
   gameEngine.reset();

@@ -22,15 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_SRC_PROTOCOL_H_
-#define WORLDSERVER_SRC_PROTOCOL_H_
+#ifndef NETWORK_EXPORT_CONNECTION_H_
+#define NETWORK_EXPORT_CONNECTION_H_
 
-#include "player_ctrl.h"
+#include "incoming_packet.h"
+#include "outgoing_packet.h"
 
-class Protocol : public PlayerCtrl
+class Connection
 {
  public:
-  virtual ~Protocol() = default;
+  struct Callbacks
+  {
+    std::function<void(IncomingPacket*)> onPacketReceived;
+    std::function<void(void)> onDisconnected;
+  };
+
+  virtual ~Connection() = default;
+
+  virtual void init(const Callbacks& callbacks) = 0;
+  virtual void close(bool force) = 0;
+  virtual void sendPacket(OutgoingPacket&& packet) = 0;
 };
 
-#endif  // WORLDSERVER_SRC_PROTOCOL_H_
+#endif  // NETWORK_EXPORT_CONNECTION_H_

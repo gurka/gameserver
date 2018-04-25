@@ -24,13 +24,21 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_map>
+
 #include <boost/asio.hpp>  //NOLINT
 
+// utils
 #include "config_parser.h"
 #include "logger.h"
+
+// account
 #include "account.h"
-#include "server.h"
+
+// network
 #include "server_factory.h"
+#include "server.h"
+#include "connection.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
@@ -45,15 +53,8 @@ static struct
   std::string motd;
 } motd;
 
-void onClientConnected(ConnectionId connectionId)
-{
-  LOG_DEBUG("Client connected, id: %d", connectionId);
-}
-
-void onClientDisconnected(ConnectionId connectionId)
-{
-  LOG_DEBUG("Client disconnected, id: %d", connectionId);
-}
+using ConnectionId = int;
+static std::unordered_map<ConnectionId, std::unique_ptr<Connection>> connections;
 
 void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 {
@@ -118,21 +119,53 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
         }
 
         LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
-        server->sendPacket(connectionId, std::move(response));
+        connections.at(connectionId)->sendPacket(std::move(response));
 
         LOG_DEBUG("Closing connection id: %d", connectionId);
-        server->closeConnection(connectionId, false);
+        connections.at(connectionId)->close(false);
       }
       break;
 
       default:
       {
         LOG_DEBUG("Unknown packet from connection id: %d, packet id: %d", connectionId, packetId);
-        server->closeConnection(connectionId, true);
+        connections.at(connectionId)->close(true);
       }
       break;
     }
   }
+}
+
+void onClientConnected(std::unique_ptr<Connection> connection)
+{
+  static ConnectionId nextConnectionId = 0;
+
+  const auto connectionId = nextConnectionId;
+  nextConnectionId += 1;
+
+  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+
+  connections.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(connectionId),
+                      std::forward_as_tuple(std::move(connection)));
+
+  Connection::Callbacks callbacks
+  {
+    // onPacketReceived
+    [connectionId](IncomingPacket* packet)
+    {
+      LOG_DEBUG("onPacketReceived: connectionId: %d", connectionId);
+      onPacketReceived(connectionId, packet);
+    },
+
+    // onDisconnected
+    [connectionId]()
+    {
+      LOG_DEBUG("onDisconnected: connectionId: %d", connectionId);
+      connections.erase(connectionId);
+    }
+  };
+  connections.at(connectionId)->init(callbacks);
 }
 
 int main()
@@ -191,13 +224,7 @@ int main()
   }
 
   // Create Server
-  Server::Callbacks callbacks =
-  {
-    &onClientConnected,
-    &onClientDisconnected,
-    &onPacketReceived,
-  };
-  server = ServerFactory::createServer(&io_service, serverPort, callbacks);
+  server = ServerFactory::createServer(&io_service, serverPort, &onClientConnected);
 
   LOG_INFO("LoginServer started!");
 

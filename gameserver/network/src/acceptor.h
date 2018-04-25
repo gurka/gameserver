@@ -37,7 +37,7 @@ class Acceptor
  public:
   Acceptor(typename Backend::Service* io_service,
            int port,
-           const std::function<void(typename Backend::Socket)>& onAccept)
+           const std::function<void(typename Backend::Socket&&)>& onAccept)
     : acceptor_(*io_service, port),
       socket_(*io_service),
       onAccept_(onAccept)
@@ -81,7 +81,7 @@ class Acceptor
 
   typename Backend::Acceptor acceptor_;
   typename Backend::Socket socket_;
-  std::function<void(typename Backend::Socket)> onAccept_;
+  std::function<void(typename Backend::Socket&&)> onAccept_;
 };
 
 #endif  // NETWORK_SRC_ACCEPTOR_H_

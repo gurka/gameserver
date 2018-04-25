@@ -25,9 +25,11 @@
 #ifndef NETWORK_EXPORT_SERVER_FACTORY_H_
 #define NETWORK_EXPORT_SERVER_FACTORY_H_
 
+#include <functional>
 #include <memory>
 
-#include "server.h"
+class Server;
+class Connection;
 
 namespace boost
 {
@@ -40,9 +42,10 @@ class io_service;
 class ServerFactory
 {
  public:
+  using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
   static std::unique_ptr<Server> createServer(boost::asio::io_service* io_service,
                                               int port,
-                                              const Server::Callbacks& callbacks);
+                                              const OnClientConnectedCallback& onClientConnected);
 };
 
 #endif  // NETWORK_EXPORT_SERVER_FACTORY_H_

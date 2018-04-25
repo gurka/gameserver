@@ -37,12 +37,7 @@
 class PlayerCtrl : public CreatureCtrl
 {
  public:
-  PlayerCtrl() = default;
   virtual ~PlayerCtrl() = default;
-
-  // Delete copy constructors
-  PlayerCtrl(const PlayerCtrl&) = delete;
-  PlayerCtrl& operator=(const PlayerCtrl&) = delete;
 
   // Called by GameEngine
   virtual CreatureId getPlayerId() const = 0;
