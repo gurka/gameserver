@@ -340,6 +340,31 @@ TEST_F(ConnectionTest, DisconnectInDataWriteCall)
   connection_.reset();
 }
 
+TEST_F(ConnectionTest, ReadsPacketLengthZero)
+{
+  std::uint8_t* buffer = nullptr;
+  std::function<void(const Backend::ErrorCode&, std::size_t)> readHandler;
+
+  // Create and initialize connection
+  connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
+  EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
+  connection_->init(callbacks_);
+  ASSERT_NE(nullptr, buffer);
+
+  // Send packet header with packet length zero to connection
+  // As there is no send in progress the connection should close the socket
+  // and call the onDisconnected callback directly when the invalid packet length is read
+  buffer[0] = 0x00;
+  buffer[1] = 0x00;
+  EXPECT_CALL(service_, socket_is_open()).WillOnce(Return(true));
+  EXPECT_CALL(service_, socket_shutdown(Backend::shutdown_both, _));
+  EXPECT_CALL(service_, socket_close(_));
+  EXPECT_CALL(callbacksMock_, onDisconnected());
+  readHandler(Backend::Error::no_error, 2);
+
+  connection_.reset();
+}
+
 // TODO(simon): tests to do:
 //
 // close(true) in receivePacket

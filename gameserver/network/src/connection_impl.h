@@ -290,6 +290,14 @@ class ConnectionImpl : public Connection
 
     LOG_DEBUG("%s: received packet header, packet length: %d", __func__, packet_length);
 
+    if (packet_length == 0)
+    {
+      LOG_DEBUG("%s: packet length 0 is invalid, closing connection", __func__);
+      receiveInProgress_ = false;
+      closeSocket();
+      return;
+    }
+
     Backend::async_read(socket_,
                         readBuffer_.data(),
                         packet_length,

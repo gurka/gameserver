@@ -1,3 +1,2 @@
-* Crash if client sends a packet header with packet length = 0
 * Client crashes if it sees a player / creature walk out from the screen either north or west
   Walking out from the screen south or east does not cause a crash
