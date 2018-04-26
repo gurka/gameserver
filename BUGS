@@ -1,2 +1,3 @@
 * Client crashes if it sees a player / creature walk out from the screen either north or west
   Walking out from the screen south or east does not cause a crash
+* Crash (heap use-after-free) if worldserver fails to start due to missing world xml
