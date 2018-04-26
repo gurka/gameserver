@@ -249,13 +249,15 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
 
   // Call onCreatureMove on all creatures that can see the movement
   // including the moving creature itself
+  // Note: see Protocol71::canSee
+  // TODO(simon): export a visible range function or just the range in world
   auto x_min = std::min(fromPosition.getX(), toPosition.getX());
-  auto x_max = std::min(fromPosition.getX(), toPosition.getX());
+  auto x_max = std::max(fromPosition.getX(), toPosition.getX());
   auto y_min = std::min(fromPosition.getY(), toPosition.getY());
   auto y_max = std::max(fromPosition.getY(), toPosition.getY());
-  for (auto x = x_min - 9; x <= x_max + 9; x++)
+  for (auto x = x_min - 8; x <= x_max + 9; x++)
   {
-    for (auto y = y_min - 7; y <= y_max + 7; y++)
+    for (auto y = y_min - 6; y <= y_max + 7; y++)
     {
       const auto position = Position(x, y, 7);
       if (!positionIsValid(position))
