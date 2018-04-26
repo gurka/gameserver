@@ -135,6 +135,24 @@ def scenario_connect_disconnect():
         else:
             print("No sleep: current_tick: {} next_event {}".format(current_tick, next_event))
 
+def scenario_just_login():
+    clients = []
+
+    while len(clients) != NUM_CLIENTS:
+        client = Client()
+        protocol = Protocol(client)
+        clients.append((client, protocol))
+        print("Spawning new client")
+        if not protocol.login("Alice", "1"):
+            sys.exit(0)
+
+    while True:
+        for client, protocol in clients:
+            while protocol.handle_packet():
+                pass
+
+        time.sleep(1)
+
 if __name__ == '__main__':
     NUM_CLIENTS = 30
 
@@ -142,3 +160,4 @@ if __name__ == '__main__':
 
     scenario_movement()
     #scenario_connect_disconnect()
+    #scenario_just_login()
