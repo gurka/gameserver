@@ -8,7 +8,7 @@ class Connection():
 
     def connect(self):
         if self.sock is None:
-            self.sock = socket.create_connection(('192.168.1.11', 7172))
+            self.sock = socket.create_connection(('127.0.0.1', 7172))
             self.sock.setblocking(0)
 
     def close(self):
