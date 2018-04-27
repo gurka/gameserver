@@ -110,7 +110,7 @@ class Protocol71 : public Protocol
   void onDisconnected();
 
   // Helper functions for creating OutgoingPackets
-  bool canSee(const Position& from_position, const Position& to_position) const;
+  bool canSee(const Position& player_position, const Position& to_position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
   void addMapData(const WorldInterface& world_interface,
                   const Position& position,

@@ -693,15 +693,15 @@ void Protocol71::onDisconnected()
   }
 }
 
-bool Protocol71::canSee(const Position& from_position, const Position& to_position) const
+bool Protocol71::canSee(const Position& player_position, const Position& to_position) const
 {
   // Note: client displays 15x11 tiles, but it know about 18x14 tiles.
   //
   //       Client know about one extra row north, one extra column west
   //       two extra rows south and two extra rows east.
   //
-  //       This function returns true if to_position is visible from from_position
-  //       with regards to what the client knows about (18x14 tiles).
+  //       This function returns true if to_position is visible from player_position
+  //       with regards to what the client (player_position) knows about, e.g. 18x14 tiles.
   //
   //
   //     00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
@@ -722,10 +722,10 @@ bool Protocol71::canSee(const Position& from_position, const Position& to_positi
   // 13 |                                                        |
   // 14 |________________________________________________________|
 
-  return to_position.getX() >= from_position.getX() - 8 &&
-         to_position.getX() <= from_position.getX() + 9 &&
-         to_position.getY() >= from_position.getY() - 6 &&
-         to_position.getY() <= from_position.getY() + 7;
+  return to_position.getX() >= player_position.getX() - 8 &&
+         to_position.getX() <= player_position.getX() + 9 &&
+         to_position.getY() >= player_position.getY() - 6 &&
+         to_position.getY() <= player_position.getY() + 7;
 }
 
 void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) const

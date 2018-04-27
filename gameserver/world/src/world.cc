@@ -249,15 +249,19 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
 
   // Call onCreatureMove on all creatures that can see the movement
   // including the moving creature itself
-  // Note: see Protocol71::canSee
-  // TODO(simon): export a visible range function or just the range in world
-  auto x_min = std::min(fromPosition.getX(), toPosition.getX());
-  auto x_max = std::max(fromPosition.getX(), toPosition.getX());
-  auto y_min = std::min(fromPosition.getY(), toPosition.getY());
-  auto y_max = std::max(fromPosition.getY(), toPosition.getY());
-  for (auto x = x_min - 8; x <= x_max + 9; x++)
+  // Note that the range of which we iterate over tiles, (-9, -7) to (+8, +6),
+  // are the opposite of Protocol71::canSee (-8, -6) to (+9, +7)
+  // This makes sense, as we here want to know "who can see us move?" while
+  // in Protocol71::canSee we want to know "can we see them move?"
+  // TODO(simon): refactor this and Protocol71::canSee to get rid of all these
+  //              constant integers
+  const auto x_min = std::min(fromPosition.getX(), toPosition.getX());
+  const auto x_max = std::max(fromPosition.getX(), toPosition.getX());
+  const auto y_min = std::min(fromPosition.getY(), toPosition.getY());
+  const auto y_max = std::max(fromPosition.getY(), toPosition.getY());
+  for (auto x = x_min - 9; x <= x_max + 8; x++)
   {
-    for (auto y = y_min - 6; y <= y_max + 7; y++)
+    for (auto y = y_min - 7; y <= y_max + 6; y++)
     {
       const auto position = Position(x, y, 7);
       if (!positionIsValid(position))
