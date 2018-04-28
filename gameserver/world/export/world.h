@@ -90,19 +90,16 @@ class World : public WorldInterface
 
   // WorldInterface
   const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const override;
-  const Tile& getTile(const Position& position) const override;
+  const Tile* getTile(const Position& position) const override;
   const Creature& getCreature(CreatureId creatureId) const override;
   const Position& getCreaturePosition(CreatureId creatureId) const override;
 
  private:
-  // Validation functions
-  bool positionIsValid(const Position& position) const;
-
   // Helper functions
-  std::vector<CreatureId> getVisibleCreatureIds(const Position& position) const;
+  std::vector<CreatureId> getCreatureIdsThatCanSeePosition(const Position& position) const;
 
   // Functions to use instead of accessing the containers directly
-  Tile& internalGetTile(const Position& position);
+  Tile* internalGetTile(const Position& position);
   Creature& internalGetCreature(CreatureId creatureId);
   CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
 

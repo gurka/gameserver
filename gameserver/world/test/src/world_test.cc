@@ -74,6 +74,7 @@ class WorldTest : public ::testing::Test
 TEST_F(WorldTest, AddCreature)
 {
   // Add first Creature at (192, 192, 7)
+  // Can see from (184, 186, 7) to (201, 199, 7)
   Creature creatureOne("TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
   Position creaturePositionOne(192, 192, 7);
@@ -87,6 +88,7 @@ TEST_F(WorldTest, AddCreature)
 
 
   // Add second Creature at (193, 193, 7)
+  // Can see from (185, 187, 7) to (202, 200, 7)
   Creature creatureTwo("TestCreatureTwo");
   MockCreatureCtrl creatureCtrlTwo;
   Position creaturePositionTwo(193, 193, 7);
@@ -101,6 +103,7 @@ TEST_F(WorldTest, AddCreature)
 
 
   // Add third Creature at (202, 193, 7)
+  // Can see from (194, 187, 7) to (211, 200, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on x axis)
   Creature creatureThree("TestCreatureThree");
   MockCreatureCtrl creatureCtrlThree;
@@ -117,6 +120,7 @@ TEST_F(WorldTest, AddCreature)
 
 
   // Add fourth Creature at (195, 200, 7)
+  // Can see from (187, 194, 7) to (204, 207, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on y axis)
   Creature creatureFour("TestCreatureFour");
   MockCreatureCtrl creatureCtrlFour;
@@ -137,9 +141,9 @@ TEST_F(WorldTest, RemoveCreature)
 {
   // Add same Creatures as in AddCreature-test with same positions, i.e:
   // creatureOne can only see creatureTwo
-  // creatureTwo can see all Creatures
-  // creatureThree can only see creatureTwo and creatureFour
-  // creatureFour can only see creatureTwo and creatureThree
+  // creatureTwo can see everybody
+  // creatureThree can only see creatureFour
+  // creatureFour cannot see anyone
 
   Creature creatureOne("TestCreatureOne");
   Creature creatureTwo("TestCreatureTwo");
@@ -157,10 +161,10 @@ TEST_F(WorldTest, RemoveCreature)
   Position creaturePositionFour(195, 200, 7);
 
   // We don't actually care about these since they are tested in AddCreature
-  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _, _)).Times(AtLeast(0));
-  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(_, _, _)).Times(AtLeast(0));
-  EXPECT_CALL(creatureCtrlThree, onCreatureSpawn(_, _, _)).Times(AtLeast(0));
-  EXPECT_CALL(creatureCtrlFour, onCreatureSpawn(_, _, _)).Times(AtLeast(0));
+  EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _, _)).Times(2);    // himself and creatureTwo
+  EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(_, _, _)).Times(3);    // himself, creatureThree and creatureFour
+  EXPECT_CALL(creatureCtrlThree, onCreatureSpawn(_, _, _)).Times(2);  // himself and creatureFour
+  EXPECT_CALL(creatureCtrlFour, onCreatureSpawn(_, _, _)).Times(1);   // only himself
 
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
   world->addCreature(&creatureTwo, &creatureCtrlTwo, creaturePositionTwo);
@@ -177,14 +181,14 @@ TEST_F(WorldTest, RemoveCreature)
 
   // Remove creatureTwo
   EXPECT_CALL(creatureCtrlTwo, onCreatureDespawn(_, creatureTwo, creaturePositionTwo, _));
-  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, creatureTwo, creaturePositionTwo, _));
-  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, creatureTwo, creaturePositionTwo, _));
+  EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, _, _, _)).Times(0);
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _, _)).Times(0);
   world->removeCreature(creatureTwo.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureTwo.getCreatureId()));
 
   // Remove creatureThree
   EXPECT_CALL(creatureCtrlThree, onCreatureDespawn(_, creatureThree, creaturePositionThree, _));
-  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, creatureThree, creaturePositionThree, _));
+  EXPECT_CALL(creatureCtrlFour, onCreatureDespawn(_, _, _, _)).Times(0);
   world->removeCreature(creatureThree.getCreatureId());
   EXPECT_FALSE(world->creatureExists(creatureThree.getCreatureId()));
 

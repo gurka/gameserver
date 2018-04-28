@@ -281,17 +281,17 @@ void GameEngine::say(CreatureId creatureId,
         position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
       }
 
-      const auto& tile = world_->getTile(position);
+      const auto* tile = world_->getTile(position);
 
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto* item : tile.getItems())
+      for (const auto* item : tile->getItems())
       {
         oss << "Item: " << item->getItemTypeId() << " (" << item->getItemType().name << ")\n";
       }
 
-      for (const auto& creatureId : tile.getCreatureIds())
+      for (const auto& creatureId : tile->getCreatureIds())
       {
         oss << "Creature: " << creatureId << "\n";
       }

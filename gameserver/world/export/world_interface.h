@@ -39,7 +39,7 @@ class WorldInterface
   virtual ~WorldInterface() = default;
 
   virtual const std::vector<const Tile*> getMapBlock(const Position& position, int width, int height) const = 0;
-  virtual const Tile& getTile(const Position& position) const = 0;
+  virtual const Tile* getTile(const Position& position) const = 0;
   virtual const Creature& getCreature(CreatureId creatureId) const = 0;
   virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
 };
