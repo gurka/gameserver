@@ -106,8 +106,9 @@ class World : public WorldInterface
   int worldSizeX_;
   int worldSizeY_;
 
+  // Column-major order, due to how map blocks are sent to client
   // No z axis yet
-  // index = (((y - position_offset) * worldSizeX_) + (x - position_offset))
+  // index = (((x - position_offset) * worldSizeY_) + (y - position_offset))
   std::vector<Tile> tiles_;
 
   struct CreatureData

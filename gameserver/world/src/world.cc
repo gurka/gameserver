@@ -588,8 +588,8 @@ Tile* World::internalGetTile(const Position& position)
     return nullptr;
   }
 
-  const auto index = ((position.getY() - position_offset) * worldSizeX_) +
-                      (position.getX() - position_offset);
+  const auto index = ((position.getX() - position_offset) * worldSizeY_) +
+                      (position.getY() - position_offset);
   return &tiles_[index];
 }
 
@@ -604,8 +604,8 @@ const Tile* World::getTile(const Position& position) const
     return nullptr;
   }
 
-  const auto index = ((position.getY() - position_offset) * worldSizeX_) +
-                      (position.getX() - position_offset);
+  const auto index = ((position.getX() - position_offset) * worldSizeY_) +
+                      (position.getY() - position_offset);
   return &tiles_[index];
 }
 
