@@ -89,7 +89,7 @@ bool GameEngine::init(GameEngineQueue* gameEngineQueue,
   return true;
 }
 
-void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
+bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   // Create the Player
   Player newPlayer{name};
@@ -115,15 +115,15 @@ void GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   auto rc = world_->addCreature(&player, player_ctrl, Position(208, 208, 7));
   if (rc != World::ReturnCode::OK)
   {
-    LOG_ERROR("%s: Could not spawn player", __func__);
-    // TODO(simon): Maybe let Protocol know that the player couldn't spawn, instead of time out?
-    // playerData_.erase(creatureId);
-    // player_ctrl->disconnect();
+    LOG_DEBUG("%s: could not spawn player", __func__);
+    containerManager_.playerDespawn(player_ctrl);
+    player_ctrl->setPlayerId(Creature::INVALID_ID);
+    playerData_.erase(creatureId);
+    return false;
   }
-  else
-  {
-    player_ctrl->sendTextMessage(0x11, loginMessage_);
-  }
+
+  player_ctrl->sendTextMessage(0x11, loginMessage_);
+  return true;
 }
 
 void GameEngine::despawn(CreatureId creatureId)

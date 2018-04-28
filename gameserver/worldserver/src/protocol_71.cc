@@ -921,7 +921,14 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   // Login OK, spawn player
   gameEngineQueue_->addTask(playerId_, [this, character_name](GameEngine* gameEngine)
   {
-    gameEngine->spawn(character_name, this);
+    if (!gameEngine->spawn(character_name, this))
+    {
+      OutgoingPacket response;
+      response.addU8(0x14);
+      response.addString("Could not spawn player.");
+      connection_->sendPacket(std::move(response));
+      connection_->close(false);
+    }
   });
 }
 

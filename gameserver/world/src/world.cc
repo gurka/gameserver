@@ -89,10 +89,13 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
     }
 
     // TODO(simon): Need to check more stuff (blocking, etc)
-    if (tile->getCreatureIds().size() == 0)
+    if (!tile->getCreatureIds().empty())
     {
-      break;
+      tile = nullptr;
+      continue;
     }
+
+    break;
   }
 
   if (tile)

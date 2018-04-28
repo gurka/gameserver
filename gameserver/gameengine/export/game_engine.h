@@ -62,7 +62,7 @@ class GameEngine
             const std::string& itemsFilename,
             const std::string& worldFilename);
 
-  void spawn(const std::string& name, PlayerCtrl* player_ctrl);
+  bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
 
   void move(CreatureId creatureId, Direction direction);
