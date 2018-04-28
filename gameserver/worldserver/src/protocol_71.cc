@@ -741,15 +741,12 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
                             int height,
                             OutgoingPacket* packet)
 {
-  auto tiles = world_interface.getMapBlock(position, width, height);
-  decltype(tiles)::const_iterator it = tiles.begin();
-
-  for (auto x = 0; x < width; x++)
+  for (auto x = position.getX(); x < position.getX() + width; x++)
   {
-    for (auto y = 0; y < height; y++)
+    for (auto y = position.getY(); y < position.getY() + height; y++)
     {
-      const auto* tile = *it;
-      if (tile != nullptr)
+      const auto* tile = world_interface.getTile(Position(x, y, position.getZ()));
+      if (tile)
       {
         const auto& items = tile->getItems();
         const auto& creatureIds = tile->getCreatureIds();
@@ -797,13 +794,12 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
         }
       }
 
-      if (x != width - 1 || y != height - 1)
+      if (x != position.getX() + width - 1 ||
+          y != position.getY() + height - 1)
       {
         packet->addU8(0x00);
         packet->addU8(0xFF);
       }
-
-      ++it;
     }
   }
 }

@@ -549,20 +549,6 @@ bool World::creatureCanReach(CreatureId creatureId, const Position& position) co
            creaturePosition.getZ() != position.getZ());
 }
 
-const std::vector<const Tile*> World::getMapBlock(const Position& position, int width, int height) const
-{
-  std::vector<const Tile*> tiles;
-  for (auto x = 0; x < width; x++)
-  {
-    for (auto y = 0; y < height; y++)
-    {
-      Position temp(position.getX() + x, position.getY() + y, position.getZ());
-      tiles.push_back(getTile(temp));
-    }
-  }
-  return tiles;
-}
-
 std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& position) const
 {
   std::vector<CreatureId> creatureIds;
