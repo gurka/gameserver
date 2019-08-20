@@ -212,8 +212,8 @@ int main()
   printf("Utils logging:             %s\n", logger_utils.c_str());
   printf("--------------------------------------------------------------------------------\n");
 
-  // Create io_service
-  boost::asio::io_service io_service;
+  // Create io_context
+  boost::asio::io_context io_context;
 
   // Create and load AccountReader
   accountReader = std::make_unique<AccountReader>();
@@ -224,21 +224,21 @@ int main()
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_service, serverPort, &onClientConnected);
+  server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
 
   LOG_INFO("LoginServer started!");
 
   // run() will continue to run until ^C from user is catched
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-  signals.async_wait([&io_service](const boost::system::error_code& error, int signal_number)
+  boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
+  signals.async_wait([&io_context](const boost::system::error_code& error, int signal_number)
   {
-    LOG_INFO("%s: received error: %s, signal_number: %d, stopping io_service",
+    LOG_INFO("%s: received error: %s, signal_number: %d, stopping io_context",
              __func__,
              error.message().c_str(),
              signal_number);
-    io_service.stop();
+    io_context.stop();
   });
-  io_service.run();
+  io_context.run();
 
   LOG_INFO("Stopping LoginServer!");
 

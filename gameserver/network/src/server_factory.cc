@@ -30,13 +30,13 @@
 
 struct Backend
 {
-  using Service = boost::asio::io_service;
+  using Service = boost::asio::io_context;
 
   class Acceptor : public boost::asio::ip::tcp::acceptor
   {
    public:
-    Acceptor(Service& io_service, int port)  //NOLINT
-      : boost::asio::ip::tcp::acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+    Acceptor(Service& io_context, int port)  //NOLINT
+      : boost::asio::ip::tcp::acceptor(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
     {
     }
   };
@@ -63,9 +63,9 @@ struct Backend
   }
 };
 
-std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_service* io_service,
+std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_context* io_context,
                                                     int port,
                                                     const OnClientConnectedCallback& onClientConnected)
 {
-  return std::make_unique<ServerImpl<Backend>>(io_service, port, onClientConnected);
+  return std::make_unique<ServerImpl<Backend>>(io_context, port, onClientConnected);
 }

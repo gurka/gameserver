@@ -39,10 +39,10 @@ template <typename Backend>
 class ServerImpl : public Server
 {
  public:
-  ServerImpl(typename Backend::Service* io_service,
+  ServerImpl(typename Backend::Service* io_context,
              int port,
              const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected)
-    : acceptor_(io_service,
+    : acceptor_(io_context,
                 port,
                 [onClientConnected](typename Backend::Socket&& socket)
                 {

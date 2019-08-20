@@ -35,7 +35,7 @@ namespace boost
 {
 namespace asio
 {
-class io_service;
+class io_context;
 }
 }
 
@@ -43,7 +43,7 @@ class ServerFactory
 {
  public:
   using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
-  static std::unique_ptr<Server> createServer(boost::asio::io_service* io_service,
+  static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
                                               int port,
                                               const OnClientConnectedCallback& onClientConnected);
 };

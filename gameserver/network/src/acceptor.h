@@ -35,11 +35,11 @@ template <typename Backend>
 class Acceptor
 {
  public:
-  Acceptor(typename Backend::Service* io_service,
+  Acceptor(typename Backend::Service* io_context,
            int port,
            const std::function<void(typename Backend::Socket&&)>& onAccept)
-    : acceptor_(*io_service, port),
-      socket_(*io_service),
+    : acceptor_(*io_context, port),
+      socket_(*io_context),
       onAccept_(onAccept)
   {
     accept();
