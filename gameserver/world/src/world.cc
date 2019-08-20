@@ -410,7 +410,6 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (tile->getNumberOfThings() >= 10)
   {
-    auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
       getCreatureCtrl(nearCreatureId).onTileUpdate(*this, position);
@@ -498,15 +497,15 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   toTile->addItem(item);
 
   // Call onItemRemoved on all creatures that can see fromPosition
-  auto nearCreatureIds = getCreatureIdsThatCanSeePosition(fromPosition);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  const auto nearCreatureIdsFrom = getCreatureIdsThatCanSeePosition(fromPosition);
+  for (const auto& nearCreatureId : nearCreatureIdsFrom)
   {
     getCreatureCtrl(nearCreatureId).onItemRemoved(*this, fromPosition, fromStackPos);
   }
 
   // Call onItemAdded on all creatures that can see toPosition
-  nearCreatureIds = getCreatureIdsThatCanSeePosition(toPosition);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  const auto nearCreatureIdsTo = getCreatureIdsThatCanSeePosition(toPosition);
+  for (const auto& nearCreatureId : nearCreatureIdsTo)
   {
     getCreatureCtrl(nearCreatureId).onItemAdded(*this, *item, toPosition);
   }
@@ -515,8 +514,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (fromTile->getNumberOfThings() >= 10)
   {
-    auto nearCreatureIds = getCreatureIdsThatCanSeePosition(fromPosition);
-    for (const auto& nearCreatureId : nearCreatureIds)
+    for (const auto& nearCreatureId : nearCreatureIdsFrom)
     {
       getCreatureCtrl(nearCreatureId).onTileUpdate(*this, fromPosition);
     }

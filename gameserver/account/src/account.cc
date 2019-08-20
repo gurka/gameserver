@@ -25,6 +25,7 @@
 #include "account.h"
 
 #include <cstring>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <utility>
@@ -246,12 +247,16 @@ const Character* AccountReader::getCharacter(const std::string& characterName) c
   if (characterExists(characterName))
   {
     const auto* account = getAccount(characterToAccountNumber_.at(characterName));
-    for (const auto& character : account->characters)
+    const auto pred = [&characterName](const Character& c)
     {
-      if (character.name == characterName)
-      {
-        return &character;
-      }
+      return c.name == characterName;
+    };
+    const auto& it = std::find_if(account->characters.begin(),
+                                  account->characters.end(),
+                                  pred);
+    if (it != account->characters.end())
+    {
+      return &(*it);
     }
 
     LOG_DEBUG("%s: Character: %s not found in accounts, but exists in characterToAccountNumber map",
