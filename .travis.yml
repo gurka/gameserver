@@ -1,13 +1,10 @@
-dist: trusty
+dist: bionic
 sudo: false
 language: cpp
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
-      - g++-6
       - libboost-system-dev
       - valgrind
       - cppcheck
@@ -15,8 +12,8 @@ addons:
 jobs:
   include:
     - stage: build
-      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/build.sh
+      script: tools/travis/build.sh
     - stage: test
-      script: CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 tools/travis/test.sh
+      script: tools/travis/test.sh
     - stage: lint
       script: tools/travis/lint.sh
