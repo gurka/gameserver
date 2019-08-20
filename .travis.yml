@@ -1,15 +1,10 @@
 dist: bionic
-sudo: false
 language: cpp
 
-addons:
-  apt:
-    sources:
-      - ppa:mhier/libboost-latest
-    packages:
-      - libboost1.70-dev
-      - valgrind
-      - cppcheck
+before_install:
+  - sudo add-apt-repository ppa:mhier/libboost-latest -y
+  - sudo apt update -q
+  - sudo apt install libboost1.70-dev valgrind cppcheck -y
 
 jobs:
   include:
