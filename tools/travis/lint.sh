@@ -13,6 +13,6 @@ python "external/google-styleguide/cpplint/cpplint.py" --linelength=120 --filter
 # Run cppcheck
 CPPCHECK_INCLUDE_DIRS=$(find gameserver/ -type d -name 'src' -or -name 'export' | grep -v '/test/' | sed 's/^/-I/')
 CPPCHECK_IGNORE_DIRS=$(find gameserver/ -type d -name 'test' | sed 's/^/-i/')
-cppcheck --std=c++11 --enable=all --error-exitcode=2 --quiet $CPPCHECK_IGNORE_DIRS $CPPCHECK_INCLUDE_DIRS gameserver/ || STATUS=1
+cppcheck --std=c++11 --enable=all --suppress="unusedFunction" --error-exitcode=2 --quiet $CPPCHECK_IGNORE_DIRS $CPPCHECK_INCLUDE_DIRS gameserver/ || STATUS=1
 
 exit $STATUS
