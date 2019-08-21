@@ -58,6 +58,23 @@ class GamePosition
   {
   }
 
+  bool operator==(const GamePosition& other) const
+  {
+    // TODO(simon): test this
+    return type_ == other.type_ &&
+           ((type_ == Type::INVALID) ||  // should INVALID positions be equal?
+            (type_ == Type::POSITION && position_ == other.position_) ||
+            (type_ == Type::INVENTORY && inventorySlot_ == other.inventorySlot_) ||
+            (type_ == Type::CONTAINER &&
+             container_.id == other.container_.id &&
+             container_.slot == other.container_.slot));
+  }
+
+  bool operator!=(const GamePosition& other) const
+  {
+    return !(*this == other);
+  }
+
   std::string toString() const
   {
     if (type_ == Type::INVALID)
@@ -126,6 +143,18 @@ class ItemPosition
       itemTypeId_(itemTypeId),
       stackPosition_(stackPosition)
   {
+  }
+
+  bool operator==(const ItemPosition& other) const
+  {
+    return gamePosition_  == other.gamePosition_ &&
+           itemTypeId_    == other.itemTypeId_ &&
+           stackPosition_ == other.stackPosition_;
+  }
+
+  bool operator!=(const ItemPosition& other) const
+  {
+    return !(*this == other);
   }
 
   std::string toString() const

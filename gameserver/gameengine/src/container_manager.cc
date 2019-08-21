@@ -330,6 +330,8 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
               container->id);
   }
 
+  // TODO(simon): Check if the container is full
+
   // If the containerSlot is valid, then check if the item it points to is a container
   if (containerSlot >= 0 &&
       containerSlot < static_cast<int>(container->items.size()) &&

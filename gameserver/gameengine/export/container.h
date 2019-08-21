@@ -79,6 +79,17 @@ struct Container
     {
     }
 
+    bool operator==(const RelatedPlayer& other) const
+    {
+      return playerCtrl == other.playerCtrl &&
+             clientContainerId == other.clientContainerId;
+    }
+
+    bool operator!=(const RelatedPlayer& other) const
+    {
+      return !(*this == other);
+    }
+
     PlayerCtrl* playerCtrl;
     int clientContainerId;
   };
