@@ -210,10 +210,9 @@ TEST_F(ContainerManagerTest, innerContainer)
   // itemContainerA: [itemNotContainerB, itemContainerB, itemNotContainerA]
   const auto* containerA = container_manager_.getContainer(&player_ctrl_mock_, clientContainerId);
   EXPECT_EQ(3u, containerA->items.size());
-  // TODO: comparison functions on Item?
-  EXPECT_EQ(itemNotContainerB.getItemUniqueId(), containerA->items[0]->getItemUniqueId());
-  EXPECT_EQ(itemContainerB.getItemUniqueId(),    containerA->items[1]->getItemUniqueId());
-  EXPECT_EQ(itemNotContainerA.getItemUniqueId(), containerA->items[2]->getItemUniqueId());
+  EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
+  EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
+  EXPECT_EQ(itemNotContainerA, *(containerA->items[2]));
 
   // Now add a regular item to containerA, stackPosition 1
   // This should add the item to containerB as itemContainerB is at stackPosition 1

@@ -45,6 +45,16 @@ class Item
 
   virtual int getCount() const = 0;
   virtual void setCount(int count) = 0;
+
+  bool operator==(const Item& other) const
+  {
+    return getItemUniqueId() == other.getItemUniqueId();
+  }
+
+  bool operator!=(const Item& other) const
+  {
+    return !(*this == other);
+  }
 };
 
 struct ItemType
