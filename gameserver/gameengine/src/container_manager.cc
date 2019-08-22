@@ -152,6 +152,8 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
     return;
   }
 
+  // TODO(simon): If we expose createContainer (already is?) and enforce that a container must be
+  //              created before being used then we can remove the itemPosition parameter
   if (containerIds_.count(item.getItemUniqueId()) == 0)
   {
     createContainer(playerCtrl, &item, itemPosition);
@@ -340,8 +342,11 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
     // We might need to make a new Container object for the inner container
     if (containerIds_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
     {
-      LOG_ERROR("%s: create new Container for inner container NOT YET IMPLEMENTED", __func__);
-      return;
+      createContainer(nullptr,  // no player
+                      container->items[containerSlot],  // the new container's item
+                      ItemPosition(GamePosition(container->id, containerSlot),  // the new container's item's position
+                                   container->items[containerSlot]->getItemTypeId(),
+                                   1));
     }
 
     // Change the container pointer to the inner container
@@ -352,7 +357,7 @@ void ContainerManager::addItem(const PlayerCtrl* playerCtrl, int containerId, in
   // Add the item at the front
   container->items.insert(container->items.begin(), item);
 
-  // Inform players that have this contianer open about the change
+  // Inform players that have this container open about the change
   for (auto& relatedPlayer : container->relatedPlayers)
   {
     relatedPlayer.playerCtrl->onContainerAddItem(relatedPlayer.clientContainerId, *item);
@@ -376,9 +381,20 @@ void ContainerManager::createContainer(PlayerCtrl* playerCtrl, const Item* item,
   }
   else  // isContainer
   {
-    const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
-    container.parentContainerId = parentContainer->id;
-    container.rootItemPosition = parentContainer->rootItemPosition;
+    if (playerCtrl)
+    {
+      const auto* parentContainer = getContainer(playerCtrl, itemPosition.getGamePosition().getContainerId());
+      container.parentContainerId = parentContainer->id;
+      container.rootItemPosition = parentContainer->rootItemPosition;
+    }
+    else
+    {
+      // If playerCtrl is nullptr then containerId must be a global containerId
+      // and we can fetch the container directly
+      const auto& parentContainer = containers_.at(itemPosition.getGamePosition().getContainerId());
+      container.parentContainerId = parentContainer.id;
+      container.rootItemPosition = parentContainer.rootItemPosition;
+    }
   }
   container.items = {};
   container.relatedPlayers = {};

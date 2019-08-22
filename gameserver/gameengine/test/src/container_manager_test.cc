@@ -185,31 +185,31 @@ TEST_F(ContainerManagerTest, closeContainer)
 TEST_F(ContainerManagerTest, innerContainer)
 {
   const auto itemPosition = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId(), 0);
-  const auto clientContainerId = 1u;
+  const auto clientContainerIdA = 1u;
 
   // TODO: what stackPosition does the use when dragging an item into an empty spot in a container?
   const auto stackPosition = -1;
 
   // Use the item to create and open the container
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemPosition, clientContainerId);
+  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdA, _, Ref(itemContainerA)));
+  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemPosition, clientContainerIdA);
 
   // Add a regular item
-  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId, Ref(itemNotContainerA)));
-  container_manager_.addItem(&player_ctrl_mock_, clientContainerId, stackPosition, &itemNotContainerA);
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerIdA, Ref(itemNotContainerA)));
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerIdA, stackPosition, &itemNotContainerA);
 
   // Add another container
-  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId, Ref(itemContainerB)));
-  container_manager_.addItem(&player_ctrl_mock_, clientContainerId, stackPosition, &itemContainerB);
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerIdA, Ref(itemContainerB)));
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerIdA, stackPosition, &itemContainerB);
 
   // Add a regular item
-  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerId, Ref(itemNotContainerB)));
-  container_manager_.addItem(&player_ctrl_mock_, clientContainerId, stackPosition, &itemNotContainerB);
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(clientContainerIdA, Ref(itemNotContainerB)));
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerIdA, stackPosition, &itemNotContainerB);
 
   // The container should now contain:
   // itemContainerA: [itemNotContainerB, itemContainerB, itemNotContainerA]
-  const auto* containerA = container_manager_.getContainer(&player_ctrl_mock_, clientContainerId);
-  EXPECT_EQ(3u, containerA->items.size());
+  const auto* containerA = container_manager_.getContainer(&player_ctrl_mock_, clientContainerIdA);
+  ASSERT_EQ(3u, containerA->items.size());
   EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
   EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
   EXPECT_EQ(itemNotContainerA, *(containerA->items[2]));
@@ -217,7 +217,43 @@ TEST_F(ContainerManagerTest, innerContainer)
   // Now add a regular item to containerA, stackPosition 1
   // This should add the item to containerB as itemContainerB is at stackPosition 1
   // containerB is not open so there should not be any onContainerAddItem call
-  container_manager_.addItem(&player_ctrl_mock_, clientContainerId, 1, &itemNotContainerC);
+  container_manager_.addItem(&player_ctrl_mock_, clientContainerIdA, 1, &itemNotContainerC);
 
-  // TODO: [container_manager.cc:343] ERROR: addItem: create new Container for inner container NOT YET IMPLEMENTED
+  // Now try open the new container
+  const auto clientContainerIdB = 2u;
+  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdB, _, Ref(itemContainerB)));
+  container_manager_.useContainer(&player_ctrl_mock_,
+                                  itemContainerB,
+                                  ItemPosition(GamePosition(clientContainerIdA, 1),
+                                               itemContainerA.getItemTypeId(), 0),
+                                               clientContainerIdB);
+
+  // Current container structure should now be:
+  // Inventory slot 0:
+  //   ContainerA:
+  //     0: itemNotContainerB
+  //     1: ContainerB
+  //       0: itemNotContainerC
+  //     2: itemNotContainerA
+  // Verify:
+  {
+    const auto containerA = container_manager_.getContainer(&player_ctrl_mock_, clientContainerIdA);
+    const auto containerB = container_manager_.getContainer(&player_ctrl_mock_, clientContainerIdB);
+
+    EXPECT_EQ(itemContainerA, *(containerA->item));
+    ASSERT_EQ(3u, containerA->items.size());
+    EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
+    EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
+    EXPECT_EQ(itemNotContainerA, *(containerA->items[2]));
+
+    EXPECT_EQ(itemContainerB, *(containerB->item));
+    ASSERT_EQ(1u, containerB->items.size());
+    EXPECT_EQ(itemNotContainerC, *(containerB->items[0]));
+
+    // Verify parentContainer and rootPosition
+    EXPECT_EQ(Container::INVALID_ID, containerA->parentContainerId);
+    EXPECT_EQ(containerA->id,        containerB->parentContainerId);
+    EXPECT_EQ(itemPosition,          containerA->rootItemPosition);
+    EXPECT_EQ(itemPosition,          containerB->rootItemPosition);
+  }
 }

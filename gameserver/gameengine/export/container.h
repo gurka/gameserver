@@ -64,7 +64,7 @@ struct Container
   int parentContainerId;
 
   // ItemPosition of the root item that this Container belongs to
-  // Is either a world position or a inventory position
+  // Is either a world position or an inventory position
   ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
