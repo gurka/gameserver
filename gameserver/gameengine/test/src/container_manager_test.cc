@@ -290,3 +290,13 @@ TEST_F(ContainerManagerTest, innerContainer)
     EXPECT_EQ(itemContainerAPos,                containerB->rootItemPosition);
   }
 }
+
+TEST_F(ContainerManagerTest, playerDespawn)
+{
+  // TODO
+}
+
+TEST_F(ContainerManagerTest, multiplePlayers)
+{
+  // TODO
+}
