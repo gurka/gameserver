@@ -492,8 +492,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 
   if (gamePosition.isContainer())
   {
-    return containerManager_.getItem(playerData.player_ctrl,
-                                     gamePosition.getContainerId(),
+    return containerManager_.getItem(gamePosition.getItemUniqueId(),
                                      gamePosition.getContainerSlot());
   }
 
@@ -501,7 +500,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
   return nullptr;
 }
 
-bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count) const
+bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
   auto& playerData = getPlayerData(creatureId);
 
@@ -519,8 +518,7 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
   else if (position.isContainer())
   {
     // TODO(simon): check capacity of Player if root Container is in Player inventory
-    return containerManager_.canAddItem(playerData.player_ctrl,
-                                        position.getContainerId(),
+    return containerManager_.canAddItem(position.getItemUniqueId(),
                                         position.getContainerSlot(),
                                         item);
   }
@@ -553,8 +551,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
   }
   else if (position.getGamePosition().isContainer())
   {
-    containerManager_.removeItem(playerData.player_ctrl,
-                                 position.getGamePosition().getContainerId(),
+    containerManager_.removeItem(position.getGamePosition().getItemUniqueId(),
                                  position.getGamePosition().getContainerSlot());
   }
 }
@@ -581,8 +578,7 @@ void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, It
     // Note: We cannot assume that the item is added to the container referenced in position
     //       If the containerSlot points to a container-item than the item will be added
     //       to that inner container
-    containerManager_.addItem(playerData.player_ctrl,
-                              position.getContainerId(),
+    containerManager_.addItem(position.getItemUniqueId(),
                               position.getContainerSlot(),
                               item);
   }

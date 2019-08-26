@@ -419,7 +419,7 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
   addItem(item, &packet);
   packet.addString(item.getItemType().name);
   packet.addU8(item.getItemType().maxitems);
-  packet.addU8(container.parentContainerId == Container::INVALID_ID ? 0x00 : 0x01);
+  packet.addU8(container.parentItemUniqueId == Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
   packet.addU8(container.items.size());
   for (const auto* item : container.items)
   {

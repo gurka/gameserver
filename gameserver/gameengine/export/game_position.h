@@ -52,9 +52,9 @@ class GamePosition
   {
   }
 
-  GamePosition(int containerId, int containerSlot)
+  GamePosition(ItemUniqueId itemUniqueId, int containerSlot)
     : type_(Type::CONTAINER),
-      container_{containerId, containerSlot}
+      container_{itemUniqueId, containerSlot}
   {
   }
 
@@ -66,7 +66,7 @@ class GamePosition
             (type_ == Type::POSITION && position_ == other.position_) ||
             (type_ == Type::INVENTORY && inventorySlot_ == other.inventorySlot_) ||
             (type_ == Type::CONTAINER &&
-             container_.id == other.container_.id &&
+             container_.itemUniqueId == other.container_.itemUniqueId &&
              container_.slot == other.container_.slot));
   }
 
@@ -91,7 +91,7 @@ class GamePosition
     }
     else  // type_ == Type::CONTAINER
     {
-      return std::string("(Container) ") + std::to_string(container_.id) + ", " + std::to_string(container_.slot);
+      return std::string("(Container) ") + std::to_string(container_.itemUniqueId) + ", " + std::to_string(container_.slot);
     }
   }
 
@@ -104,7 +104,7 @@ class GamePosition
   int getInventorySlot() const { return inventorySlot_; }
 
   bool isContainer() const { return type_ == Type::CONTAINER; }
-  int getContainerId() const { return container_.id; }
+  ItemUniqueId getItemUniqueId() const { return container_.itemUniqueId; }
   int getContainerSlot() const { return container_.slot; }
 
  private:
@@ -122,7 +122,7 @@ class GamePosition
     int inventorySlot_;
     struct
     {
-      int id;
+      ItemUniqueId itemUniqueId;
       int slot;
     } container_;
   };
@@ -134,6 +134,14 @@ class ItemPosition
   ItemPosition()
     : gamePosition_(),
       itemTypeId_(0),  // TODO(simon): Item::INVALID_ID ?
+      stackPosition_(0)
+  {
+  }
+
+  // TODO(simon): stackPosition is only used for GamePosition Type::POSITION, or??
+  ItemPosition(const GamePosition& gamePosition, ItemTypeId itemTypeId)
+    : gamePosition_(gamePosition),
+      itemTypeId_(itemTypeId),
       stackPosition_(0)
   {
   }

@@ -35,39 +35,38 @@ class PlayerCtrl;
 struct Container
 {
   Container()
-    : id(INVALID_ID),
-      weight(0),
+    : weight(0),
       item(nullptr),
-      parentContainerId(INVALID_ID),
+      parentItemUniqueId(Item::INVALID_UNIQUE_ID),
       rootItemPosition(),
       items(),
       relatedPlayers()
   {
   }
 
-  // Invalid id: -1
-  // Client container id: 0..63
-  // (Global) container id: 64..INT_MAX
-  static constexpr int INVALID_ID = -1;
-
-  // This Container's id
-  int id;
+  // Disallow copy and move, Container should only reside in ContainerManager::containers_
+  Container(const Container&) = delete;
+  Container& operator=(const Container&) = delete;
+  Container(Container&&) = delete;
+  Container& operator=(Container&&) = delete;
 
   // The total weight of this Container and all Items in it (including other Containers)
   int weight;
 
   // The Item that corresponds to this Container
+  // TODO(simon): store ItemUniqueId instead?
   const Item* item;
 
   // Container id of the parent container, or INVALID_ID if no parent
   // This id must NOT be a clientContainerId
-  int parentContainerId;
+  ItemUniqueId parentItemUniqueId;
 
   // ItemPosition of the root item that this Container belongs to
   // Is either a world position or an inventory position
   ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
+  // TODO(simon): store ItemUniqueId instead?
   std::vector<Item*> items;
 
   // List of Players that have this Container open

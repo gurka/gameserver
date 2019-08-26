@@ -40,8 +40,7 @@ class ContainerManager
 {
  public:
   ContainerManager()
-    : nextContainerId_(64),
-      containers_(),
+    : containers_(),
       clientContainerIds_()
   {
   }
@@ -49,12 +48,17 @@ class ContainerManager
   void playerSpawn(const PlayerCtrl* playerCtrl);
   void playerDespawn(const PlayerCtrl* playerCtrl);
 
-  const Container* getContainer(int containerId) const;
-  Container* getContainer(int containerId);
-  const Container* getContainer(const PlayerCtrl* playerCtrl, int containerId) const;
-  Container* getContainer(const PlayerCtrl* playerCtrl, int containerId);
-  Item* getItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
+  ItemUniqueId getItemUniqueId(const PlayerCtrl* playerCtrl, int containerId) const;
 
+  const Container* getContainer(ItemUniqueId itemUniqueId) const;
+  Container* getContainer(ItemUniqueId itemUniqueId);
+
+  const Item* getItem(ItemUniqueId itemUniqueId, int containerSlot) const;
+  Item* getItem(ItemUniqueId itemUniqueId, int containerSlot);
+
+  // TODO: openContainer, so that it matches closeContainer
+  //       but this function can be used to close the container if already open... hmm
+  //       maybe the user can check this? `if (getItemUniqueId(...) != -1) closeContainer(...);`
   void useContainer(PlayerCtrl* playerCtrl,
                     const Item& item,
                     const ItemPosition& itemPosition,
@@ -63,38 +67,29 @@ class ContainerManager
   void closeContainer(PlayerCtrl* playerCtrl, int clientContainerId);
   void openParentContainer(PlayerCtrl* playerCtrl, int clientContainerId);
 
-  bool canAddItem(const PlayerCtrl* playerCtrl, int clientContainerId, int containerSlot, const Item& item) const;
-  void removeItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot);
-  void addItem(const PlayerCtrl* playerCtrl, int containerId, int containerSlot, Item* item);
+  bool canAddItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
+  void removeItem(ItemUniqueId itemUniqueId, int containerSlot);
+  void addItem(ItemUniqueId itemUniqueId, int containerSlot, Item* item);
 
  private:
-  void createContainer(PlayerCtrl* playerCtrl, const Item* item, const ItemPosition& itemPosition);
-
-  void openContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId);
-  void closeContainer(PlayerCtrl* playerCtrl, Container* container, int clientContainerId);
+  void createContainer(const Item* item, const ItemPosition& itemPosition);
+  void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
+  void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
 
   bool isClientContainerId(int containerId) const;
   void setClientContainerId(CreatureId playerId, int clientContainerId, int containerId);
   int getClientContainerId(CreatureId playerId, int containerId) const;
-  int getContainerId(CreatureId playerId, int clientContainerId) const;
+  ItemUniqueId getContainerId(CreatureId playerId, int clientContainerId) const;
 
-  void addRelatedPlayer(Container* container, PlayerCtrl* playerCtrl, int clientContainerId);
-  void removeRelatedPlayer(Container* container, const PlayerCtrl* playerCtrl, int clientContainerId);
+  void addRelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId);
+  void removeRelatedPlayer(const PlayerCtrl* playerCtrl, int clientContainerId);
 
-  // TODO(simon): Map ItemUniqueId directly to Container
-  //              Then we won't need ContainerId (...right?)
-  //              And can then rename clientContainerId to just containerId
-
-  // Maps ItemUniqueId to ContainerId
-  std::unordered_map<ItemUniqueId, int> containerIds_;
-
-  // All containers
-  int nextContainerId_;
-  std::unordered_map<int, Container> containers_;
+  // Maps ItemUniqueId to Container
+  std::unordered_map<ItemUniqueId, Container> containers_;
 
   // Maps a (player's) CreatureId to an array where index is
-  // a clientContainerId and element is a (global) ContainerId
-  std::unordered_map<CreatureId, std::array<int, 64>> clientContainerIds_;
+  // a clientContainerId and element is an ItemUniqueId
+  std::unordered_map<CreatureId, std::array<ItemUniqueId, 64>> clientContainerIds_;  // TODO(simon): rename
 };
 
 #endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

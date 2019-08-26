@@ -37,7 +37,7 @@ class ItemManager
  public:
   ItemManager()
     : items_(),
-      nextItemUniqueId_(1),  // TODO(simon): 0 is used as invalid itemId in game_position.h
+      nextItemUniqueId_(1),
       itemTypes_(),
       itemTypesIdFirst_(0),
       itemTypesIdLast_(0)
