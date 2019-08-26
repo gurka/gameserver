@@ -91,7 +91,8 @@ class GamePosition
     }
     else  // type_ == Type::CONTAINER
     {
-      return std::string("(Container) ") + std::to_string(container_.itemUniqueId) + ", " + std::to_string(container_.slot);
+      return std::string("(Container) ") +
+             std::to_string(container_.itemUniqueId) + ", " + std::to_string(container_.slot);
     }
   }
 
