@@ -48,7 +48,7 @@ class ContainerManager
   void playerSpawn(const PlayerCtrl* playerCtrl);
   void playerDespawn(const PlayerCtrl* playerCtrl);
 
-  ItemUniqueId getItemUniqueId(const PlayerCtrl* playerCtrl, int containerId) const;
+  ItemUniqueId getItemUniqueId(const PlayerCtrl* playerCtrl, int clientContainerId) const;
 
   const Container* getContainer(ItemUniqueId itemUniqueId) const;
   Container* getContainer(ItemUniqueId itemUniqueId);
@@ -56,9 +56,6 @@ class ContainerManager
   const Item* getItem(ItemUniqueId itemUniqueId, int containerSlot) const;
   Item* getItem(ItemUniqueId itemUniqueId, int containerSlot);
 
-  // TODO: openContainer, so that it matches closeContainer
-  //       but this function can be used to close the container if already open... hmm
-  //       maybe the user can check this? `if (getItemUniqueId(...) != -1) closeContainer(...);`
   void useContainer(PlayerCtrl* playerCtrl,
                     const Item& item,
                     const ItemPosition& itemPosition,
@@ -73,12 +70,14 @@ class ContainerManager
 
  private:
   void createContainer(const Item* item, const ItemPosition& itemPosition);
+  Container* getInnerContainer(Container* container, int containerSlot);
+
   void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
 
-  bool isClientContainerId(int containerId) const;
-  void setClientContainerId(CreatureId playerId, int clientContainerId, int containerId);
-  int getClientContainerId(CreatureId playerId, int containerId) const;
+  bool isClientContainerId(int clientContainerId) const;
+  void setClientContainerId(CreatureId playerId, int clientContainerId, ItemUniqueId itemUniqueId);
+  int getClientContainerId(CreatureId playerId, ItemUniqueId itemUniqueId) const;
   ItemUniqueId getContainerId(CreatureId playerId, int clientContainerId) const;
 
   void addRelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId);
@@ -89,7 +88,7 @@ class ContainerManager
 
   // Maps a (player's) CreatureId to an array where index is
   // a clientContainerId and element is an ItemUniqueId
-  std::unordered_map<CreatureId, std::array<ItemUniqueId, 64>> clientContainerIds_;  // TODO(simon): rename
+  std::unordered_map<CreatureId, std::array<ItemUniqueId, 64>> clientContainerIds_;
 };
 
 #endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

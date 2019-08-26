@@ -54,7 +54,6 @@ struct Container
   int weight;
 
   // The Item that corresponds to this Container
-  // TODO(simon): store ItemUniqueId instead?
   const Item* item;
 
   // Container id of the parent container, or INVALID_ID if no parent
@@ -66,8 +65,7 @@ struct Container
   ItemPosition rootItemPosition;
 
   // Collection of Items in the Container
-  // TODO(simon): store ItemUniqueId instead?
-  std::vector<Item*> items;
+  std::vector<const Item*> items;
 
   // List of Players that have this Container open
   struct RelatedPlayer

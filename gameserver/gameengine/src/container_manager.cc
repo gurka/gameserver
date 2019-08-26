@@ -45,8 +45,8 @@ void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
     auto& clientContainerIds = clientContainerIds_[playerId];
     for (auto i = 0u; i < clientContainerIds.size(); i++)
     {
-      const auto containerId = clientContainerIds[i];
-      if (containerId == Item::INVALID_UNIQUE_ID)
+      const auto itemUniqueId = clientContainerIds[i];
+      if (itemUniqueId == Item::INVALID_UNIQUE_ID)
       {
         continue;
       }
@@ -57,9 +57,14 @@ void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
   }
 }
 
-ItemUniqueId ContainerManager::getItemUniqueId(const PlayerCtrl* playerCtrl, int containerId) const
+ItemUniqueId ContainerManager::getItemUniqueId(const PlayerCtrl* playerCtrl, int clientContainerId) const
 {
-  return clientContainerIds_.at(playerCtrl->getPlayerId())[containerId];
+  if (isClientContainerId(clientContainerId))
+  {
+    return clientContainerIds_.at(playerCtrl->getPlayerId())[clientContainerId];
+  }
+
+  return Item::INVALID_UNIQUE_ID;
 }
 
 const Container* ContainerManager::getContainer(ItemUniqueId itemUniqueId) const
@@ -128,10 +133,6 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
     // Create the container
     createContainer(&item, itemPosition);
   }
-  else
-  {
-    // TODO: Can we validate that the container is where it's supposed to be?
-  }
 
   // Check if Player has this Container open
   const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), item.getItemUniqueId());
@@ -197,24 +198,8 @@ bool ContainerManager::canAddItem(ItemUniqueId itemUniqueId,
     return false;
   }
 
-  // If the containerSlot is valid, then check if the item it points to is a container
-  // TODO: duplicate code in ::addItem
-  if (containerSlot >= 0 &&
-      containerSlot < static_cast<int>(container->items.size()) &&
-      container->items[containerSlot]->getItemType().isContainer)
-  {
-    // We might need to make a new Container object for the inner container
-    if (containers_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
-    {
-      createContainer(container->items[containerSlot],
-                      ItemPosition(GamePosition(container->item->getItemUniqueId(),
-                                                containerSlot),
-                                   container->item->getItemTypeId()));
-    }
-
-    // Change the container pointer to the inner container
-    container = &containers_.at(container->items[containerSlot]->getItemUniqueId());
-  }
+  // If containerSlot points to another contianer, create it if needed and reset container pointer
+  container = getInnerContainer(container, containerSlot);
 
   // Just make sure that there is room for the item
   // GameEngine is responsible for checking the weight and player capacity
@@ -277,24 +262,8 @@ void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, Ite
 
   // TODO(simon): Check if the container is full
 
-  // If the containerSlot is valid, then check if the item it points to is a container
-  // TODO: duplicate code in ::canAddItem
-  if (containerSlot >= 0 &&
-      containerSlot < static_cast<int>(container->items.size()) &&
-      container->items[containerSlot]->getItemType().isContainer)
-  {
-    // We might need to make a new Container object for the inner container
-    if (containers_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
-    {
-      createContainer(container->items[containerSlot],
-                      ItemPosition(GamePosition(container->item->getItemUniqueId(),
-                                                containerSlot),
-                                   container->item->getItemTypeId()));
-    }
-
-    // Change the container pointer to the inner container
-    container = &containers_.at(container->items[containerSlot]->getItemUniqueId());
-  }
+  // If containerSlot points to another contianer, create it if needed and reset container pointer
+  container = getInnerContainer(container, containerSlot);
 
   // Add the item at the front
   container->items.insert(container->items.begin(), item);
@@ -337,6 +306,28 @@ void ContainerManager::createContainer(const Item* item, const ItemPosition& ite
             item->getItemUniqueId(),
             container.parentItemUniqueId,
             container.rootItemPosition.toString().c_str());
+}
+
+Container* ContainerManager::getInnerContainer(Container* container, int containerSlot)
+{
+  if (containerSlot >= 0 &&
+      containerSlot < static_cast<int>(container->items.size()) &&
+      container->items[containerSlot]->getItemType().isContainer)
+  {
+    // We might need to make a new Container object for the inner container
+    if (containers_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
+    {
+      createContainer(container->items[containerSlot],
+                      ItemPosition(GamePosition(container->item->getItemUniqueId(),
+                                                containerSlot),
+                                   container->item->getItemTypeId()));
+    }
+
+    // Change the container pointer to the inner container
+    return &containers_.at(container->items[containerSlot]->getItemUniqueId());
+  }
+
+  return container;
 }
 
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
@@ -389,23 +380,23 @@ void ContainerManager::closeContainer(PlayerCtrl* playerCtrl,
   playerCtrl->onCloseContainer(clientContainerId);
 }
 
-bool ContainerManager::isClientContainerId(int containerId) const
+bool ContainerManager::isClientContainerId(int clientContainerId) const
 {
-  return containerId >= 0 && containerId < 64;
+  return clientContainerId >= 0 && clientContainerId < 64;
 }
 
-void ContainerManager::setClientContainerId(CreatureId playerId, int clientContainerId, int containerId)
+void ContainerManager::setClientContainerId(CreatureId playerId, int clientContainerId, ItemUniqueId itemUniqueId)
 {
   auto& clientContainerIds = clientContainerIds_.at(playerId);
-  clientContainerIds[clientContainerId] = containerId;
+  clientContainerIds[clientContainerId] = itemUniqueId;
 }
 
-int ContainerManager::getClientContainerId(CreatureId playerId, int containerId) const
+int ContainerManager::getClientContainerId(CreatureId playerId, ItemUniqueId itemUniqueId) const
 {
   const auto& clientContainerIds = clientContainerIds_.at(playerId);
   const auto it = std::find(clientContainerIds.cbegin(),
                             clientContainerIds.cend(),
-                            containerId);
+                            itemUniqueId);
   if (it != clientContainerIds.cend())
   {
     return std::distance(clientContainerIds.cbegin(), it);
