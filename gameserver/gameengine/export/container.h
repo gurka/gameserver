@@ -57,7 +57,6 @@ struct Container
   const Item* item;
 
   // Container id of the parent container, or INVALID_ID if no parent
-  // This id must NOT be a clientContainerId
   ItemUniqueId parentItemUniqueId;
 
   // ItemPosition of the root item that this Container belongs to
@@ -68,29 +67,7 @@ struct Container
   std::vector<const Item*> items;
 
   // List of Players that have this Container open
-  struct RelatedPlayer
-  {
-    RelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId)
-      : playerCtrl(playerCtrl),
-        clientContainerId(clientContainerId)
-    {
-    }
-
-    bool operator==(const RelatedPlayer& other) const
-    {
-      return playerCtrl == other.playerCtrl &&
-             clientContainerId == other.clientContainerId;
-    }
-
-    bool operator!=(const RelatedPlayer& other) const
-    {
-      return !(*this == other);
-    }
-
-    PlayerCtrl* playerCtrl;
-    int clientContainerId;
-  };
-  std::vector<RelatedPlayer> relatedPlayers;
+  std::vector<PlayerCtrl*> relatedPlayers;
 };
 
 #endif  // GAMEENGINE_EXPORT_CONTAINER_H_

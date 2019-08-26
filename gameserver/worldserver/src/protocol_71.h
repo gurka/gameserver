@@ -92,14 +92,18 @@ class Protocol71 : public Protocol
   CreatureId getPlayerId() const override { return playerId_; }
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
   void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
-  void onOpenContainer(int localContainerId, const Container& container, const Item& item) override;
-  void onCloseContainer(int localContainerId) override;
-  void onContainerAddItem(int clientContainerId, const Item& item) override;
-  void onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item) override;
-  void onContainerRemoveItem(int clientContainerId, int containerSlot) override;
+  void onOpenContainer(int newContainerId, const Container& container, const Item& item) override;
+  void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) override;
+  void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) override;
+  void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item) override;
+  void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot) override;
   void sendTextMessage(int message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
+
+  // Called by ContainerManager (from PlayerCtrl)
+  const std::array<ItemUniqueId, 64>& getContainerIds() const override { return containerIds_; }
+  bool hasContainerOpen(ItemUniqueId itemUniqueId) const override;
 
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
@@ -135,6 +139,11 @@ class Protocol71 : public Protocol
   GamePosition getGamePosition(IncomingPacket* packet) const;
   ItemPosition getItemPosition(IncomingPacket* packet) const;
 
+  // Helper functions for containerId
+  void setContainerId(int containerId, ItemUniqueId itemUniqueId);
+  int getContainerId(ItemUniqueId itemUniqueId) const;
+  ItemUniqueId getContainerItemUniqueId(int containerId) const;
+
   std::function<void(void)> closeProtocol_;
   std::unique_ptr<Connection> connection_;
   GameEngineQueue* gameEngineQueue_;
@@ -143,6 +152,11 @@ class Protocol71 : public Protocol
   CreatureId playerId_;
 
   std::array<CreatureId, 64> knownCreatures_;
+
+  // Known/opened containers
+  // clientContainerId maps to a container's ItemUniqueId
+  static constexpr int INVALID_CONTAINER_ID = -1;
+  std::array<ItemUniqueId, 64> containerIds_;
 };
 
 #endif  // WORLDSERVER_SRC_PROTOCOL_71_H_

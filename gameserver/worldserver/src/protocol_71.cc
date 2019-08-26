@@ -50,6 +50,8 @@
 // account
 #include "account.h"
 
+constexpr int Protocol71::INVALID_CONTAINER_ID;
+
 Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
                        std::unique_ptr<Connection>&& connection,
                        GameEngineQueue* gameEngineQueue,
@@ -61,6 +63,7 @@ Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
     playerId_(Creature::INVALID_ID)
 {
   knownCreatures_.fill(Creature::INVALID_ID);
+  containerIds_.fill(Item::INVALID_UNIQUE_ID);
 
   Connection::Callbacks callbacks
   {
@@ -398,7 +401,7 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onOpenContainer(int clientContainerId, const Container& container, const Item& item)
+void Protocol71::onOpenContainer(int newContainerId, const Container& container, const Item& item)
 {
   if (!isConnected())
   {
@@ -411,11 +414,26 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+  // Set containerId
+  const auto oldItem = getContainerItemUniqueId(newContainerId);
+  if (oldItem != Item::INVALID_UNIQUE_ID)
+  {
+    LOG_ERROR("%s: overwriting containerId: %d from item %lu to item %lu",
+              __func__,
+              newContainerId,
+              oldItem,
+              item.getItemUniqueId());
+
+    // Maybe this is OK, but should we then send onCloseContainer for the old container?
+    return;
+  }
+  setContainerId(newContainerId, item.getItemUniqueId());
+
+  LOG_DEBUG("%s: newContainerId: %u", __func__, newContainerId);
 
   OutgoingPacket packet;
   packet.addU8(0x6E);
-  packet.addU8(clientContainerId);
+  packet.addU8(newContainerId);
   addItem(item, &packet);
   packet.addString(item.getItemType().name);
   packet.addU8(item.getItemType().maxitems);
@@ -432,73 +450,117 @@ void Protocol71::onOpenContainer(int clientContainerId, const Container& contain
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onCloseContainer(int clientContainerId)
+void Protocol71::onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId)
 {
   if (!isConnected())
   {
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
+  // Find containerId
+  const auto containerId = getContainerId(containerItemUniqueId);
+  if (containerId == INVALID_CONTAINER_ID)
+  {
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    return;
+  }
+
+  if (resetContainerId)
+  {
+    setContainerId(containerId, Item::INVALID_UNIQUE_ID);
+  }
+
+  LOG_DEBUG("%s: containerItemUniqueId: %u -> containerId: %d", __func__, containerItemUniqueId, containerId);
 
   OutgoingPacket packet;
   packet.addU8(0x6F);
-  packet.addU8(clientContainerId);
+  packet.addU8(containerId);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerAddItem(int clientContainerId, const Item& item)
+void Protocol71::onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item)
 {
   if (!isConnected())
   {
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, itemTypeId: %d", __func__, clientContainerId, item.getItemTypeId());
+  const auto containerId = getContainerId(containerItemUniqueId);
+  if (containerId == INVALID_CONTAINER_ID)
+  {
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    return;
+  }
+
+  LOG_DEBUG("%s: containerItemUniqueId: %u -> containerId: %d, itemTypeId: %d",
+            __func__,
+            containerItemUniqueId,
+            containerId,
+            item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x70);
-  packet.addU8(clientContainerId);
+  packet.addU8(containerId);
   addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item)
+void Protocol71::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item)
 {
   if (!isConnected())
   {
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d, itemTypeId: %d",
+  const auto containerId = getContainerId(containerItemUniqueId);
+  if (containerId == INVALID_CONTAINER_ID)
+  {
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    return;
+  }
+
+  LOG_DEBUG("%s: containerItemUniqueId: %u -> containerId: %d, containerSlot: %d, itemTypeId: %d",
             __func__,
-            clientContainerId,
+            containerItemUniqueId,
+            containerId,
             containerSlot,
             item.getItemTypeId());
 
   OutgoingPacket packet;
   packet.addU8(0x71);
-  packet.addU8(clientContainerId);
+  packet.addU8(containerId);
   packet.addU8(containerSlot);
   addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerRemoveItem(int clientContainerId, int containerSlot)
+void Protocol71::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot)
 {
   if (!isConnected())
   {
     return;
   }
 
-  LOG_DEBUG("%s: clientContainerId: %u, containerSlot: %d",
+  const auto containerId = getContainerId(containerItemUniqueId);
+  if (containerId == INVALID_CONTAINER_ID)
+  {
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    return;
+  }
+
+  LOG_DEBUG("%s: containerItemUniqueId: %u -> containerId: %d, containerSlot: %d",
             __func__,
-            clientContainerId,
+            containerItemUniqueId,
+            containerId,
             containerSlot);
 
   OutgoingPacket packet;
   packet.addU8(0x72);
-  packet.addU8(clientContainerId);
+  packet.addU8(containerId);
   packet.addU8(containerSlot);
   connection_->sendPacket(std::move(packet));
 }
@@ -537,6 +599,11 @@ void Protocol71::cancelMove()
   OutgoingPacket packet;
   packet.addU8(0xB5);
   connection_->sendPacket(std::move(packet));
+}
+
+bool Protocol71::hasContainerOpen(ItemUniqueId itemUniqueId) const
+{
+  return getContainerId(itemUniqueId) != INVALID_CONTAINER_ID;
 }
 
 void Protocol71::parsePacket(IncomingPacket* packet)
@@ -987,25 +1054,39 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
 
 void Protocol71::parseCloseContainer(IncomingPacket* packet)
 {
-  const auto clientContainerId = packet->getU8();
-
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-
-  gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
+  const auto containerId = packet->getU8();
+  const auto itemUniqueId = getContainerItemUniqueId(containerId);
+  if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    gameEngine->closeContainer(playerId_, clientContainerId);
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    return;
+  }
+
+  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, containerId, itemUniqueId);
+
+  gameEngineQueue_->addTask(playerId_, [this, itemUniqueId](GameEngine* gameEngine)
+  {
+    gameEngine->closeContainer(playerId_, itemUniqueId);
   });
 }
 
 void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
 {
-  const auto clientContainerId = packet->getU8();
-
-  LOG_DEBUG("%s: clientContainerId: %u", __func__, clientContainerId);
-
-  gameEngineQueue_->addTask(playerId_, [this, clientContainerId](GameEngine* gameEngine)
+  const auto containerId = packet->getU8();
+  const auto itemUniqueId = getContainerItemUniqueId(containerId);
+  if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    gameEngine->openParentContainer(playerId_, clientContainerId);
+    // TODO(simon): disconnect?
+    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    return;
+  }
+
+  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, containerId, itemUniqueId);
+
+  gameEngineQueue_->addTask(playerId_, [this, itemUniqueId, containerId](GameEngine* gameEngine)
+  {
+    gameEngine->openParentContainer(playerId_, itemUniqueId, containerId);
   });
 }
 
@@ -1074,8 +1155,15 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     // Container have x fully set and 7th bit in y set
     // Container id is lower 6 bits in y
     // Container slot is z
-    const auto clientContainerId = y & ~0x40;
-    return GamePosition(clientContainerId, z);
+    const auto containerId = y & ~0x40;
+    const auto itemUniqueId = getContainerItemUniqueId(containerId);
+    if (itemUniqueId == Item::INVALID_UNIQUE_ID)
+    {
+      LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
+      return GamePosition();
+    }
+
+    return GamePosition(itemUniqueId, z);
   }
 }
 
@@ -1086,4 +1174,35 @@ ItemPosition Protocol71::getItemPosition(IncomingPacket* packet) const
   const auto stackPosition = packet->getU8();
 
   return ItemPosition(gamePosition, itemId, stackPosition);
+}
+
+void Protocol71::setContainerId(int containerId, ItemUniqueId itemUniqueId)
+{
+  containerIds_[containerId] = itemUniqueId;
+}
+
+int Protocol71::getContainerId(ItemUniqueId itemUniqueId) const
+{
+  const auto it = std::find(containerIds_.cbegin(),
+                            containerIds_.cend(),
+                            itemUniqueId);
+  if (it != containerIds_.cend())
+  {
+    return std::distance(containerIds_.cbegin(), it);
+  }
+  else
+  {
+    return INVALID_CONTAINER_ID;
+  }
+}
+
+ItemUniqueId Protocol71::getContainerItemUniqueId(int containerId) const
+{
+  if (containerId < 0 || containerId >= 64)
+  {
+    LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
+    return Item::INVALID_UNIQUE_ID;
+  }
+
+  return containerIds_.at(containerId);
 }

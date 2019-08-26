@@ -31,40 +31,15 @@
 #include "logger.h"
 #include "player_ctrl.h"
 
-void ContainerManager::playerSpawn(const PlayerCtrl* playerCtrl)
-{
-  auto& clientContainerIds = clientContainerIds_[playerCtrl->getPlayerId()];
-  clientContainerIds.fill(Item::INVALID_UNIQUE_ID);
-}
-
 void ContainerManager::playerDespawn(const PlayerCtrl* playerCtrl)
 {
-  const auto playerId = playerCtrl->getPlayerId();
-  if (clientContainerIds_.count(playerId) == 1)
+  for (auto itemUniqueId : playerCtrl->getContainerIds())
   {
-    auto& clientContainerIds = clientContainerIds_[playerId];
-    for (auto i = 0u; i < clientContainerIds.size(); i++)
+    if (itemUniqueId != Item::INVALID_UNIQUE_ID)
     {
-      const auto itemUniqueId = clientContainerIds[i];
-      if (itemUniqueId == Item::INVALID_UNIQUE_ID)
-      {
-        continue;
-      }
-      removeRelatedPlayer(playerCtrl, i);
+      removeRelatedPlayer(playerCtrl, itemUniqueId);
     }
-
-    clientContainerIds_.erase(playerId);
   }
-}
-
-ItemUniqueId ContainerManager::getItemUniqueId(const PlayerCtrl* playerCtrl, int clientContainerId) const
-{
-  if (isClientContainerId(clientContainerId))
-  {
-    return clientContainerIds_.at(playerCtrl->getPlayerId())[clientContainerId];
-  }
-
-  return Item::INVALID_UNIQUE_ID;
 }
 
 const Container* ContainerManager::getContainer(ItemUniqueId itemUniqueId) const
@@ -120,7 +95,7 @@ Item* ContainerManager::getItem(ItemUniqueId itemUniqueId, int containerSlot)
 void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
                                     const Item& item,
                                     const ItemPosition& itemPosition,
-                                    int newClientContainerId)
+                                    int newContainerId)
 {
   if (!item.getItemType().isContainer)
   {
@@ -135,39 +110,32 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
   }
 
   // Check if Player has this Container open
-  const auto clientContainerId = getClientContainerId(playerCtrl->getPlayerId(), item.getItemUniqueId());
-  if (clientContainerId == -1)
+  // TODO(simon): either check Container::relatedPlayers or check via PlayerCtrl?
+
+  if (playerCtrl->hasContainerOpen(item.getItemUniqueId()))
   {
-    openContainer(playerCtrl, item.getItemUniqueId(), newClientContainerId);
+    // Do not close the Container here, the client will ack this by sending closeContainer
+    playerCtrl->onCloseContainer(item.getItemUniqueId(), false);
   }
   else
   {
-    // Do not close the Container here, the client will ack this by sending closeContainer
-    playerCtrl->onCloseContainer(clientContainerId);
+    openContainer(playerCtrl, item.getItemUniqueId(), newContainerId);
   }
 }
 
-void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, int clientContainerId)
+void ContainerManager::closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId)
 {
-  const auto itemUniqueId = getItemUniqueId(playerCtrl, clientContainerId);
-  if (itemUniqueId == Item::INVALID_UNIQUE_ID)
-  {
-    LOG_ERROR("%s: must be called with clientContainerId", __func__);
-    return;
-  }
+  LOG_DEBUG("%s: playerId: %d, itemUniqueId: %d", __func__, playerCtrl->getPlayerId(), itemUniqueId);
 
-  closeContainer(playerCtrl, itemUniqueId, clientContainerId);
+  // Remove player from related players
+  removeRelatedPlayer(playerCtrl, itemUniqueId);
+
+  // Send onCloseContainer
+  playerCtrl->onCloseContainer(itemUniqueId, true);
 }
 
-void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientContainerId)
+void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId)
 {
-  const auto itemUniqueId = getItemUniqueId(playerCtrl, clientContainerId);
-  if (itemUniqueId == Item::INVALID_UNIQUE_ID)
-  {
-    LOG_ERROR("%s: must be called with clientContainerId", __func__);
-    return;
-  }
-
   auto* currentContainer = getContainer(itemUniqueId);
   if (!currentContainer)
   {
@@ -175,8 +143,11 @@ void ContainerManager::openParentContainer(PlayerCtrl* playerCtrl, int clientCon
     return;
   }
 
+  // Remove player from current container
+  removeRelatedPlayer(playerCtrl, itemUniqueId);
+
   // Open parent container
-  openContainer(playerCtrl, currentContainer->parentItemUniqueId, clientContainerId);
+  openContainer(playerCtrl, currentContainer->parentItemUniqueId, newContainerId);
 }
 
 bool ContainerManager::canAddItem(ItemUniqueId itemUniqueId,
@@ -239,9 +210,9 @@ void ContainerManager::removeItem(ItemUniqueId itemUniqueId, int containerSlot)
   container->items.erase(container->items.begin() + containerSlot);
 
   // Inform players that have this contianer open about the change
-  for (auto& relatedPlayer : container->relatedPlayers)
+  for (auto& playerCtrl : container->relatedPlayers)
   {
-    relatedPlayer.playerCtrl->onContainerRemoveItem(relatedPlayer.clientContainerId, containerSlot);
+    playerCtrl->onContainerRemoveItem(itemUniqueId, containerSlot);
   }
 }
 
@@ -269,43 +240,10 @@ void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, Ite
   container->items.insert(container->items.begin(), item);
 
   // Inform players that have this container open about the change
-  for (auto& relatedPlayer : container->relatedPlayers)
+  for (auto& playerCtrl : container->relatedPlayers)
   {
-    relatedPlayer.playerCtrl->onContainerAddItem(relatedPlayer.clientContainerId, *item);
+    playerCtrl->onContainerAddItem(itemUniqueId, *item);
   }
-}
-
-void ContainerManager::createContainer(const Item* item, const ItemPosition& itemPosition)
-{
-  if (containers_.count(item->getItemUniqueId()))
-  {
-    LOG_ERROR("%s: container is already created for itemUniqueId: %d", __func__, item->getItemUniqueId());
-    return;
-  }
-
-  auto& container = containers_[item->getItemUniqueId()];
-  container.weight = 0;
-  container.item = item;
-  if (itemPosition.getGamePosition().isPosition() ||
-      itemPosition.getGamePosition().isInventory())
-  {
-    container.parentItemUniqueId = Item::INVALID_UNIQUE_ID;
-    container.rootItemPosition = itemPosition;
-  }
-  else  // isContainer
-  {
-    const auto& parentContainer = containers_.at(itemPosition.getGamePosition().getItemUniqueId());
-    container.parentItemUniqueId = itemPosition.getGamePosition().getItemUniqueId();
-    container.rootItemPosition = parentContainer.rootItemPosition;
-  }
-  container.items = {};
-  container.relatedPlayers = {};
-
-  LOG_DEBUG("%s: created new Container with itemUniqueId %d, parentItemUniqueId: %d, rootItemPosition: %s",
-            __func__,
-            item->getItemUniqueId(),
-            container.parentItemUniqueId,
-            container.rootItemPosition.toString().c_str());
 }
 
 Container* ContainerManager::getInnerContainer(Container* container, int containerSlot)
@@ -330,110 +268,59 @@ Container* ContainerManager::getInnerContainer(Container* container, int contain
   return container;
 }
 
-void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
-                                     ItemUniqueId itemUniqueId,
-                                     int clientContainerId)
+void ContainerManager::createContainer(const Item* item, const ItemPosition& itemPosition)
 {
-  LOG_DEBUG("%s: playerId: %d, itemUniqueId: %d, clientContainerId: %d",
-            __func__,
-            playerCtrl->getPlayerId(),
-            itemUniqueId,
-            clientContainerId);
-
-  // Check if there already is an open container at the given clientContainerId
-  const auto currentItemUniqueId = getContainerId(playerCtrl->getPlayerId(), clientContainerId);
-  if (currentItemUniqueId != Item::INVALID_UNIQUE_ID)
+  if (containers_.count(item->getItemUniqueId()))
   {
-    // Remove player from relatedPlayers
-    removeRelatedPlayer(playerCtrl, clientContainerId);
-  }
-
-  auto& container = containers_.at(itemUniqueId);
-
-  // Set clientContainerId
-  setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, itemUniqueId);
-
-  // Add player to related players
-  addRelatedPlayer(playerCtrl, clientContainerId);
-
-  // Send onOpenContainer
-  playerCtrl->onOpenContainer(clientContainerId, container, *container.item);
-}
-
-void ContainerManager::closeContainer(PlayerCtrl* playerCtrl,
-                                      ItemUniqueId itemUniqueId,
-                                      int clientContainerId)
-{
-  LOG_DEBUG("%s: playerId: %d, itemUniqueId: %d, clientContainerId: %d",
-            __func__,
-            playerCtrl->getPlayerId(),
-            itemUniqueId,
-            clientContainerId);
-
-  // Remove player from related players
-  removeRelatedPlayer(playerCtrl, clientContainerId);
-
-  // Unset clientContainerId
-  setClientContainerId(playerCtrl->getPlayerId(), clientContainerId, Item::INVALID_UNIQUE_ID);
-
-  // Send onCloseContainer
-  playerCtrl->onCloseContainer(clientContainerId);
-}
-
-bool ContainerManager::isClientContainerId(int clientContainerId) const
-{
-  return clientContainerId >= 0 && clientContainerId < 64;
-}
-
-void ContainerManager::setClientContainerId(CreatureId playerId, int clientContainerId, ItemUniqueId itemUniqueId)
-{
-  auto& clientContainerIds = clientContainerIds_.at(playerId);
-  clientContainerIds[clientContainerId] = itemUniqueId;
-}
-
-int ContainerManager::getClientContainerId(CreatureId playerId, ItemUniqueId itemUniqueId) const
-{
-  const auto& clientContainerIds = clientContainerIds_.at(playerId);
-  const auto it = std::find(clientContainerIds.cbegin(),
-                            clientContainerIds.cend(),
-                            itemUniqueId);
-  if (it != clientContainerIds.cend())
-  {
-    return std::distance(clientContainerIds.cbegin(), it);
-  }
-  else
-  {
-    return -1;  // TODO(simon): constant?
-  }
-}
-
-ItemUniqueId ContainerManager::getContainerId(CreatureId playerId, int clientContainerId) const
-{
-  if (!isClientContainerId(clientContainerId))
-  {
-    LOG_ERROR("%s: invalid clientContainerId: %d", __func__, clientContainerId);
-    return Item::INVALID_UNIQUE_ID;
-  }
-
-  const auto& clientContainerIds = clientContainerIds_.at(playerId);
-  return clientContainerIds[clientContainerId];
-}
-
-void ContainerManager::addRelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId)
-{
-  auto* container = getContainer(getItemUniqueId(playerCtrl, clientContainerId));
-  if (!container)
-  {
-    // getContainer logs error
+    LOG_ERROR("%s: container is already created for itemUniqueId: %d", __func__, item->getItemUniqueId());
     return;
   }
 
-  container->relatedPlayers.emplace_back(playerCtrl, clientContainerId);
+  auto& container = containers_[item->getItemUniqueId()];
+  container.weight = 0;
+  container.item = item;
+  if (itemPosition.getGamePosition().isPosition() ||
+      itemPosition.getGamePosition().isInventory())
+  {
+    container.parentItemUniqueId = Item::INVALID_UNIQUE_ID;
+    container.rootItemPosition = itemPosition;
+  }
+  else  // isContainer
+  {
+    container.parentItemUniqueId = itemPosition.getGamePosition().getItemUniqueId();
+    container.rootItemPosition = containers_.at(container.parentItemUniqueId).rootItemPosition;
+  }
+  container.items = {};
+  container.relatedPlayers = {};
+
+  LOG_DEBUG("%s: created new Container with itemUniqueId %d, parentItemUniqueId: %d, rootItemPosition: %s",
+            __func__,
+            item->getItemUniqueId(),
+            container.parentItemUniqueId,
+            container.rootItemPosition.toString().c_str());
 }
 
-void ContainerManager::removeRelatedPlayer(const PlayerCtrl* playerCtrl, int clientContainerId)
+void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
+                                     ItemUniqueId itemUniqueId,
+                                     int newContainerId)
 {
-  const auto itemUniqueId = getItemUniqueId(playerCtrl, clientContainerId);
+  LOG_DEBUG("%s: playerId: %d, itemUniqueId: %d, newContainerId: %d",
+            __func__,
+            playerCtrl->getPlayerId(),
+            itemUniqueId,
+            newContainerId);
+
+  auto& container = containers_.at(itemUniqueId);
+
+  // Add player to related players
+  addRelatedPlayer(playerCtrl, itemUniqueId);
+
+  // Send onOpenContainer
+  playerCtrl->onOpenContainer(newContainerId, container, *container.item);
+}
+
+void ContainerManager::addRelatedPlayer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId)
+{
   auto* container = getContainer(itemUniqueId);
   if (!container)
   {
@@ -441,19 +328,24 @@ void ContainerManager::removeRelatedPlayer(const PlayerCtrl* playerCtrl, int cli
     return;
   }
 
-  auto it = std::find_if(container->relatedPlayers.begin(),
-                         container->relatedPlayers.end(),
-                         [playerCtrl, clientContainerId](const auto& relatedPlayer)
+  container->relatedPlayers.emplace_back(playerCtrl);
+}
+
+void ContainerManager::removeRelatedPlayer(const PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId)
+{
+  auto* container = getContainer(itemUniqueId);
+  if (!container)
   {
-    return relatedPlayer.playerCtrl->getPlayerId() == playerCtrl->getPlayerId() &&
-           relatedPlayer.clientContainerId == clientContainerId;
-  });
+    // getContainer logs error
+    return;
+  }
+
+  auto it = std::find(container->relatedPlayers.begin(), container->relatedPlayers.end(), playerCtrl);
   if (it == container->relatedPlayers.end())
   {
-    LOG_ERROR("%s: could not find RelatedPlayer with playerId: %d, clientContainerId: %d in itemUniqueId: %d",
+    LOG_ERROR("%s: could not find RelatedPlayer with playerId: %d in itemUniqueId: %d",
               __func__,
               playerCtrl->getPlayerId(),
-              clientContainerId,
               itemUniqueId);
     return;
   }

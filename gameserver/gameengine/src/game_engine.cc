@@ -108,9 +108,6 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   // Tell PlayerCtrl its CreatureId
   player_ctrl->setPlayerId(player.getCreatureId());
 
-  // Inform ContainerManager of the new player
-  containerManager_.playerSpawn(player_ctrl);
-
   // Spawn the player
   auto rc = world_->addCreature(&player, player_ctrl, Position(208, 208, 7));
   if (rc != World::ReturnCode::OK)
@@ -462,16 +459,18 @@ void GameEngine::lookAt(CreatureId creatureId, const ItemPosition& position)
   playerData.player_ctrl->sendTextMessage(0x13, ss.str());
 }
 
-void GameEngine::closeContainer(CreatureId creatureId, int clientContainerId)
+void GameEngine::closeContainer(CreatureId creatureId, ItemUniqueId itemUniqueId)
 {
-  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-  containerManager_.closeContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
+  LOG_DEBUG("%s: creatureId: %d itemUniqueId: %d", __func__, creatureId, itemUniqueId);
+  containerManager_.closeContainer(getPlayerData(creatureId).player_ctrl, itemUniqueId);
 }
 
-void GameEngine::openParentContainer(CreatureId creatureId, int clientContainerId)
+void GameEngine::openParentContainer(CreatureId creatureId, ItemUniqueId itemUniqueId, int newContainerId)
 {
-  LOG_DEBUG("%s: creatureId: %d clientContainerId: %d", __func__, creatureId, clientContainerId);
-  containerManager_.openParentContainer(getPlayerData(creatureId).player_ctrl, clientContainerId);
+  LOG_DEBUG("%s: creatureId: %d itemUniqueId: %d", __func__, creatureId, itemUniqueId);
+  containerManager_.openParentContainer(getPlayerData(creatureId).player_ctrl,
+                                        itemUniqueId,
+                                        newContainerId);
 }
 
 Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)

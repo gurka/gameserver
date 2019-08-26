@@ -40,15 +40,11 @@ class ContainerManager
 {
  public:
   ContainerManager()
-    : containers_(),
-      clientContainerIds_()
+    : containers_()
   {
   }
 
-  void playerSpawn(const PlayerCtrl* playerCtrl);
   void playerDespawn(const PlayerCtrl* playerCtrl);
-
-  ItemUniqueId getItemUniqueId(const PlayerCtrl* playerCtrl, int clientContainerId) const;
 
   const Container* getContainer(ItemUniqueId itemUniqueId) const;
   Container* getContainer(ItemUniqueId itemUniqueId);
@@ -59,36 +55,25 @@ class ContainerManager
   void useContainer(PlayerCtrl* playerCtrl,
                     const Item& item,
                     const ItemPosition& itemPosition,
-                    int newClientContainerId);
-
-  void closeContainer(PlayerCtrl* playerCtrl, int clientContainerId);
-  void openParentContainer(PlayerCtrl* playerCtrl, int clientContainerId);
+                    int newContainerId);
+  void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
+  void openParentContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
 
   bool canAddItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
   void removeItem(ItemUniqueId itemUniqueId, int containerSlot);
   void addItem(ItemUniqueId itemUniqueId, int containerSlot, Item* item);
 
  private:
-  void createContainer(const Item* item, const ItemPosition& itemPosition);
   Container* getInnerContainer(Container* container, int containerSlot);
 
-  void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
-  void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int clientContainerId);
+  void createContainer(const Item* item, const ItemPosition& itemPosition);
+  void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
 
-  bool isClientContainerId(int clientContainerId) const;
-  void setClientContainerId(CreatureId playerId, int clientContainerId, ItemUniqueId itemUniqueId);
-  int getClientContainerId(CreatureId playerId, ItemUniqueId itemUniqueId) const;
-  ItemUniqueId getContainerId(CreatureId playerId, int clientContainerId) const;
-
-  void addRelatedPlayer(PlayerCtrl* playerCtrl, int clientContainerId);
-  void removeRelatedPlayer(const PlayerCtrl* playerCtrl, int clientContainerId);
+  void addRelatedPlayer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
+  void removeRelatedPlayer(const PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
 
   // Maps ItemUniqueId to Container
   std::unordered_map<ItemUniqueId, Container> containers_;
-
-  // Maps a (player's) CreatureId to an array where index is
-  // a clientContainerId and element is an ItemUniqueId
-  std::unordered_map<CreatureId, std::array<ItemUniqueId, 64>> clientContainerIds_;
 };
 
 #endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

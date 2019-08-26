@@ -73,17 +73,20 @@ class PlayerCtrlMock : public PlayerCtrl
 
   MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, int inventoryIndex));
 
-  MOCK_METHOD3(onOpenContainer, void(int clientContainerId, const Container& container, const Item& item));
-  MOCK_METHOD1(onCloseContainer, void(int clientContainerId));
+  MOCK_METHOD3(onOpenContainer, void(int newContainerId, const Container& container, const Item& item));
+  MOCK_METHOD2(onCloseContainer, void(ItemUniqueId itemUniqueId, bool resetContainerId));
 
-  MOCK_METHOD2(onContainerAddItem, void(int clientContainerId, const Item& item));
-  MOCK_METHOD3(onContainerUpdateItem, void(int clientContainerId, int containerSlot, const Item& item));
-  MOCK_METHOD2(onContainerRemoveItem, void(int clientContainerId, int containerSlot));
+  MOCK_METHOD2(onContainerAddItem, void(ItemUniqueId itemUniqueId, const Item& item));
+  MOCK_METHOD3(onContainerUpdateItem, void(ItemUniqueId itemUniqueId, int containerSlot, const Item& item));
+  MOCK_METHOD2(onContainerRemoveItem, void(ItemUniqueId itemUniqueId, int containerSlot));
 
   MOCK_METHOD2(sendTextMessage, void(int message_type, const std::string& message));
 
   MOCK_METHOD1(sendCancel, void(const std::string& message));
   MOCK_METHOD0(cancelMove, void());
+
+  MOCK_CONST_METHOD0(getContainerIds, const std::array<ItemUniqueId, 64>&());
+  MOCK_CONST_METHOD1(hasContainerOpen, bool(ItemUniqueId itemUniqueId));
 };
 
 #endif  // GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_

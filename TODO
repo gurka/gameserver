@@ -19,6 +19,16 @@ ContainerManager:
 
   * Fix tests
 
+  * PRIO:
+    - GamePosition type CONTAINER is broken.
+    - clientContainerId belongs to a player, but ItemPosition is set to Container::rootItemPosition
+      (note: this can never happen, rootItemPosition is always inventory or world...)
+    - Printing GamePosition sucks
+    - Investigate moving clientContianerId stuff to Protocol
+    - NO CLIENTCONTAINERID SHOULD EVER LEAVE PROTOCOL_71
+      Only newContainerId for when using items that could be a container
+    - GamePosition should use ItemUniqueId and containerSlot for Type::CONTAINER
+
 World:
   * Look at how Tile stores Creatures (using CreatureId)
     Why not store them as Creature pointers, just like Items?

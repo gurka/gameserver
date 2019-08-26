@@ -45,17 +45,21 @@ class PlayerCtrl : public CreatureCtrl
 
   virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
 
-  virtual void onOpenContainer(int clientContainerId, const Container& container, const Item& item) = 0;
-  virtual void onCloseContainer(int clientContainerId) = 0;
+  virtual void onOpenContainer(int newContainerId, const Container& container, const Item& item) = 0;
+  virtual void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) = 0;
 
-  virtual void onContainerAddItem(int clientContainerId, const Item& item) = 0;
-  virtual void onContainerUpdateItem(int clientContainerId, int containerSlot, const Item& item) = 0;
-  virtual void onContainerRemoveItem(int clientContainerId, int containerSlot) = 0;
+  virtual void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) = 0;
+  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item) = 0;
+  virtual void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot) = 0;
 
   virtual void sendTextMessage(int message_type, const std::string& message) = 0;
 
   virtual void sendCancel(const std::string& message) = 0;
   virtual void cancelMove() = 0;
+
+  // Called by ContainerManager
+  virtual const std::array<ItemUniqueId, 64>& getContainerIds() const = 0;
+  virtual bool hasContainerOpen(ItemUniqueId itemUniqueId) const = 0;
 };
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_CTRL_H_
