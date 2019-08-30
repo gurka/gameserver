@@ -34,6 +34,8 @@ using ::testing::ReturnRef;
 using ::testing::Ref;
 using ::testing::_;
 using ::testing::SaveArg;
+using ::testing::WithArg;
+using ::testing::Invoke;
 
 struct ItemStub : public Item
 {
@@ -91,6 +93,13 @@ class ContainerManagerTest : public ::testing::Test
     itemContainerB = ItemStub { 101u, itemTypeContainer.id, itemTypeContainer, 1 };
     itemContainerC = ItemStub { 102u, itemTypeContainer.id, itemTypeContainer, 1 };
 
+    itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
+    itemContainerBPos = ItemPosition(GamePosition(Position(1, 2, 3)), itemContainerB.getItemTypeId());
+
+    clientContainerIdA = 1;
+    clientContainerIdB = 2;
+    clientContainerIdC = 3;
+
     itemNotContainerA = ItemStub { 200u, itemTypeNotContainer.id, itemTypeNotContainer, 1 };
     itemNotContainerB = ItemStub { 201u, itemTypeNotContainer.id, itemTypeNotContainer, 2 };
     itemNotContainerC = ItemStub { 202u, itemTypeNotContainer.id, itemTypeNotContainer, 3 };
@@ -104,6 +113,29 @@ class ContainerManagerTest : public ::testing::Test
     // TODO(simon): Verify that no containers have related players?
   }
 
+  Container* createAndOpenContainer(const ItemStub& itemContainer,
+                              const ItemPosition& itemPosition,
+                              int clientContainerId)
+  {
+    const Container* savedContainer = nullptr;
+    const auto saveContainer = [&savedContainer](const Container& container)
+    {
+      savedContainer = &container;
+    };
+
+    EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainer.getItemUniqueId())).WillOnce(Return(false));
+    EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId, _, Ref(itemContainer)))
+      .WillOnce(WithArg<1>(Invoke(saveContainer)));
+    container_manager_.useContainer(&player_ctrl_mock_, itemContainer, itemPosition, clientContainerId);
+    containerIds[clientContainerId] = itemContainer.getItemUniqueId();
+    if (!savedContainer)
+    {
+      return nullptr;
+    }
+    EXPECT_EQ(savedContainer, container_manager_.getContainer(itemContainer.getItemUniqueId()));
+    return container_manager_.getContainer(itemContainer.getItemUniqueId());
+  }
+
   PlayerCtrlMock player_ctrl_mock_;
   ContainerManager container_manager_;
   const CreatureId player_id = 123;
@@ -114,6 +146,15 @@ class ContainerManagerTest : public ::testing::Test
   ItemStub itemContainerA;
   ItemStub itemContainerB;
   ItemStub itemContainerC;
+
+  ItemPosition itemContainerAPos;
+  ItemPosition itemContainerBPos;
+  ItemPosition itemContainerCPos;
+
+  int clientContainerIdA;
+  int clientContainerIdB;
+  int clientContainerIdC;
+
   ItemStub itemNotContainerA;
   ItemStub itemNotContainerB;
   ItemStub itemNotContainerC;
@@ -123,49 +164,29 @@ class ContainerManagerTest : public ::testing::Test
 
 TEST_F(ContainerManagerTest, useContainer)
 {
-  // Create/open a container located in player inventory slot 0
-  const auto itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
-  const auto clientContainerIdA = 1u;
-  // TODO: SaveArg<1> and match with getContainer
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdA, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerIdA);
-  containerIds[clientContainerIdA] = itemContainerA.getItemUniqueId();
-
-  // Validate the newly created container
-  auto* containerA = container_manager_.getContainer(itemContainerA.getItemUniqueId());
+  // Create, use/open and validate a new container
+  auto* containerA = createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
   ASSERT_TRUE(containerA != nullptr);
-  EXPECT_EQ(0, containerA->weight);
-  EXPECT_EQ(itemContainerA, *containerA->item);
+  EXPECT_EQ(0,                       containerA->weight);
+  EXPECT_EQ(itemContainerA,         *containerA->item);
   EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerA->parentItemUniqueId);
-  EXPECT_EQ(itemContainerAPos, containerA->rootItemPosition);
+  EXPECT_EQ(itemContainerAPos,       containerA->rootItemPosition);
   EXPECT_TRUE(containerA->items.empty());
-  EXPECT_EQ(1u, containerA->relatedPlayers.size());
-  EXPECT_EQ(1u,                 containerA->relatedPlayers.size());
-  EXPECT_EQ(&player_ctrl_mock_, containerA->relatedPlayers.front());
+  EXPECT_EQ(1u,                      containerA->relatedPlayers.size());
+  EXPECT_EQ(&player_ctrl_mock_,      containerA->relatedPlayers.front());
 
-  // Create/open a container located in the world
-  const auto itemContainerBPos = ItemPosition(GamePosition(Position(1, 2, 3)), itemContainerB.getItemTypeId());
-  const auto clientContainerIdB = 2u;
-  // TODO: SaveArg<1> and match with getContainer
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerB.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdB, _, Ref(itemContainerB)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerB, itemContainerBPos, clientContainerIdB);
-  containerIds[clientContainerIdB] = itemContainerB.getItemUniqueId();
-
-  // Validate the newly created container
-  auto* containerB = container_manager_.getContainer(itemContainerB.getItemUniqueId());
+  // Create, use/open and validate a new container
+  auto* containerB = createAndOpenContainer(itemContainerB, itemContainerBPos, clientContainerIdB);
   ASSERT_TRUE(containerB != nullptr);
-  EXPECT_EQ(0, containerB->weight);
-  EXPECT_EQ(itemContainerB, *containerB->item);
+  EXPECT_EQ(0,                       containerB->weight);
+  EXPECT_EQ(itemContainerB,         *containerB->item);
   EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerB->parentItemUniqueId);
-  EXPECT_EQ(itemContainerBPos, containerB->rootItemPosition);
+  EXPECT_EQ(itemContainerBPos,       containerB->rootItemPosition);
   EXPECT_TRUE(containerB->items.empty());
-  EXPECT_EQ(1u, containerB->relatedPlayers.size());
-  EXPECT_EQ(1u,                 containerB->relatedPlayers.size());
-  EXPECT_EQ(&player_ctrl_mock_, containerB->relatedPlayers.front());
+  EXPECT_EQ(1u,                      containerB->relatedPlayers.size());
+  EXPECT_EQ(&player_ctrl_mock_,      containerB->relatedPlayers.front());
 
-  // Make sure that both containers exist
+  // Make sure that both containers still exist
   EXPECT_EQ(containerA, container_manager_.getContainer(itemContainerA.getItemUniqueId()));
   EXPECT_EQ(containerB, container_manager_.getContainer(itemContainerB.getItemUniqueId()));
 }
@@ -173,30 +194,16 @@ TEST_F(ContainerManagerTest, useContainer)
 TEST_F(ContainerManagerTest, useContainerWithSameId)
 {
   // Create/open a container located in player inventory slot 0
-  const auto itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
-  const auto clientContainerId = 1u;
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerId);
-  containerIds[clientContainerId] = itemContainerA.getItemUniqueId();
+  createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
 
   // Create/open a container located in the world, with same id as previous container
-  const auto itemContainerBPos = ItemPosition(GamePosition(Position(1, 2, 3)), itemContainerB.getItemTypeId());
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerB.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId, _, Ref(itemContainerB)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerB, itemContainerBPos, clientContainerId);
-  containerIds[clientContainerId] = itemContainerB.getItemUniqueId();
+  createAndOpenContainer(itemContainerB, itemContainerBPos, clientContainerIdA);
 }
 
 TEST_F(ContainerManagerTest, closeContainer)
 {
   // Create/open a container located in player inventory slot 0
-  const auto itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
-  const auto clientContainerIdA = 1u;
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdA, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerIdA);
-  containerIds[clientContainerIdA] = itemContainerA.getItemUniqueId();
+  createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
 
   // Use it again to close the container
   EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(true));
@@ -223,12 +230,7 @@ TEST_F(ContainerManagerTest, closeContainer)
 TEST_F(ContainerManagerTest, innerContainer)
 {
   // Create/open a container located in player inventory slot 0
-  const auto itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
-  const auto clientContainerIdA = 1u;
-  EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(false));
-  EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdA, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerIdA);
-  containerIds[clientContainerIdA] = itemContainerA.getItemUniqueId();
+  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
 
   // Add a regular item (slot 19, at the end of the container)
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
@@ -247,7 +249,6 @@ TEST_F(ContainerManagerTest, innerContainer)
   //   0: itemNotContainerB
   //   1: itemContainerB
   //   2: itemNotContainerA
-  const auto* containerA = container_manager_.getContainer(itemContainerA.getItemUniqueId());
   ASSERT_EQ(3u, containerA->items.size());
   EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
   EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
@@ -263,7 +264,6 @@ TEST_F(ContainerManagerTest, innerContainer)
   EXPECT_TRUE(container_manager_.getContainer(itemContainerB.getItemUniqueId()) != nullptr);
 
   // Now open the new container
-  const auto clientContainerIdB = 2u;
   EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerB.getItemUniqueId())).WillOnce(Return(false));
   EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdB, _, Ref(itemContainerB)));
   container_manager_.useContainer(&player_ctrl_mock_,
