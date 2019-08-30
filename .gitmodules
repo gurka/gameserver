@@ -7,3 +7,6 @@
 [submodule "tools/google-styleguide"]
 	path = external/google-styleguide
 	url = https://github.com/google/styleguide.git
+[submodule "external/websocketpp"]
+	path = external/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
