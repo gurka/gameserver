@@ -72,14 +72,13 @@ struct ItemStub : public Item
   int count_;
 };
 
-// TODO(simon): add helper functions
-
 class ContainerManagerTest : public ::testing::Test
 {
  protected:
   ContainerManagerTest()
   {
     EXPECT_CALL(player_ctrl_mock_, getPlayerId()).WillRepeatedly(Return(player_id));
+    EXPECT_CALL(player_ctrl_mock_, getContainerIds()).WillRepeatedly(ReturnRef(containerIds));
 
     containerIds.fill(Item::INVALID_UNIQUE_ID);
 
@@ -107,10 +106,9 @@ class ContainerManagerTest : public ::testing::Test
 
   ~ContainerManagerTest()
   {
-    EXPECT_CALL(player_ctrl_mock_, getContainerIds()).WillOnce(ReturnRef(containerIds));
     container_manager_.playerDespawn(&player_ctrl_mock_);
 
-    // TODO(simon): Verify that no containers have related players?
+    EXPECT_TRUE(container_manager_.noRelatedPlayers());
   }
 
   Container* createAndOpenContainer(const ItemStub& itemContainer,

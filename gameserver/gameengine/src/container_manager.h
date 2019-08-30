@@ -74,6 +74,21 @@ class ContainerManager
 
   // Maps ItemUniqueId to Container
   std::unordered_map<ItemUniqueId, Container> containers_;
+
+#ifdef UNITTEST
+ public:
+  bool noRelatedPlayers()
+  {
+    for (const auto& pair : containers_)
+    {
+      if (!pair.second.relatedPlayers.empty())
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+#endif
 };
 
 #endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

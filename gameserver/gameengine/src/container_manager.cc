@@ -109,9 +109,6 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
     createContainer(&item, itemPosition);
   }
 
-  // Check if Player has this Container open
-  // TODO(simon): either check Container::relatedPlayers or check via PlayerCtrl?
-
   if (playerCtrl->hasContainerOpen(item.getItemUniqueId()))
   {
     // Do not close the Container here, the client will ack this by sending closeContainer
@@ -309,6 +306,13 @@ void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
             playerCtrl->getPlayerId(),
             itemUniqueId,
             newContainerId);
+
+  // Check if player already has a container open with this id
+  if (playerCtrl->getContainerIds()[newContainerId] != Item::INVALID_UNIQUE_ID)
+  {
+    // Then remove player from that container's relatedPlayers
+    removeRelatedPlayer(playerCtrl, playerCtrl->getContainerIds()[newContainerId]);
+  }
 
   auto& container = containers_.at(itemUniqueId);
 
