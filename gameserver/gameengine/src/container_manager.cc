@@ -274,12 +274,14 @@ void ContainerManager::updateRootPosition(ItemUniqueId itemUniqueId, const GameP
   // Note: this function should only be used when a container is moved to a non-container
   //       (e.g. inventory or world position)
 
-  auto* container = getContainer(itemUniqueId);
-  if (!container)
+  if (containers_.count(itemUniqueId) == 0)
   {
-    // getContainer logs error
+    // This is OK and can occur if moving a (not created/opened) container from/to a
+    // non-container position
     return;
   }
+
+  auto* container = getContainer(itemUniqueId);
 
   if (gamePosition.isContainer())
   {
