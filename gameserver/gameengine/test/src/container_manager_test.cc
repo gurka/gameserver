@@ -179,24 +179,26 @@ TEST_F(ContainerManagerTest, useContainer)
   EXPECT_EQ(1u,                      containerB->relatedPlayers.size());
   EXPECT_EQ(&player_ctrl_mock_,      containerB->relatedPlayers.front());
 
-  // Make sure that both containers still exist
-  EXPECT_EQ(containerA, container_manager_.getContainer(itemContainerA.getItemUniqueId()));
-  EXPECT_EQ(containerB, container_manager_.getContainer(itemContainerB.getItemUniqueId()));
+  std::cout << containerA->toString() << '\n';
+  std::cout << containerB->toString() << '\n';
 }
 
 TEST_F(ContainerManagerTest, useContainerWithSameId)
 {
   // Create/open a container located in player inventory slot 0
-  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
+  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Create/open a container located in the world, with same id as previous container
-  createAndOpenContainer(itemContainerB, itemContainerPosB, clientContainerIdA);
+  const auto* containerB = createAndOpenContainer(itemContainerB, itemContainerPosB, clientContainerIdA);
+
+  std::cout << containerA->toString() << '\n';
+  std::cout << containerB->toString() << '\n';
 }
 
 TEST_F(ContainerManagerTest, closeContainer)
 {
   // Create/open a container located in player inventory slot 0
-  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
+  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Use it again to close the container
   EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(true));
@@ -218,6 +220,8 @@ TEST_F(ContainerManagerTest, closeContainer)
   EXPECT_CALL(player_ctrl_mock_, onCloseContainer(itemContainerA.getItemUniqueId(), true));
   container_manager_.closeContainer(&player_ctrl_mock_, itemContainerA.getItemUniqueId());
   containerIds[clientContainerIdA] = Item::INVALID_UNIQUE_ID;
+
+  std::cout << containerA->toString() << '\n';
 }
 
 TEST_F(ContainerManagerTest, innerContainer)
@@ -272,26 +276,26 @@ TEST_F(ContainerManagerTest, innerContainer)
   //     0: itemNotContainerC
   //   2: itemNotContainerA
   // Verify:
-  {
-    const auto containerA = container_manager_.getContainer(itemContainerA.getItemUniqueId());
-    const auto containerB = container_manager_.getContainer(itemContainerB.getItemUniqueId());
+  const auto containerB = container_manager_.getContainer(itemContainerB.getItemUniqueId());
 
-    EXPECT_EQ(itemContainerA, *(containerA->item));
-    ASSERT_EQ(3u, containerA->items.size());
-    EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
-    EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
-    EXPECT_EQ(itemNotContainerA, *(containerA->items[2]));
+  EXPECT_EQ(itemContainerA, *(containerA->item));
+  ASSERT_EQ(3u, containerA->items.size());
+  EXPECT_EQ(itemNotContainerB, *(containerA->items[0]));
+  EXPECT_EQ(itemContainerB,    *(containerA->items[1]));
+  EXPECT_EQ(itemNotContainerA, *(containerA->items[2]));
 
-    EXPECT_EQ(itemContainerB, *(containerB->item));
-    ASSERT_EQ(1u, containerB->items.size());
-    EXPECT_EQ(itemNotContainerC, *(containerB->items[0]));
+  EXPECT_EQ(itemContainerB, *(containerB->item));
+  ASSERT_EQ(1u, containerB->items.size());
+  EXPECT_EQ(itemNotContainerC, *(containerB->items[0]));
 
-    // Verify parentContainer and rootPosition
-    EXPECT_EQ(Item::INVALID_UNIQUE_ID,          containerA->parentItemUniqueId);
-    EXPECT_EQ(itemContainerA.getItemUniqueId(), containerB->parentItemUniqueId);
-    EXPECT_EQ(itemContainerPosA,                containerA->rootGamePosition);
-    EXPECT_EQ(itemContainerPosA,                containerB->rootGamePosition);
-  }
+  // Verify parentContainer and rootPosition
+  EXPECT_EQ(Item::INVALID_UNIQUE_ID,          containerA->parentItemUniqueId);
+  EXPECT_EQ(itemContainerA.getItemUniqueId(), containerB->parentItemUniqueId);
+  EXPECT_EQ(itemContainerPosA,                containerA->rootGamePosition);
+  EXPECT_EQ(itemContainerPosA,                containerB->rootGamePosition);
+
+  std::cout << containerA->toString() << '\n';
+  std::cout << containerB->toString() << '\n';
 }
 
 TEST_F(ContainerManagerTest, playerDespawn)
@@ -307,7 +311,7 @@ TEST_F(ContainerManagerTest, multiplePlayers)
 TEST_F(ContainerManagerTest, moveContainer)
 {
   // Create/open a container located in player inventory slot 0
-  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
+  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Add a regular item
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
@@ -321,26 +325,46 @@ TEST_F(ContainerManagerTest, moveContainer)
   // No onContainerAddItem as the player doesn't have the inner container open
   container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemNotContainerB);
 
-  //const auto worldPositionA = ItemPosition(GamePosition(Position(0, 0, 0)), )
+  // Just get container B without opening it
+  const auto containerB = container_manager_.getContainer(itemContainerB.getItemUniqueId());
+
+  const auto worldPositionA = GamePosition(Position(0, 0, 0));
+  const auto worldPositionB = GamePosition(Position(1, 1, 1));
+  const auto inventoryPositionA = GamePosition(5);
+
+  // Both container A and B's rootGamePosition should be itemContainerPosA
+  EXPECT_EQ(itemContainerPosA, containerA->rootGamePosition);
+  EXPECT_EQ(itemContainerPosA, containerB->rootGamePosition);
 
   // Move container A to a world position A
-  // TODO
+  container_manager_.updateRootPosition(itemContainerA.getItemUniqueId(), worldPositionA);
 
   // Both container A and B's rootGamePosition should be changed to the world position A
+  EXPECT_EQ(worldPositionA, containerA->rootGamePosition);
+  EXPECT_EQ(worldPositionA, containerB->rootGamePosition);
 
   // Move container B to world position B
-  // TODO
+  EXPECT_CALL(player_ctrl_mock_, onContainerRemoveItem(itemContainerA.getItemUniqueId(), 0));
+  container_manager_.removeItem(itemContainerA.getItemUniqueId(), 0);
+  container_manager_.updateRootPosition(itemContainerB.getItemUniqueId(), worldPositionB);
 
   // Container B's rootGamePosition should be changed to the world position B
+  EXPECT_EQ(worldPositionB, containerB->rootGamePosition);
 
   // Move container A to inside container B
-  // TODO
+  container_manager_.addItem(itemContainerB.getItemUniqueId(), 0, &itemContainerA);
 
   // Both container A and B's rootGamePosition should be changed to world position B
+  EXPECT_EQ(worldPositionB, containerA->rootGamePosition);
+  EXPECT_EQ(worldPositionB, containerB->rootGamePosition);
 
   // Move container B to inventory position
-  // TODO
+  container_manager_.updateRootPosition(itemContainerB.getItemUniqueId(), inventoryPositionA);
 
   // Both container A and B's rootGamePosition should be changed to inventory position
+  EXPECT_EQ(inventoryPositionA, containerA->rootGamePosition);
+  EXPECT_EQ(inventoryPositionA, containerB->rootGamePosition);
 
+  std::cout << containerA->toString() << '\n';
+  std::cout << containerB->toString() << '\n';
 }

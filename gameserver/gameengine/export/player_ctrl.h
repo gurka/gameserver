@@ -30,9 +30,9 @@
 
 #include "creature_ctrl.h"
 #include "player.h"
-#include "position.h"
-#include "item.h"
-#include "container.h"
+
+class Container;
+class Item;
 
 class PlayerCtrl : public CreatureCtrl
 {

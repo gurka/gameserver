@@ -25,12 +25,13 @@
 #ifndef GAMEENGINE_EXPORT_CONTAINER_H_
 #define GAMEENGINE_EXPORT_CONTAINER_H_
 
+#include <sstream>
 #include <vector>
 
 #include "game_position.h"
+#include "player_ctrl.h"
 
 class Item;
-class PlayerCtrl;
 
 struct Container
 {
@@ -69,6 +70,27 @@ struct Container
 
   // List of Players that have this Container open
   std::vector<PlayerCtrl*> relatedPlayers;
+
+  std::string toString(int indent = 2) const
+  {
+    const auto indents = std::string(indent, ' ');
+    std::ostringstream ss;
+    ss << indents << "Weight:             " << weight << '\n';
+    ss << indents << "ItemUniqueId:       " << item->getItemUniqueId() << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+    ss << indents << "parentItemUniqueId: " << parentItemUniqueId << '\n';
+    ss << indents << "rootGamePosition:   " << rootGamePosition.toString() << '\n';
+    ss << indents << "items:\n";
+    for (const auto* item : items)
+    {
+      ss << indents << indents << "ItemUniqueId: " << item->getItemUniqueId() << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+    }
+    ss << indents << "relatedPlayers:\n";
+    for (const auto* playerCtrl : relatedPlayers)
+    {
+      ss << indents << indents << "PlayerID: " << playerCtrl->getPlayerId() << '\n';
+    }
+    return ss.str();
+  }
 };
 
 #endif  // GAMEENGINE_EXPORT_CONTAINER_H_

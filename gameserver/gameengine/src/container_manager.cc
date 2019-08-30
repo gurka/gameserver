@@ -25,6 +25,7 @@
 #include "container_manager.h"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 
 #include "item.h"
@@ -203,8 +204,21 @@ void ContainerManager::removeItem(ItemUniqueId itemUniqueId, int containerSlot)
     return;
   }
 
+  const auto* item = container->items[containerSlot];
+
   // Remove the item
   container->items.erase(container->items.begin() + containerSlot);
+
+  // Check if the removed item is a container
+  if (item->getItemType().isContainer)
+  {
+    // Update parentItemUniqueId and rootGamePosition if there is a container created for the item
+    if (containers_.count(item->getItemUniqueId()) == 1)
+    {
+      containers_[item->getItemUniqueId()].parentItemUniqueId = Item::INVALID_UNIQUE_ID;
+      containers_[item->getItemUniqueId()].rootGamePosition = GamePosition();
+    }
+  }
 
   // Inform players that have this contianer open about the change
   for (auto& playerCtrl : container->relatedPlayers)
@@ -236,11 +250,63 @@ void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, Ite
   // Add the item at the front
   container->items.insert(container->items.begin(), item);
 
+  // Check if the new item is a container
+  if (item->getItemType().isContainer)
+  {
+    // Update parentItemUniqueId and rootGamePosition if there is a container created for this item
+    // Otherwise it will be done in createContainer when the container is opened
+    if (containers_.count(item->getItemUniqueId()) == 1)
+    {
+      containers_[item->getItemUniqueId()].parentItemUniqueId = container->item->getItemUniqueId();
+      containers_[item->getItemUniqueId()].rootGamePosition = container->rootGamePosition;
+    }
+  }
+
   // Inform players that have this container open about the change
   for (auto& playerCtrl : container->relatedPlayers)
   {
     playerCtrl->onContainerAddItem(itemUniqueId, *item);
   }
+}
+
+void ContainerManager::updateRootPosition(ItemUniqueId itemUniqueId, const GamePosition& gamePosition)
+{
+  // Note: this function should only be used when a container is moved to a non-container
+  //       (e.g. inventory or world position)
+
+  auto* container = getContainer(itemUniqueId);
+  if (!container)
+  {
+    // getContainer logs error
+    return;
+  }
+
+  if (gamePosition.isContainer())
+  {
+    LOG_ERROR("%s: use addItem for moving a container into another container", __func__);
+    return;
+  }
+
+  LOG_DEBUG("%s: itemUniqueId: %d gamePosition: %s", __func__, itemUniqueId, gamePosition.toString().c_str());
+
+  // Update container's and all inner container's rootGamePosition
+  const auto updateContainers = [this, &gamePosition](Container* container, auto& updateContainersRef) -> void
+  {
+    container->rootGamePosition = gamePosition;
+    for (auto* item : container->items)
+    {
+      if (item->getItemType().isContainer)
+      {
+        // Don't update container's which hasn't been created yet,
+        // and don't use getContainer to avoid ERROR log
+        if (containers_.count(item->getItemUniqueId()) == 1)
+        {
+          updateContainersRef(&containers_[item->getItemUniqueId()], updateContainersRef);
+        }
+      }
+    }
+  };
+  updateContainers(container, updateContainers);
 }
 
 Container* ContainerManager::getInnerContainer(Container* container, int containerSlot)

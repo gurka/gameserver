@@ -63,6 +63,8 @@ class ContainerManager
   void removeItem(ItemUniqueId itemUniqueId, int containerSlot);
   void addItem(ItemUniqueId itemUniqueId, int containerSlot, Item* item);
 
+  void updateRootPosition(ItemUniqueId itemUniqueId, const GamePosition& gamePosition);
+
  private:
   Container* getInnerContainer(Container* container, int containerSlot);
 
