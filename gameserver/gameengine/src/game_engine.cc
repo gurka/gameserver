@@ -403,7 +403,7 @@ void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, in
 
   if (item->getItemType().isContainer)
   {
-    containerManager_.useContainer(playerData.player_ctrl, *item, position, newContainerId);
+    containerManager_.useContainer(playerData.player_ctrl, *item, position.getGamePosition(), newContainerId);
   }
 }
 

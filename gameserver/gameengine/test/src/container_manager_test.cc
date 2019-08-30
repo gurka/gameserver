@@ -77,14 +77,16 @@ class ContainerManagerTest : public ::testing::Test
  protected:
   ContainerManagerTest()
   {
-    EXPECT_CALL(player_ctrl_mock_, getPlayerId()).WillRepeatedly(Return(player_id));
+    EXPECT_CALL(player_ctrl_mock_, getPlayerId()).WillRepeatedly(Return(901564));
     EXPECT_CALL(player_ctrl_mock_, getContainerIds()).WillRepeatedly(ReturnRef(containerIds));
 
     containerIds.fill(Item::INVALID_UNIQUE_ID);
 
+    ItemType itemTypeContainer;
     itemTypeContainer.id = 123;
     itemTypeContainer.isContainer = true;
 
+    ItemType itemTypeNotContainer;
     itemTypeNotContainer.id = 456;
     itemTypeNotContainer.isContainer = false;
 
@@ -92,12 +94,11 @@ class ContainerManagerTest : public ::testing::Test
     itemContainerB = ItemStub { 101u, itemTypeContainer.id, itemTypeContainer, 1 };
     itemContainerC = ItemStub { 102u, itemTypeContainer.id, itemTypeContainer, 1 };
 
-    itemContainerAPos = ItemPosition(GamePosition(0), itemContainerA.getItemTypeId());
-    itemContainerBPos = ItemPosition(GamePosition(Position(1, 2, 3)), itemContainerB.getItemTypeId());
+    itemContainerPosA = GamePosition(0);
+    itemContainerPosB = GamePosition(Position(1, 2, 3));
 
     clientContainerIdA = 1;
     clientContainerIdB = 2;
-    clientContainerIdC = 3;
 
     itemNotContainerA = ItemStub { 200u, itemTypeNotContainer.id, itemTypeNotContainer, 1 };
     itemNotContainerB = ItemStub { 201u, itemTypeNotContainer.id, itemTypeNotContainer, 2 };
@@ -112,8 +113,8 @@ class ContainerManagerTest : public ::testing::Test
   }
 
   Container* createAndOpenContainer(const ItemStub& itemContainer,
-                              const ItemPosition& itemPosition,
-                              int clientContainerId)
+                                    const GamePosition& gamePosition,
+                                    int clientContainerId)
   {
     const Container* savedContainer = nullptr;
     const auto saveContainer = [&savedContainer](const Container& container)
@@ -124,7 +125,7 @@ class ContainerManagerTest : public ::testing::Test
     EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainer.getItemUniqueId())).WillOnce(Return(false));
     EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerId, _, Ref(itemContainer)))
       .WillOnce(WithArg<1>(Invoke(saveContainer)));
-    container_manager_.useContainer(&player_ctrl_mock_, itemContainer, itemPosition, clientContainerId);
+    container_manager_.useContainer(&player_ctrl_mock_, itemContainer, gamePosition, clientContainerId);
     containerIds[clientContainerId] = itemContainer.getItemUniqueId();
     if (!savedContainer)
     {
@@ -136,22 +137,16 @@ class ContainerManagerTest : public ::testing::Test
 
   PlayerCtrlMock player_ctrl_mock_;
   ContainerManager container_manager_;
-  const CreatureId player_id = 123;
-
-  ItemType itemTypeContainer;
-  ItemType itemTypeNotContainer;
 
   ItemStub itemContainerA;
   ItemStub itemContainerB;
   ItemStub itemContainerC;
 
-  ItemPosition itemContainerAPos;
-  ItemPosition itemContainerBPos;
-  ItemPosition itemContainerCPos;
+  GamePosition itemContainerPosA;
+  GamePosition itemContainerPosB;
 
   int clientContainerIdA;
   int clientContainerIdB;
-  int clientContainerIdC;
 
   ItemStub itemNotContainerA;
   ItemStub itemNotContainerB;
@@ -163,23 +158,23 @@ class ContainerManagerTest : public ::testing::Test
 TEST_F(ContainerManagerTest, useContainer)
 {
   // Create, use/open and validate a new container
-  auto* containerA = createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
+  auto* containerA = createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
   ASSERT_TRUE(containerA != nullptr);
   EXPECT_EQ(0,                       containerA->weight);
   EXPECT_EQ(itemContainerA,         *containerA->item);
   EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerA->parentItemUniqueId);
-  EXPECT_EQ(itemContainerAPos,       containerA->rootItemPosition);
+  EXPECT_EQ(itemContainerPosA,       containerA->rootGamePosition);
   EXPECT_TRUE(containerA->items.empty());
   EXPECT_EQ(1u,                      containerA->relatedPlayers.size());
   EXPECT_EQ(&player_ctrl_mock_,      containerA->relatedPlayers.front());
 
   // Create, use/open and validate a new container
-  auto* containerB = createAndOpenContainer(itemContainerB, itemContainerBPos, clientContainerIdB);
+  auto* containerB = createAndOpenContainer(itemContainerB, itemContainerPosB, clientContainerIdB);
   ASSERT_TRUE(containerB != nullptr);
   EXPECT_EQ(0,                       containerB->weight);
   EXPECT_EQ(itemContainerB,         *containerB->item);
   EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerB->parentItemUniqueId);
-  EXPECT_EQ(itemContainerBPos,       containerB->rootItemPosition);
+  EXPECT_EQ(itemContainerPosB,       containerB->rootGamePosition);
   EXPECT_TRUE(containerB->items.empty());
   EXPECT_EQ(1u,                      containerB->relatedPlayers.size());
   EXPECT_EQ(&player_ctrl_mock_,      containerB->relatedPlayers.front());
@@ -192,21 +187,21 @@ TEST_F(ContainerManagerTest, useContainer)
 TEST_F(ContainerManagerTest, useContainerWithSameId)
 {
   // Create/open a container located in player inventory slot 0
-  createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
+  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Create/open a container located in the world, with same id as previous container
-  createAndOpenContainer(itemContainerB, itemContainerBPos, clientContainerIdA);
+  createAndOpenContainer(itemContainerB, itemContainerPosB, clientContainerIdA);
 }
 
 TEST_F(ContainerManagerTest, closeContainer)
 {
   // Create/open a container located in player inventory slot 0
-  createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
+  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Use it again to close the container
   EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(true));
   EXPECT_CALL(player_ctrl_mock_, onCloseContainer(itemContainerA.getItemUniqueId(), false));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerIdA);
+  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // We need to ack by calling closeContainer
   EXPECT_CALL(player_ctrl_mock_, onCloseContainer(itemContainerA.getItemUniqueId(), true));
@@ -216,7 +211,7 @@ TEST_F(ContainerManagerTest, closeContainer)
   // Use the item again to open the container
   EXPECT_CALL(player_ctrl_mock_, hasContainerOpen(itemContainerA.getItemUniqueId())).WillOnce(Return(false));
   EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdA, _, Ref(itemContainerA)));
-  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerAPos, clientContainerIdA);
+  container_manager_.useContainer(&player_ctrl_mock_, itemContainerA, itemContainerPosA, clientContainerIdA);
   containerIds[clientContainerIdA] = itemContainerA.getItemUniqueId();
 
   // Close it without "using" the item
@@ -228,7 +223,7 @@ TEST_F(ContainerManagerTest, closeContainer)
 TEST_F(ContainerManagerTest, innerContainer)
 {
   // Create/open a container located in player inventory slot 0
-  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerAPos, clientContainerIdA);
+  const auto* containerA = createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
 
   // Add a regular item (slot 19, at the end of the container)
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
@@ -266,9 +261,7 @@ TEST_F(ContainerManagerTest, innerContainer)
   EXPECT_CALL(player_ctrl_mock_, onOpenContainer(clientContainerIdB, _, Ref(itemContainerB)));
   container_manager_.useContainer(&player_ctrl_mock_,
                                   itemContainerB,
-                                  ItemPosition(GamePosition(itemContainerA.getItemUniqueId(), 1),
-                                               itemContainerA.getItemTypeId(),
-                                               0),
+                                  GamePosition(itemContainerA.getItemUniqueId(), 1),
                                   clientContainerIdB);
   containerIds[clientContainerIdB] = itemContainerB.getItemUniqueId();
 
@@ -296,8 +289,8 @@ TEST_F(ContainerManagerTest, innerContainer)
     // Verify parentContainer and rootPosition
     EXPECT_EQ(Item::INVALID_UNIQUE_ID,          containerA->parentItemUniqueId);
     EXPECT_EQ(itemContainerA.getItemUniqueId(), containerB->parentItemUniqueId);
-    EXPECT_EQ(itemContainerAPos,                containerA->rootItemPosition);
-    EXPECT_EQ(itemContainerAPos,                containerB->rootItemPosition);
+    EXPECT_EQ(itemContainerPosA,                containerA->rootGamePosition);
+    EXPECT_EQ(itemContainerPosA,                containerB->rootGamePosition);
   }
 }
 
@@ -313,5 +306,41 @@ TEST_F(ContainerManagerTest, multiplePlayers)
 
 TEST_F(ContainerManagerTest, moveContainer)
 {
+  // Create/open a container located in player inventory slot 0
+  createAndOpenContainer(itemContainerA, itemContainerPosA, clientContainerIdA);
+
+  // Add a regular item
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemNotContainerA);
+
+  // Add another container
+  EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemContainerB)));
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemContainerB);
+
+  // Add a regular item (will be placed in the inner container)
+  // No onContainerAddItem as the player doesn't have the inner container open
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemNotContainerB);
+
+  //const auto worldPositionA = ItemPosition(GamePosition(Position(0, 0, 0)), )
+
+  // Move container A to a world position A
+  // TODO
+
+  // Both container A and B's rootGamePosition should be changed to the world position A
+
+  // Move container B to world position B
+  // TODO
+
+  // Container B's rootGamePosition should be changed to the world position B
+
+  // Move container A to inside container B
+  // TODO
+
+  // Both container A and B's rootGamePosition should be changed to world position B
+
+  // Move container B to inventory position
+  // TODO
+
+  // Both container A and B's rootGamePosition should be changed to inventory position
 
 }

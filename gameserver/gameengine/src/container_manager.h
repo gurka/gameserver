@@ -54,7 +54,7 @@ class ContainerManager
 
   void useContainer(PlayerCtrl* playerCtrl,
                     const Item& item,
-                    const ItemPosition& itemPosition,
+                    const GamePosition& gamePosition,
                     int newContainerId);
   void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
   void openParentContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
@@ -66,7 +66,7 @@ class ContainerManager
  private:
   Container* getInnerContainer(Container* container, int containerSlot);
 
-  void createContainer(const Item* item, const ItemPosition& itemPosition);
+  void createContainer(const Item* item, const GamePosition& gamePosition);
   void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
 
   void addRelatedPlayer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);

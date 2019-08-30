@@ -38,7 +38,7 @@ struct Container
     : weight(0),
       item(nullptr),
       parentItemUniqueId(Item::INVALID_UNIQUE_ID),
-      rootItemPosition(),
+      rootGamePosition(),
       items(),
       relatedPlayers()
   {
@@ -59,9 +59,10 @@ struct Container
   // Container id of the parent container, or INVALID_ID if no parent
   ItemUniqueId parentItemUniqueId;
 
-  // ItemPosition of the root item that this Container belongs to
+  // GamePosition of the root item that this Container belongs to
   // Is either a world position or an inventory position
-  ItemPosition rootItemPosition;
+  // Note: changed from ItemPosition to GamePosition, is it OK?
+  GamePosition rootGamePosition;
 
   // Collection of Items in the Container
   std::vector<const Item*> items;

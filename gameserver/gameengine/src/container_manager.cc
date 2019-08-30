@@ -94,7 +94,7 @@ Item* ContainerManager::getItem(ItemUniqueId itemUniqueId, int containerSlot)
 
 void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
                                     const Item& item,
-                                    const ItemPosition& itemPosition,
+                                    const GamePosition& gamePosition,
                                     int newContainerId)
 {
   if (!item.getItemType().isContainer)
@@ -106,7 +106,7 @@ void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
   if (containers_.count(item.getItemUniqueId()) == 0)
   {
     // Create the container
-    createContainer(&item, itemPosition);
+    createContainer(&item, gamePosition);
   }
 
   if (playerCtrl->hasContainerOpen(item.getItemUniqueId()))
@@ -253,9 +253,7 @@ Container* ContainerManager::getInnerContainer(Container* container, int contain
     if (containers_.count(container->items[containerSlot]->getItemUniqueId()) == 0)
     {
       createContainer(container->items[containerSlot],
-                      ItemPosition(GamePosition(container->item->getItemUniqueId(),
-                                                containerSlot),
-                                   container->item->getItemTypeId()));
+                      GamePosition(container->item->getItemUniqueId(), containerSlot));
     }
 
     // Change the container pointer to the inner container
@@ -265,7 +263,7 @@ Container* ContainerManager::getInnerContainer(Container* container, int contain
   return container;
 }
 
-void ContainerManager::createContainer(const Item* item, const ItemPosition& itemPosition)
+void ContainerManager::createContainer(const Item* item, const GamePosition& gamePosition)
 {
   if (containers_.count(item->getItemUniqueId()))
   {
@@ -276,16 +274,16 @@ void ContainerManager::createContainer(const Item* item, const ItemPosition& ite
   auto& container = containers_[item->getItemUniqueId()];
   container.weight = 0;
   container.item = item;
-  if (itemPosition.getGamePosition().isPosition() ||
-      itemPosition.getGamePosition().isInventory())
+  if (gamePosition.isPosition() ||
+      gamePosition.isInventory())
   {
     container.parentItemUniqueId = Item::INVALID_UNIQUE_ID;
-    container.rootItemPosition = itemPosition;
+    container.rootGamePosition = gamePosition;
   }
   else  // isContainer
   {
-    container.parentItemUniqueId = itemPosition.getGamePosition().getItemUniqueId();
-    container.rootItemPosition = containers_.at(container.parentItemUniqueId).rootItemPosition;
+    container.parentItemUniqueId = gamePosition.getItemUniqueId();
+    container.rootGamePosition = containers_.at(container.parentItemUniqueId).rootGamePosition;
   }
   container.items = {};
   container.relatedPlayers = {};
@@ -294,7 +292,7 @@ void ContainerManager::createContainer(const Item* item, const ItemPosition& ite
             __func__,
             item->getItemUniqueId(),
             container.parentItemUniqueId,
-            container.rootItemPosition.toString().c_str());
+            container.rootGamePosition.toString().c_str());
 }
 
 void ContainerManager::openContainer(PlayerCtrl* playerCtrl,
