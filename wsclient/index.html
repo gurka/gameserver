@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Websocket</title>
+    <style>
+.content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <div id="login">
+        <input id="login_account" type="text" value="1"></input>
+        <br />
+        <input id="login_password" type="text" value="1"></input>
+        <br />
+        <button onclick="login()">Login</button>
+        <br />
+      </div>
+      <div id="characters" hidden>
+      </div>
+    </div>
+    <script src="packet.js"></script>
+    <script src="login.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
