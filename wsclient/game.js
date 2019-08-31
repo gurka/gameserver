@@ -1,5 +1,6 @@
-function game(name, ip, port) {
-  console.log(name);
-  console.log(ip);
-  console.log(port);
+class Game {
+  constructor(name, url) {
+    console.log(name);
+    console.log(url);
+  }
 }
