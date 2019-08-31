@@ -43,6 +43,8 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "incoming_packet.cc",   Module::NETWORK     },
   { "outgoing_packet.cc",   Module::NETWORK     },
   { "acceptor.h",           Module::NETWORK     },
+  { "websocket_server_impl.h", Module::NETWORK  },
+  { "websocket_server_impl.cc", Module::NETWORK },
 
   // world
   { "item.cc",              Module::WORLD       },

@@ -27,6 +27,7 @@
 #include <boost/asio.hpp>  //NOLINT
 
 #include "server_impl.h"
+#include "websocket_server_impl.h"
 
 struct Backend
 {
@@ -68,4 +69,11 @@ std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_context* io_
                                                     const OnClientConnectedCallback& onClientConnected)
 {
   return std::make_unique<ServerImpl<Backend>>(io_context, port, onClientConnected);
+}
+
+std::unique_ptr<Server> ServerFactory::createWebsocketServer(boost::asio::io_context* io_context,
+                                                             int port,
+                                                             const OnClientConnectedCallback& onClientConnected)
+{
+  return std::make_unique<WebsocketServerImpl>(io_context, port, onClientConnected);
 }

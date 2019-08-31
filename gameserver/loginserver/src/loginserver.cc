@@ -46,6 +46,7 @@
 // static things (like Logger) gets deallocated
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
+static std::unique_ptr<Server> websocketServer;
 
 // Due to "Static/global string variables are not permitted."
 static struct
@@ -226,6 +227,9 @@ int main()
   // Create Server
   server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
 
+  // Create websocket server
+  websocketServer = ServerFactory::createWebsocketServer(&io_context, 7272, &onClientConnected);
+
   LOG_INFO("LoginServer started!");
 
   // run() will continue to run until ^C from user is catched
@@ -243,6 +247,7 @@ int main()
   LOG_INFO("Stopping LoginServer!");
 
   // Deallocate things
+  websocketServer.reset();
   server.reset();
   accountReader.reset();
 

@@ -14,4 +14,6 @@ add_library(network
   "src/outgoing_packet.cc"
   "src/server_factory.cc"
   "src/server_impl.h"
+  "src/websocket_server_impl.cc"
+  "src/websocket_server_impl.h"
 )

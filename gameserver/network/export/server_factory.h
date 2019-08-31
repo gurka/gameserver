@@ -43,9 +43,14 @@ class ServerFactory
 {
  public:
   using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
+
   static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
                                               int port,
                                               const OnClientConnectedCallback& onClientConnected);
+
+  static std::unique_ptr<Server> createWebsocketServer(boost::asio::io_context* io_context,
+                                                       int port,
+                                                       const OnClientConnectedCallback& onClientConnected);
 };
 
 #endif  // NETWORK_EXPORT_SERVER_FACTORY_H_

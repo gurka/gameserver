@@ -59,6 +59,9 @@ target_include_directories(network PUBLIC
   "network/export"
   "utils/export"
 )
+target_include_directories(network SYSTEM PUBLIC
+  "../external/websocketpp"
+)
 
 add_subdirectory("gameengine")
 target_include_directories(gameengine PUBLIC
