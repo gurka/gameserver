@@ -13,7 +13,7 @@ class Login {
   packetHandler(packet) {
     // Process packet
     if (packet.getU8() != 0x14) {
-      console.log("Unknown packet, expected MOTD");
+      this.callback({"error": "Unknown packet, expected MOTD"});
       return;
     }
 
@@ -23,51 +23,25 @@ class Login {
     let login_resp = packet.getU8();
     if (login_resp == 0x0A) {
       let error = packet.getString();
-      console.log("Error: " + error);
+      this.callback({"error": error});
     } else if (login_resp == 0x64) {
-      let characters = document.getElementById("characters");
-      characters.appendChild(document.createTextNode("Characters:"));
-      characters.appendChild(document.createElement("br"));
-
+      let res = {
+        "characters": [],
+        "prem_days": "",
+        "motd": motd
+      };
       let num_chars = packet.getU8();
       for (let i = 0; i < num_chars; i++) {
         let name = packet.getString();
         let world = packet.getString();
         let url = "ws://" + this.int2ip(packet.getU32());
         url += ":" + (packet.getU16() + 1000);  // TODO: WS server is normal port + 1000
-        console.log(name + " (" + world + ", " + url + ")");
-
-        let character = document.createElement("button");
-        character.innerHTML = name;
-        character.onclick = function() {
-          core_game(name, url);
-        };
-        characters.appendChild(character);
-        characters.appendChild(document.createElement("br"));
+        res["characters"].push({"name": name, "world": world, "url": url});
       }
-
-      let prem_days = packet.getU16();
-      console.log("Premium days: " + prem_days);
-
-      characters.appendChild(document.createTextNode("Premium days: " + prem_days));
-      characters.appendChild(document.createElement("br"));
-
-      let cancel_btn = document.createElement("button");
-      cancel_btn.innerHTML = "Cancel";
-      cancel_btn.onclick = function() {
-        let characters = document.getElementById("characters");
-        while (characters.firstChild) {
-          characters.removeChild(characters.firstChild);
-        }
-        characters.hidden = true;
-        document.getElementById("login").hidden = false;
-      };
-      characters.appendChild(cancel_btn);
-
-      document.getElementById("login").hidden = true;
-      characters.hidden = false;
+      res["prem_days"] = packet.getU16();
+      this.callback(res);
     } else {
-      console.log("Unknown login response: " + login_resp);
+      this.callback({"error": "Unknown login response: " + login_resp});
     }
   }
 
@@ -77,7 +51,7 @@ class Login {
     let password = document.getElementById("login_password").value;
 
     if (isNaN(account)) {
-      console.log("Invalid account number");
+      this.callback({"error": "Invalid account number"});
       return;
     }
 
