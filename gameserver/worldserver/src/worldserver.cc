@@ -55,6 +55,7 @@ static std::unique_ptr<GameEngineQueue> gameEngineQueue;
 static std::unique_ptr<GameEngine> gameEngine;
 static std::unique_ptr<AccountReader> accountReader;
 static std::unique_ptr<Server> server;
+static std::unique_ptr<Server> websocketServer;
 
 using ProtocolId = int;
 static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
@@ -97,6 +98,7 @@ int main()
 
   // Read [server] settings
   const auto serverPort = config.getInteger("server", "port", 7172);
+  const auto wsServerPort = serverPort + 1000;
 
   // Read [world] settings
   const auto loginMessage     = config.getString("world", "login_message", "Welcome to LoginServer!");
@@ -124,6 +126,7 @@ int main()
   printf("WorldServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
   printf("Server port:               %d\n", serverPort);
+  printf("Websocket server port:     %d\n", wsServerPort);
   printf("\n");
   printf("Login message:             %s\n", loginMessage.c_str());
   printf("Accounts filename:         %s\n", accountsFilename.c_str());
@@ -164,6 +167,9 @@ int main()
   // Create Server
   server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
 
+  // Create websocket server
+  websocketServer = ServerFactory::createWebsocketServer(&io_context, wsServerPort, &onClientConnected);
+
   LOG_INFO("WorldServer started!");
 
   // run() will continue to run until ^C from user is catched
@@ -182,6 +188,7 @@ int main()
 
   // Deallocate things (in reverse order of construction)
   protocols.clear();
+  websocketServer.reset();
   server.reset();
   accountReader.reset();
   gameEngine.reset();

@@ -111,6 +111,7 @@ class WebsocketServerImpl : public Server
   void close(websocketpp::connection_hdl hdl, WebsocketBackend::ErrorCode& ec);
 
  private:
+  void closeConnection(websocketpp::connection_hdl hdl);
   void fix(websocketpp::lib::shared_ptr<void> hdl_lock);
 
   WebsocketServer server_;

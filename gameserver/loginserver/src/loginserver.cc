@@ -181,6 +181,7 @@ int main()
 
   // Read [server] settings
   auto serverPort = config.getInteger("server", "port", 7171);
+  const auto wsServerPort = serverPort + 1000;
 
   // Read [login] settings
   motd.motd = config.getString("login", "motd", "Welcome to LoginServer!");
@@ -203,6 +204,7 @@ int main()
   printf("LoginServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
   printf("Server port:               %d\n", serverPort);
+  printf("Websocket server port:     %d\n", wsServerPort);
   printf("\n");
   printf("Accounts filename:         %s\n", accountsFilename.c_str());
   printf("Message of the day:        %s\n", motd.motd.c_str());
@@ -228,7 +230,7 @@ int main()
   server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
 
   // Create websocket server
-  websocketServer = ServerFactory::createWebsocketServer(&io_context, 7272, &onClientConnected);
+  websocketServer = ServerFactory::createWebsocketServer(&io_context, wsServerPort, &onClientConnected);
 
   LOG_INFO("LoginServer started!");
 

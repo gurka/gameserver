@@ -84,8 +84,7 @@ WebsocketServerImpl::WebsocketServerImpl(boost::asio::io_context* io_context,
 
   server_.set_close_handler([this](websocketpp::connection_hdl hdl)
   {
-    // TODO
-    (void)hdl;
+    closeConnection(hdl);
   });
 
   server_.set_message_handler([this](websocketpp::connection_hdl hdl, WebsocketServer::message_ptr msg)
@@ -174,9 +173,12 @@ void WebsocketServerImpl::close(websocketpp::connection_hdl hdl, WebsocketBacken
     ec = WebsocketBackend::ErrorCode();
   }
 
-  // TODO: below needs to be done in another context, otherwise ConnectionImpl will get aborted
-  //       async_read calls before close() has returned which is not how boost::asio works
-  //       ... maybe
+  closeConnection(hdl);
+}
+
+void WebsocketServerImpl::closeConnection(websocketpp::connection_hdl hdl)
+{
+  LOG_DEBUG("%s", __func__);
 
   // Abort and delete AsyncRead if any ongoing
   const auto hdl_lock = hdl.lock();
