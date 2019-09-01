@@ -50,5 +50,6 @@ function core_login() {
 }
 
 function core_game(name, url) {
-  game = new Game(name, url);
+  let password = document.getElementById("login_password").value;
+  game = new Game(name, password, url);
 }
