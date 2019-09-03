@@ -109,15 +109,11 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x64);  // Full (visible) map
     addPosition(position, &packet);  // Position
 
-    addMapData(world_interface, Position(position.getX() - 8, position.getY() - 6, position.getZ()), 18, 14, &packet);
-
-    for (auto i = 0; i < 12; i++)
-    {
-      packet.addU8(0xFF);
-    }
-
-    packet.addU8(0xE4);  // Light?
-    packet.addU8(0xFF);
+    addMapData(world_interface,
+               Position(position.getX() - 8, position.getY() - 6, position.getZ()),
+               18,
+               14,
+               &packet);
 
     packet.addU8(0x83);  // Magic effect (login)
     packet.addU16(position.getX());
@@ -257,39 +253,38 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
 
   if (creature.getCreatureId() == playerId_)
   {
+    // Changing level is currently not supported
+    if (oldPosition.getZ() != newPosition.getZ())
+    {
+      LOG_ERROR("%s: changing level is not supported!", __func__);
+      return;
+    }
+
     // This player moved, send new map data
     if (oldPosition.getY() > newPosition.getY())
     {
       // Get north block
       packet.addU8(0x65);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() - 6, 7), 18, 1, &packet);
-      packet.addU8(0x7E);
-      packet.addU8(0xFF);
+      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()), 18, 1, &packet);
     }
     else if (oldPosition.getY() < newPosition.getY())
     {
       // Get south block
       packet.addU8(0x67);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() + 7, 7), 18, 1, &packet);
-      packet.addU8(0x7E);
-      packet.addU8(0xFF);
+      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()), 18, 1, &packet);
     }
 
     if (oldPosition.getX() > newPosition.getX())
     {
       // Get west block
       packet.addU8(0x68);
-      addMapData(world_interface, Position(newPosition.getX() - 8, newPosition.getY() - 6, 7), 1, 14, &packet);
-      packet.addU8(0x62);
-      packet.addU8(0xFF);
+      addMapData(world_interface, Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()), 1, 14, &packet);
     }
     else if (oldPosition.getX() < newPosition.getX())
     {
       // Get west block
       packet.addU8(0x66);
-      addMapData(world_interface, Position(newPosition.getX() + 9, newPosition.getY() - 6, 7), 1, 14, &packet);
-      packet.addU8(0x62);
-      packet.addU8(0xFF);
+      addMapData(world_interface, Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()), 1, 14, &packet);
     }
   }
 
@@ -808,66 +803,130 @@ void Protocol71::addMapData(const WorldInterface& world_interface,
                             int height,
                             OutgoingPacket* packet)
 {
-  for (auto x = position.getX(); x < position.getX() + width; x++)
+  // Calculate how to iterate over z
+  // Valid z is 0..15, 0 is highest and 15 is lowest. 7 is sea level.
+  // If on ground or higher (z <= 7) then go over everything above ground (from 7 to 0)
+  // If underground (z > 7) then go from two below to two above, with cap on lowest level (from e.g. 8 to 12, if z = 10)
+  const auto z_start = position.getZ() > 7 ? (position.getZ() - 2) : 7;
+  const auto z_end = position.getZ() > 7 ? std::min(position.getZ() + 2, 15) : 0;
+  const auto z_dir = z_start > z_end ? -1 : 1;
+
+  // After sending each tile we should send 0xYY 0xFF where YY is the number of following tiles
+  // that are empty and should be skipped. If there are no empty following tiles then we need
+  // to send 0x00 0xFF which denotes that this tiles is done.
+  // We don't know if the next tile is empty until the next iteration, so we will never send
+  // the "this tile is done" bytes on the same iteration as the actual tile, but rather in a
+  // later iteration, which is a bit confusing. We start off with -1 so that we don't start the
+  // message with saying that a tile is done.
+  int skip = -1;
+
+  for (auto z = z_start; z != z_end + z_dir; z += z_dir)
   {
-    for (auto y = position.getY(); y < position.getY() + height; y++)
+    // Currently we are always on z = 7, so we should send z=7, z=6, ..., z=0
+    // But we skip z=6, ..., z=0 as we only have ground
+    if (z != 7)
     {
-      const auto* tile = world_interface.getTile(Position(x, y, position.getZ()));
-      if (tile)
+      if (skip != -1)
       {
-        const auto& items = tile->getItems();
-        const auto& creatureIds = tile->getCreatureIds();
-        auto itemIt = items.cbegin();
-        auto creatureIt = creatureIds.cbegin();
-
-        // Client can only handle ground + 9 items/creatures at most
-        auto count = 0;
-
-        // Add ground Item
-        addItem(*(*itemIt), packet);
-        count++;
-        ++itemIt;
-
-        // if splash; add; count++
-
-        // Add top Items
-        while (count < 10 && itemIt != items.cend())
-        {
-          if (!(*itemIt)->getItemType().alwaysOnTop)
-          {
-            break;
-          }
-
-          addItem(*(*itemIt), packet);
-          count++;
-          ++itemIt;
-        }
-
-        // Add Creatures
-        while (count < 10 && creatureIt != creatureIds.cend())
-        {
-          const Creature& creature = world_interface.getCreature(*creatureIt);
-          addCreature(creature, packet);
-          count++;
-          ++creatureIt;
-        }
-
-        // Add bottom Item
-        while (count < 10 && itemIt != items.cend())
-        {
-          addItem(*(*itemIt), packet);
-          count++;
-          ++itemIt;
-        }
-      }
-
-      if (x != position.getX() + width - 1 ||
-          y != position.getY() + height - 1)
-      {
-        packet->addU8(0x00);
+        // Send current skip value first
+        packet->addU8(skip);
         packet->addU8(0xFF);
       }
+
+      // Skip this level (skip width * height tiles)
+      packet->addU8(width * height);
+      packet->addU8(0xFF);
+      skip = -1;
+      continue;
     }
+
+    for (auto x = position.getX(); x < position.getX() + width; x++)
+    {
+      for (auto y = position.getY(); y < position.getY() + height; y++)
+      {
+        const auto* tile = world_interface.getTile(Position(x, y, position.getZ()));
+        if (!tile)
+        {
+          skip += 1;
+          if (skip == 0xFF)
+          {
+            packet->addU8(skip);
+            packet->addU8(0xFF);
+
+            // If there is a tile on the next iteration we don't want to send
+            // "tile is done", as we just sent one due to skip being max
+            skip = -1;
+          }
+        }
+        else
+        {
+          // Send "tile is done" with the number of tiles that were empty, unless this
+          // is the first tile (-1)
+          if (skip != -1)
+          {
+            packet->addU8(skip);
+            packet->addU8(0xFF);
+          }
+          else
+          {
+            // Don't let skip be -1 more than one iteration
+            skip = 0;
+          }
+
+          const auto& items = tile->getItems();
+          const auto& creatureIds = tile->getCreatureIds();
+          auto itemIt = items.cbegin();
+          auto creatureIt = creatureIds.cbegin();
+
+          // Client can only handle ground + 9 items/creatures at most
+          auto count = 0;
+
+          // Add ground Item
+          addItem(*(*itemIt), packet);
+          count++;
+          ++itemIt;
+
+          // if splash; add; count++
+
+          // Add top Items
+          while (count < 10 && itemIt != items.cend())
+          {
+            if (!(*itemIt)->getItemType().alwaysOnTop)
+            {
+              break;
+            }
+
+            addItem(*(*itemIt), packet);
+            count++;
+            ++itemIt;
+          }
+
+          // Add Creatures
+          while (count < 10 && creatureIt != creatureIds.cend())
+          {
+            const Creature& creature = world_interface.getCreature(*creatureIt);
+            addCreature(creature, packet);
+            count++;
+            ++creatureIt;
+          }
+
+          // Add bottom Item
+          while (count < 10 && itemIt != items.cend())
+          {
+            addItem(*(*itemIt), packet);
+            count++;
+            ++itemIt;
+          }
+        }
+      }
+    }
+  }
+
+  // Send last skip value
+  if (skip != -1)
+  {
+    packet->addU8(skip);
+    packet->addU8(0xFF);
   }
 }
 
