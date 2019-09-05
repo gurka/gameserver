@@ -1,4 +1,6 @@
-class Client {
+import { IncomingPacket } from './packet.mjs';
+
+export class Client {
 
   constructor(url, onOpen, packetHandler) {
     this.url = url;
@@ -8,7 +10,7 @@ class Client {
     this.receivedData = new Uint8Array(0);
     this.ws = new WebSocket(url);
 
-    this.ws.onopen = (event) => { this.onOpen(); };
+    this.ws.onopen = () => { this.onOpen(); };
     this.ws.onmessage = (event) => {
       // Convert to Uint8Array and call handleReceivedData
       let reader = new FileReader();

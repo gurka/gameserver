@@ -1,13 +1,13 @@
-let login = null;
-let game = null;
+import { Login } from './login.mjs';
+import { Game } from './game.mjs';
 
-function core_login() {
-  login = new Login((res) => {
+document.getElementById("login_button").addEventListener('click', core_login);
+
+export function core_login() {
+  new Login((res) => {
     if ("error" in res) {
       document.getElementById("login_error").innerHTML = res["error"];
     } else {
-      login = null;
-
       let chars_el = document.getElementById("characters");
 
       chars_el.appendChild(document.createTextNode("MOTD:"));
@@ -49,7 +49,7 @@ function core_login() {
   });
 }
 
-function core_game(name, url) {
+export function core_game(name, url) {
   let password = document.getElementById("login_password").value;
-  game = new Game(name, password, url);
+  new Game(name, password, url);
 }
