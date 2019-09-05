@@ -48,7 +48,7 @@ bool ItemManager::loadItemTypes(const std::string& dataFilename, const std::stri
     return false;
   }
 
-  //dumpItemTypeToJson();
+  // dumpItemTypeToJson();
 
   return true;
 }
@@ -432,9 +432,12 @@ void ItemManager::dumpItemTypeToJson() const
 
     std::string tmp;
 
-#define VALUE_INT(NAME) if (itemType.NAME != 0) ofs << "\"" << #NAME << "\": " << itemType.NAME << ", ";
-#define VALUE_STR(NAME) if (!itemType.NAME.empty()) ofs << "\"" << #NAME << "\": \"" << itemType.NAME << "\", ";
-#define VALUE_BOOL(NAME) if (itemType.NAME) ofs << "\"" << #NAME << "\": " << (itemType.NAME ? "true" : "false") << ", ";
+#define VALUE_INT(NAME) if (itemType.NAME != 0) \
+                          ofs << "\"" << #NAME << "\": " << itemType.NAME << ", ";
+#define VALUE_STR(NAME) if (!itemType.NAME.empty()) \
+                          ofs << "\"" << #NAME << "\": \"" << itemType.NAME << "\", ";
+#define VALUE_BOOL(NAME) if (itemType.NAME) \
+                           ofs << "\"" << #NAME << "\": " << (itemType.NAME ? "true" : "false") << ", ";
 
     VALUE_INT(id);
     VALUE_BOOL(ground);

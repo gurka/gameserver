@@ -265,26 +265,42 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get north block
       packet.addU8(0x65);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()), 18, 1, &packet);
+      addMapData(world_interface,
+                 Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+                 18,
+                 1,
+                 &packet);
     }
     else if (oldPosition.getY() < newPosition.getY())
     {
       // Get south block
       packet.addU8(0x67);
-      addMapData(world_interface, Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()), 18, 1, &packet);
+      addMapData(world_interface,
+                 Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()),
+                 18,
+                 1,
+                 &packet);
     }
 
     if (oldPosition.getX() > newPosition.getX())
     {
       // Get west block
       packet.addU8(0x68);
-      addMapData(world_interface, Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()), 1, 14, &packet);
+      addMapData(world_interface,
+                 Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+                 1,
+                 14,
+                 &packet);
     }
     else if (oldPosition.getX() < newPosition.getX())
     {
       // Get west block
       packet.addU8(0x66);
-      addMapData(world_interface, Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()), 1, 14, &packet);
+      addMapData(world_interface,
+                 Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()),
+                 1,
+                 14,
+                 &packet);
     }
   }
 
