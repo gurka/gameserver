@@ -107,19 +107,8 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x00);
 
     addFullMapData(world_interface, position, &packet);
-
     addMagicEffect(position, 0x0A, &packet);
-
-    // Player stats
-    packet.addU8(0xA0);
-    packet.addU16(player.getHealth());
-    packet.addU16(player.getMaxHealth());
-    packet.addU16(player.getCapacity());
-    packet.addU32(player.getExperience());
-    packet.addU8(player.getLevel());
-    packet.addU16(player.getMana());
-    packet.addU16(player.getMaxMana());
-    packet.addU8(player.getMagicLevel());
+    addPlayerStats(player, &packet);
 
     packet.addU8(0x82);  // Light?
     packet.addU8(0x6F);
@@ -1034,6 +1023,19 @@ void Protocol71::addMagicEffect(const Position& position,
   packet->addU16(position.getY());
   packet->addU8(position.getZ());
   packet->addU8(type);
+}
+
+void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) const
+{
+  packet->addU8(0xA0);
+  packet->addU16(player.getHealth());
+  packet->addU16(player.getMaxHealth());
+  packet->addU16(player.getCapacity());
+  packet->addU32(player.getExperience());
+  packet->addU8(player.getLevel());
+  packet->addU16(player.getMana());
+  packet->addU16(player.getMaxMana());
+  packet->addU8(player.getMagicLevel());
 }
 
 void Protocol71::parseLogin(IncomingPacket* packet)
