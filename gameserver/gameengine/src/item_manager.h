@@ -54,6 +54,7 @@ class ItemManager
  private:
   bool loadItemTypesDataFile(const std::string& dataFilename);
   bool loadItemTypesItemsFile(const std::string& itemsFilename);
+  void dumpItemTypeToJson() const;
 
   class ItemImpl : public Item
   {
