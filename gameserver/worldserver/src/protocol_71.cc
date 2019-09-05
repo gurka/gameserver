@@ -208,6 +208,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
               player_position.toString().c_str(),
               oldPosition.toString().c_str(),
               newPosition.toString().c_str());
+    disconnect();
     return;
   }
 
@@ -217,6 +218,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
     if (oldPosition.getZ() != newPosition.getZ())
     {
       LOG_ERROR("%s: changing level is not supported!", __func__);
+      disconnect();
       return;
     }
 
@@ -382,22 +384,11 @@ void Protocol71::onOpenContainer(int newContainerId, const Container& container,
   if (item.getItemType().maxitems == 0)
   {
     LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
+    disconnect();
     return;
   }
 
   // Set containerId
-  const auto oldItem = getContainerItemUniqueId(newContainerId);
-  if (oldItem != Item::INVALID_UNIQUE_ID)
-  {
-    LOG_ERROR("%s: overwriting containerId: %d from item %lu to item %lu",
-              __func__,
-              newContainerId,
-              oldItem,
-              item.getItemUniqueId());
-
-    // Maybe this is OK, but should we then send onCloseContainer for the old container?
-    return;
-  }
   setContainerId(newContainerId, item.getItemUniqueId());
 
   LOG_DEBUG("%s: newContainerId: %u", __func__, newContainerId);
@@ -432,8 +423,8 @@ void Protocol71::onCloseContainer(ItemUniqueId containerItemUniqueId, bool reset
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -460,8 +451,8 @@ void Protocol71::onContainerAddItem(ItemUniqueId containerItemUniqueId, const It
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -488,8 +479,8 @@ void Protocol71::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int c
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -518,8 +509,8 @@ void Protocol71::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int c
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -577,6 +568,19 @@ bool Protocol71::hasContainerOpen(ItemUniqueId itemUniqueId) const
   return getContainerId(itemUniqueId) != INVALID_CONTAINER_ID;
 }
 
+void Protocol71::disconnect() const
+{
+  // Called when the user sent something bad
+  if (!isConnected())
+  {
+    LOG_ERROR("%s: called when not connected", __func__);
+    return;
+  }
+
+  // onDisconnect callback will handle the rest
+  connection_->close(true);
+}
+
 void Protocol71::parsePacket(IncomingPacket* packet)
 {
   if (!isConnected())
@@ -596,7 +600,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     else
     {
       LOG_ERROR("%s: Expected login packet but received packet type: 0x%X", __func__, packetType);
-      connection_->close(true);
+      disconnect();
     }
 
     return;
@@ -932,6 +936,8 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
       // No empty spot!
       // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
       LOG_ERROR("%s: knownCreatures_ is full!", __func__);
+      disconnect();
+      return;
     }
     else
     {
@@ -1099,6 +1105,7 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
   if (pathLength == 0)
   {
     LOG_ERROR("%s: Path length is zero!", __func__);
+    disconnect();
     return;
   }
 
@@ -1150,8 +1157,8 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    disconnect();
     return;
   }
 
@@ -1169,8 +1176,8 @@ void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    disconnect();
     return;
   }
 
@@ -1252,6 +1259,7 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     if (itemUniqueId == Item::INVALID_UNIQUE_ID)
     {
       LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
+      disconnect();
       return GamePosition();
     }
 

@@ -108,6 +108,7 @@ class Protocol71 : public Protocol
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
   bool isConnected() const { return static_cast<bool>(connection_); }
+  void disconnect() const;
 
   // Connection callbacks
   void parsePacket(IncomingPacket* packet);
