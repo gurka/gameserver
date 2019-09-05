@@ -26,6 +26,7 @@
 #define GAMEENGINE_EXPORT_CONTAINER_H_
 
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "game_position.h"
@@ -76,13 +77,15 @@ struct Container
     const auto indents = std::string(indent, ' ');
     std::ostringstream ss;
     ss << indents << "Weight:             " << weight << '\n';
-    ss << indents << "ItemUniqueId:       " << item->getItemUniqueId() << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+    ss << indents << "ItemUniqueId:       " << item->getItemUniqueId()
+       << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
     ss << indents << "parentItemUniqueId: " << parentItemUniqueId << '\n';
     ss << indents << "rootGamePosition:   " << rootGamePosition.toString() << '\n';
     ss << indents << "items:\n";
     for (const auto* item : items)
     {
-      ss << indents << indents << "ItemUniqueId: " << item->getItemUniqueId() << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+      ss << indents << indents << "ItemUniqueId: " << item->getItemUniqueId()
+         << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
     }
     ss << indents << "relatedPlayers:\n";
     for (const auto* playerCtrl : relatedPlayers)
