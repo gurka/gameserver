@@ -102,10 +102,8 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
 
     packet.addU8(0x0A);  // Login
     packet.addU32(playerId_);
-
-    packet.addU8(0x32);  // isGM / canReport / canBan?
-    packet.addU8(0x00);
-
+    packet.addU16(50);  // Server beat, 50hz
+                        // TODO(simon): customizable?
     addFullMapData(world_interface, position, &packet);
     addMagicEffect(position, 0x0A, &packet);
     addPlayerStats(player, &packet);
