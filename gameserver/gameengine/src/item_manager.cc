@@ -48,6 +48,8 @@ bool ItemManager::loadItemTypes(const std::string& dataFilename, const std::stri
     return false;
   }
 
+  //dumpItemTypeToJson();
+
   return true;
 }
 
@@ -56,7 +58,7 @@ ItemUniqueId ItemManager::createItem(ItemTypeId itemTypeId)
   if (itemTypeId < itemTypesIdFirst_ || itemTypeId > itemTypesIdLast_)
   {
     LOG_ERROR("%s: itemTypeId: %d out of range", __func__, itemTypeId);
-    return 0;  // TODO(simon): invalid ItemId (see header and game_position.h)
+    return Item::INVALID_UNIQUE_ID;
   }
 
   const auto itemUniqueId = nextItemUniqueId_;
@@ -414,4 +416,74 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
   LOG_INFO("%s: Successfully loaded %d items", __func__, numberOfItems);
   free(xmlString);
   return true;
+}
+
+void ItemManager::dumpItemTypeToJson() const
+{
+  LOG_INFO(__func__);
+
+  std::ofstream ofs("itemtypes.json");
+  ofs << "{\n";
+  ofs << "  \"itemTypes\": [\n";
+  for (auto id = itemTypesIdFirst_; id <= itemTypesIdLast_; id++)
+  {
+    const auto& itemType = itemTypes_[id];
+    ofs << "    { ";
+
+    std::string tmp;
+
+#define VALUE_INT(NAME) if (itemType.NAME != 0) ofs << "\"" << #NAME << "\": " << itemType.NAME << ", ";
+#define VALUE_STR(NAME) if (!itemType.NAME.empty()) ofs << "\"" << #NAME << "\": \"" << itemType.NAME << "\", ";
+#define VALUE_BOOL(NAME) if (itemType.NAME) ofs << "\"" << #NAME << "\": " << (itemType.NAME ? "true" : "false") << ", ";
+
+    VALUE_INT(id);
+    VALUE_BOOL(ground);
+    VALUE_INT(speed);
+    VALUE_BOOL(isBlocking);
+    VALUE_BOOL(alwaysOnTop);
+    VALUE_BOOL(isContainer);
+    VALUE_BOOL(isStackable);
+    VALUE_BOOL(isUsable);
+    VALUE_BOOL(isMultitype);
+    VALUE_BOOL(isNotMovable);
+    VALUE_BOOL(isEquipable);
+
+    VALUE_STR(name);
+    VALUE_INT(weight);
+    VALUE_INT(decayto);
+    VALUE_INT(decaytime);
+    VALUE_INT(damage);
+    VALUE_INT(maxitems);
+    VALUE_STR(type);
+    VALUE_STR(position);
+    VALUE_INT(attack);
+    VALUE_INT(defence);
+    VALUE_INT(arm);
+    VALUE_STR(skill);
+    VALUE_STR(descr);
+    VALUE_INT(handed);
+    VALUE_INT(shottype);
+    VALUE_STR(amutype);
+
+#undef VALUE_INT
+#undef VALUE_STR
+#undef VALUE_BOOL
+
+    // Go back two characters
+    ofs.seekp(-2, ofs.cur);
+    ofs << " }";
+
+    if (id != itemTypesIdLast_)
+    {
+      ofs << ",\n";
+    }
+    else
+    {
+      ofs << "\n";
+    }
+  }
+  ofs << "  ]\n";
+  ofs << "}\n";
+
+  LOG_INFO("%s: done", __func__);
 }
