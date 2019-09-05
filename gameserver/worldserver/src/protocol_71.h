@@ -108,6 +108,7 @@ class Protocol71 : public Protocol
  private:
   bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
   bool isConnected() const { return static_cast<bool>(connection_); }
+  void disconnect() const;
 
   // Connection callbacks
   void parsePacket(IncomingPacket* packet);
@@ -116,6 +117,9 @@ class Protocol71 : public Protocol
   // Helper functions for creating OutgoingPackets
   bool canSee(const Position& player_position, const Position& to_position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
+  void addFullMapData(const WorldInterface& world_interface,
+                      const Position& position,
+                      OutgoingPacket* packet);
   void addMapData(const WorldInterface& world_interface,
                   const Position& position,
                   int width,
@@ -124,6 +128,10 @@ class Protocol71 : public Protocol
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
   void addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const;
+  void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet) const;
+  void addPlayerStats(const Player& player, OutgoingPacket* packet) const;
+  void addPlayerSkills(const Player& player, OutgoingPacket* packet) const;
+  void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet) const;
 
   // Functions to parse IncomingPackets
   void parseLogin(IncomingPacket* packet);

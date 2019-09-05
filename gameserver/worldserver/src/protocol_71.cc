@@ -102,48 +102,15 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
 
     packet.addU8(0x0A);  // Login
     packet.addU32(playerId_);
+    packet.addU16(50);  // Server beat, 50hz
+                        // TODO(simon): customizable?
 
-    packet.addU8(0x32);  // ??
-    packet.addU8(0x00);
-
-    packet.addU8(0x64);  // Full (visible) map
-    addPosition(position, &packet);  // Position
-
-    addMapData(world_interface,
-               Position(position.getX() - 8, position.getY() - 6, position.getZ()),
-               18,
-               14,
-               &packet);
-
-    packet.addU8(0x83);  // Magic effect (login)
-    packet.addU16(position.getX());
-    packet.addU16(position.getY());
-    packet.addU8(position.getZ());
-    packet.addU8(0x0A);
-
-    // Player stats
-    packet.addU8(0xA0);
-    packet.addU16(player.getHealth());
-    packet.addU16(player.getMaxHealth());
-    packet.addU16(player.getCapacity());
-    packet.addU32(player.getExperience());
-    packet.addU8(player.getLevel());
-    packet.addU16(player.getMana());
-    packet.addU16(player.getMaxMana());
-    packet.addU8(player.getMagicLevel());
-
-    packet.addU8(0x82);  // Light?
-    packet.addU8(0x6F);
-    packet.addU8(0xD7);
-
-    // Player skills
-    packet.addU8(0xA1);
-    for (auto i = 0; i < 7; i++)
-    {
-      packet.addU8(10);
-    }
-
-
+    // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
+    addFullMapData(world_interface, position, &packet);
+    addMagicEffect(position, 0x0A, &packet);
+    addPlayerStats(player, &packet);
+    addWorldLight(0x64, 0xD7, &packet);
+    addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
     {
       addEquipment(player.getEquipment(), i, &packet);
@@ -155,11 +122,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x6A);
     addPosition(position, &packet);
     addCreature(creature, &packet);
-
-    // Spawn/login bubble
-    packet.addU8(0x83);
-    addPosition(position, &packet);
-    packet.addU8(0x0A);
+    addMagicEffect(position, 0x0A, &packet);
   }
 
   connection_->sendPacket(std::move(packet));
@@ -184,10 +147,7 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
   }
 
   OutgoingPacket packet;
-  // Logout poff
-  packet.addU8(0x83);
-  addPosition(position, &packet);
-  packet.addU8(0x02);
+  addMagicEffect(position, 0x02, &packet);
   packet.addU8(0x6C);
   addPosition(position, &packet);
   packet.addU8(stackPos);
@@ -248,6 +208,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
               player_position.toString().c_str(),
               oldPosition.toString().c_str(),
               newPosition.toString().c_str());
+    disconnect();
     return;
   }
 
@@ -257,6 +218,7 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
     if (oldPosition.getZ() != newPosition.getZ())
     {
       LOG_ERROR("%s: changing level is not supported!", __func__);
+      disconnect();
       return;
     }
 
@@ -422,22 +384,11 @@ void Protocol71::onOpenContainer(int newContainerId, const Container& container,
   if (item.getItemType().maxitems == 0)
   {
     LOG_ERROR("%s: Container with ItemTypeId: %d has maxitems == 0", __func__, item.getItemTypeId());
+    disconnect();
     return;
   }
 
   // Set containerId
-  const auto oldItem = getContainerItemUniqueId(newContainerId);
-  if (oldItem != Item::INVALID_UNIQUE_ID)
-  {
-    LOG_ERROR("%s: overwriting containerId: %d from item %lu to item %lu",
-              __func__,
-              newContainerId,
-              oldItem,
-              item.getItemUniqueId());
-
-    // Maybe this is OK, but should we then send onCloseContainer for the old container?
-    return;
-  }
   setContainerId(newContainerId, item.getItemUniqueId());
 
   LOG_DEBUG("%s: newContainerId: %u", __func__, newContainerId);
@@ -472,8 +423,8 @@ void Protocol71::onCloseContainer(ItemUniqueId containerItemUniqueId, bool reset
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -500,8 +451,8 @@ void Protocol71::onContainerAddItem(ItemUniqueId containerItemUniqueId, const It
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -528,8 +479,8 @@ void Protocol71::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int c
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -558,8 +509,8 @@ void Protocol71::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int c
   const auto containerId = getContainerId(containerItemUniqueId);
   if (containerId == INVALID_CONTAINER_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: could not find an open container with itemUniqueId: %lu", __func__, containerItemUniqueId);
+    disconnect();
     return;
   }
 
@@ -617,6 +568,19 @@ bool Protocol71::hasContainerOpen(ItemUniqueId itemUniqueId) const
   return getContainerId(itemUniqueId) != INVALID_CONTAINER_ID;
 }
 
+void Protocol71::disconnect() const
+{
+  // Called when the user sent something bad
+  if (!isConnected())
+  {
+    LOG_ERROR("%s: called when not connected", __func__);
+    return;
+  }
+
+  // onDisconnect callback will handle the rest
+  connection_->close(true);
+}
+
 void Protocol71::parsePacket(IncomingPacket* packet)
 {
   if (!isConnected())
@@ -636,7 +600,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
     else
     {
       LOG_ERROR("%s: Expected login packet but received packet type: 0x%X", __func__, packetType);
-      connection_->close(true);
+      disconnect();
     }
 
     return;
@@ -813,6 +777,19 @@ void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) c
   packet->addU8(position.getZ());
 }
 
+void Protocol71::addFullMapData(const WorldInterface& world_interface,
+                                const Position& position,
+                                OutgoingPacket* packet)
+{
+  packet->addU8(0x64);
+  addPosition(position, packet);
+  addMapData(world_interface,
+             Position(position.getX() - 8, position.getY() - 6, position.getZ()),
+             18,
+             14,
+             packet);
+}
+
 void Protocol71::addMapData(const WorldInterface& world_interface,
                             const Position& position,
                             int width,
@@ -959,6 +936,8 @@ void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
       // No empty spot!
       // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
       LOG_ERROR("%s: knownCreatures_ is full!", __func__);
+      disconnect();
+      return;
     }
     else
     {
@@ -1023,6 +1002,50 @@ void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, Ou
   }
 }
 
+void Protocol71::addMagicEffect(const Position& position,
+                                std::uint8_t type,
+                                OutgoingPacket* packet) const
+{
+  packet->addU8(0x83);
+  packet->addU16(position.getX());
+  packet->addU16(position.getY());
+  packet->addU8(position.getZ());
+  packet->addU8(type);
+}
+
+void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) const
+{
+  packet->addU8(0xA0);
+  packet->addU16(player.getHealth());
+  packet->addU16(player.getMaxHealth());
+  packet->addU16(player.getCapacity());
+  packet->addU32(player.getExperience());
+  packet->addU8(player.getLevel());
+  packet->addU16(player.getMana());
+  packet->addU16(player.getMaxMana());
+  packet->addU8(player.getMagicLevel());
+}
+
+void Protocol71::addWorldLight(std::uint8_t intensity,
+                               std::uint8_t color,
+                               OutgoingPacket* packet) const
+{
+  packet->addU8(0x82);
+  packet->addU8(intensity);
+  packet->addU8(color);
+}
+
+void Protocol71::addPlayerSkills(const Player& player, OutgoingPacket* packet) const
+{
+  packet->addU8(0xA1);
+  // TODO(simon): add skills to Player
+  (void)player;
+  for (auto i = 0; i < 7; i++)
+  {
+    packet->addU8(10);
+  }
+}
+
 void Protocol71::parseLogin(IncomingPacket* packet)
 {
   packet->getU8();  // Unknown (0x02)
@@ -1082,6 +1105,7 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
   if (pathLength == 0)
   {
     LOG_ERROR("%s: Path length is zero!", __func__);
+    disconnect();
     return;
   }
 
@@ -1133,8 +1157,8 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    disconnect();
     return;
   }
 
@@ -1152,8 +1176,8 @@ void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    // TODO(simon): disconnect?
     LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    disconnect();
     return;
   }
 
@@ -1235,6 +1259,7 @@ GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
     if (itemUniqueId == Item::INVALID_UNIQUE_ID)
     {
       LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
+      disconnect();
       return GamePosition();
     }
 
