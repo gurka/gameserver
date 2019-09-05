@@ -103,16 +103,16 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x0A);  // Login
     packet.addU32(playerId_);
 
-    packet.addU8(0x32);  // ??
+    packet.addU8(0x32);  // isGM / canReport / canBan?
     packet.addU8(0x00);
 
     addFullMapData(world_interface, position, &packet);
     addMagicEffect(position, 0x0A, &packet);
     addPlayerStats(player, &packet);
 
-    packet.addU8(0x82);  // Light?
-    packet.addU8(0x6F);
-    packet.addU8(0xD7);
+    packet.addU8(0x82);  // addLight
+    packet.addU8(0x6F);  // param 1
+    packet.addU8(0xD7);  // param 2 ???
 
     addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
@@ -126,11 +126,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x6A);
     addPosition(position, &packet);
     addCreature(creature, &packet);
-
-    // Spawn/login bubble
-    packet.addU8(0x83);
-    addPosition(position, &packet);
-    packet.addU8(0x0A);
+    addMagicEffect(position, 0x0A, &packet);
   }
 
   connection_->sendPacket(std::move(packet));
@@ -155,10 +151,7 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
   }
 
   OutgoingPacket packet;
-  // Logout poff
-  packet.addU8(0x83);
-  addPosition(position, &packet);
-  packet.addU8(0x02);
+  addMagicEffect(position, 0x02, &packet);
   packet.addU8(0x6C);
   addPosition(position, &packet);
   packet.addU8(stackPos);
