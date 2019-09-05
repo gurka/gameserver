@@ -108,11 +108,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
 
     addFullMapData(world_interface, position, &packet);
 
-    packet.addU8(0x83);  // Magic effect (login)
-    packet.addU16(position.getX());
-    packet.addU16(position.getY());
-    packet.addU8(position.getZ());
-    packet.addU8(0x0A);
+    addMagicEffect(position, 0x0A, &packet);
 
     // Player stats
     packet.addU8(0xA0);
@@ -1027,6 +1023,17 @@ void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, Ou
     packet->addU8(inventoryIndex);
     addItem(*item, packet);
   }
+}
+
+void Protocol71::addMagicEffect(const Position& position,
+                                std::uint8_t type,
+                                OutgoingPacket* packet) const
+{
+  packet->addU8(0x83);
+  packet->addU16(position.getX());
+  packet->addU16(position.getY());
+  packet->addU8(position.getZ());
+  packet->addU8(type);
 }
 
 void Protocol71::parseLogin(IncomingPacket* packet)

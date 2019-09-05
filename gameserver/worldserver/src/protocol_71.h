@@ -127,6 +127,7 @@ class Protocol71 : public Protocol
   void addCreature(const Creature& creature, OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet) const;
   void addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const;
+  void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet) const;
 
   // Functions to parse IncomingPackets
   void parseLogin(IncomingPacket* packet);
