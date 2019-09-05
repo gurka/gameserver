@@ -109,11 +109,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     addFullMapData(world_interface, position, &packet);
     addMagicEffect(position, 0x0A, &packet);
     addPlayerStats(player, &packet);
-
-    packet.addU8(0x82);  // addLight
-    packet.addU8(0x6F);  // param 1
-    packet.addU8(0xD7);  // param 2 ???
-
+    addWorldLight(0x64, 0xD7, &packet);
     addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
     {
@@ -1022,6 +1018,16 @@ void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) co
   packet->addU16(player.getMana());
   packet->addU16(player.getMaxMana());
   packet->addU8(player.getMagicLevel());
+}
+
+void Protocol71::addWorldLight(std::uint8_t param1,
+                               std::uint8_t param2,
+                               OutgoingPacket* packet) const
+{
+  // TODO(simon): figure out param1 and param2
+  packet->addU8(0x82);
+  packet->addU8(param1);
+  packet->addU8(param2);
 }
 
 void Protocol71::addPlayerSkills(const Player& player, OutgoingPacket* packet) const
