@@ -104,6 +104,8 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU32(playerId_);
     packet.addU16(50);  // Server beat, 50hz
                         // TODO(simon): customizable?
+
+    // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
     addFullMapData(world_interface, position, &packet);
     addMagicEffect(position, 0x0A, &packet);
     addPlayerStats(player, &packet);
@@ -1018,14 +1020,13 @@ void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) co
   packet->addU8(player.getMagicLevel());
 }
 
-void Protocol71::addWorldLight(std::uint8_t param1,
-                               std::uint8_t param2,
+void Protocol71::addWorldLight(std::uint8_t intensity,
+                               std::uint8_t color,
                                OutgoingPacket* packet) const
 {
-  // TODO(simon): figure out param1 and param2
   packet->addU8(0x82);
-  packet->addU8(param1);
-  packet->addU8(param2);
+  packet->addU8(intensity);
+  packet->addU8(color);
 }
 
 void Protocol71::addPlayerSkills(const Player& player, OutgoingPacket* packet) const

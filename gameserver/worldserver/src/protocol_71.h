@@ -130,7 +130,7 @@ class Protocol71 : public Protocol
   void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet) const;
   void addPlayerStats(const Player& player, OutgoingPacket* packet) const;
   void addPlayerSkills(const Player& player, OutgoingPacket* packet) const;
-  void addWorldLight(std::uint8_t param1, std::uint8_t param2, OutgoingPacket* packet) const;
+  void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet) const;
 
   // Functions to parse IncomingPackets
   void parseLogin(IncomingPacket* packet);
