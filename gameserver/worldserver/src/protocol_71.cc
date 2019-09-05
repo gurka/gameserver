@@ -106,14 +106,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x32);  // ??
     packet.addU8(0x00);
 
-    packet.addU8(0x64);  // Full (visible) map
-    addPosition(position, &packet);  // Position
-
-    addMapData(world_interface,
-               Position(position.getX() - 8, position.getY() - 6, position.getZ()),
-               18,
-               14,
-               &packet);
+    addFullMapData(world_interface, position, &packet);
 
     packet.addU8(0x83);  // Magic effect (login)
     packet.addU16(position.getX());
@@ -811,6 +804,19 @@ void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) c
   packet->addU16(position.getX());
   packet->addU16(position.getY());
   packet->addU8(position.getZ());
+}
+
+void Protocol71::addFullMapData(const WorldInterface& world_interface,
+                                const Position& position,
+                                OutgoingPacket* packet)
+{
+  packet->addU8(0x64);
+  addPosition(position, packet);
+  addMapData(world_interface,
+             Position(position.getX() - 8, position.getY() - 6, position.getZ()),
+             18,
+             14,
+             packet);
 }
 
 void Protocol71::addMapData(const WorldInterface& world_interface,

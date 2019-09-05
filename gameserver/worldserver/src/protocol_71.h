@@ -116,6 +116,9 @@ class Protocol71 : public Protocol
   // Helper functions for creating OutgoingPackets
   bool canSee(const Position& player_position, const Position& to_position) const;
   void addPosition(const Position& position, OutgoingPacket* packet) const;
+  void addFullMapData(const WorldInterface& world_interface,
+                      const Position& position,
+                      OutgoingPacket* packet);
   void addMapData(const WorldInterface& world_interface,
                   const Position& position,
                   int width,
