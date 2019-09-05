@@ -114,14 +114,7 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
     packet.addU8(0x6F);
     packet.addU8(0xD7);
 
-    // Player skills
-    packet.addU8(0xA1);
-    for (auto i = 0; i < 7; i++)
-    {
-      packet.addU8(10);
-    }
-
-
+    addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
     {
       addEquipment(player.getEquipment(), i, &packet);
@@ -1036,6 +1029,17 @@ void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) co
   packet->addU16(player.getMana());
   packet->addU16(player.getMaxMana());
   packet->addU8(player.getMagicLevel());
+}
+
+void Protocol71::addPlayerSkills(const Player& player, OutgoingPacket* packet) const
+{
+  packet->addU8(0xA1);
+  // TODO(simon): add skills to Player
+  (void)player;
+  for (auto i = 0; i < 7; i++)
+  {
+    packet->addU8(10);
+  }
 }
 
 void Protocol71::parseLogin(IncomingPacket* packet)
