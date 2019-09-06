@@ -38,7 +38,7 @@ export class Client {
 
       // Check if we have enough data for the whole packet
       if (this.receivedData.length - 2 >= packet_len) {
-        let packet = new IncomingPacket(this.receivedData.slice(2, packet_len + 2));
+        let packet = new IncomingPacket(this.receivedData.slice(2, packet_len + 2), packet_len);
 
         // Delete packet data from receivedData
         this.receivedData = this.receivedData.slice(packet_len + 2);

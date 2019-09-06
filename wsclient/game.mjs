@@ -28,7 +28,7 @@ export class Game {
 
   packetHandler(packet) {
     while (!packet.isEmpty()) {
-      const type = packet.getU8();
+      var type = packet.getU8();
       if (type == 0x0A) {
         this.handleLoginPacket(packet);
       } else if (type == 0x14) {
