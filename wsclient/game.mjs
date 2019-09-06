@@ -27,29 +27,38 @@ export class Game {
   }
 
   packetHandler(packet) {
-    let type = packet.getU8();
-    if (type == 0x0A) {
-      this.handleLoginPacket(packet);
-    } else if (type == 0x14) {
-      const reason = packet.getString();
-      console.log("Could not login: " + reason);
-    } else {
-      console.log("Unknown packet type: " + type);
+    while (!packet.isEmpty()) {
+      const type = packet.getU8();
+      if (type == 0x0A) {
+        this.handleLoginPacket(packet);
+      } else if (type == 0x14) {
+        const reason = packet.getString();
+        console.log("Could not login: " + reason);
+      } else if (type == 0x64) {
+        this.handleFullMapPacket(packet);
+      } else if (type == 0x83) {
+        this.handleMagicEffect(packet);
+      } else if (type == 0xA0) {
+        this.handlePlayerStats(packet);
+      } else if (type == 0x82) {
+        this.handleWorldLight(packet);
+      } else if (type == 0xA1) {
+        this.handlePlayerSkills(packet);
+      } else if (type == 0x78 || type == 0x79) {
+        this.handleEquipmentUpdate(type == 0x78, packet);
+      } else {
+        console.log("Unknown packet type: " + type + ", skipping rest of this packet");
+        return;
+      }
     }
   }
 
   handleLoginPacket(packet) {
     this.playerId = packet.getU32();
+    this.serverBeat = packet.getU16();
+  }
 
-    // skip unknown
-    packet.skipBytes(2);
-
-    var tmp = packet.getU8();
-    if (tmp != 0x64) {
-      console.log("Invalid login packet, expected 0x64 but received: " + tmp);
-      return;
-    }
-
+  handleFullMapPacket(packet) {
     this.playerPosition = packet.getPosition();
 
     // Parse map (server will send map data from (x - 8, y - 6, z) to and including (x + 9, y + 7, z), where x, y, z is playerPosition
@@ -69,7 +78,7 @@ export class Game {
             skip -= 1;
             continue;
           }
-          
+
           // Parse tile
           for (var stackpos = 0; stackpos < 255; stackpos++) {
 
@@ -125,7 +134,40 @@ export class Game {
         }
       }
     }
+  }
 
-    console.log("Map parsed!");
+  handleMagicEffect(packet) {
+    packet.getPosition();
+    packet.getU8();
+  }
+
+  handlePlayerStats(packet) {
+    packet.getU16();  // health
+    packet.getU16();  // max health
+    packet.getU16();  // cap
+    packet.getU32();  // exp
+    packet.getU8();   // level
+    packet.getU16();  // mana
+    packet.getU16();  // max mana
+    packet.getU8();   // magic level
+  }
+
+  handleWorldLight(packet) {
+    packet.getU8();  // intensity
+    packet.getU8();  // color
+  }
+
+  handlePlayerSkills(packet) {
+    for (var skill = 0; skill < 7; skill++) {
+      packet.getU8();
+    }
+  }
+
+  handleEquipmentUpdate(empty, packet) {
+    packet.getU8();  // index
+    if (!empty) {
+      packet.getU16();  // itemTypeId
+      // assume not stackable or multitype
+    }
   }
 }

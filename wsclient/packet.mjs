@@ -56,6 +56,10 @@ export class IncomingPacket {
     const z = this.getU8();
     return { "x": x, "y": y, "z": z };
   }
+
+  isEmpty() {
+    return this.pos == this.length;
+  }
 }
 
 export class OutgoingPacket {
