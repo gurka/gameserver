@@ -1007,9 +1007,7 @@ void Protocol71::addMagicEffect(const Position& position,
                                 OutgoingPacket* packet) const
 {
   packet->addU8(0x83);
-  packet->addU16(position.getX());
-  packet->addU16(position.getY());
-  packet->addU8(position.getZ());
+  addPosition(position, packet);
   packet->addU8(type);
 }
 
