@@ -26,6 +26,7 @@
 #define NETWORK_EXPORT_OUTGOING_PACKET_H_
 
 #include <cstdint>
+#include <array>
 #include <string>
 #include <stack>
 #include <memory>
