@@ -16,4 +16,3 @@ target_link_libraries(network_test
   gmock_main
 )
 target_compile_definitions(network_test PRIVATE UNITTEST)
-set_target_properties(network_test PROPERTIES EXCLUDE_FROM_ALL TRUE)

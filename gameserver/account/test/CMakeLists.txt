@@ -11,4 +11,3 @@ target_link_libraries(account_test
   gmock_main
 )
 target_compile_definitions(account_test PRIVATE UNITTEST)
-set_target_properties(account_test PROPERTIES EXCLUDE_FROM_ALL TRUE)

@@ -37,18 +37,12 @@ add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml INTERFACE "../external/rapidxml")
 
 # -- Unit tests --
-add_subdirectory(../external/googletest external/googletest)
-set_target_properties(gtest PROPERTIES EXCLUDE_FROM_ALL TRUE)
-set_target_properties(gmock PROPERTIES EXCLUDE_FROM_ALL TRUE)
-set_target_properties(gtest_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
-set_target_properties(gmock_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
-add_subdirectory("account/test")
-add_subdirectory("gameengine/test")
-add_subdirectory("network/test")
-add_subdirectory("utils/test")
-add_subdirectory("world/test")
-
+add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)
+add_subdirectory("account/test" EXCLUDE_FROM_ALL)
+add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)
+add_subdirectory("network/test" EXCLUDE_FROM_ALL)
+add_subdirectory("utils/test" EXCLUDE_FROM_ALL)
+add_subdirectory("world/test" EXCLUDE_FROM_ALL)
 add_custom_target(unittest DEPENDS
   account_test
   gameengine_test
