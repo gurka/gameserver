@@ -62,7 +62,7 @@ namespace ProtocolHelper
                    std::array<CreatureId, 64>* knownCreatures,
                    OutgoingPacket* packet);
   void addItem(const Item& item, OutgoingPacket* packet);
-  void addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet);
+  void addEquipment(const Equipment& equipment, std::uint8_t inventoryIndex, OutgoingPacket* packet);
   void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet);
   void addPlayerStats(const Player& player, OutgoingPacket* packet);
   void addPlayerSkills(const Player& player, OutgoingPacket* packet);

@@ -53,7 +53,7 @@
 // account
 #include "account.h"
 
-constexpr int Protocol::INVALID_CONTAINER_ID;
+constexpr std::uint8_t Protocol::INVALID_CONTAINER_ID;
 
 Protocol::Protocol(const std::function<void(void)>& closeProtocol,
                    std::unique_ptr<Connection>&& connection,
@@ -104,7 +104,7 @@ void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
     const auto& player = static_cast<const Player&>(creature);
 
     packet.addU8(0x0A);  // Login
-    packet.addU32(playerId_);
+    packet.add(playerId_);
     packet.addU16(50);  // Server beat, 50hz
                         // TODO(simon): customizable?
 
@@ -134,7 +134,7 @@ void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
 void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
                                  const Creature& creature,
                                  const Position& position,
-                                 int stackPos)
+                                 std::uint8_t stackPos)
 {
   (void)world_interface;
 
@@ -153,7 +153,7 @@ void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
   ProtocolHelper::addMagicEffect(position, 0x02, &packet);
   packet.addU8(0x6C);
   ProtocolHelper::addPosition(position, &packet);
-  packet.addU8(stackPos);
+  packet.add(stackPos);
   connection_->sendPacket(std::move(packet));
 
   if (creature.getCreatureId() == playerId_)
@@ -169,7 +169,7 @@ void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
 void Protocol::onCreatureMove(const WorldInterface& world_interface,
                               const Creature& creature,
                               const Position& oldPosition,
-                              int oldStackPos,
+                              std::uint8_t oldStackPos,
                               const Position& newPosition)
 {
   if (!isConnected())
@@ -188,14 +188,14 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
   {
     packet.addU8(0x6D);
     ProtocolHelper::addPosition(oldPosition, &packet);
-    packet.addU8(oldStackPos);
+    packet.add(oldStackPos);
     ProtocolHelper::addPosition(newPosition, &packet);
   }
   else if (canSeeOldPos)
   {
     packet.addU8(0x6C);
     ProtocolHelper::addPosition(oldPosition, &packet);
-    packet.addU8(oldStackPos);
+    packet.add(oldStackPos);
   }
   else if (canSeeNewPos)
   {
@@ -279,7 +279,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
 void Protocol::onCreatureTurn(const WorldInterface& world_interface,
                               const Creature& creature,
                               const Position& position,
-                              int stackPos)
+                              std::uint8_t stackPos)
 {
   (void)world_interface;
 
@@ -291,11 +291,11 @@ void Protocol::onCreatureTurn(const WorldInterface& world_interface,
   OutgoingPacket packet;
   packet.addU8(0x6B);
   ProtocolHelper::addPosition(position, &packet);
-  packet.addU8(stackPos);
+  packet.add(stackPos);
   packet.addU8(0x63);
   packet.addU8(0x00);
-  packet.addU32(creature.getCreatureId());
-  packet.addU8(static_cast<std::uint8_t>(creature.getDirection()));
+  packet.add(creature.getCreatureId());
+  packet.add(static_cast<std::uint8_t>(creature.getDirection()));
   connection_->sendPacket(std::move(packet));
 }
 
@@ -313,15 +313,17 @@ void Protocol::onCreatureSay(const WorldInterface& world_interface,
 
   OutgoingPacket packet;
   packet.addU8(0xAA);
-  packet.addString(creature.getName());
+  packet.add(creature.getName());
   packet.addU8(0x01);  // Say type
   // if type <= 3
   ProtocolHelper::addPosition(position, &packet);
-  packet.addString(message);
+  packet.add(message);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
+void Protocol::onItemRemoved(const WorldInterface& world_interface,
+                             const Position& position,
+                             std::uint8_t stackPos)
 {
   (void)world_interface;
 
@@ -333,7 +335,7 @@ void Protocol::onItemRemoved(const WorldInterface& world_interface, const Positi
   OutgoingPacket packet;
   packet.addU8(0x6C);
   ProtocolHelper::addPosition(position, &packet);
-  packet.addU8(stackPos);
+  packet.add(stackPos);
   connection_->sendPacket(std::move(packet));
 }
 
@@ -369,7 +371,7 @@ void Protocol::onTileUpdate(const WorldInterface& world_interface, const Positio
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onEquipmentUpdated(const Player& player, int inventoryIndex)
+void Protocol::onEquipmentUpdated(const Player& player, std::uint8_t inventoryIndex)
 {
   if (!isConnected())
   {
@@ -381,7 +383,7 @@ void Protocol::onEquipmentUpdated(const Player& player, int inventoryIndex)
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onOpenContainer(int newContainerId, const Container& container, const Item& item)
+void Protocol::onOpenContainer(std::uint8_t newContainerId, const Container& container, const Item& item)
 {
   if (!isConnected())
   {
@@ -402,18 +404,18 @@ void Protocol::onOpenContainer(int newContainerId, const Container& container, c
 
   OutgoingPacket packet;
   packet.addU8(0x6E);
-  packet.addU8(newContainerId);
+  packet.add(newContainerId);
   ProtocolHelper::addItem(item, &packet);
-  packet.addString(item.getItemType().name);
-  packet.addU8(item.getItemType().maxitems);
+  packet.add(item.getItemType().name);
+  packet.add(item.getItemType().maxitems);
   packet.addU8(container.parentItemUniqueId == Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
   packet.addU8(container.items.size());
   for (const auto* item : container.items)
   {
-    packet.addU16(item->getItemTypeId());
+    packet.add(item->getItemTypeId());
     if (item->getItemType().isStackable)  // or splash or fluid container?
     {
-      packet.addU8(item->getCount());
+      packet.add(item->getCount());
     }
   }
   connection_->sendPacket(std::move(packet));
@@ -444,7 +446,7 @@ void Protocol::onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetCo
 
   OutgoingPacket packet;
   packet.addU8(0x6F);
-  packet.addU8(containerId);
+  packet.add(containerId);
   connection_->sendPacket(std::move(packet));
 }
 
@@ -471,12 +473,12 @@ void Protocol::onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item
 
   OutgoingPacket packet;
   packet.addU8(0x70);
-  packet.addU8(containerId);
+  packet.add(containerId);
   ProtocolHelper::addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item)
+void Protocol::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot, const Item& item)
 {
   if (!isConnected())
   {
@@ -500,13 +502,13 @@ void Protocol::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int con
 
   OutgoingPacket packet;
   packet.addU8(0x71);
-  packet.addU8(containerId);
-  packet.addU8(containerSlot);
+  packet.add(containerId);
+  packet.add(containerSlot);
   ProtocolHelper::addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot)
+void Protocol::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot)
 {
   if (!isConnected())
   {
@@ -529,13 +531,13 @@ void Protocol::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int con
 
   OutgoingPacket packet;
   packet.addU8(0x72);
-  packet.addU8(containerId);
-  packet.addU8(containerSlot);
+  packet.add(containerId);
+  packet.add(containerSlot);
   connection_->sendPacket(std::move(packet));
 }
 
 // 0x13 default text, 0x11 login text
-void Protocol::sendTextMessage(int message_type, const std::string& message)
+void Protocol::sendTextMessage(std::uint8_t message_type, const std::string& message)
 {
   if (!isConnected())
   {
@@ -544,8 +546,8 @@ void Protocol::sendTextMessage(int message_type, const std::string& message)
 
   OutgoingPacket packet;
   packet.addU8(0xB4);
-  packet.addU8(message_type);
-  packet.addString(message);
+  packet.add(message_type);
+  packet.add(message);
   connection_->sendPacket(std::move(packet));
 }
 
@@ -559,7 +561,7 @@ void Protocol::sendCancel(const std::string& message)
   OutgoingPacket packet;
   packet.addU8(0xB4);
   packet.addU8(0x14);
-  packet.addString(message);
+  packet.add(message);
   connection_->sendPacket(std::move(packet));
 }
 
@@ -762,7 +764,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   {
     OutgoingPacket response;
     response.addU8(0x14);
-    response.addString("Invalid character.");
+    response.add("Invalid character.");
     connection_->sendPacket(std::move(response));
     connection_->close(false);
     return;
@@ -773,7 +775,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   {
     OutgoingPacket response;
     response.addU8(0x14);
-    response.addString("Invalid password.");
+    response.add("Invalid password.");
     connection_->sendPacket(std::move(response));
     connection_->close(false);
     return;
@@ -786,7 +788,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
     {
       OutgoingPacket response;
       response.addU8(0x14);
-      response.addString("Could not spawn player.");
+      response.add("Could not spawn player.");
       connection_->sendPacket(std::move(response));
       connection_->close(false);
     }
@@ -902,17 +904,17 @@ void Protocol::parseSay(IncomingPacket* packet)
   const auto type = packet->getU8();
 
   std::string receiver = "";
-  auto channelId = 0;
+  std::uint16_t channelId = 0;
 
   switch (type)
   {
     case 0x06:  // PRIVATE
     case 0x0B:  // PRIVATE RED
-      receiver = packet->getString();
+      packet->get(&receiver);
       break;
     case 0x07:  // CHANNEL_Y
     case 0x0A:  // CHANNEL_R1
-      channelId = packet->getU16();
+      packet->get(&channelId);
       break;
     default:
       break;
@@ -926,12 +928,12 @@ void Protocol::parseSay(IncomingPacket* packet)
   });
 }
 
-void Protocol::setContainerId(int containerId, ItemUniqueId itemUniqueId)
+void Protocol::setContainerId(std::uint8_t containerId, ItemUniqueId itemUniqueId)
 {
   containerIds_[containerId] = itemUniqueId;
 }
 
-int Protocol::getContainerId(ItemUniqueId itemUniqueId) const
+std::uint8_t Protocol::getContainerId(ItemUniqueId itemUniqueId) const
 {
   const auto it = std::find(containerIds_.cbegin(),
                             containerIds_.cend(),
@@ -946,9 +948,9 @@ int Protocol::getContainerId(ItemUniqueId itemUniqueId) const
   }
 }
 
-ItemUniqueId Protocol::getContainerItemUniqueId(int containerId) const
+ItemUniqueId Protocol::getContainerItemUniqueId(std::uint8_t containerId) const
 {
-  if (containerId < 0 || containerId >= 64)
+  if (containerId >= 64)
   {
     LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
     return Item::INVALID_UNIQUE_ID;

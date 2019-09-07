@@ -184,12 +184,12 @@ Player::Player(const std::string& name)
 {
 }
 
-int Player::getSpeed() const
+std::uint16_t Player::getSpeed() const
 {
   return 220 + (2 * (getLevel() - 1));
 }
 
-int Player::getLevel() const
+std::uint8_t Player::getLevel() const
 {
   if (experience_ < 100) return 1;
   else if (experience_ < 200) return 2;

@@ -36,8 +36,8 @@ class ItemMock : public Item
 
   MOCK_CONST_METHOD0(getItemType, const ItemType&());
 
-  MOCK_CONST_METHOD0(getCount, int());
-  MOCK_METHOD1(setCount, void(int count));
+  MOCK_CONST_METHOD0(getCount, std::uint8_t());
+  MOCK_METHOD1(setCount, void(std::uint8_t count));
 };
 
 #endif  // WORLD_TEST_SRC_ITEM_MOCK_H_

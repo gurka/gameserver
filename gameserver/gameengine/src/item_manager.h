@@ -71,13 +71,13 @@ class ItemManager
 
     const ItemType& getItemType() const override { return *itemType_; }
 
-    int getCount() const override { return count_; }
-    void setCount(int count) override { count_ = count; }
+    std::uint8_t getCount() const override { return count_; }
+    void setCount(std::uint8_t count) override { count_ = count; }
 
    private:
     ItemUniqueId itemUniqueId_;
     const ItemType* itemType_;
-    int count_;
+    std::uint8_t count_;
   };
 
   std::unordered_map<ItemUniqueId, ItemImpl> items_;

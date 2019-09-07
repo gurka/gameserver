@@ -72,27 +72,27 @@ class Player : public Creature
   explicit Player(const std::string& name);
 
   // From Creature
-  int getSpeed() const override;
+  std::uint16_t getSpeed() const override;
 
-  int getMaxMana() const { return maxMana_; }
-  void setMaxMana(int maxMana) { maxMana_ = maxMana; }
+  std::uint16_t getMaxMana() const { return maxMana_; }
+  void setMaxMana(std::uint16_t maxMana) { maxMana_ = maxMana; }
 
-  int getMana() const { return mana_; }
-  void setMana(int mana) { mana_ = mana; }
+  std::uint16_t getMana() const { return mana_; }
+  void setMana(std::uint16_t mana) { mana_ = mana; }
 
-  int getCapacity() const { return capacity_; }
-  void setCapacity(int capacity) { capacity_ = capacity; }
+  std::uint16_t getCapacity() const { return capacity_; }
+  void setCapacity(std::uint16_t capacity) { capacity_ = capacity; }
 
-  int getExperience() const { return experience_; }
-  void setExperience(int experience) { experience_ = experience; }
+  std::uint32_t getExperience() const { return experience_; }
+  void setExperience(std::uint32_t experience) { experience_ = experience; }
 
-  int getMagicLevel() const { return magicLevel_; }
-  void setMagicLevel(int magicLevel) { magicLevel_ = magicLevel; }
+  std::uint8_t getMagicLevel() const { return magicLevel_; }
+  void setMagicLevel(std::uint8_t magicLevel) { magicLevel_ = magicLevel; }
 
   int getPartyShield() const { return partyShield_; }
   void setPartyShield(int partyShield) { partyShield_ = partyShield; }
 
-  int getLevel() const;
+  std::uint8_t getLevel() const;
 
   const Equipment& getEquipment() const
   {
@@ -105,11 +105,11 @@ class Player : public Creature
   }
 
  private:
-  int maxMana_;
-  int mana_;
-  int capacity_;
-  int experience_;
-  int magicLevel_;
+  std::uint16_t maxMana_;
+  std::uint16_t mana_;
+  std::uint16_t capacity_;
+  std::uint32_t experience_;
+  std::uint8_t magicLevel_;
   int partyShield_;
   Equipment equipment_;
 };

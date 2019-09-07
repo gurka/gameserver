@@ -25,7 +25,9 @@
 #ifndef WORLD_EXPORT_POSITION_H_
 #define WORLD_EXPORT_POSITION_H_
 
+#include <cstdint>
 #include <string>
+
 #include "direction.h"
 
 class Position
@@ -34,7 +36,7 @@ class Position
   static const Position INVALID;
 
   Position();
-  Position(int x, int y, int z);
+  Position(std::uint16_t x, std::uint16_t y, std::uint8_t z);
 
   bool operator==(const Position& other) const;
   bool operator!=(const Position& other) const;
@@ -42,14 +44,14 @@ class Position
   std::string toString() const;
   Position addDirection(const Direction& direction) const;
 
-  int getX() const { return x_; }
-  int getY() const { return y_; }
-  int getZ() const { return z_; }
+  std::uint16_t getX() const { return x_; }
+  std::uint16_t getY() const { return y_; }
+  std::uint8_t  getZ() const { return z_; }
 
  private:
-  int x_;
-  int y_;
-  int z_;
+  std::uint16_t x_;
+  std::uint16_t y_;
+  std::uint8_t z_;
 };
 
 #endif  // WORLD_EXPORT_POSITION_H_

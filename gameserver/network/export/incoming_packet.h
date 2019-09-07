@@ -54,6 +54,16 @@ class IncomingPacket
   std::vector<std::uint8_t> peekBytes(int num_bytes) const;
   std::vector<std::uint8_t> getBytes(int numBytes);
 
+  // Generic functions
+  void get(std::uint8_t*  val) { *val = getU8();     }
+  void get(std::uint16_t* val) { *val = getU16();    }
+  void get(std::uint32_t* val) { *val = getU32();    }
+  void get(std::string*   str) { *str = getString(); }
+
+  // Invalid function to make sure that no implicit conversions / promotion occurs
+  template<typename T>
+  void get(T*) = delete;
+
  private:
   const std::uint8_t* buffer_;
   std::size_t length_;

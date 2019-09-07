@@ -68,36 +68,40 @@ class Protocol : public PlayerCtrl
   void onCreatureDespawn(const WorldInterface& world_interface,
                          const Creature& creature,
                          const Position& position,
-                         int stackPos) override;
+                         std::uint8_t stackPos) override;
   void onCreatureMove(const WorldInterface& world_interface,
                       const Creature& creature,
                       const Position& oldPosition,
-                      int oldStackPos,
+                      std::uint8_t oldStackPos,
                       const Position& newPosition) override;
   void onCreatureTurn(const WorldInterface& world_interface,
                       const Creature& creature,
                       const Position& position,
-                      int stackPos) override;
+                      std::uint8_t stackPos) override;
   void onCreatureSay(const WorldInterface& world_interface,
                      const Creature& creature,
                      const Position& position,
                      const std::string& message) override;
 
-  void onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos) override;
-  void onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position) override;
+  void onItemRemoved(const WorldInterface& world_interface,
+                     const Position& position,
+                     std::uint8_t stackPos) override;
+  void onItemAdded(const WorldInterface& world_interface,
+                   const Item& item,
+                   const Position& position) override;
 
   void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
   CreatureId getPlayerId() const override { return playerId_; }
   void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
-  void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
-  void onOpenContainer(int newContainerId, const Container& container, const Item& item) override;
+  void onEquipmentUpdated(const Player& player, std::uint8_t inventoryIndex) override;
+  void onOpenContainer(std::uint8_t newContainerId, const Container& container, const Item& item) override;
   void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) override;
   void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) override;
-  void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item) override;
-  void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot) override;
-  void sendTextMessage(int message_type, const std::string& message) override;
+  void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot, const Item& item) override;
+  void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot) override;
+  void sendTextMessage(std::uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
 
@@ -125,9 +129,9 @@ class Protocol : public PlayerCtrl
   void parseSay(IncomingPacket* packet);
 
   // Helper functions for containerId
-  void setContainerId(int containerId, ItemUniqueId itemUniqueId);
-  int getContainerId(ItemUniqueId itemUniqueId) const;
-  ItemUniqueId getContainerItemUniqueId(int containerId) const;
+  void setContainerId(std::uint8_t containerId, ItemUniqueId itemUniqueId);
+  std::uint8_t getContainerId(ItemUniqueId itemUniqueId) const;
+  ItemUniqueId getContainerItemUniqueId(std::uint8_t containerId) const;
 
   std::function<void(void)> closeProtocol_;
   std::unique_ptr<Connection> connection_;
@@ -140,7 +144,7 @@ class Protocol : public PlayerCtrl
 
   // Known/opened containers
   // clientContainerId maps to a container's ItemUniqueId
-  static constexpr int INVALID_CONTAINER_ID = -1;
+  static constexpr std::uint8_t INVALID_CONTAINER_ID = -1;
   std::array<ItemUniqueId, 64> containerIds_;
 };
 
