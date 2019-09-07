@@ -21,23 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "container.h"
 
-#ifndef WORLD_TEST_SRC_ITEM_MOCK_H_
-#define WORLD_TEST_SRC_ITEM_MOCK_H_
+#include <string>
+#include <sstream>
 
+#include "player_ctrl.h"
 #include "item.h"
-#include "gmock/gmock.h"
+#include "creature.h"
 
-class ItemMock : public Item
+std::string Container::toString(int indent) const
 {
- public:
-  MOCK_CONST_METHOD0(getItemUniqueId, ItemUniqueId());
-  MOCK_CONST_METHOD0(getItemTypeId, ItemTypeId());
-
-  MOCK_CONST_METHOD0(getItemType, const ItemType&());
-
-  MOCK_CONST_METHOD0(getCount, std::uint8_t());
-  MOCK_METHOD1(setCount, void(std::uint8_t count));
-};
-
-#endif  // WORLD_TEST_SRC_ITEM_MOCK_H_
+  const auto indents = std::string(indent, ' ');
+  std::ostringstream ss;
+  ss << indents << "Weight:             " << weight << '\n';
+  ss << indents << "ItemUniqueId:       " << item->getItemUniqueId()
+     << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+  ss << indents << "parentItemUniqueId: " << parentItemUniqueId << '\n';
+  ss << indents << "rootGamePosition:   " << rootGamePosition.toString() << '\n';
+  ss << indents << "items:\n";
+  for (const auto* item : items)
+  {
+    ss << indents << indents << "ItemUniqueId: " << item->getItemUniqueId()
+       << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+  }
+  ss << indents << "relatedPlayers:\n";
+  for (const auto* playerCtrl : relatedPlayers)
+  {
+    ss << indents << indents << "PlayerID: " << playerCtrl->getPlayerId() << '\n';
+  }
+  return ss.str();
+}

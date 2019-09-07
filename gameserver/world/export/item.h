@@ -29,7 +29,7 @@
 #include <string>
 
 using ItemUniqueId = std::uint64_t;
-using ItemTypeId = int;
+using ItemTypeId = std::uint16_t;
 
 struct ItemType;
 
@@ -45,8 +45,8 @@ class Item
 
   virtual const ItemType& getItemType() const = 0;
 
-  virtual int getCount() const = 0;
-  virtual void setCount(int count) = 0;
+  virtual std::uint8_t getCount() const = 0;
+  virtual void setCount(std::uint8_t count) = 0;
 
   bool operator==(const Item& other) const
   {
@@ -76,22 +76,22 @@ struct ItemType
   bool isEquipable  = false;
 
   // Loaded from xml file
-  std::string name     = "";
-  int weight           = 0;
-  int decayto          = 0;
-  int decaytime        = 0;
-  int damage           = 0;
-  int maxitems         = 0;
-  std::string type     = "";
-  std::string position = "";
-  int attack           = 0;
-  int defence          = 0;
-  int arm              = 0;
-  std::string skill    = "";
-  std::string descr    = "";
-  int handed           = 0;
-  int shottype         = 0;
-  std::string amutype  = "";
+  std::string name      = "";
+  int weight            = 0;
+  int decayto           = 0;
+  int decaytime         = 0;
+  int damage            = 0;
+  std::uint8_t maxitems = 0;
+  std::string type      = "";
+  std::string position  = "";
+  int attack            = 0;
+  int defence           = 0;
+  int arm               = 0;
+  std::string skill     = "";
+  std::string descr     = "";
+  int handed            = 0;
+  int shottype          = 0;
+  std::string amutype   = "";
 };
 
 #endif  // WORLD_EXPORT_ITEM_H_

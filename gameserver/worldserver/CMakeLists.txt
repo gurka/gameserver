@@ -1,18 +1,12 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 
 project(worldserver)
-
-add_executable(worldserver
-  "src/protocol_71.cc"
-  "src/protocol_71.h"
-  "src/protocol.h"
-  "src/worldserver.cc"
-)
-
+add_executable(worldserver "src/worldserver.cc")
 target_link_libraries(worldserver
   account
-  network
   gameengine
+  network
+  protocol
   world
   utils
   boost_system

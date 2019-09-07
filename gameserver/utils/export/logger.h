@@ -53,6 +53,7 @@ class Logger
     GAMEENGINE,
     LOGINSERVER,
     NETWORK,
+    PROTOCOL,
     UTILS,
     WORLD,
     WORLDSERVER,

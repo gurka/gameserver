@@ -35,7 +35,7 @@ Position::Position()
 {
 }
 
-Position::Position(int x, int y, int z)
+Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
   : x_(x),
     y_(y),
     z_(z)

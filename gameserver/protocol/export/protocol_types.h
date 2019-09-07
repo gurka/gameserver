@@ -22,15 +22,61 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_SRC_PROTOCOL_H_
-#define WORLDSERVER_SRC_PROTOCOL_H_
+#ifndef WORLDSERVER_SRC_PROTOCOL_TYPES_H_
+#define WORLDSERVER_SRC_PROTOCOL_TYPES_H_
 
-#include "player_ctrl.h"
+#include <cstdint>
 
-class Protocol : public PlayerCtrl
+#include "direction.h"
+#include "creature.h"
+#include "position.h"
+
+namespace ProtocolTypes
 {
- public:
-  virtual ~Protocol() = default;
+
+struct Creature
+{
+  bool known;
+  std::uint32_t idToRemove;  // only if known = false
+  std::uint32_t id;
+  std::string name;  // only if known = false
+  std::uint8_t healthPercent;
+  Direction direction;
+  Outfit outfit;
+  std::uint16_t speed;
 };
 
-#endif  // WORLDSERVER_SRC_PROTOCOL_H_
+struct Item
+{
+  std::uint16_t itemTypeId;
+  std::uint8_t extra;  // only if type is stackable or multitype
+};
+
+struct Equipment
+{
+  bool empty;
+  std::uint8_t inventoryIndex;
+  Item item;  // only if empty = false
+};
+
+struct MagicEffect
+{
+  Position position;
+  std::uint8_t type;
+};
+
+struct PlayerStats
+{
+  std::uint16_t health;
+  std::uint16_t maxHealth;
+  std::uint16_t capacity;
+  std::uint32_t exp;
+  std::uint8_t level;
+  std::uint16_t mana;
+  std::uint16_t maxMana;
+  std::uint8_t magicLevel;
+};
+
+}
+
+#endif  // WORLDSERVER_SRC_PROTOCOL_TYPES_H_

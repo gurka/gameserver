@@ -30,16 +30,16 @@
 
 #include "direction.h"
 
-using CreatureId = int;
+using CreatureId = std::uint32_t;
 
 struct Outfit
 {
-  int type;
-  int ext;  // item
-  int head;
-  int body;
-  int legs;
-  int feet;
+  std::uint8_t type;
+  std::uint8_t ext;  // ???
+  std::uint8_t head;
+  std::uint8_t body;
+  std::uint8_t legs;
+  std::uint8_t feet;
 };
 
 class Creature
@@ -60,14 +60,14 @@ class Creature
   const Direction& getDirection() const { return direction_; }
   void setDirection(const Direction& direction) { direction_ = direction; }
 
-  int getMaxHealth() const { return maxHealth_; }
-  void setMaxHealth(int maxHealth) { maxHealth_ = maxHealth; }
+  std::uint16_t getMaxHealth() const { return maxHealth_; }
+  void setMaxHealth(std::uint16_t maxHealth) { maxHealth_ = maxHealth; }
 
-  int getHealth() const { return health_; }
-  void setHealth(int health) { health_ = health; }
+  std::uint16_t getHealth() const { return health_; }
+  void setHealth(std::uint16_t health) { health_ = health; }
 
-  virtual int getSpeed() const { return speed_; }
-  void setSpeed(int speed) { speed_ = speed; }
+  virtual std::uint16_t getSpeed() const { return speed_; }
+  void setSpeed(std::uint16_t speed) { speed_ = speed; }
 
   const Outfit& getOutfit() const { return outfit_; }
   void setOutfit(const Outfit& outfit) { outfit_ = outfit; }
@@ -88,9 +88,9 @@ class Creature
   CreatureId creatureId_;
   std::string name_;
   Direction direction_;
-  int maxHealth_;
-  int health_;
-  int speed_;
+  std::uint16_t maxHealth_;
+  std::uint16_t health_;
+  std::uint16_t speed_;
   Outfit outfit_;
   int lightColor_;
   int lightLevel_;

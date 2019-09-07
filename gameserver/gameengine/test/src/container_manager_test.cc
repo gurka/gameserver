@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include "player.h"
 #include "container_manager.h"
 #include "player_ctrl_mock.h"
 #include "world_interface.h"
@@ -63,13 +64,13 @@ struct ItemStub : public Item
 
   const ItemType& getItemType() const { return itemType_; }
 
-  int getCount() const { return count_; }
-  void setCount(int count) { count_ = count; }
+  std::uint8_t getCount() const { return count_; }
+  void setCount(std::uint8_t count) { count_ = count; }
 
   ItemUniqueId itemUniqueId_;
   ItemTypeId itemTypeId_;
   ItemType itemType_;
-  int count_;
+  std::uint8_t count_;
 };
 
 class ContainerManagerTest : public ::testing::Test

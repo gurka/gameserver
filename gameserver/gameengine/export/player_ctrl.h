@@ -25,14 +25,18 @@
 #ifndef GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 #define GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 
+#include "creature_ctrl.h"
+
+#include <array>
 #include <string>
 #include <vector>
 
-#include "creature_ctrl.h"
-#include "player.h"
+#include "creature.h"
+#include "item.h"
 
 class Container;
 class Item;
+class Player;
 
 class PlayerCtrl : public CreatureCtrl
 {
@@ -43,16 +47,16 @@ class PlayerCtrl : public CreatureCtrl
   virtual CreatureId getPlayerId() const = 0;
   virtual void setPlayerId(CreatureId playerId) = 0;
 
-  virtual void onEquipmentUpdated(const Player& player, int inventoryIndex) = 0;
+  virtual void onEquipmentUpdated(const Player& player, std::uint8_t inventoryIndex) = 0;
 
-  virtual void onOpenContainer(int newContainerId, const Container& container, const Item& item) = 0;
+  virtual void onOpenContainer(std::uint8_t newContainerId, const Container& container, const Item& item) = 0;
   virtual void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) = 0;
 
   virtual void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) = 0;
-  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item) = 0;
-  virtual void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot) = 0;
+  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot, const Item& item) = 0;
+  virtual void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot) = 0;
 
-  virtual void sendTextMessage(int message_type, const std::string& message) = 0;
+  virtual void sendTextMessage(std::uint8_t message_type, const std::string& message) = 0;
 
   virtual void sendCancel(const std::string& message) = 0;
   virtual void cancelMove() = 0;

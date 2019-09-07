@@ -54,6 +54,17 @@ class OutgoingPacket
   void addU32(std::uint32_t val);
   void addString(const std::string& string);
 
+  // Generic functions
+  void add(std::uint8_t val)       { addU8(val);     }
+  void add(std::uint16_t val)      { addU16(val);    }
+  void add(std::uint32_t val)      { addU32(val);    }
+  void add(const std::string& str) { addString(str); }
+  void add(const char* str)        { addString(str); }
+
+  // Invalid function to make sure that no implicit conversions / promotion occurs
+  template<typename T>
+  void add(T) = delete;
+
  private:
   std::unique_ptr<std::array<std::uint8_t, 8192>> buffer_;
   std::size_t position_;
