@@ -29,6 +29,7 @@
 #include <array>
 #include <string>
 
+#include "protocol_types.h"
 #include "game_position.h"
 #include "creature.h"
 #include "item.h"
@@ -36,14 +37,15 @@
 class Position;
 class OutgoingPacket;
 class WorldInterface;
+class Outfit;
 class Equipment;
 class Player;
 class IncomingPacket;
 
 namespace ProtocolHelper
 {
-  // Helper functions for creating OutgoingPackets
   bool canSee(const Position& player_position, const Position& to_position);
+
   void addPosition(const Position& position, OutgoingPacket* packet);
   void addFullMapData(const WorldInterface& world_interface,
                       const Position& position,
@@ -55,6 +57,7 @@ namespace ProtocolHelper
                   int height,
                   std::array<CreatureId, 64>* knownCreatures,
                   OutgoingPacket* packet);
+  void addOutfit(const Outfit& outfit, OutgoingPacket* packet);
   void addCreature(const Creature& creature,
                    std::array<CreatureId, 64>* knownCreatures,
                    OutgoingPacket* packet);
@@ -65,7 +68,13 @@ namespace ProtocolHelper
   void addPlayerSkills(const Player& player, OutgoingPacket* packet);
   void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet);
 
-  // Helper functions for parsing IncomingPackets
+  Position getPosition(IncomingPacket* packet);
+  Outfit getOutfit(IncomingPacket* packet);
+  ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet);
+  ProtocolTypes::Item getItem(IncomingPacket* packet);
+  ProtocolTypes::Equipment getEquipment(bool empty, IncomingPacket* packet);
+  ProtocolTypes::MagicEffect getMagicEffect(IncomingPacket* packet);
+
   GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);
   ItemPosition getItemPosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);
 }

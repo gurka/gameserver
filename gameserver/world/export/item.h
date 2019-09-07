@@ -29,7 +29,7 @@
 #include <string>
 
 using ItemUniqueId = std::uint64_t;
-using ItemTypeId = int;
+using ItemTypeId = std::uint16_t;
 
 struct ItemType;
 

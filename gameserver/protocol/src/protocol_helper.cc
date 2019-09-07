@@ -34,6 +34,7 @@
 #include "player.h"
 #include "incoming_packet.h"
 #include "tile.h"
+#include "protocol_types.h"
 
 namespace ProtocolHelper
 {
@@ -229,6 +230,15 @@ void addMapData(const WorldInterface& world_interface,
   }
 }
 
+void addOutfit(const Outfit& outfit, OutgoingPacket* packet)
+{
+  packet->addU8(outfit.type);
+  packet->addU8(outfit.head);
+  packet->addU8(outfit.body);
+  packet->addU8(outfit.legs);
+  packet->addU8(outfit.feet);
+}
+
 void addCreature(const Creature& creature,
                  std::array<CreatureId, 64>* knownCreatures,
                  OutgoingPacket* packet)
@@ -267,11 +277,7 @@ void addCreature(const Creature& creature,
 
   packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
   packet->addU8(static_cast<std::uint8_t>(creature.getDirection()));
-  packet->addU8(creature.getOutfit().type);
-  packet->addU8(creature.getOutfit().head);
-  packet->addU8(creature.getOutfit().body);
-  packet->addU8(creature.getOutfit().legs);
-  packet->addU8(creature.getOutfit().feet);
+  addOutfit(creature.getOutfit(), packet);
 
   packet->addU8(0x00);
   packet->addU8(0xDC);
@@ -331,15 +337,6 @@ void addPlayerStats(const Player& player, OutgoingPacket* packet)
   packet->addU8(player.getMagicLevel());
 }
 
-void addWorldLight(std::uint8_t intensity,
-                   std::uint8_t color,
-                   OutgoingPacket* packet)
-{
-  packet->addU8(0x82);
-  packet->addU8(intensity);
-  packet->addU8(color);
-}
-
 void addPlayerSkills(const Player& player, OutgoingPacket* packet)
 {
   packet->addU8(0xA1);
@@ -349,6 +346,98 @@ void addPlayerSkills(const Player& player, OutgoingPacket* packet)
   {
     packet->addU8(10);
   }
+}
+
+void addWorldLight(std::uint8_t intensity,
+                   std::uint8_t color,
+                   OutgoingPacket* packet)
+{
+  packet->addU8(0x82);
+  packet->addU8(intensity);
+  packet->addU8(color);
+}
+
+Position getPosition(IncomingPacket* packet)
+{
+  const auto x = packet->getU16();
+  const auto y = packet->getU16();
+  const auto z = packet->getU8();
+  return Position(x, y, z);
+}
+
+Outfit getOutfit(IncomingPacket* packet)
+{
+  Outfit outfit;
+  outfit.type = packet->getU8();
+  outfit.head = packet->getU8();
+  outfit.body = packet->getU8();
+  outfit.legs = packet->getU8();
+  outfit.feet = packet->getU8();
+  return outfit;
+}
+
+ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
+{
+  ProtocolTypes::Creature creature;
+  creature.known = known;
+  if (creature.known)
+  {
+    creature.id = packet->getU32();
+  }
+  else
+  {
+    creature.idToRemove = packet->getU32();
+    creature.id = packet->getU32();
+    creature.name = packet->getString();
+  }
+  creature.healthPercent = packet->getU8();
+  creature.direction = static_cast<Direction>(packet->getU8());
+  creature.outfit = getOutfit(packet);
+  creature.speed = packet->getU16();
+  return creature;
+}
+
+ProtocolTypes::Item getItem(IncomingPacket* packet)
+{
+  ProtocolTypes::Item item;
+  item.itemTypeId = packet->getU16();
+  // Need to make ItemType available to be able to check if we should
+  // read extra or not. For now assume not to read it
+  return item;
+}
+
+ProtocolTypes::Equipment getEquipment(bool empty, IncomingPacket* packet)
+{
+  ProtocolTypes::Equipment equipment;
+  equipment.empty = empty;
+  equipment.inventoryIndex = packet->getU8();
+  if (equipment.empty)
+  {
+    equipment.item = getItem(packet);
+  }
+  return equipment;
+}
+
+ProtocolTypes::MagicEffect getMagicEffect(IncomingPacket* packet)
+{
+  ProtocolTypes::MagicEffect effect;
+  effect.position = getPosition(packet);
+  effect.type = packet->getU8();
+  return effect;
+}
+
+ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet)
+{
+  ProtocolTypes::PlayerStats stats;
+  stats.health = packet->getU16();
+  stats.maxHealth = packet->getU16();
+  stats.capacity = packet->getU16();
+  stats.exp = packet->getU32();
+  stats.level = packet->getU8();
+  stats.mana = packet->getU16();
+  stats.maxMana = packet->getU16();
+  stats.magicLevel = packet->getU8();
+  return stats;
 }
 
 GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)
