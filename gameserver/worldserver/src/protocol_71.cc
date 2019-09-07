@@ -43,6 +43,7 @@
 // world
 #include "world_interface.h"
 #include "tile.h"
+#include "item.h"
 
 // utils
 #include "logger.h"

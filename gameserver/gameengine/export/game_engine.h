@@ -34,23 +34,21 @@
 #include <utility>
 
 #include "world.h"
-#include "item_manager.h"
 #include "player.h"
 #include "position.h"
-#include "container_manager.h"
 #include "game_position.h"
 
 class GameEngineQueue;
 class OutgoingPacket;
 class PlayerCtrl;
+class ItemManager;
+class ContainerManager;
 
 class GameEngine
 {
  public:
-  GameEngine()
-    : gameEngineQueue_(nullptr)
-  {
-  }
+  GameEngine();
+  ~GameEngine();
 
   // Delete copy constructors
   GameEngine(const GameEngine&) = delete;
@@ -109,14 +107,11 @@ class GameEngine
   const PlayerData& getPlayerData(CreatureId creatureId) const { return playerData_.at(creatureId); }
 
   std::unordered_map<CreatureId, PlayerData> playerData_;
-
-  // TODO(simon): refactor away unique_ptr
   std::unique_ptr<World> world_;
-
   GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;
-  ItemManager itemManager_;
-  ContainerManager containerManager_;
+  std::unique_ptr<ItemManager> itemManager_;
+  std::unique_ptr<ContainerManager> containerManager_;
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_

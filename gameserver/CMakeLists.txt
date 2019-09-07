@@ -55,14 +55,12 @@ target_include_directories(utils PUBLIC
 
 add_subdirectory("network")
 target_include_directories(network PUBLIC
-  "network/src"
   "network/export"
   "utils/export"
 )
 
 add_subdirectory("gameengine")
 target_include_directories(gameengine PUBLIC
-  "gameengine/src"
   "gameengine/export"
   "utils/export"
   "world/export"
@@ -73,7 +71,6 @@ target_include_directories(gameengine SYSTEM PRIVATE
 
 add_subdirectory("world")
 target_include_directories(world PUBLIC
-  "world/src"
   "world/export"
   "utils/export"
 )

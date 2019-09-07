@@ -25,14 +25,18 @@
 #ifndef GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 #define GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 
+#include "creature_ctrl.h"
+
+#include <array>
 #include <string>
 #include <vector>
 
-#include "creature_ctrl.h"
-#include "player.h"
+#include "creature.h"
+#include "item.h"
 
 class Container;
 class Item;
+class Player;
 
 class PlayerCtrl : public CreatureCtrl
 {
