@@ -33,6 +33,7 @@ add_subdirectory("worldserver")
 target_include_directories(worldserver PUBLIC
   "account/export"
   "network/export"
+  "protocol/export"
   "utils/export"
   "world/export"
 )
@@ -57,6 +58,16 @@ add_subdirectory("network")
 target_include_directories(network PUBLIC
   "network/export"
   "utils/export"
+)
+
+add_subdirectory("protocol")
+target_include_directories(protocol PUBLIC
+  "protocol/export"
+  "account/export"
+  "gameengine/export"
+  "network/export"
+  "utils/export"
+  "world/export"
 )
 
 add_subdirectory("gameengine")
