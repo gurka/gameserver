@@ -32,6 +32,10 @@ add_subdirectory("protocol")
 add_subdirectory("gameengine")
 add_subdirectory("world")
 
+# -- External --
+add_library(rapidxml INTERFACE)
+target_include_directories(rapidxml INTERFACE "../external/rapidxml")
+
 # -- Unit tests --
 
 # Google Test

@@ -6,7 +6,7 @@ add_library(account
   "src/account.cc"
 )
 target_include_directories(account PUBLIC "export")
-target_include_directories(account SYSTEM PRIVATE "../../external/rapidxml")
 target_link_libraries(account
   utils
+  rapidxml
 )

@@ -20,8 +20,8 @@ add_library(gameengine
   "src/world_factory.h"
 )
 target_include_directories(gameengine PUBLIC "export")
-target_include_directories(gameengine SYSTEM PRIVATE "../../external/rapidxml")
 target_link_libraries(gameengine
   utils
   world
+  rapidxml
 )
