@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.12)
 
 project(worldserver)
 add_executable(worldserver "src/worldserver.cc")
