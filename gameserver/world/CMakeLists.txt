@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(world)
-
 add_library(world
   "export/creature_ctrl.h"
   "export/creature.h"
@@ -15,4 +14,8 @@ add_library(world
   "src/position.cc"
   "src/tile.cc"
   "src/world.cc"
+)
+target_include_directories(world PUBLIC "export")
+target_link_libraries(world
+  utils
 )

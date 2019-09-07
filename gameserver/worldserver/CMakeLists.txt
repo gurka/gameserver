@@ -1,11 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(worldserver)
-
-add_executable(worldserver
-  "src/worldserver.cc"
-)
-
+add_executable(worldserver "src/worldserver.cc")
 target_link_libraries(worldserver
   account
   gameengine

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(gameengine)
-
 add_library(gameengine
   "export/container.h"
   "export/game_position.h"
@@ -19,4 +18,10 @@ add_library(gameengine
   "src/player.cc"
   "src/world_factory.cc"
   "src/world_factory.h"
+)
+target_include_directories(gameengine PUBLIC "export")
+target_include_directories(gameengine SYSTEM PRIVATE "../../external/rapidxml")
+target_link_libraries(gameengine
+  utils
+  world
 )

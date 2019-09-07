@@ -21,70 +21,16 @@ if(GAMESERVER_USE_ASAN)
 endif()
 
 # -- Binaries --
-
 add_subdirectory("loginserver")
-target_include_directories(loginserver PUBLIC
-  "account/export"
-  "network/export"
-  "utils/export"
-)
-
 add_subdirectory("worldserver")
-target_include_directories(worldserver PUBLIC
-  "account/export"
-  "network/export"
-  "protocol/export"
-  "utils/export"
-  "world/export"
-)
 
 # -- Modules --
-
 add_subdirectory("account")
-target_include_directories(account PUBLIC
-  "account/export"
-  "utils/export"
-)
-target_include_directories(account SYSTEM PRIVATE
-  "../external/rapidxml"
-)
-
 add_subdirectory("utils")
-target_include_directories(utils PUBLIC
-  "utils/export"
-)
-
 add_subdirectory("network")
-target_include_directories(network PUBLIC
-  "network/export"
-  "utils/export"
-)
-
 add_subdirectory("protocol")
-target_include_directories(protocol PUBLIC
-  "protocol/export"
-  "account/export"
-  "gameengine/export"
-  "network/export"
-  "utils/export"
-  "world/export"
-)
-
 add_subdirectory("gameengine")
-target_include_directories(gameengine PUBLIC
-  "gameengine/export"
-  "utils/export"
-  "world/export"
-)
-target_include_directories(gameengine SYSTEM PRIVATE
-  "../external/rapidxml"
-)
-
 add_subdirectory("world")
-target_include_directories(world PUBLIC
-  "world/export"
-  "utils/export"
-)
 
 # -- Unit tests --
 

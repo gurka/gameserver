@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(account)
-
 add_library(account
   "export/account.h"
   "src/account.cc"
+)
+target_include_directories(account PUBLIC "export")
+target_include_directories(account SYSTEM PRIVATE "../../external/rapidxml")
+target_link_libraries(account
+  utils
 )
