@@ -37,70 +37,18 @@ add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml INTERFACE "../external/rapidxml")
 
 # -- Unit tests --
-
-# Google Test
 add_subdirectory(../external/googletest external/googletest)
 set_target_properties(gtest PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gmock PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gtest_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(gmock_main PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-# Account test
 add_subdirectory("account/test")
-target_include_directories(account_test PUBLIC
-  "account/export"
-  "account/src"
-)
-target_include_directories(account_test SYSTEM PRIVATE
-  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-)
-
-# Gameengine test
 add_subdirectory("gameengine/test")
-target_include_directories(gameengine_test PUBLIC
-  "gameengine/export"
-  "gameengine/src"
-)
-target_include_directories(gameengine_test SYSTEM PRIVATE
-  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-)
-
-# Network test
 add_subdirectory("network/test")
-target_include_directories(network_test PUBLIC
-  "network/export"
-  "network/src"
-)
-target_include_directories(network_test SYSTEM PRIVATE
-  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-)
-
-# Utils test
 add_subdirectory("utils/test")
-target_include_directories(utils_test PUBLIC
-  "utils/export"
-  "utils/src"
-)
-target_include_directories(utils_test SYSTEM PRIVATE
-  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-)
-
-# World test
 add_subdirectory("world/test")
-target_include_directories(world_test PUBLIC
-  "world/export"
-  "world/src"
-)
-target_include_directories(world_test SYSTEM PRIVATE
-  ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR}
-  ${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR}
-)
 
-# Build all tests with target 'unittest'
 add_custom_target(unittest DEPENDS
   account_test
   gameengine_test
