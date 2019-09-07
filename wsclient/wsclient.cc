@@ -1,137 +1,223 @@
-#include <emscripten.h>
-#include <emscripten/bind.h>
-#include <emscripten/val.h>
-
 #include <cstdint>
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include "logger.h"
 #include "outgoing_packet.h"
 #include "incoming_packet.h"
+#include "position.h"
 
-emscripten::val ws = emscripten::val::null();
+#include "network.h"
+
+std::uint32_t playerId;
+
+Position getPosition(IncomingPacket* packet)
+{
+  const auto x = packet->getU16();
+  const auto y = packet->getU16();
+  const auto z = packet->getU8();
+  return Position(x, y, z);
+}
+
+void getItem(IncomingPacket* packet)
+{
+  packet->getU16();  // ItemTypeId
+  // assume not stackable or multitype
+}
+
+void getMapData(IncomingPacket* packet, int width, int height)
+{
+  // Assume that we always are on z=7
+  auto skip = 0;
+  for (auto z = 7; z >= 0; z--)
+  {
+    for (auto x = 0; x < width; x++)
+    {
+      for (auto y = 0; y < height; y++)
+      {
+        if (skip > 0)
+        {
+          skip -= 1;
+          continue;
+        }
+
+        // Parse tile
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+            return;
+          }
+
+          if (packet->peekU16() == 0x0061 ||
+              packet->peekU16() == 0x0062)
+          {
+            std::uint32_t creatureId;
+            std::string creatureName;
+            if (packet->getU16() == 0x0061)
+            {
+              // New creature
+              packet->getU32();  // creatureId to remove
+              creatureId = packet->getU32();
+              creatureName = packet->getString();
+            }
+            else  // 0x0062
+            {
+              // Known creature
+              creatureId = packet->getU32();
+            }
+
+            LOG_INFO("%s: parsed creature with id: %d and name: %s",
+                     __func__,
+                     creatureId,
+                     creatureName.c_str());
+
+            packet->getU8();  // hp %
+            packet->getU8();  // direction
+            packet->getU8();  // outfit
+            packet->getU8();
+            packet->getU8();
+            packet->getU8();
+            packet->getU8();
+            packet->getU16();  // unknown 0x00 0xDC
+            packet->getU16();  // speed
+          }
+          else
+          {
+            getItem(packet);
+          }
+        }
+      }
+    }
+  }
+}
+
+void handleLoginPacket(IncomingPacket* packet)
+{
+  playerId = packet->getU32();
+  packet->getU16();  // server beat
+}
+
+void handleLoginFailedPacket(IncomingPacket* packet)
+{
+  const auto reason = packet->getString();
+  LOG_ERROR("Could not login: %s", reason.c_str());
+}
+
+void handleFullMapPacket(IncomingPacket* packet)
+{
+  getPosition(packet);
+  getMapData(packet, 18, 14);
+}
+
+void handleMagicEffect(IncomingPacket* packet)
+{
+  getPosition(packet);
+  packet->getU8();  // 
+}
+
+void handlePlayerStats(IncomingPacket* packet)
+{
+  packet->getU16();  // hp
+  packet->getU16();  // max hp
+  packet->getU16();  // cap
+  packet->getU32();  // exp
+  packet->getU8();   // level
+  packet->getU16();  // mana
+  packet->getU16();  // max mana
+  packet->getU8();   // magic level
+}
+
+void handleWorldLight(IncomingPacket* packet)
+{
+  packet->getU8();  // intensity
+  packet->getU8();  // color
+}
+
+void handlePlayerSkills(IncomingPacket* packet)
+{
+  for (auto i = 0; i < 7; i++)
+  {
+    packet->getU8();
+  }
+}
+
+void handleEquipmentUpdate(IncomingPacket* packet, bool empty)
+{
+  packet->getU8();  // index
+  if (!empty)
+  {
+    getItem(packet);
+  }
+}
+
+void handleTextMessage(IncomingPacket* packet)
+{
+  packet->getU8();  // type
+  const auto message = packet->getString();
+  LOG_INFO("%s: message: %s", __func__, message.c_str());
+}
 
 void handle_packet(IncomingPacket* packet)
 {
   LOG_INFO("%s", __func__);
-
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
-    if (type == 0x0A)
+    switch (type)
     {
-      const auto reason = packet->getString();
-      LOG_INFO("Could not login: %s", reason.c_str());
-    }
-    else if (type == 0x14)
-    {
-      const auto motd = packet->getString();
-      LOG_INFO("MOTD: %s", motd.c_str());
-    }
-    else if (type == 0x64)
-    {
-      const auto num_chars = packet->getU8();
-      LOG_INFO("Number of characters: %d", num_chars);
-      for (auto i = 0; i < num_chars; i++)
-      {
-        const auto name = packet->getString();
-        const auto world = packet->getString();
-        const auto ip = packet->getU32();
-        const auto port = packet->getU16();
-        LOG_INFO("Character: %s World: %s IP: %d port: %d", name.c_str(), world.c_str(), ip, port);
-      }
-      const auto prem_days = packet->getU16();
-      LOG_INFO("Premium days: %d", prem_days);
-    }
-    else
-    {
-      LOG_ERROR("%s: unknown packet type: 0x%X", __func__, type);
-      break;
-    }
-  }
-}
+      case 0x0A:
+        handleLoginPacket(packet);
+        break;
 
-void connect()
-{
-  ws = emscripten::val::global("WebSocket").new_(emscripten::val("ws://192.168.1.4:8171"));
-  ws.set("onopen", emscripten::val::module_property("onopen"));
-  ws.set("onmessage", emscripten::val::module_property("onmessage"));
-}
+      case 0x14:
+        handleLoginFailedPacket(packet);
+        break;
 
-void send_packet(const OutgoingPacket& packet)
-{
-  static std::uint8_t header[2];
-  header[0] = packet.getLength();
-  header[1] = packet.getLength() >> 8;
-  ws.call<void>("send", std::string(reinterpret_cast<const char*>(header), 2));
-  ws.call<void>("send", std::string(reinterpret_cast<const char*>(packet.getBuffer()), packet.getLength()));
-}
+      case 0x64:
+        handleFullMapPacket(packet);
+        break;
 
-void onopen(emscripten::val event)
-{
-  (void)event;
+      case 0x83:
+        handleMagicEffect(packet);
+        break;
 
-  // Send login packet
-  OutgoingPacket packet;
-  packet.addU8(0x01);
-  packet.addU16(0x1234);
-  packet.addU16(0x5678);
-  packet.skipBytes(12);
-  packet.addU32(1);
-  packet.addString("1");
-  send_packet(packet);
-}
+      case 0xA0:
+        handlePlayerStats(packet);
+        break;
 
-void onmessage(emscripten::val event)
-{
-  // Convert to Uint8Array
-  auto reader = emscripten::val::global("FileReader").new_();
-  reader.call<void>("readAsArrayBuffer", event["data"]);
-  reader.call<void>("addEventListener", std::string("loadend"), emscripten::val::module_property("onmessage_buffer"));
-}
+      case 0x82:
+        handleWorldLight(packet);
+        break;
 
-void onmessage_buffer(emscripten::val event)
-{
-  static std::vector<std::uint8_t> buffer;
+      case 0xA1:
+        handlePlayerSkills(packet);
+        break;
 
-  const auto str = event["target"]["result"].as<std::string>();
-  buffer.insert(buffer.end(),
-                reinterpret_cast<const std::uint8_t*>(str.data()),
-                reinterpret_cast<const std::uint8_t*>(str.data() + str.length()));
+      case 0x78:
+      case 0x79:
+        handleEquipmentUpdate(packet, type == 0x78);
+        break;
 
-  LOG_INFO("%s: BEFORE: %d AFTER: %d ADDED: %d", __func__, buffer.size() - str.length(), buffer.size(), str.length());
+      case 0xB4:
+        handleTextMessage(packet);
+        break;
 
-  // Check if we have enough for next packet
-  while (buffer.size() >= 2u)
-  {
-    const auto next_packet_length = buffer[0] | (buffer[1] << 8);
-    LOG_INFO("%s: next_packet_length: %d", __func__, next_packet_length);
-    if (buffer.size() >= 2u + next_packet_length)
-    {
-      IncomingPacket packet(buffer.data() + 2, next_packet_length);
-      handle_packet(&packet);
-      buffer.erase(buffer.begin(), buffer.begin() + 2u + next_packet_length);
-    }
-    else
-    {
-      break;
+      default:
+        LOG_ERROR("%s: unknown packet type: 0x%X", __func__, type);
+        return;
     }
   }
-
-  LOG_INFO("%s: AFTER HANDLE: %d", __func__, buffer.size());
-}
-
-EMSCRIPTEN_BINDINGS(websocket_callbacks)
-{
-  emscripten::function("onopen", &onopen);
-  emscripten::function("onmessage", &onmessage);
-  emscripten::function("onmessage_buffer", &onmessage_buffer);
 }
 
 int main()
 {
-  connect();
-  return 0;
+  Network::start(&handle_packet);
 }
