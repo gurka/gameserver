@@ -58,6 +58,20 @@ function eclipse {
   popd
 }
 
+function wsclient {
+  mkdir -p "$BUILD_DIR/wsclient"
+  pushd "$BUILD_DIR/wsclient"
+  CC=emcc CXX=em++ cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_WSCLIENT=ON
+  popd
+}
+
+function wsclient_eclipse {
+  mkdir -p "$BUILD_DIR/wsclient_eclipse"
+  pushd "$BUILD_DIR/wsclient_eclipse"
+  CC=emcc CXX=em++ cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_WSCLIENT=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+  popd
+}
+
 case $1 in
   'all')
     release
@@ -66,6 +80,8 @@ case $1 in
     travis_debug
     travis_debug_asan
     eclipse
+    wsclient
+    wsclient_eclipse
     ;;
 
   'release')
@@ -92,7 +108,15 @@ case $1 in
     eclipse
     ;;
 
+  'wsclient')
+    wsclient
+    ;;
+
+  'wsclient_eclipse')
+    wsclient_eclipse
+    ;;
+
   *)
-    echo "Usage: $0 [all | release | debug | debug_asan | travis_debug | travis_debug_asan | eclipse]"
+    echo "Usage: $0 [all | release | debug | debug_asan | travis_debug | travis_debug_asan | eclipse | wsclient | wsclient_eclipse]"
     ;;
 esac

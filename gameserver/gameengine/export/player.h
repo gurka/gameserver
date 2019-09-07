@@ -25,6 +25,7 @@
 #ifndef GAMEENGINE_SRC_PLAYER_H_
 #define GAMEENGINE_SRC_PLAYER_H_
 
+#include <array>
 #include <deque>
 #include <string>
 #include <unordered_map>

@@ -37,7 +37,7 @@
 class Position;
 class OutgoingPacket;
 class WorldInterface;
-class Outfit;
+struct Outfit;
 class Equipment;
 class Player;
 class IncomingPacket;
