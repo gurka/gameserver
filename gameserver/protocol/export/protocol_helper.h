@@ -70,10 +70,18 @@ namespace ProtocolHelper
 
   Position getPosition(IncomingPacket* packet);
   Outfit getOutfit(IncomingPacket* packet);
+
+  ProtocolTypes::Login getLogin(IncomingPacket* packet);
+  ProtocolTypes::LoginFailed getLoginFailed(IncomingPacket* packet);
   ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet);
   ProtocolTypes::Item getItem(IncomingPacket* packet);
   ProtocolTypes::Equipment getEquipment(bool empty, IncomingPacket* packet);
   ProtocolTypes::MagicEffect getMagicEffect(IncomingPacket* packet);
+  ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet);
+  ProtocolTypes::WorldLight getWorldLight(IncomingPacket* packet);
+  ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet);
+  ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet);
+  ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet);
 
   GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);
   ItemPosition getItemPosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);

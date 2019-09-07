@@ -376,6 +376,21 @@ Outfit getOutfit(IncomingPacket* packet)
   return outfit;
 }
 
+ProtocolTypes::Login getLogin(IncomingPacket* packet)
+{
+  ProtocolTypes::Login login;
+  packet->get(&login.playerId);
+  packet->get(&login.serverBeat);
+  return login;
+}
+
+ProtocolTypes::LoginFailed getLoginFailed(IncomingPacket* packet)
+{
+  ProtocolTypes::LoginFailed failed;
+  packet->get(&failed.reason);
+  return failed;
+}
+
 ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
 {
   ProtocolTypes::Creature creature;
@@ -438,6 +453,96 @@ ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet)
   packet->get(&stats.maxMana);
   packet->get(&stats.magicLevel);
   return stats;
+}
+
+ProtocolTypes::WorldLight getWorldLight(IncomingPacket* packet)
+{
+  ProtocolTypes::WorldLight light;
+  packet->get(&light.intensity);
+  packet->get(&light.color);
+  return light;
+}
+
+ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet)
+{
+  ProtocolTypes::PlayerSkills skills;
+  packet->get(&skills.fist);
+  packet->get(&skills.club);
+  packet->get(&skills.sword);
+  packet->get(&skills.axe);
+  packet->get(&skills.dist);
+  packet->get(&skills.shield);
+  packet->get(&skills.fish);
+  return skills;
+}
+
+ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet)
+{
+  ProtocolTypes::TextMessage message;
+  packet->get(&message.type);
+  packet->get(&message.message);
+  return message;
+}
+
+ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet)
+{
+  ProtocolTypes::MapData map;
+
+  map.position = ProtocolHelper::getPosition(packet);
+
+  // Assume that we always are on z=7
+  auto skip = 0;
+  for (auto z = 7; z >= 0; z--)
+  {
+    for (auto x = 0; x < width; x++)
+    {
+      for (auto y = 0; y < height; y++)
+      {
+        if (skip > 0)
+        {
+          skip -= 1;
+          continue;
+        }
+
+        // Parse tile
+        ProtocolTypes::MapData::TileData tile;
+        tile.position = Position(x, y, z);
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+          }
+
+          if (packet->peekU16() == 0x0061 ||
+              packet->peekU16() == 0x0062)
+          {
+            ProtocolTypes::MapData::CreatureData creature;
+            creature.stackpos = stackpos;
+            creature.creature = ProtocolHelper::getCreature(packet->getU16() == 0x0062, packet);
+            tile.creatures.push_back(std::move(creature));
+          }
+          else
+          {
+            ProtocolTypes::MapData::ItemData item;
+            item.stackpos = stackpos;
+            item.item = ProtocolHelper::getItem(packet);
+            tile.items.push_back(std::move(item));
+          }
+        }
+
+        map.tiles.push_back(std::move(tile));
+      }
+    }
+  }
+
+  return map;
 }
 
 GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)

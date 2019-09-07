@@ -17,6 +17,10 @@ if(NOT GAMESERVER_WSCLIENT)
     "src/websocket_server_impl.cc"
     "src/websocket_server_impl.h"
   )
+  target_link_libraries(network
+    utils
+    websocketpp
+  )
 else()
   add_library(network
     "export/incoming_packet.h"
@@ -24,9 +28,8 @@ else()
     "src/incoming_packet.cc"
     "src/outgoing_packet.cc"
   )
+  target_link_libraries(network
+    utils
+  )
 endif()
 target_include_directories(network PUBLIC "export")
-target_link_libraries(network
-  utils
-  websocketpp
-)

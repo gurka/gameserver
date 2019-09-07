@@ -5,6 +5,7 @@ if(NOT GAMESERVER_WSCLIENT)
   add_library(protocol
     "export/protocol.h"
     "export/protocol_helper.h"
+    "export/protocol_types.h"
     "src/protocol.cc"
     "src/protocol_helper.cc"
   )
@@ -18,6 +19,7 @@ if(NOT GAMESERVER_WSCLIENT)
 else()
   add_library(protocol
     "export/protocol_helper.h"
+    "export/protocol_types.h"
     "src/protocol_helper.cc"
   )
   target_link_libraries(protocol
