@@ -64,8 +64,11 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "item_manager.cc",      Module::GAMEENGINE  },
 
   // worldserver
-  { "protocol_71.cc",       Module::WORLDSERVER },
   { "worldserver.cc",       Module::WORLDSERVER },
+
+  // protocol
+  { "protocol.cc",          Module::PROTOCOL    },
+  { "protocol_helper.cc",   Module::PROTOCOL    },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_ =
@@ -75,6 +78,7 @@ std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::mo
   { Module::GAMEENGINE,  Level::DEBUG },
   { Module::LOGINSERVER, Level::DEBUG },
   { Module::NETWORK,     Level::DEBUG },
+  { Module::PROTOCOL,    Level::DEBUG },
   { Module::UTILS,       Level::DEBUG },
   { Module::WORLD,       Level::DEBUG },
   { Module::WORLDSERVER, Level::DEBUG },

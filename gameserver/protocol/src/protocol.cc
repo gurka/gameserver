@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
-#include "protocol_71.h"
+#include "protocol.h"
 
 #include <cstdio>
 
 #include <algorithm>
 #include <deque>
 #include <utility>
+
+#include "protocol_helper.h"
 
 // network
 #include "connection.h"
@@ -51,12 +53,12 @@
 // account
 #include "account.h"
 
-constexpr int Protocol71::INVALID_CONTAINER_ID;
+constexpr int Protocol::INVALID_CONTAINER_ID;
 
-Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
-                       std::unique_ptr<Connection>&& connection,
-                       GameEngineQueue* gameEngineQueue,
-                       AccountReader* accountReader)
+Protocol::Protocol(const std::function<void(void)>& closeProtocol,
+                   std::unique_ptr<Connection>&& connection,
+                   GameEngineQueue* gameEngineQueue,
+                   AccountReader* accountReader)
   : closeProtocol_(closeProtocol),
     connection_(std::move(connection)),
     gameEngineQueue_(gameEngineQueue),
@@ -85,9 +87,9 @@ Protocol71::Protocol71(const std::function<void(void)>& closeProtocol,
   connection_->init(callbacks);
 }
 
-void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
-                                 const Creature& creature,
-                                 const Position& position)
+void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
+                               const Creature& creature,
+                               const Position& position)
 {
   if (!isConnected())
   {
@@ -107,32 +109,32 @@ void Protocol71::onCreatureSpawn(const WorldInterface& world_interface,
                         // TODO(simon): customizable?
 
     // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
-    addFullMapData(world_interface, position, &packet);
-    addMagicEffect(position, 0x0A, &packet);
-    addPlayerStats(player, &packet);
-    addWorldLight(0x64, 0xD7, &packet);
-    addPlayerSkills(player, &packet);
+    ProtocolHelper::addFullMapData(world_interface, position, &knownCreatures_, &packet);
+    ProtocolHelper::addMagicEffect(position, 0x0A, &packet);
+    ProtocolHelper::addPlayerStats(player, &packet);
+    ProtocolHelper::addWorldLight(0x64, 0xD7, &packet);
+    ProtocolHelper::addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
     {
-      addEquipment(player.getEquipment(), i, &packet);
+      ProtocolHelper::addEquipment(player.getEquipment(), i, &packet);
     }
   }
   else
   {
     // Someone else spawned
     packet.addU8(0x6A);
-    addPosition(position, &packet);
-    addCreature(creature, &packet);
-    addMagicEffect(position, 0x0A, &packet);
+    ProtocolHelper::addPosition(position, &packet);
+    ProtocolHelper::addCreature(creature, &knownCreatures_, &packet);
+    ProtocolHelper::addMagicEffect(position, 0x0A, &packet);
   }
 
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
-                                   const Creature& creature,
-                                   const Position& position,
-                                   int stackPos)
+void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
+                                 const Creature& creature,
+                                 const Position& position,
+                                 int stackPos)
 {
   (void)world_interface;
 
@@ -148,9 +150,9 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
   }
 
   OutgoingPacket packet;
-  addMagicEffect(position, 0x02, &packet);
+  ProtocolHelper::addMagicEffect(position, 0x02, &packet);
   packet.addU8(0x6C);
-  addPosition(position, &packet);
+  ProtocolHelper::addPosition(position, &packet);
   packet.addU8(stackPos);
   connection_->sendPacket(std::move(packet));
 
@@ -164,11 +166,11 @@ void Protocol71::onCreatureDespawn(const WorldInterface& world_interface,
   }
 }
 
-void Protocol71::onCreatureMove(const WorldInterface& world_interface,
-                                const Creature& creature,
-                                const Position& oldPosition,
-                                int oldStackPos,
-                                const Position& newPosition)
+void Protocol::onCreatureMove(const WorldInterface& world_interface,
+                              const Creature& creature,
+                              const Position& oldPosition,
+                              int oldStackPos,
+                              const Position& newPosition)
 {
   if (!isConnected())
   {
@@ -179,27 +181,27 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
   OutgoingPacket packet;
 
   const auto& player_position = world_interface.getCreaturePosition(playerId_);
-  bool canSeeOldPos = canSee(player_position, oldPosition);
-  bool canSeeNewPos = canSee(player_position, newPosition);
+  bool canSeeOldPos = ProtocolHelper::canSee(player_position, oldPosition);
+  bool canSeeNewPos = ProtocolHelper::canSee(player_position, newPosition);
 
   if (canSeeOldPos && canSeeNewPos)
   {
     packet.addU8(0x6D);
-    addPosition(oldPosition, &packet);
+    ProtocolHelper::addPosition(oldPosition, &packet);
     packet.addU8(oldStackPos);
-    addPosition(newPosition, &packet);
+    ProtocolHelper::addPosition(newPosition, &packet);
   }
   else if (canSeeOldPos)
   {
     packet.addU8(0x6C);
-    addPosition(oldPosition, &packet);
+    ProtocolHelper::addPosition(oldPosition, &packet);
     packet.addU8(oldStackPos);
   }
   else if (canSeeNewPos)
   {
     packet.addU8(0x6A);
-    addPosition(newPosition, &packet);
-    addCreature(creature, &packet);
+    ProtocolHelper::addPosition(newPosition, &packet);
+    ProtocolHelper::addCreature(creature, &knownCreatures_, &packet);
   }
   else
   {
@@ -228,52 +230,56 @@ void Protocol71::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get north block
       packet.addU8(0x65);
-      addMapData(world_interface,
-                 Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
-                 18,
-                 1,
-                 &packet);
+      ProtocolHelper::addMapData(world_interface,
+                                 Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+                                 18,
+                                 1,
+                                 &knownCreatures_,
+                                 &packet);
     }
     else if (oldPosition.getY() < newPosition.getY())
     {
       // Get south block
       packet.addU8(0x67);
-      addMapData(world_interface,
-                 Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()),
-                 18,
-                 1,
-                 &packet);
+      ProtocolHelper::addMapData(world_interface,
+                                 Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()),
+                                 18,
+                                 1,
+                                 &knownCreatures_,
+                                 &packet);
     }
 
     if (oldPosition.getX() > newPosition.getX())
     {
       // Get west block
       packet.addU8(0x68);
-      addMapData(world_interface,
-                 Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
-                 1,
-                 14,
-                 &packet);
+      ProtocolHelper::addMapData(world_interface,
+                                 Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+                                 1,
+                                 14,
+                                 &knownCreatures_,
+                                 &packet);
     }
     else if (oldPosition.getX() < newPosition.getX())
     {
       // Get west block
       packet.addU8(0x66);
-      addMapData(world_interface,
-                 Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()),
-                 1,
-                 14,
-                 &packet);
+      ProtocolHelper::addMapData(world_interface,
+                                 Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()),
+                                 1,
+                                 14,
+                                 &knownCreatures_,
+                                 &packet);
     }
   }
 
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
-                                const Creature& creature,
-                                const Position& position,
-                                int stackPos)
+void Protocol::onCreatureTurn(const WorldInterface& world_interface,
+                              const Creature& creature,
+                              const Position& position,
+                              int stackPos)
 {
   (void)world_interface;
 
@@ -284,7 +290,7 @@ void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
 
   OutgoingPacket packet;
   packet.addU8(0x6B);
-  addPosition(position, &packet);
+  ProtocolHelper::addPosition(position, &packet);
   packet.addU8(stackPos);
   packet.addU8(0x63);
   packet.addU8(0x00);
@@ -293,10 +299,10 @@ void Protocol71::onCreatureTurn(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onCreatureSay(const WorldInterface& world_interface,
-                               const Creature& creature,
-                               const Position& position,
-                               const std::string& message)
+void Protocol::onCreatureSay(const WorldInterface& world_interface,
+                             const Creature& creature,
+                             const Position& position,
+                             const std::string& message)
 {
   (void)world_interface;
 
@@ -310,12 +316,12 @@ void Protocol71::onCreatureSay(const WorldInterface& world_interface,
   packet.addString(creature.getName());
   packet.addU8(0x01);  // Say type
   // if type <= 3
-  addPosition(position, &packet);
+  ProtocolHelper::addPosition(position, &packet);
   packet.addString(message);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
+void Protocol::onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos)
 {
   (void)world_interface;
 
@@ -326,12 +332,12 @@ void Protocol71::onItemRemoved(const WorldInterface& world_interface, const Posi
 
   OutgoingPacket packet;
   packet.addU8(0x6C);
-  addPosition(position, &packet);
+  ProtocolHelper::addPosition(position, &packet);
   packet.addU8(stackPos);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
+void Protocol::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
 {
   (void)world_interface;
 
@@ -342,12 +348,12 @@ void Protocol71::onItemAdded(const WorldInterface& world_interface, const Item& 
 
   OutgoingPacket packet;
   packet.addU8(0x6A);
-  addPosition(position, &packet);
-  addItem(item, &packet);
+  ProtocolHelper::addPosition(position, &packet);
+  ProtocolHelper::addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Position& position)
+void Protocol::onTileUpdate(const WorldInterface& world_interface, const Position& position)
 {
   if (!isConnected())
   {
@@ -356,14 +362,14 @@ void Protocol71::onTileUpdate(const WorldInterface& world_interface, const Posit
 
   OutgoingPacket packet;
   packet.addU8(0x69);
-  addPosition(position, &packet);
-  addMapData(world_interface, position, 1, 1, &packet);
+  ProtocolHelper::addPosition(position, &packet);
+  ProtocolHelper::addMapData(world_interface, position, 1, 1, &knownCreatures_, &packet);
   packet.addU8(0x00);
   packet.addU8(0xFF);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
+void Protocol::onEquipmentUpdated(const Player& player, int inventoryIndex)
 {
   if (!isConnected())
   {
@@ -371,11 +377,11 @@ void Protocol71::onEquipmentUpdated(const Player& player, int inventoryIndex)
   }
 
   OutgoingPacket packet;
-  addEquipment(player.getEquipment(), inventoryIndex, &packet);
+  ProtocolHelper::addEquipment(player.getEquipment(), inventoryIndex, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onOpenContainer(int newContainerId, const Container& container, const Item& item)
+void Protocol::onOpenContainer(int newContainerId, const Container& container, const Item& item)
 {
   if (!isConnected())
   {
@@ -397,7 +403,7 @@ void Protocol71::onOpenContainer(int newContainerId, const Container& container,
   OutgoingPacket packet;
   packet.addU8(0x6E);
   packet.addU8(newContainerId);
-  addItem(item, &packet);
+  ProtocolHelper::addItem(item, &packet);
   packet.addString(item.getItemType().name);
   packet.addU8(item.getItemType().maxitems);
   packet.addU8(container.parentItemUniqueId == Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
@@ -413,7 +419,7 @@ void Protocol71::onOpenContainer(int newContainerId, const Container& container,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId)
+void Protocol::onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId)
 {
   if (!isConnected())
   {
@@ -442,7 +448,7 @@ void Protocol71::onCloseContainer(ItemUniqueId containerItemUniqueId, bool reset
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item)
+void Protocol::onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item)
 {
   if (!isConnected())
   {
@@ -466,11 +472,11 @@ void Protocol71::onContainerAddItem(ItemUniqueId containerItemUniqueId, const It
   OutgoingPacket packet;
   packet.addU8(0x70);
   packet.addU8(containerId);
-  addItem(item, &packet);
+  ProtocolHelper::addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item)
+void Protocol::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item)
 {
   if (!isConnected())
   {
@@ -496,11 +502,11 @@ void Protocol71::onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int c
   packet.addU8(0x71);
   packet.addU8(containerId);
   packet.addU8(containerSlot);
-  addItem(item, &packet);
+  ProtocolHelper::addItem(item, &packet);
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot)
+void Protocol::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot)
 {
   if (!isConnected())
   {
@@ -529,7 +535,7 @@ void Protocol71::onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int c
 }
 
 // 0x13 default text, 0x11 login text
-void Protocol71::sendTextMessage(int message_type, const std::string& message)
+void Protocol::sendTextMessage(int message_type, const std::string& message)
 {
   if (!isConnected())
   {
@@ -543,7 +549,7 @@ void Protocol71::sendTextMessage(int message_type, const std::string& message)
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::sendCancel(const std::string& message)
+void Protocol::sendCancel(const std::string& message)
 {
   if (!isConnected())
   {
@@ -557,19 +563,19 @@ void Protocol71::sendCancel(const std::string& message)
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol71::cancelMove()
+void Protocol::cancelMove()
 {
   OutgoingPacket packet;
   packet.addU8(0xB5);
   connection_->sendPacket(std::move(packet));
 }
 
-bool Protocol71::hasContainerOpen(ItemUniqueId itemUniqueId) const
+bool Protocol::hasContainerOpen(ItemUniqueId itemUniqueId) const
 {
   return getContainerId(itemUniqueId) != INVALID_CONTAINER_ID;
 }
 
-void Protocol71::disconnect() const
+void Protocol::disconnect() const
 {
   // Called when the user sent something bad
   if (!isConnected())
@@ -582,7 +588,7 @@ void Protocol71::disconnect() const
   connection_->close(true);
 }
 
-void Protocol71::parsePacket(IncomingPacket* packet)
+void Protocol::parsePacket(IncomingPacket* packet)
 {
   if (!isConnected())
   {
@@ -716,7 +722,7 @@ void Protocol71::parsePacket(IncomingPacket* packet)
   }
 }
 
-void Protocol71::onDisconnected()
+void Protocol::onDisconnected()
 {
   // We are no longer connected, so erase the connection
   connection_.reset();
@@ -736,316 +742,7 @@ void Protocol71::onDisconnected()
   }
 }
 
-bool Protocol71::canSee(const Position& player_position, const Position& to_position) const
-{
-  // Note: client displays 15x11 tiles, but it know about 18x14 tiles.
-  //
-  //       Client know about one extra row north, one extra column west
-  //       two extra rows south and two extra rows east.
-  //
-  //       This function returns true if to_position is visible from player_position
-  //       with regards to what the client (player_position) knows about, e.g. 18x14 tiles.
-  //
-  //
-  //     00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
-  //     ________________________________________________________
-  // 00 |   _______________________________________________      |
-  // 01 |  |                                               |     |
-  // 02 |  |                                               |     |
-  // 03 |  |                                               |     |
-  // 04 |  |                                               |     |
-  // 05 |  |                                               |     |
-  // 06 |  |                                               |     |
-  // 07 |  |                                               |     |
-  // 08 |  |                                               |     |
-  // 09 |  |                                               |     |
-  // 10 |  |                                               |     |
-  // 11 |  |                                               |     |
-  // 12 |  |_______________________________________________|     |
-  // 13 |                                                        |
-  // 14 |________________________________________________________|
-
-  return to_position.getX() >= player_position.getX() - 8 &&
-         to_position.getX() <= player_position.getX() + 9 &&
-         to_position.getY() >= player_position.getY() - 6 &&
-         to_position.getY() <= player_position.getY() + 7;
-}
-
-void Protocol71::addPosition(const Position& position, OutgoingPacket* packet) const
-{
-  packet->addU16(position.getX());
-  packet->addU16(position.getY());
-  packet->addU8(position.getZ());
-}
-
-void Protocol71::addFullMapData(const WorldInterface& world_interface,
-                                const Position& position,
-                                OutgoingPacket* packet)
-{
-  packet->addU8(0x64);
-  addPosition(position, packet);
-  addMapData(world_interface,
-             Position(position.getX() - 8, position.getY() - 6, position.getZ()),
-             18,
-             14,
-             packet);
-}
-
-void Protocol71::addMapData(const WorldInterface& world_interface,
-                            const Position& position,
-                            int width,
-                            int height,
-                            OutgoingPacket* packet)
-{
-  // Calculate how to iterate over z
-  // Valid z is 0..15, 0 is highest and 15 is lowest. 7 is sea level.
-  // If on ground or higher (z <= 7) then go over everything above ground (from 7 to 0)
-  // If underground (z > 7) then go from two below to two above, with cap on lowest level (from e.g. 8 to 12, if z = 10)
-  const auto z_start = position.getZ() > 7 ? (position.getZ() - 2) : 7;
-  const auto z_end = position.getZ() > 7 ? std::min(position.getZ() + 2, 15) : 0;
-  const auto z_dir = z_start > z_end ? -1 : 1;
-
-  // After sending each tile we should send 0xYY 0xFF where YY is the number of following tiles
-  // that are empty and should be skipped. If there are no empty following tiles then we need
-  // to send 0x00 0xFF which denotes that this tiles is done.
-  // We don't know if the next tile is empty until the next iteration, so we will never send
-  // the "this tile is done" bytes on the same iteration as the actual tile, but rather in a
-  // later iteration, which is a bit confusing. We start off with -1 so that we don't start the
-  // message with saying that a tile is done.
-  int skip = -1;
-
-  for (auto z = z_start; z != z_end + z_dir; z += z_dir)
-  {
-    // Currently we are always on z = 7, so we should send z=7, z=6, ..., z=0
-    // But we skip z=6, ..., z=0 as we only have ground
-    if (z != 7)
-    {
-      if (skip != -1)
-      {
-        // Send current skip value first
-        packet->addU8(skip);
-        packet->addU8(0xFF);
-      }
-
-      // Skip this level (skip width * height tiles)
-      packet->addU8(width * height);
-      packet->addU8(0xFF);
-      skip = -1;
-      continue;
-    }
-
-    for (auto x = position.getX(); x < position.getX() + width; x++)
-    {
-      for (auto y = position.getY(); y < position.getY() + height; y++)
-      {
-        const auto* tile = world_interface.getTile(Position(x, y, position.getZ()));
-        if (!tile)
-        {
-          skip += 1;
-          if (skip == 0xFF)
-          {
-            packet->addU8(skip);
-            packet->addU8(0xFF);
-
-            // If there is a tile on the next iteration we don't want to send
-            // "tile is done", as we just sent one due to skip being max
-            skip = -1;
-          }
-        }
-        else
-        {
-          // Send "tile is done" with the number of tiles that were empty, unless this
-          // is the first tile (-1)
-          if (skip != -1)
-          {
-            packet->addU8(skip);
-            packet->addU8(0xFF);
-          }
-          else
-          {
-            // Don't let skip be -1 more than one iteration
-            skip = 0;
-          }
-
-          const auto& items = tile->getItems();
-          const auto& creatureIds = tile->getCreatureIds();
-          auto itemIt = items.cbegin();
-          auto creatureIt = creatureIds.cbegin();
-
-          // Client can only handle ground + 9 items/creatures at most
-          auto count = 0;
-
-          // Add ground Item
-          addItem(*(*itemIt), packet);
-          count++;
-          ++itemIt;
-
-          // if splash; add; count++
-
-          // Add top Items
-          while (count < 10 && itemIt != items.cend())
-          {
-            if (!(*itemIt)->getItemType().alwaysOnTop)
-            {
-              break;
-            }
-
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
-          }
-
-          // Add Creatures
-          while (count < 10 && creatureIt != creatureIds.cend())
-          {
-            const Creature& creature = world_interface.getCreature(*creatureIt);
-            addCreature(creature, packet);
-            count++;
-            ++creatureIt;
-          }
-
-          // Add bottom Item
-          while (count < 10 && itemIt != items.cend())
-          {
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
-          }
-        }
-      }
-    }
-  }
-
-  // Send last skip value
-  if (skip != -1)
-  {
-    packet->addU8(skip);
-    packet->addU8(0xFF);
-  }
-}
-
-void Protocol71::addCreature(const Creature& creature, OutgoingPacket* packet)
-{
-  // First check if we know about this creature or not
-  auto it = std::find(knownCreatures_.begin(), knownCreatures_.end(), creature.getCreatureId());
-  if (it == knownCreatures_.end())
-  {
-    // Find an empty spot
-    auto unused = std::find(knownCreatures_.begin(), knownCreatures_.end(), Creature::INVALID_ID);
-    if (unused == knownCreatures_.end())
-    {
-      // No empty spot!
-      // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
-      LOG_ERROR("%s: knownCreatures_ is full!", __func__);
-      disconnect();
-      return;
-    }
-    else
-    {
-      *unused = creature.getCreatureId();
-    }
-
-    packet->addU8(0x61);
-    packet->addU8(0x00);
-    packet->addU32(0x00);  // creatureId to remove (0x00 = none)
-    packet->addU32(creature.getCreatureId());
-    packet->addString(creature.getName());
-  }
-  else
-  {
-    // We already know about this creature
-    packet->addU8(0x62);
-    packet->addU8(0x00);
-    packet->addU32(creature.getCreatureId());
-  }
-
-  packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
-  packet->addU8(static_cast<std::uint8_t>(creature.getDirection()));
-  packet->addU8(creature.getOutfit().type);
-  packet->addU8(creature.getOutfit().head);
-  packet->addU8(creature.getOutfit().body);
-  packet->addU8(creature.getOutfit().legs);
-  packet->addU8(creature.getOutfit().feet);
-
-  packet->addU8(0x00);
-  packet->addU8(0xDC);
-
-  packet->addU16(creature.getSpeed());
-}
-
-void Protocol71::addItem(const Item& item, OutgoingPacket* packet) const
-{
-  packet->addU16(item.getItemTypeId());
-  if (item.getItemType().isStackable)
-  {
-    packet->addU8(item.getCount());
-  }
-  else if (item.getItemType().isMultitype)
-  {
-    // TODO(simon): getSubType???
-    packet->addU8(0);
-  }
-}
-
-void Protocol71::addEquipment(const Equipment& equipment, int inventoryIndex, OutgoingPacket* packet) const
-{
-  const auto* item = equipment.getItem(inventoryIndex);
-  if (!item)
-  {
-    packet->addU8(0x79);  // No Item in this slot
-    packet->addU8(inventoryIndex);
-  }
-  else
-  {
-    packet->addU8(0x78);
-    packet->addU8(inventoryIndex);
-    addItem(*item, packet);
-  }
-}
-
-void Protocol71::addMagicEffect(const Position& position,
-                                std::uint8_t type,
-                                OutgoingPacket* packet) const
-{
-  packet->addU8(0x83);
-  addPosition(position, packet);
-  packet->addU8(type);
-}
-
-void Protocol71::addPlayerStats(const Player& player, OutgoingPacket* packet) const
-{
-  packet->addU8(0xA0);
-  packet->addU16(player.getHealth());
-  packet->addU16(player.getMaxHealth());
-  packet->addU16(player.getCapacity());
-  packet->addU32(player.getExperience());
-  packet->addU8(player.getLevel());
-  packet->addU16(player.getMana());
-  packet->addU16(player.getMaxMana());
-  packet->addU8(player.getMagicLevel());
-}
-
-void Protocol71::addWorldLight(std::uint8_t intensity,
-                               std::uint8_t color,
-                               OutgoingPacket* packet) const
-{
-  packet->addU8(0x82);
-  packet->addU8(intensity);
-  packet->addU8(color);
-}
-
-void Protocol71::addPlayerSkills(const Player& player, OutgoingPacket* packet) const
-{
-  packet->addU8(0xA1);
-  // TODO(simon): add skills to Player
-  (void)player;
-  for (auto i = 0; i < 7; i++)
-  {
-    packet->addU8(10);
-  }
-}
-
-void Protocol71::parseLogin(IncomingPacket* packet)
+void Protocol::parseLogin(IncomingPacket* packet)
 {
   packet->getU8();  // Unknown (0x02)
   const auto client_os = packet->getU8();
@@ -1096,7 +793,7 @@ void Protocol71::parseLogin(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseMoveClick(IncomingPacket* packet)
+void Protocol::parseMoveClick(IncomingPacket* packet)
 {
   std::deque<Direction> moves;
   const auto pathLength = packet->getU8();
@@ -1119,10 +816,10 @@ void Protocol71::parseMoveClick(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseMoveItem(IncomingPacket* packet)
+void Protocol::parseMoveItem(IncomingPacket* packet)
 {
-  const auto fromItemPosition = getItemPosition(packet);
-  const auto toGamePosition = getGamePosition(packet);
+  const auto fromItemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
+  const auto toGamePosition = ProtocolHelper::getGamePosition(&containerIds_, packet);
   const auto count = packet->getU8();
 
   LOG_DEBUG("%s: from: %s, to: %s, count: %u",
@@ -1137,9 +834,9 @@ void Protocol71::parseMoveItem(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseUseItem(IncomingPacket* packet)
+void Protocol::parseUseItem(IncomingPacket* packet)
 {
-  const auto itemPosition = getItemPosition(packet);
+  const auto itemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
   const auto newContainerId = packet->getU8();
 
   LOG_DEBUG("%s: itemPosition: %s, newContainerId: %u", __func__, itemPosition.toString().c_str(), newContainerId);
@@ -1150,7 +847,7 @@ void Protocol71::parseUseItem(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseCloseContainer(IncomingPacket* packet)
+void Protocol::parseCloseContainer(IncomingPacket* packet)
 {
   const auto containerId = packet->getU8();
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
@@ -1169,7 +866,7 @@ void Protocol71::parseCloseContainer(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
+void Protocol::parseOpenParentContainer(IncomingPacket* packet)
 {
   const auto containerId = packet->getU8();
   const auto itemUniqueId = getContainerItemUniqueId(containerId);
@@ -1188,9 +885,9 @@ void Protocol71::parseOpenParentContainer(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseLookAt(IncomingPacket* packet)
+void Protocol::parseLookAt(IncomingPacket* packet)
 {
-  const auto itemPosition = getItemPosition(packet);
+  const auto itemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
 
   LOG_DEBUG("%s: itemPosition: %s", __func__, itemPosition.toString().c_str());
 
@@ -1200,7 +897,7 @@ void Protocol71::parseLookAt(IncomingPacket* packet)
   });
 }
 
-void Protocol71::parseSay(IncomingPacket* packet)
+void Protocol::parseSay(IncomingPacket* packet)
 {
   const auto type = packet->getU8();
 
@@ -1229,58 +926,12 @@ void Protocol71::parseSay(IncomingPacket* packet)
   });
 }
 
-GamePosition Protocol71::getGamePosition(IncomingPacket* packet) const
-{
-  const auto x = packet->getU16();
-  const auto y = packet->getU16();
-  const auto z = packet->getU8();
-
-  LOG_DEBUG("%s: x = 0x%04X, y = 0x%04X, z = 0x%02X", __func__, x, y, z);
-
-  if (x != 0xFFFF)
-  {
-    // Positions have x not fully set
-    return GamePosition(Position(x, y, z));
-  }
-  else if ((y & 0x40) == 0x00)
-  {
-    // Inventory have x fully set and 7th bit in y not set
-    // Inventory slot is 4 lower bits in y
-    return GamePosition(y & ~0x40);
-  }
-  else
-  {
-    // Container have x fully set and 7th bit in y set
-    // Container id is lower 6 bits in y
-    // Container slot is z
-    const auto containerId = y & ~0x40;
-    const auto itemUniqueId = getContainerItemUniqueId(containerId);
-    if (itemUniqueId == Item::INVALID_UNIQUE_ID)
-    {
-      LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
-      disconnect();
-      return GamePosition();
-    }
-
-    return GamePosition(itemUniqueId, z);
-  }
-}
-
-ItemPosition Protocol71::getItemPosition(IncomingPacket* packet) const
-{
-  const auto gamePosition = getGamePosition(packet);
-  const auto itemId = packet->getU16();
-  const auto stackPosition = packet->getU8();
-
-  return ItemPosition(gamePosition, itemId, stackPosition);
-}
-
-void Protocol71::setContainerId(int containerId, ItemUniqueId itemUniqueId)
+void Protocol::setContainerId(int containerId, ItemUniqueId itemUniqueId)
 {
   containerIds_[containerId] = itemUniqueId;
 }
 
-int Protocol71::getContainerId(ItemUniqueId itemUniqueId) const
+int Protocol::getContainerId(ItemUniqueId itemUniqueId) const
 {
   const auto it = std::find(containerIds_.cbegin(),
                             containerIds_.cend(),
@@ -1295,7 +946,7 @@ int Protocol71::getContainerId(ItemUniqueId itemUniqueId) const
   }
 }
 
-ItemUniqueId Protocol71::getContainerItemUniqueId(int containerId) const
+ItemUniqueId Protocol::getContainerItemUniqueId(int containerId) const
 {
   if (containerId < 0 || containerId >= 64)
   {

@@ -27,10 +27,121 @@
 
 #include "player_ctrl.h"
 
+#include <array>
+#include <functional>
+#include <string>
+#include <memory>
+
+// gameengine
+#include "player.h"
+#include "game_position.h"
+#include "container.h"
+
+// world
+#include "creature.h"
+#include "position.h"
+#include "item.h"
+
+class Connection;
+class IncomingPacket;
+class OutgoingPacket;
+class GameEngineQueue;
+class AccountReader;
+class WorldInterface;
+
 class Protocol : public PlayerCtrl
 {
  public:
-  virtual ~Protocol() = default;
+  Protocol(const std::function<void(void)>& closeProtocol,
+             std::unique_ptr<Connection>&& connection,
+             GameEngineQueue* gameEngineQueue,
+             AccountReader* accountReader);
+
+  // Delete copy constructors
+  Protocol(const Protocol&) = delete;
+  Protocol& operator=(const Protocol&) = delete;
+
+  // Called by World (from CreatureCtrl)
+  void onCreatureSpawn(const WorldInterface& world_interface,
+                       const Creature& creature,
+                       const Position& position) override;
+  void onCreatureDespawn(const WorldInterface& world_interface,
+                         const Creature& creature,
+                         const Position& position,
+                         int stackPos) override;
+  void onCreatureMove(const WorldInterface& world_interface,
+                      const Creature& creature,
+                      const Position& oldPosition,
+                      int oldStackPos,
+                      const Position& newPosition) override;
+  void onCreatureTurn(const WorldInterface& world_interface,
+                      const Creature& creature,
+                      const Position& position,
+                      int stackPos) override;
+  void onCreatureSay(const WorldInterface& world_interface,
+                     const Creature& creature,
+                     const Position& position,
+                     const std::string& message) override;
+
+  void onItemRemoved(const WorldInterface& world_interface, const Position& position, int stackPos) override;
+  void onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position) override;
+
+  void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
+
+  // Called by GameEngine (from PlayerCtrl)
+  CreatureId getPlayerId() const override { return playerId_; }
+  void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
+  void onEquipmentUpdated(const Player& player, int inventoryIndex) override;
+  void onOpenContainer(int newContainerId, const Container& container, const Item& item) override;
+  void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) override;
+  void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) override;
+  void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, int containerSlot, const Item& item) override;
+  void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, int containerSlot) override;
+  void sendTextMessage(int message_type, const std::string& message) override;
+  void sendCancel(const std::string& message) override;
+  void cancelMove() override;
+
+  // Called by ContainerManager (from PlayerCtrl)
+  const std::array<ItemUniqueId, 64>& getContainerIds() const override { return containerIds_; }
+  bool hasContainerOpen(ItemUniqueId itemUniqueId) const override;
+
+ private:
+  bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
+  bool isConnected() const { return static_cast<bool>(connection_); }
+  void disconnect() const;
+
+  // Connection callbacks
+  void parsePacket(IncomingPacket* packet);
+  void onDisconnected();
+
+  // Functions to parse IncomingPackets
+  void parseLogin(IncomingPacket* packet);
+  void parseMoveClick(IncomingPacket* packet);
+  void parseMoveItem(IncomingPacket* packet);
+  void parseUseItem(IncomingPacket* packet);
+  void parseCloseContainer(IncomingPacket* packet);
+  void parseOpenParentContainer(IncomingPacket* packet);
+  void parseLookAt(IncomingPacket* packet);
+  void parseSay(IncomingPacket* packet);
+
+  // Helper functions for containerId
+  void setContainerId(int containerId, ItemUniqueId itemUniqueId);
+  int getContainerId(ItemUniqueId itemUniqueId) const;
+  ItemUniqueId getContainerItemUniqueId(int containerId) const;
+
+  std::function<void(void)> closeProtocol_;
+  std::unique_ptr<Connection> connection_;
+  GameEngineQueue* gameEngineQueue_;
+  AccountReader* accountReader_;
+
+  CreatureId playerId_;
+
+  std::array<CreatureId, 64> knownCreatures_;
+
+  // Known/opened containers
+  // clientContainerId maps to a container's ItemUniqueId
+  static constexpr int INVALID_CONTAINER_ID = -1;
+  std::array<ItemUniqueId, 64> containerIds_;
 };
 
 #endif  // WORLDSERVER_SRC_PROTOCOL_H_

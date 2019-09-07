@@ -46,7 +46,6 @@
 
 // worldserver
 #include "protocol.h"
-#include "protocol_71.h"
 
 
 // We need to use unique_ptr, so that we can deallocate everything before
@@ -69,16 +68,14 @@ void onClientConnected(std::unique_ptr<Connection>&& connection)
   LOG_DEBUG("%s: protocolId: %d", __func__, protocolId);
 
   // Create and store Protocol for this Connection
-  // Note: we need a different solution if we want to support different protocol versions
-  // as the client version is parsed in the login packet
-  auto protocol = std::make_unique<Protocol71>([protocolId]()
-                                               {
-                                                 LOG_DEBUG("onCloseProtocol: protocolId: %d", protocolId);
-                                                 protocols.erase(protocolId);
-                                               },
-                                               std::move(connection),
-                                               gameEngineQueue.get(),
-                                               accountReader.get());
+  auto protocol = std::make_unique<Protocol>([protocolId]()
+                                             {
+                                               LOG_DEBUG("onCloseProtocol: protocolId: %d", protocolId);
+                                               protocols.erase(protocolId);
+                                             },
+                                             std::move(connection),
+                                             gameEngineQueue.get(),
+                                             accountReader.get());
 
   protocols.emplace(std::piecewise_construct,
                     std::forward_as_tuple(protocolId),
@@ -108,6 +105,7 @@ int main()
   // Read [logger] settings
   const auto logger_account     = config.getString("logger", "account", "ERROR");
   const auto logger_network     = config.getString("logger", "network", "ERROR");
+  const auto logger_protocol    = config.getString("logger", "protocol", "ERROR");
   const auto logger_utils       = config.getString("logger", "utils", "ERROR");
   const auto logger_world       = config.getString("logger", "world", "ERROR");
   const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
@@ -115,6 +113,7 @@ int main()
   // Set logger settings
   Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
   Logger::setLevel(Logger::Module::NETWORK,     logger_network);
+  Logger::setLevel(Logger::Module::PROTOCOL,    logger_protocol);
   Logger::setLevel(Logger::Module::UTILS,       logger_utils);
   Logger::setLevel(Logger::Module::WORLD,       logger_world);
   Logger::setLevel(Logger::Module::WORLDSERVER, logger_worldserver);
@@ -133,6 +132,7 @@ int main()
   printf("\n");
   printf("Account logging:           %s\n", logger_account.c_str());
   printf("Network logging:           %s\n", logger_network.c_str());
+  printf("Protocol logging:          %s\n", logger_protocol.c_str());
   printf("Utils logging:             %s\n", logger_utils.c_str());
   printf("World logging:             %s\n", logger_world.c_str());
   printf("Worldserver logging:       %s\n", logger_worldserver.c_str());
