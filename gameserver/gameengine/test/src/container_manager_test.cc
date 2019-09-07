@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include "player.h"
 #include "container_manager.h"
 #include "player_ctrl_mock.h"
 #include "world_interface.h"
