@@ -21,57 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef WSCLIENT_SRC_GRAPHICS_H_
+#define WSCLIENT_SRC_GRAPHICS_H_
 
+#include "types.h"
+#include "protocol_types.h"
 #include "position.h"
 
-#include <sstream>
-
-const Position Position::INVALID = Position();
-
-Position::Position()
-  : x_(0),
-    y_(0),
-    z_(0)
+namespace Graphics
 {
+
+  void init();
+  void draw(const types::Map&,
+            const Position& position);
+
 }
 
-Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
-  : x_(x),
-    y_(y),
-    z_(z)
-{
-}
-
-bool Position::operator==(const Position& other) const
-{
-  return (x_ == other.x_) && (y_ == other.y_) && (z_ == other.z_);
-}
-
-bool Position::operator!=(const Position& other) const
-{
-  return !(*this == other);
-}
-
-std::string Position::toString() const
-{
-  std::ostringstream ss;
-  ss << "(" << x_ << ", " << y_ << ", " << static_cast<int>(z_) << ")";
-  return ss.str();
-}
-
-Position Position::addDirection(const Direction& direction) const
-{
-  switch (direction)
-  {
-  case Direction::EAST:
-    return Position(x_ + 1, y_    , z_);
-  case Direction::NORTH:
-    return Position(x_    , y_ - 1, z_);
-  case Direction::SOUTH:
-    return Position(x_    , y_ + 1, z_);
-  case Direction::WEST:
-    return Position(x_ - 1, y_    , z_);
-  }
-
-  return Position();
-}
+#endif  // WSCLIENT_SRC_GRAPHICS_H_

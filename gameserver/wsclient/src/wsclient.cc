@@ -1,3 +1,26 @@
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2018 Simon Sandström
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -9,10 +32,13 @@
 #include "protocol_helper.h"
 #include "protocol_types.h"
 
+#include "types.h"
 #include "network.h"
+#include "graphics.h"
 
 std::uint32_t playerId;
-ProtocolTypes::MapData mapData;
+Position playerPosition;
+types::Map map;
 
 void handleLoginPacket(const ProtocolTypes::Login& login)
 {
@@ -24,9 +50,27 @@ void handleLoginFailedPacket(const ProtocolTypes::LoginFailed& failed)
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const ProtocolTypes::MapData& map)
+void handleFullMapPacket(const ProtocolTypes::MapData& mapData)
 {
-  mapData = map;
+  playerPosition = mapData.position;
+  auto it = mapData.tiles.begin();
+  for (auto x = 0; x < types::known_tiles_x; x++)
+  {
+    for (auto y = 0; y < types::known_tiles_y; y++)
+    {
+      if (it->skip)
+      {
+        map[y][x] = ProtocolTypes::MapData::TileData();
+      }
+      else
+      {
+        map[y][x] = *it;
+      }
+      ++it;
+    }
+  }
+
+  Graphics::draw(map, playerPosition);
 }
 
 void handleMagicEffect(const ProtocolTypes::MagicEffect& effect)
@@ -110,5 +154,6 @@ void handle_packet(IncomingPacket* packet)
 
 int main()
 {
+  Graphics::init();
   Network::start(&handle_packet);
 }

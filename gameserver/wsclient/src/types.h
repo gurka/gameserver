@@ -21,57 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef WSCLIENT_SRC_TYPES_H_
+#define WSCLIENT_SRC_TYPES_H_
 
-#include "position.h"
+#include <array>
 
-#include <sstream>
+#include "protocol_types.h"
 
-const Position Position::INVALID = Position();
-
-Position::Position()
-  : x_(0),
-    y_(0),
-    z_(0)
+namespace types
 {
+
+constexpr auto draw_tiles_x = 15;
+constexpr auto draw_tiles_y = 11;
+constexpr auto known_tiles_x = 18;
+constexpr auto known_tiles_y = 14;
+using Map = std::array<std::array<ProtocolTypes::MapData::TileData, known_tiles_x>, known_tiles_y>;
+
 }
 
-Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
-  : x_(x),
-    y_(y),
-    z_(z)
-{
-}
-
-bool Position::operator==(const Position& other) const
-{
-  return (x_ == other.x_) && (y_ == other.y_) && (z_ == other.z_);
-}
-
-bool Position::operator!=(const Position& other) const
-{
-  return !(*this == other);
-}
-
-std::string Position::toString() const
-{
-  std::ostringstream ss;
-  ss << "(" << x_ << ", " << y_ << ", " << static_cast<int>(z_) << ")";
-  return ss.str();
-}
-
-Position Position::addDirection(const Direction& direction) const
-{
-  switch (direction)
-  {
-  case Direction::EAST:
-    return Position(x_ + 1, y_    , z_);
-  case Direction::NORTH:
-    return Position(x_    , y_ - 1, z_);
-  case Direction::SOUTH:
-    return Position(x_    , y_ + 1, z_);
-  case Direction::WEST:
-    return Position(x_ - 1, y_    , z_);
-  }
-
-  return Position();
-}
+#endif  // WSCLIENT_SRC_TYPES_H_

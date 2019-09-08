@@ -498,15 +498,17 @@ ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet)
     {
       for (auto y = 0; y < height; y++)
       {
+        ProtocolTypes::MapData::TileData tile;
         if (skip > 0)
         {
           skip -= 1;
+          tile.skip = true;
+          map.tiles.push_back(std::move(tile));
           continue;
         }
 
         // Parse tile
-        ProtocolTypes::MapData::TileData tile;
-        tile.position = Position(x, y, z);
+        tile.skip = false;
         for (auto stackpos = 0; true; stackpos++)
         {
           if (packet->peekU16() >= 0xFF00)

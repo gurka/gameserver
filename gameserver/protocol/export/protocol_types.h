@@ -128,7 +128,7 @@ struct MapData
 
   struct TileData
   {
-    Position position;
+    bool skip;
     std::vector<CreatureData> creatures;
     std::vector<ItemData> items;
   };
