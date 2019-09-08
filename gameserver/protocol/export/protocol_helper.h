@@ -82,6 +82,7 @@ namespace ProtocolHelper
   ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet);
   ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet);
   ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet);
+  ProtocolTypes::CreatureMove getCreatureMove(bool canSeeOldPos, bool canSeeNewPos, IncomingPacket* packet);
 
   GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);
   ItemPosition getItemPosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet);

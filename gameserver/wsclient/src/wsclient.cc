@@ -70,7 +70,7 @@ void handleFullMapPacket(const ProtocolTypes::MapData& mapData)
     }
   }
 
-  Graphics::draw(map, playerPosition);
+  Graphics::draw(map, playerPosition, playerId);
 }
 
 void handleMagicEffect(const ProtocolTypes::MagicEffect& effect)
@@ -96,6 +96,63 @@ void handleEquipmentUpdate(const ProtocolTypes::Equipment& equipment)
 void handleTextMessage(const ProtocolTypes::TextMessage& message)
 {
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
+}
+
+void handleCreatureMove(const ProtocolTypes::CreatureMove& move)
+{
+  LOG_INFO("%s: canSeeOldPos: %s, canSeeNewPos: %s",
+           __func__,
+           move.canSeeOldPos ? "true" : "false",
+           move.canSeeNewPos ? "true" : "false");
+
+  ProtocolTypes::MapData::CreatureData c;
+
+  if (move.canSeeOldPos)
+  {
+    // Remove from tile
+    const auto x = move.oldPosition.getX() + 8 - playerPosition.getX();
+    const auto y = move.oldPosition.getY() + 6 - playerPosition.getY();
+    const auto sp = move.oldStackPosition;
+    const auto it = std::find_if(map[y][x].creatures.begin(),
+                                 map[y][x].creatures.end(),
+                                 [&sp](const ProtocolTypes::MapData::CreatureData& cd)
+    {
+      return cd.stackpos == sp;
+    });
+    if (it == map[y][x].creatures.end())
+    {
+      LOG_ERROR("%s: no creature found at given position with correct stackposition", __func__);
+      return;
+    }
+
+    c = *it;
+    map[y][x].creatures.erase(it);
+
+    // Assume player position is 200, 100
+    // Known map is from 192, 94 to 209, 107
+    // So to top left corner from global pos to local pos we need to:
+    // 192, 94 -> 0, 0 = 192 + 8 - 200, 94 + 6 - 100
+  }
+
+  if (move.canSeeNewPos)
+  {
+    // Add to tile
+    const auto x = move.newPosition.getX() + 8 - playerPosition.getX();
+    const auto y = move.newPosition.getY() + 6 - playerPosition.getY();
+    if (move.canSeeOldPos)
+    {
+      map[y][x].creatures.push_back(c);
+    }
+    else
+    {
+      ProtocolTypes::MapData::CreatureData cd;
+      cd.creature = move.creature;
+      cd.stackpos = 1;  // TODO
+      map[y][x].creatures.push_back(cd);
+    }
+  }
+
+  Graphics::draw(map, playerPosition, playerId);
 }
 
 void handle_packet(IncomingPacket* packet)
@@ -143,6 +200,14 @@ void handle_packet(IncomingPacket* packet)
 
       case 0xB4:
         handleTextMessage(getTextMessage(packet));
+        break;
+
+      case 0x6C:
+      case 0x6D:
+      case 0x6A:
+        handleCreatureMove(getCreatureMove(type == 0x6D || type == 0x6C,
+                                           type == 0x6D || type == 0x6A,
+                                           packet));
         break;
 
       default:

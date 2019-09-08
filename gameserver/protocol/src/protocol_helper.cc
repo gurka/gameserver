@@ -547,6 +547,30 @@ ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet)
   return map;
 }
 
+ProtocolTypes::CreatureMove getCreatureMove(bool canSeeOldPos, bool canSeeNewPos, IncomingPacket* packet)
+{
+  ProtocolTypes::CreatureMove move;
+  move.canSeeOldPos = canSeeOldPos;
+  move.canSeeNewPos = canSeeNewPos;
+  if (move.canSeeOldPos && move.canSeeNewPos)
+  {
+    move.oldPosition = getPosition(packet);
+    packet->get(&move.oldStackPosition);
+    move.newPosition = getPosition(packet);
+  }
+  else if (move.canSeeOldPos)
+  {
+    move.oldPosition = getPosition(packet);
+    packet->get(&move.oldStackPosition);
+  }
+  else  // if (move.canSeeNewPos)
+  {
+    move.newPosition = getPosition(packet);
+    move.creature = getCreature(packet->getU16() == 0x0062, packet);
+  }
+  return move;
+}
+
 GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)
 {
   const auto x = packet->getU16();

@@ -137,6 +137,17 @@ struct MapData
   std::vector<TileData> tiles;
 };
 
+struct CreatureMove
+{
+  bool canSeeOldPos;
+  bool canSeeNewPos;
+
+  Position oldPosition;           // only if canSeeOldPos = true
+  std::uint8_t oldStackPosition;  // only if canSeeOldPos = true
+  Position newPosition;           // only if canSeeNewPos = true
+  Creature creature;              // only if canSeeOldPos = false and canSeeNewPos = true
+};
+
 }
 
 #endif  // WORLDSERVER_SRC_PROTOCOL_TYPES_H_

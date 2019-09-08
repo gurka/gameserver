@@ -68,8 +68,7 @@ namespace Graphics
     screen = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
   }
 
-  void draw(const types::Map& map,
-            const Position& position)
+  void draw(const types::Map& map, const Position& position, std::uint32_t playerId)
   {
     if (SDL_MUSTLOCK(screen))
     {
@@ -86,15 +85,28 @@ namespace Graphics
         //  Draw creature over tile
         if (!tile.creatures.empty())
         {
-          // Fill sprite with red
-          LOG_INFO("%s: draw creature", __func__);
-          fillRect(tile_x * tile_size,
-                   tile_y * tile_size,
-                   tile_size,
-                   tile_size,
-                   255,
-                   0,
-                   0);
+          if (tile.creatures.front().creature.id == playerId)
+          {
+            // Fill sprite with green
+            fillRect(tile_x * tile_size,
+                     tile_y * tile_size,
+                     tile_size,
+                     tile_size,
+                     0,
+                     255,
+                     0);
+          }
+          else
+          {
+            // Fill sprite with red
+            fillRect(tile_x * tile_size,
+                     tile_y * tile_size,
+                     tile_size,
+                     tile_size,
+                     255,
+                     0,
+                     0);
+          }
         }
         else if (!tile.items.empty())
         {
@@ -102,7 +114,6 @@ namespace Graphics
           if (ground.item.itemTypeId == 694)
           {
             // Ground, fill with brown
-            LOG_INFO("%s: draw ground", __func__);
             fillRect(tile_x * tile_size,
                      tile_y * tile_size,
                      tile_size,
@@ -115,7 +126,6 @@ namespace Graphics
           else if (ground.item.itemTypeId == 475)
           {
             // Water, fill with blue
-            LOG_INFO("%s: draw water", __func__);
             fillRect(tile_x * tile_size,
                      tile_y * tile_size,
                      tile_size,
@@ -140,7 +150,6 @@ namespace Graphics
         else
         {
           // Empty tile, fill with black
-          LOG_INFO("%s: empty tile", __func__);
           fillRect(tile_x * tile_size,
                    tile_y * tile_size,
                    tile_size,

@@ -33,7 +33,8 @@ namespace Graphics
 
   void init();
   void draw(const types::Map&,
-            const Position& position);
+            const Position& position,
+            std::uint32_t playerId);
 
 }
 
