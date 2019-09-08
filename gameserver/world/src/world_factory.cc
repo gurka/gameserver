@@ -40,8 +40,17 @@
 #include "rapidxml.hpp"
 
 std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilename,
-                                                 ItemManager* itemManager)
+                                                 const std::string& dataFilename,
+                                                 const std::string& itemsFilename)
 {
+  // Load ItemManager
+  auto itemManager = std::make_unique<ItemManager>();
+  if (!itemManager->loadItemTypes(dataFilename, itemsFilename))
+  {
+    LOG_ERROR("%s: could not load ItemManager", __func__);
+    return std::unique_ptr<World>();
+  }
+
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
   std::ifstream xmlFile(worldFilename);
@@ -115,14 +124,14 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
 
       const auto groundItemTypeId = std::stoi(groundItemAttr->value());
       const auto groundItemId = itemManager->createItem(groundItemTypeId);
-      if (groundItemId == 0)  // TODO(simon): invalid ItemId
+      if (groundItemId == Item::INVALID_UNIQUE_ID)
       {
         LOG_ERROR("%s: groundItemTypeId: %d is invalid", __func__, groundItemTypeId);
         free(xmlString);
         return std::unique_ptr<World>();
       }
 
-      tiles.emplace_back(itemManager->getItem(groundItemId));
+      tiles.emplace_back(groundItemId);
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -137,14 +146,14 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
 
         const auto itemTypeId = std::stoi(itemIdAttr->value());
         const auto itemId = itemManager->createItem(itemTypeId);
-        if (itemId == 0)  // TODO(simon): invalid ItemId
+        if (itemId == Item::INVALID_UNIQUE_ID)
         {
           LOG_ERROR("%s: itemTypeId: %d is invalid", __func__, itemTypeId);
           free(xmlString);
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addItem(itemManager->getItem(itemId));
+        tiles.back().addItem(itemId, itemManager->getItem(itemId)->getItemType().alwaysOnTop);
       }
 
       // Go to next <tile> in XML
@@ -155,5 +164,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles));
+  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles), std::move(itemManager));
 }

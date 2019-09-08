@@ -173,49 +173,27 @@ void addMapData(const WorldInterface& world_interface,
             skip = 0;
           }
 
-          const auto& items = tile->getItems();
-          const auto& creatureIds = tile->getCreatureIds();
-          auto itemIt = items.cbegin();
-          auto creatureIt = creatureIds.cbegin();
-
-          // Client can only handle ground + 9 items/creatures at most
           auto count = 0;
-
-          // Add ground Item
-          addItem(*(*itemIt), packet);
-          count++;
-          ++itemIt;
-
-          // if splash; add; count++
-
-          // Add top Items
-          while (count < 10 && itemIt != items.cend())
+          for (const auto& thing : tile->getThings())
           {
-            if (!(*itemIt)->getItemType().alwaysOnTop)
+            if (count >= 10)
             {
               break;
             }
 
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
-          }
+            if (thing.isItem)
+            {
+              addItem(*(world_interface.getItem(thing.item.itemUniqueId)),
+                      packet);
+            }
+            else
+            {
+              addCreature(world_interface.getCreature(thing.creatureId),
+                          knownCreatures,
+                          packet);
+            }
 
-          // Add Creatures
-          while (count < 10 && creatureIt != creatureIds.cend())
-          {
-            const Creature& creature = world_interface.getCreature(*creatureIt);
-            addCreature(creature, knownCreatures, packet);
-            count++;
-            ++creatureIt;
-          }
-
-          // Add bottom Item
-          while (count < 10 && itemIt != items.cend())
-          {
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
+            count += 1;
           }
         }
       }

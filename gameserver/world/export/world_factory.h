@@ -35,7 +35,8 @@ class WorldFactory
 {
  public:
   static std::unique_ptr<World> createWorld(const std::string& worldFilename,
-                                            ItemManager* itemManager);
+                                            const std::string& dataFilename,
+                                            const std::string& itemsFilename);
 };
 
 #endif  // GAMEENGINE_SRC_WORLD_FACTORY_H_

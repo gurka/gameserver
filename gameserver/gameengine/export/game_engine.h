@@ -41,7 +41,6 @@
 class GameEngineQueue;
 class OutgoingPacket;
 class PlayerCtrl;
-class ItemManager;
 class ContainerManager;
 
 class GameEngine
@@ -110,7 +109,6 @@ class GameEngine
   std::unique_ptr<World> world_;
   GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;
-  std::unique_ptr<ItemManager> itemManager_;
   std::unique_ptr<ContainerManager> containerManager_;
 };
 

@@ -36,7 +36,6 @@
 #include "creature.h"
 #include "creature_ctrl.h"
 #include "item.h"
-#include "item_manager.h"
 #include "container_manager.h"
 #include "position.h"
 #include "world_factory.h"
@@ -75,16 +74,8 @@ bool GameEngine::init(GameEngineQueue* gameEngineQueue,
   gameEngineQueue_ = gameEngineQueue;
   loginMessage_ = loginMessage;
 
-  // Load ItemManager
-  itemManager_ = std::make_unique<ItemManager>();
-  if (!itemManager_->loadItemTypes(dataFilename, itemsFilename))
-  {
-    LOG_ERROR("%s: could not load ItemManager", __func__);
-    return false;
-  }
-
   // Load World
-  world_ = WorldFactory::createWorld(worldFilename, itemManager_.get());
+  world_ = WorldFactory::createWorld(worldFilename, dataFilename, itemsFilename);
   if (!world_)
   {
     LOG_ERROR("%s: could not load World", __func__);
@@ -291,36 +282,40 @@ void GameEngine::say(CreatureId creatureId,
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto* item : tile->getItems())
+      for (const auto& thing : tile->getThings())
       {
-        oss << "Item: " << item->getItemTypeId() << " (" << item->getItemType().name << ")\n";
-      }
-
-      for (const auto& creatureId : tile->getCreatureIds())
-      {
-        oss << "Creature: " << creatureId << "\n";
+        if (thing.isItem)
+        {
+          oss << "Item: " << thing.item.itemUniqueId << "\n";
+        }
+        else
+        {
+          oss << "Creature: " << thing.creatureId << "\n";
+        }
       }
 
       playerData.player_ctrl->sendTextMessage(0x13, oss.str());
     }
     else if (command == "put")
     {
-      std::istringstream iss(option);
-      ItemTypeId itemTypeId = 0;
-      iss >> itemTypeId;
+      // TODO(simon): replace itemManager->createItem/getItem with world->createItem/getItem
 
-      const auto itemId = itemManager_->createItem(itemTypeId);
-
-      if (itemId == 0)  // TODO(simon): see item_manager TODO
-      {
-        playerData.player_ctrl->sendTextMessage(0x13, "Invalid itemId");
-      }
-      else
-      {
-        auto* item = itemManager_->getItem(itemId);
-        const auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
-        world_->addItem(item, position);
-      }
+//      std::istringstream iss(option);
+//      ItemTypeId itemTypeId = 0;
+//      iss >> itemTypeId;
+//
+//      const auto itemId = itemManager_->createItem(itemTypeId);
+//
+//      if (itemId == 0)  // TODO(simon): see item_manager TODO
+//      {
+//        playerData.player_ctrl->sendTextMessage(0x13, "Invalid itemId");
+//      }
+//      else
+//      {
+//        auto* item = itemManager_->getItem(itemId);
+//        const auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
+//        world_->addItem(item, position);
+//      }
     }
     else
     {

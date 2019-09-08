@@ -33,10 +33,36 @@
 class Tile
 {
  public:
-  explicit Tile(Item* groundItem)
-    : numberOfTopItems(0),
-      items_({groundItem})
+  struct Thing
   {
+    Thing(CreatureId creatureId_)
+    {
+      isItem = false;
+      creatureId = creatureId_;
+    }
+
+    Thing(ItemUniqueId itemUniqueId, bool onTop)
+    {
+      isItem = true;
+      item.itemUniqueId = itemUniqueId;
+      item.onTop = onTop;
+    }
+
+    bool isItem;
+    union
+    {
+      struct
+      {
+        ItemUniqueId itemUniqueId;
+        bool onTop;
+      } item;
+      CreatureId creatureId;
+    };
+  };
+
+  explicit Tile(ItemUniqueId groundItem)
+  {
+    things_.emplace_back(groundItem, false);
   }
 
   // Delete copy constructors
@@ -51,24 +77,23 @@ class Tile
   void addCreature(CreatureId creatureId);
   bool removeCreature(CreatureId creatureId);
   CreatureId getCreatureId(int stackPosition) const;
-  const std::vector<CreatureId>& getCreatureIds() const { return creatureIds_; }
   int getCreatureStackPos(CreatureId creatureId) const;
 
   // Items
-  void addItem(Item* item);
-  bool removeItem(ItemTypeId itemTypeId, int stackPosition);
-  const Item* getItem(int stackPosition) const;
-  Item* getItem(int stackPosition);
-  const std::vector<Item*>& getItems() const { return items_; }
+  void addItem(ItemUniqueId item, bool onTop);
+  bool removeItem(int stackPosition);
+  ItemUniqueId getItemUniqueId(int stackPosition) const;
 
   // Other
-  std::size_t getNumberOfThings() const;
-  int getGroundSpeed() const;
+  const std::vector<Thing>& getThings() const { return things_; }
+  std::size_t getNumberOfThings() const { return things_.size(); }
 
  private:
-  int numberOfTopItems;
-  std::vector<Item*> items_;
-  std::vector<CreatureId> creatureIds_;
+  // First ground
+  // Then onTop items
+  // Then creatures
+  // Then other items
+  std::vector<Thing> things_;
 };
 
 #endif  // WORLD_EXPORT_TILE_H_

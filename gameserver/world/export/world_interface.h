@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "creature.h"
+#include "item.h"
 
 class Tile;
 class Position;
@@ -39,6 +40,7 @@ class WorldInterface
   virtual ~WorldInterface() = default;
 
   virtual const Tile* getTile(const Position& position) const = 0;
+  virtual const Item* getItem(ItemUniqueId itemUniqueId) const = 0;
   virtual const Creature& getCreature(CreatureId creatureId) const = 0;
   virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
 };
