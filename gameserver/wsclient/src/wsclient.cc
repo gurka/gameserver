@@ -35,10 +35,12 @@
 #include "types.h"
 #include "network.h"
 #include "graphics.h"
+#include "map.h"
 
 std::uint32_t playerId;
 Position playerPosition;
-types::Map map;
+Map map;
+std::vector<ProtocolTypes::Creature> creatures;
 
 void handleLoginPacket(const ProtocolTypes::Login& login)
 {
@@ -53,23 +55,7 @@ void handleLoginFailedPacket(const ProtocolTypes::LoginFailed& failed)
 void handleFullMapPacket(const ProtocolTypes::MapData& mapData)
 {
   playerPosition = mapData.position;
-  auto it = mapData.tiles.begin();
-  for (auto x = 0; x < types::known_tiles_x; x++)
-  {
-    for (auto y = 0; y < types::known_tiles_y; y++)
-    {
-      if (it->skip)
-      {
-        map[y][x] = ProtocolTypes::MapData::TileData();
-      }
-      else
-      {
-        map[y][x] = *it;
-      }
-      ++it;
-    }
-  }
-
+  map.setMapData(mapData);
   Graphics::draw(map, playerPosition, playerId);
 }
 
@@ -105,52 +91,26 @@ void handleCreatureMove(const ProtocolTypes::CreatureMove& move)
            move.canSeeOldPos ? "true" : "false",
            move.canSeeNewPos ? "true" : "false");
 
-  ProtocolTypes::MapData::CreatureData c;
-
-  if (move.canSeeOldPos)
+  if (move.canSeeOldPos && move.canSeeNewPos)
   {
-    // Remove from tile
-    const auto x = move.oldPosition.getX() + 8 - playerPosition.getX();
-    const auto y = move.oldPosition.getY() + 6 - playerPosition.getY();
-    const auto sp = move.oldStackPosition;
-    const auto it = std::find_if(map[y][x].creatures.begin(),
-                                 map[y][x].creatures.end(),
-                                 [&sp](const ProtocolTypes::MapData::CreatureData& cd)
-    {
-      return cd.stackpos == sp;
-    });
-    if (it == map[y][x].creatures.end())
-    {
-      LOG_ERROR("%s: no creature found at given position with correct stackposition", __func__);
-      return;
-    }
-
-    c = *it;
-    map[y][x].creatures.erase(it);
-
-    // Assume player position is 200, 100
-    // Known map is from 192, 94 to 209, 107
-    // So to top left corner from global pos to local pos we need to:
-    // 192, 94 -> 0, 0 = 192 + 8 - 200, 94 + 6 - 100
+    // Move creature
+    const auto cid = map.getTile(move.oldPosition).things[move.oldStackPosition].creatureId;
+    map.removeThing(move.oldPosition, move.oldStackPosition);
+    map.addCreature(move.newPosition, cid);
+  }
+  else if (move.canSeeOldPos)
+  {
+    // Remove creature
+    map.removeThing(move.oldPosition, move.oldStackPosition);
+  }
+  else if (move.canSeeNewPos)
+  {
+    // Add new creature
+    map.addCreature(move.newPosition, move.creature.id);
   }
 
-  if (move.canSeeNewPos)
-  {
-    // Add to tile
-    const auto x = move.newPosition.getX() + 8 - playerPosition.getX();
-    const auto y = move.newPosition.getY() + 6 - playerPosition.getY();
-    if (move.canSeeOldPos)
-    {
-      map[y][x].creatures.push_back(c);
-    }
-    else
-    {
-      ProtocolTypes::MapData::CreatureData cd;
-      cd.creature = move.creature;
-      cd.stackpos = 1;  // TODO
-      map[y][x].creatures.push_back(cd);
-    }
-  }
+  // If this played moved then we need to update map's playerPosition
+  // BEFORE OR AFTER MOVING PLAYER???
 
   Graphics::draw(map, playerPosition, playerId);
 }
@@ -158,8 +118,6 @@ void handleCreatureMove(const ProtocolTypes::CreatureMove& move)
 void handle_packet(IncomingPacket* packet)
 {
   using namespace ProtocolHelper;
-
-  LOG_INFO("%s", __func__);
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();

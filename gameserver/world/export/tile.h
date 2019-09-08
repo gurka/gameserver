@@ -60,6 +60,8 @@ class Tile
     };
   };
 
+  Tile() = default;
+
   explicit Tile(ItemUniqueId groundItem)
   {
     things_.emplace_back(groundItem, false);

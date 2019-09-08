@@ -239,17 +239,15 @@ void addCreature(const Creature& creature,
       *unused = creature.getCreatureId();
     }
 
-    packet->addU8(0x61);
-    packet->addU8(0x00);
+    packet->addU16(0x0061);
     packet->addU32(0x00);  // creatureId to remove (0x00 = none)
     packet->add(creature.getCreatureId());
     packet->add(creature.getName());
   }
   else
   {
-    // We already know about this creature
-    packet->addU8(0x62);
-    packet->addU8(0x00);
+    // Client already know about this creature
+    packet->addU16(0x0062);
     packet->add(creature.getCreatureId());
   }
 
@@ -386,6 +384,7 @@ ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
   packet->get(&creature.healthPercent);
   creature.direction = static_cast<Direction>(packet->getU8());
   creature.outfit = getOutfit(packet);
+  packet->getU16();  // unknown 0xDC00
   packet->get(&creature.speed);
   return creature;
 }

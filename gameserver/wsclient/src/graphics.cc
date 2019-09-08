@@ -68,95 +68,86 @@ namespace Graphics
     screen = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
   }
 
-  void draw(const types::Map& map, const Position& position, std::uint32_t playerId)
+  void draw(const Map& map, const Position& position, std::uint32_t playerId)
   {
     if (SDL_MUSTLOCK(screen))
     {
       SDL_LockSurface(screen);
     }
 
-    for (auto tile_y = 0; tile_y < types::draw_tiles_y; tile_y++)
+    for (auto y = 0; y < types::draw_tiles_y; y++)
     {
-      for (auto tile_x = 0; tile_x < types::draw_tiles_x; tile_x++)
+      for (auto x = 0; x < types::draw_tiles_x; x++)
       {
-        // Adjust for draw/known map size
-        const auto& tile = map[1 + tile_y][1 + tile_x];
-
-        //  Draw creature over tile
-        if (!tile.creatures.empty())
+        const auto& tile = map.getTile(Position(x - 7 + position.getX(),
+                                                y - 5 + position.getY(),
+                                                position.getZ()));
+        for (const auto& thing : tile.things)
         {
-          if (tile.creatures.front().creature.id == playerId)
+          if (thing.isItem)
           {
-            // Fill sprite with green
-            fillRect(tile_x * tile_size,
-                     tile_y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     255,
-                     0);
+            if (thing.item.itemTypeId == 694)
+            {
+              // Ground, fill with brown
+              fillRect(x * tile_size,
+                       y * tile_size,
+                       tile_size,
+                       tile_size,
+                       218,
+                       165,
+                       32);
+
+            }
+            else if (thing.item.itemTypeId == 475)
+            {
+              // Water, fill with blue
+              fillRect(x * tile_size,
+                       y * tile_size,
+                       tile_size,
+                       tile_size,
+                       0,
+                       0,
+                       255);
+            }
+            else
+            {
+              // Unknown itemTypeId, fill with black
+              LOG_INFO("%s: unknown itemTypeId: %d", __func__, thing.item.itemTypeId);
+              fillRect(x * tile_size,
+                       y * tile_size,
+                       tile_size,
+                       tile_size,
+                       0,
+                       0,
+                       0);
+            }
           }
           else
           {
-            // Fill sprite with red
-            fillRect(tile_x * tile_size,
-                     tile_y * tile_size,
-                     tile_size,
-                     tile_size,
-                     255,
-                     0,
-                     0);
+            // Creature
+            if (thing.creatureId == playerId)
+            {
+              // Fill sprite with green
+              fillRect(x * tile_size,
+                       y * tile_size,
+                       tile_size,
+                       tile_size,
+                       0,
+                       255,
+                       0);
+            }
+            else
+            {
+              // Fill sprite with red
+              fillRect(x * tile_size,
+                       y * tile_size,
+                       tile_size,
+                       tile_size,
+                       255,
+                       0,
+                       0);
+            }
           }
-        }
-        else if (!tile.items.empty())
-        {
-          const auto& ground = tile.items.front();
-          if (ground.item.itemTypeId == 694)
-          {
-            // Ground, fill with brown
-            fillRect(tile_x * tile_size,
-                     tile_y * tile_size,
-                     tile_size,
-                     tile_size,
-                     218,
-                     165,
-                     32);
-
-          }
-          else if (ground.item.itemTypeId == 475)
-          {
-            // Water, fill with blue
-            fillRect(tile_x * tile_size,
-                     tile_y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     0,
-                     255);
-          }
-          else
-          {
-            // Unknown itemTypeId, fill with black
-            LOG_INFO("%s: unknown itemTypeId: %d", __func__, ground.item.itemTypeId);
-            fillRect(tile_x * tile_size,
-                     tile_y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     0,
-                     0);
-          }
-        }
-        else
-        {
-          // Empty tile, fill with black
-          fillRect(tile_x * tile_size,
-                   tile_y * tile_size,
-                   tile_size,
-                   tile_size,
-                   0,
-                   0,
-                   0);
         }
       }
     }

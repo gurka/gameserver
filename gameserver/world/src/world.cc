@@ -206,7 +206,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   // Check if toTile is blocking or not
   for (const auto& thing : toTile->getThings())
   {
-    if (thing.isItem && itemManager_->getItem(thing.item.itemUniqueId)->getItemType().isBlocking)
+    if (thing.isItem && getItem(thing.item.itemUniqueId)->getItemType().isBlocking)
     {
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
@@ -229,7 +229,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   creature_data_.at(creatureId).position = toPosition;
 
   // Set new nextWalkTime for this Creature
-  auto groundSpeed = itemManager_->getItem(fromTile->getItemUniqueId(0))->getItemType().speed;
+  auto groundSpeed = getItem(fromTile->getItemUniqueId(0))->getItemType().speed;
   auto creatureSpeed = creature.getSpeed();
   auto duration = (1000 * groundSpeed) / creatureSpeed;
 
@@ -408,7 +408,7 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
   }
 
   // Get the item and verify itemTypeId
-  const auto* item = itemManager_->getItem(tile->getItemUniqueId(stackPos));
+  const auto* item = getItem(tile->getItemUniqueId(stackPos));
   if (!item || item->getItemTypeId() != itemTypeId)
   {
     LOG_ERROR("%s: item with given stackPos does not match given itemTypeId", __func__);

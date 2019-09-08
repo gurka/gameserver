@@ -24,15 +24,16 @@
 #ifndef WSCLIENT_SRC_GRAPHICS_H_
 #define WSCLIENT_SRC_GRAPHICS_H_
 
-#include "types.h"
-#include "protocol_types.h"
+#include <cstdint>
+
 #include "position.h"
+#include "map.h"
 
 namespace Graphics
 {
 
   void init();
-  void draw(const types::Map&,
+  void draw(const Map& map,
             const Position& position,
             std::uint32_t playerId);
 
