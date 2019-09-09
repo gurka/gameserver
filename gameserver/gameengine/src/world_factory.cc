@@ -40,17 +40,8 @@
 #include "rapidxml.hpp"
 
 std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilename,
-                                                 const std::string& dataFilename,
-                                                 const std::string& itemsFilename)
+                                                 ItemManager* itemManager)
 {
-  // Load ItemManager
-  auto itemManager = std::make_unique<ItemManager>();
-  if (!itemManager->loadItemTypes(dataFilename, itemsFilename))
-  {
-    LOG_ERROR("%s: could not load ItemManager", __func__);
-    return std::unique_ptr<World>();
-  }
-
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
   std::ifstream xmlFile(worldFilename);
@@ -131,7 +122,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
         return std::unique_ptr<World>();
       }
 
-      tiles.emplace_back(groundItemId);
+      tiles.emplace_back(itemManager->getItem(groundItemId));
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
@@ -153,7 +144,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addItem(itemId, itemManager->getItem(itemId)->getItemType().alwaysOnTop);
+        tiles.back().addItem(*(itemManager->getItem(itemId)));
       }
 
       // Go to next <tile> in XML
@@ -164,5 +155,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
   LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
   free(xmlString);
 
-  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles), std::move(itemManager));
+  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles));
 }

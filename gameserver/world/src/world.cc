@@ -33,16 +33,13 @@
 
 #include "logger.h"
 #include "tick.h"
-#include "item_manager.h"
 
 World::World(int worldSizeX,
              int worldSizeY,
-             std::vector<Tile>&& tiles,
-             std::unique_ptr<ItemManager>&& itemManager)
+             std::vector<Tile>&& tiles)
   : worldSizeX_(worldSizeX),
     worldSizeY_(worldSizeY),
-    tiles_(std::move(tiles)),
-    itemManager_(std::move(itemManager))
+    tiles_(std::move(tiles))
 {
 }
 
@@ -99,7 +96,7 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
                                  things.cend(),
                                  [](const Tile::Thing& thing)
     {
-      return !thing.isItem;
+      return thing.creature != nullptr;
     });
     if (it != things.cend())
     {
@@ -113,7 +110,7 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
   if (tile)
   {
     LOG_INFO("%s: spawning creature: %d at position: %s", __func__, creatureId, adjustedPosition.toString().c_str());
-    tile->addCreature(creatureId);
+    tile->addCreature(creature);
 
     creature_data_.emplace(std::piecewise_construct,
                            std::forward_as_tuple(creatureId),
@@ -124,7 +121,7 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
     auto nearCreatureIds = getCreatureIdsThatCanSeePosition(adjustedPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onCreatureSpawn(*this, *creature, adjustedPosition);
+      getCreatureCtrl(nearCreatureId).onCreatureSpawn(*creature, adjustedPosition);
     }
 
     return ReturnCode::OK;
@@ -157,7 +154,7 @@ void World::removeCreature(CreatureId creatureId)
   auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureDespawn(*this, creature, position, stackPos);
+    getCreatureCtrl(nearCreatureId).onCreatureDespawn(creature, position, stackPos);
   }
 
   creature_data_.erase(creatureId);
@@ -206,13 +203,12 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   // Check if toTile is blocking or not
   for (const auto& thing : toTile->getThings())
   {
-    if (thing.isItem && getItem(thing.item.itemUniqueId)->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().isBlocking)
     {
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
-
-    if (!thing.isItem)
+    else if (thing.creature)
     {
       LOG_DEBUG("%s: Item on toTile has creatures", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
@@ -225,11 +221,11 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   auto fromStackPos = fromTile->getCreatureStackPos(creatureId);
   fromTile->removeCreature(creatureId);
 
-  toTile->addCreature(creatureId);
+  toTile->addCreature(creature_data_.at(creatureId).creature);
   creature_data_.at(creatureId).position = toPosition;
 
   // Set new nextWalkTime for this Creature
-  auto groundSpeed = getItem(fromTile->getItemUniqueId(0))->getItemType().speed;
+  auto groundSpeed = fromTile->getItem(0)->getItemType().speed;
   auto creatureSpeed = creature.getSpeed();
   auto duration = (1000 * groundSpeed) / creatureSpeed;
 
@@ -285,13 +281,12 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       }
       for (const auto& thing : tile->getThings())
       {
-        if (!thing.isItem)
+        if (thing.creature)
         {
-          getCreatureCtrl(thing.creatureId).onCreatureMove(*this,
-                                                           creature,
-                                                           fromPosition,
-                                                           fromStackPos,
-                                                           toPosition);
+          getCreatureCtrl(thing.creature->getCreatureId()).onCreatureMove(creature,
+                                                                          fromPosition,
+                                                                          fromStackPos,
+                                                                          toPosition);
         }
       }
     }
@@ -304,7 +299,7 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
     auto nearCreatureIds = getCreatureIdsThatCanSeePosition(fromPosition);
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, fromPosition);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
     }
   }
 
@@ -329,7 +324,7 @@ void World::creatureTurn(CreatureId creatureId, Direction direction)
   auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureTurn(*this, creature, position, stackPos);
+    getCreatureCtrl(nearCreatureId).onCreatureTurn(creature, position, stackPos);
   }
 }
 
@@ -346,7 +341,7 @@ void World::creatureSay(CreatureId creatureId, const std::string& message)
   auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureSay(*this, creature, position, message);
+    getCreatureCtrl(nearCreatureId).onCreatureSay(creature, position, message);
   }
 }
 
@@ -364,7 +359,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
 
   for (const auto& thing : tile->getThings())
   {
-    if (thing.isItem && getItem(thing.item.itemUniqueId)->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().isBlocking)
     {
       return false;
     }
@@ -373,7 +368,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
   return true;
 }
 
-World::ReturnCode World::addItem(Item* item, const Position& position)
+World::ReturnCode World::addItem(const Item& item, const Position& position)
 {
   auto* tile = internalGetTile(position);
   if (!tile)
@@ -383,13 +378,13 @@ World::ReturnCode World::addItem(Item* item, const Position& position)
   }
 
   // Add Item to toTile
-  tile->addItem(item->getItemUniqueId(), item->getItemType().alwaysOnTop);
+  tile->addItem(item);
 
   // Call onItemAdded on all creatures that can see position
   auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(*this, *item, position);
+    getCreatureCtrl(nearCreatureId).onItemAdded(item, position);
   }
 
   return ReturnCode::OK;
@@ -408,7 +403,7 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
   }
 
   // Get the item and verify itemTypeId
-  const auto* item = getItem(tile->getItemUniqueId(stackPos));
+  const auto* item = tile->getItem(stackPos);
   if (!item || item->getItemTypeId() != itemTypeId)
   {
     LOG_ERROR("%s: item with given stackPos does not match given itemTypeId", __func__);
@@ -429,7 +424,7 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
   auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
   for (const auto& nearCreatureId : nearCreatureIds)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(*this, position, stackPos);
+    getCreatureCtrl(nearCreatureId).onItemRemoved(position, stackPos);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the tile
@@ -438,7 +433,7 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
   {
     for (const auto& nearCreatureId : nearCreatureIds)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, position);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(position);
     }
   }
 
@@ -495,7 +490,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   // Check if we can add Item to toTile
   for (const auto& thing : toTile->getThings())
   {
-    if (thing.isItem && getItem(thing.item.itemUniqueId)->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().isBlocking)
     {
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
@@ -503,7 +498,7 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   }
 
   // Get the Item from fromTile
-  auto* item = getItem(fromTile->getItemUniqueId(fromStackPos));
+  auto* item = fromTile->getItem(fromStackPos);
   if (!item || item->getItemTypeId() != itemTypeId)
   {
     LOG_ERROR("%s: Could not find the item to move", __func__);
@@ -520,20 +515,20 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   }
 
   // Add Item to toTile
-  toTile->addItem(item->getItemUniqueId(), item->getItemType().alwaysOnTop);
+  toTile->addItem(*item);
 
   // Call onItemRemoved on all creatures that can see fromPosition
   const auto nearCreatureIdsFrom = getCreatureIdsThatCanSeePosition(fromPosition);
   for (const auto& nearCreatureId : nearCreatureIdsFrom)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(*this, fromPosition, fromStackPos);
+    getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
   }
 
   // Call onItemAdded on all creatures that can see toPosition
   const auto nearCreatureIdsTo = getCreatureIdsThatCanSeePosition(toPosition);
   for (const auto& nearCreatureId : nearCreatureIdsTo)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(*this, *item, toPosition);
+    getCreatureCtrl(nearCreatureId).onItemAdded(*item, toPosition);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
@@ -542,27 +537,11 @@ World::ReturnCode World::moveItem(CreatureId creatureId,
   {
     for (const auto& nearCreatureId : nearCreatureIdsFrom)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(*this, fromPosition);
+      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
     }
   }
 
   return ReturnCode::OK;
-}
-
-Item* World::getItem(const Position& position, int stackPosition)
-{
-  auto* tile = internalGetTile(position);
-  if (!tile)
-  {
-    LOG_ERROR("%s: could not find tile at position: %s", __func__, position.toString().c_str());
-    return nullptr;
-  }
-  return getItem(tile->getItemUniqueId(stackPosition));
-}
-
-Item* World::getItem(ItemUniqueId itemUniqueId)
-{
-  return itemManager_->getItem(itemUniqueId);
 }
 
 bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const
@@ -579,6 +558,42 @@ bool World::creatureCanReach(CreatureId creatureId, const Position& position) co
   return !(std::abs(creaturePosition.getX() - position.getX()) > 1 ||
            std::abs(creaturePosition.getY() - position.getY()) > 1 ||
            creaturePosition.getZ() != position.getZ());
+}
+
+const Tile* World::getTile(const Position& position) const
+{
+  if (position.getX() < position_offset ||
+      position.getX() >= position_offset + worldSizeX_ ||
+      position.getY() < position_offset ||
+      position.getY() >= position_offset + worldSizeY_ ||
+      position.getZ() != 7)
+  {
+    return nullptr;
+  }
+
+  const auto index = ((position.getX() - position_offset) * worldSizeY_) +
+                      (position.getY() - position_offset);
+  return &tiles_[index];
+}
+
+const Creature& World::getCreature(CreatureId creatureId) const
+{
+  if (!creatureExists(creatureId))
+  {
+    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
+    return Creature::INVALID;
+  }
+  return *(creature_data_.at(creatureId).creature);
+}
+
+const Position& World::getCreaturePosition(CreatureId creatureId) const
+{
+  if (!creatureExists(creatureId))
+  {
+    LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
+    return Position::INVALID;
+  }
+  return creature_data_.at(creatureId).position;
 }
 
 std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& position) const
@@ -599,9 +614,9 @@ std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& 
 
       for (const auto& thing : tile->getThings())
       {
-        if (!thing.isItem)
+        if (thing.creature)
         {
-          creatureIds.push_back(thing.creatureId);
+          creatureIds.push_back(thing.creature->getCreatureId());
         }
       }
     }
@@ -626,42 +641,11 @@ Tile* World::internalGetTile(const Position& position)
   return &tiles_[index];
 }
 
-const Tile* World::getTile(const Position& position) const
-{
-  if (position.getX() < position_offset ||
-      position.getX() >= position_offset + worldSizeX_ ||
-      position.getY() < position_offset ||
-      position.getY() >= position_offset + worldSizeY_ ||
-      position.getZ() != 7)
-  {
-    return nullptr;
-  }
-
-  const auto index = ((position.getX() - position_offset) * worldSizeY_) +
-                      (position.getY() - position_offset);
-  return &tiles_[index];
-}
-
-const Item* World::getItem(ItemUniqueId itemUniqueId) const
-{
-  return itemManager_->getItem(itemUniqueId);
-}
-
 Creature& World::internalGetCreature(CreatureId creatureId)
 {
   if (!creatureExists(creatureId))
   {
     LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
-  }
-  return *(creature_data_.at(creatureId).creature);
-}
-
-const Creature& World::getCreature(CreatureId creatureId) const
-{
-  if (!creatureExists(creatureId))
-  {
-    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
-    return Creature::INVALID;
   }
   return *(creature_data_.at(creatureId).creature);
 }
@@ -673,14 +657,4 @@ CreatureCtrl& World::getCreatureCtrl(CreatureId creatureId)
     LOG_ERROR("getCreatureCtrl called with non-existent CreatureId");
   }
   return *(creature_data_.at(creatureId).creature_ctrl);
-}
-
-const Position& World::getCreaturePosition(CreatureId creatureId) const
-{
-  if (!creatureExists(creatureId))
-  {
-    LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
-    return Position::INVALID;
-  }
-  return creature_data_.at(creatureId).position;
 }

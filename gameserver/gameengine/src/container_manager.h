@@ -50,7 +50,6 @@ class ContainerManager
   Container* getContainer(ItemUniqueId itemUniqueId);
 
   const Item* getItem(ItemUniqueId itemUniqueId, int containerSlot) const;
-  Item* getItem(ItemUniqueId itemUniqueId, int containerSlot);
 
   void useContainer(PlayerCtrl* playerCtrl,
                     const Item& item,
@@ -61,7 +60,7 @@ class ContainerManager
 
   bool canAddItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
   void removeItem(ItemUniqueId itemUniqueId, int containerSlot);
-  void addItem(ItemUniqueId itemUniqueId, int containerSlot, Item* item);
+  void addItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
 
   void updateRootPosition(ItemUniqueId itemUniqueId, const GamePosition& gamePosition);
 

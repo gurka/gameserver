@@ -35,36 +35,27 @@ class Tile
  public:
   struct Thing
   {
-    Thing(CreatureId creatureId_)
+    Thing(const Creature* creature)
+        : creature(creature),
+          item(nullptr)
     {
-      isItem = false;
-      creatureId = creatureId_;
     }
 
-    Thing(ItemUniqueId itemUniqueId, bool onTop)
+    Thing(const Item* item)
+        : creature(nullptr),
+          item(item)
     {
-      isItem = true;
-      item.itemUniqueId = itemUniqueId;
-      item.onTop = onTop;
     }
 
-    bool isItem;
-    union
-    {
-      struct
-      {
-        ItemUniqueId itemUniqueId;
-        bool onTop;
-      } item;
-      CreatureId creatureId;
-    };
+    const Creature* creature;
+    const Item* item;
   };
 
   Tile() = default;
 
-  explicit Tile(ItemUniqueId groundItem)
+  explicit Tile(const Item* groundItem)
   {
-    things_.emplace_back(groundItem, false);
+    things_.emplace_back(groundItem);
   }
 
   // Delete copy constructors
@@ -75,15 +66,17 @@ class Tile
   Tile(Tile&&) = default;
   Tile& operator=(Tile&&) = default;
 
-  // Creatures
-  void addCreature(CreatureId creatureId);
+  // Creatures (TODO: sort out Creature* vs CreatureId)
+  void addCreature(const Creature* creature);
   bool removeCreature(CreatureId creatureId);
+  const Creature* getCreature(int stackPosition) const;
   CreatureId getCreatureId(int stackPosition) const;
   int getCreatureStackPos(CreatureId creatureId) const;
 
-  // Items
-  void addItem(ItemUniqueId item, bool onTop);
+  // Items (TODO: sort out Item* vs ItemUniqueId)
+  void addItem(const Item& item);
   bool removeItem(int stackPosition);
+  const Item* getItem(int stackPosition) const;
   ItemUniqueId getItemUniqueId(int stackPosition) const;
 
   // Other

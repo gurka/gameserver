@@ -36,6 +36,7 @@
 #include "creature.h"
 #include "creature_ctrl.h"
 #include "item.h"
+#include "item_manager.h"
 #include "container_manager.h"
 #include "position.h"
 #include "world_factory.h"
@@ -62,7 +63,15 @@ struct RecursiveTask
 
 }  // namespace
 
-GameEngine::GameEngine() = default;
+GameEngine::GameEngine()
+    : playerData_(),
+      itemManager_(),
+      world_(),
+      gameEngineQueue_(nullptr),
+      loginMessage_(),
+      containerManager_()
+{
+}
 GameEngine::~GameEngine() = default;
 
 bool GameEngine::init(GameEngineQueue* gameEngineQueue,
@@ -74,8 +83,16 @@ bool GameEngine::init(GameEngineQueue* gameEngineQueue,
   gameEngineQueue_ = gameEngineQueue;
   loginMessage_ = loginMessage;
 
+  // Load ItemManager
+  itemManager_ = std::make_unique<ItemManager>();
+  if (!itemManager_->loadItemTypes(dataFilename, itemsFilename))
+  {
+    LOG_ERROR("%s: could not load ItemManager", __func__);
+    return false;
+  }
+
   // Load World
-  world_ = WorldFactory::createWorld(worldFilename, dataFilename, itemsFilename);
+  world_ = WorldFactory::createWorld(worldFilename, itemManager_.get());
   if (!world_)
   {
     LOG_ERROR("%s: could not load World", __func__);
@@ -284,13 +301,13 @@ void GameEngine::say(CreatureId creatureId,
 
       for (const auto& thing : tile->getThings())
       {
-        if (thing.isItem)
+        if (thing.item)
         {
-          oss << "Item: " << thing.item.itemUniqueId << "\n";
+          oss << "Item: " << thing.item->getItemUniqueId() << "\n";
         }
         else
         {
-          oss << "Creature: " << thing.creatureId << "\n";
+          oss << "Creature: " << thing.creature->getCreatureId() << "\n";
         }
       }
 
@@ -374,7 +391,7 @@ void GameEngine::moveItem(CreatureId creatureId,
   removeItem(creatureId, fromPosition, count);
 
   // Add Item to toPosition
-  addItem(creatureId, toPosition, item, count);
+  addItem(creatureId, toPosition, *item, count);
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
@@ -468,7 +485,7 @@ void GameEngine::openParentContainer(CreatureId creatureId, ItemUniqueId itemUni
                                          newContainerId);
 }
 
-Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
+const Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 {
   // TODO(simon): verify ItemId
   auto& playerData = getPlayerData(creatureId);
@@ -476,7 +493,7 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
   const auto& gamePosition = position.getGamePosition();
   if (gamePosition.isPosition())
   {
-    return world_->getItem(gamePosition.getPosition(), position.getStackPosition());
+    return world_->getTile(gamePosition.getPosition())->getItem(position.getStackPosition());
   }
 
   if (gamePosition.isInventory())
@@ -550,7 +567,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
   }
 }
 
-void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, Item* item, int count)
+void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
   auto& playerData = getPlayerData(creatureId);
 
@@ -578,8 +595,8 @@ void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, It
   }
 
   // Handle case where a container is moved to a non-container
-  if (item->getItemType().isContainer && !position.isContainer())
+  if (item.getItemType().isContainer && !position.isContainer())
   {
-    containerManager_->updateRootPosition(item->getItemUniqueId(), position);
+    containerManager_->updateRootPosition(item.getItemUniqueId(), position);
   }
 }

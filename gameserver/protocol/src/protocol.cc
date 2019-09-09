@@ -57,10 +57,12 @@ constexpr std::uint8_t Protocol::INVALID_CONTAINER_ID;
 
 Protocol::Protocol(const std::function<void(void)>& closeProtocol,
                    std::unique_ptr<Connection>&& connection,
+                   const WorldInterface* worldInterface,
                    GameEngineQueue* gameEngineQueue,
                    AccountReader* accountReader)
   : closeProtocol_(closeProtocol),
     connection_(std::move(connection)),
+    worldInterface_(worldInterface),
     gameEngineQueue_(gameEngineQueue),
     accountReader_(accountReader),
     playerId_(Creature::INVALID_ID)
@@ -87,9 +89,7 @@ Protocol::Protocol(const std::function<void(void)>& closeProtocol,
   connection_->init(callbacks);
 }
 
-void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
-                               const Creature& creature,
-                               const Position& position)
+void Protocol::onCreatureSpawn(const Creature& creature, const Position& position)
 {
   if (!isConnected())
   {
@@ -109,7 +109,7 @@ void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
                         // TODO(simon): customizable?
 
     // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
-    ProtocolHelper::addFullMapData(world_interface, position, &knownCreatures_, &packet);
+    ProtocolHelper::addFullMapData(*worldInterface_, position, &knownCreatures_, &packet);
     ProtocolHelper::addMagicEffect(position, 0x0A, &packet);
     ProtocolHelper::addPlayerStats(player, &packet);
     ProtocolHelper::addWorldLight(0x64, 0xD7, &packet);
@@ -131,13 +131,10 @@ void Protocol::onCreatureSpawn(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
-                                 const Creature& creature,
+void Protocol::onCreatureDespawn(const Creature& creature,
                                  const Position& position,
                                  std::uint8_t stackPos)
 {
-  (void)world_interface;
-
   if (!isConnected())
   {
     if (creature.getCreatureId() == playerId_)
@@ -166,8 +163,7 @@ void Protocol::onCreatureDespawn(const WorldInterface& world_interface,
   }
 }
 
-void Protocol::onCreatureMove(const WorldInterface& world_interface,
-                              const Creature& creature,
+void Protocol::onCreatureMove(const Creature& creature,
                               const Position& oldPosition,
                               std::uint8_t oldStackPos,
                               const Position& newPosition)
@@ -180,7 +176,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
   // Build outgoing packet
   OutgoingPacket packet;
 
-  const auto& player_position = world_interface.getCreaturePosition(playerId_);
+  const auto& player_position = worldInterface_->getCreaturePosition(playerId_);
   bool canSeeOldPos = ProtocolHelper::canSee(player_position, oldPosition);
   bool canSeeNewPos = ProtocolHelper::canSee(player_position, newPosition);
 
@@ -230,7 +226,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get north block
       packet.addU8(0x65);
-      ProtocolHelper::addMapData(world_interface,
+      ProtocolHelper::addMapData(*worldInterface_,
                                  Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
                                  18,
                                  1,
@@ -241,7 +237,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get south block
       packet.addU8(0x67);
-      ProtocolHelper::addMapData(world_interface,
+      ProtocolHelper::addMapData(*worldInterface_,
                                  Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()),
                                  18,
                                  1,
@@ -253,7 +249,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get west block
       packet.addU8(0x68);
-      ProtocolHelper::addMapData(world_interface,
+      ProtocolHelper::addMapData(*worldInterface_,
                                  Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
                                  1,
                                  14,
@@ -264,7 +260,7 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
     {
       // Get west block
       packet.addU8(0x66);
-      ProtocolHelper::addMapData(world_interface,
+      ProtocolHelper::addMapData(*worldInterface_,
                                  Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()),
                                  1,
                                  14,
@@ -276,13 +272,10 @@ void Protocol::onCreatureMove(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureTurn(const WorldInterface& world_interface,
-                              const Creature& creature,
+void Protocol::onCreatureTurn(const Creature& creature,
                               const Position& position,
                               std::uint8_t stackPos)
 {
-  (void)world_interface;
-
   if (!isConnected())
   {
     return;
@@ -299,13 +292,10 @@ void Protocol::onCreatureTurn(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureSay(const WorldInterface& world_interface,
-                             const Creature& creature,
+void Protocol::onCreatureSay(const Creature& creature,
                              const Position& position,
                              const std::string& message)
 {
-  (void)world_interface;
-
   if (!isConnected())
   {
     return;
@@ -321,12 +311,9 @@ void Protocol::onCreatureSay(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onItemRemoved(const WorldInterface& world_interface,
-                             const Position& position,
+void Protocol::onItemRemoved(const Position& position,
                              std::uint8_t stackPos)
 {
-  (void)world_interface;
-
   if (!isConnected())
   {
     return;
@@ -339,10 +326,8 @@ void Protocol::onItemRemoved(const WorldInterface& world_interface,
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onItemAdded(const WorldInterface& world_interface, const Item& item, const Position& position)
+void Protocol::onItemAdded(const Item& item, const Position& position)
 {
-  (void)world_interface;
-
   if (!isConnected())
   {
     return;
@@ -355,7 +340,7 @@ void Protocol::onItemAdded(const WorldInterface& world_interface, const Item& it
   connection_->sendPacket(std::move(packet));
 }
 
-void Protocol::onTileUpdate(const WorldInterface& world_interface, const Position& position)
+void Protocol::onTileUpdate(const Position& position)
 {
   if (!isConnected())
   {
@@ -365,7 +350,7 @@ void Protocol::onTileUpdate(const WorldInterface& world_interface, const Positio
   OutgoingPacket packet;
   packet.addU8(0x69);
   ProtocolHelper::addPosition(position, &packet);
-  ProtocolHelper::addMapData(world_interface, position, 1, 1, &knownCreatures_, &packet);
+  ProtocolHelper::addMapData(*worldInterface_, position, 1, 1, &knownCreatures_, &packet);
   packet.addU8(0x00);
   packet.addU8(0xFF);
   connection_->sendPacket(std::move(packet));

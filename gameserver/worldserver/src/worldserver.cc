@@ -75,6 +75,7 @@ void onClientConnected(std::unique_ptr<Connection>&& connection)
                                                protocols.erase(protocolId);
                                              },
                                              std::move(connection),
+                                             gameEngine->getWorldInterface(),
                                              gameEngineQueue.get(),
                                              accountReader.get());
 

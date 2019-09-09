@@ -181,16 +181,13 @@ void addMapData(const WorldInterface& world_interface,
               break;
             }
 
-            if (thing.isItem)
+            if (thing.item)
             {
-              addItem(*(world_interface.getItem(thing.item.itemUniqueId)),
-                      packet);
+              addItem(*(thing.item), packet);
             }
             else
             {
-              addCreature(world_interface.getCreature(thing.creatureId),
-                          knownCreatures,
-                          packet);
+              addCreature(*(thing.creature), knownCreatures, packet);
             }
 
             count += 1;

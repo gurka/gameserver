@@ -29,20 +29,20 @@
 
 #include "logger.h"
 
-void Tile::addCreature(CreatureId creatureId)
+void Tile::addCreature(const Creature* creature)
 {
   auto it = things_.cbegin() + 1;
   while (it != things_.cend())
   {
     // Iterate until we have passed all items with onTop = true
     // e.g. found a creature, an item with onTop = false, or end
-    if (!it->isItem || !it->item.onTop)
+    if (!it->item || !it->item->getItemType().alwaysOnTop)
     {
       break;
     }
     ++it;
   }
-  things_.emplace(it, creatureId);
+  things_.emplace(it, creature);
 }
 
 bool Tile::removeCreature(CreatureId creatureId)
@@ -51,7 +51,7 @@ bool Tile::removeCreature(CreatureId creatureId)
                                things_.cend(),
                                [&creatureId](const Thing& t)
   {
-    return !t.isItem && t.creatureId == creatureId;
+    return t.creature && t.creature->getCreatureId() == creatureId;
   });
 
   if (it != things_.cend())
@@ -65,7 +65,7 @@ bool Tile::removeCreature(CreatureId creatureId)
   }
 }
 
-CreatureId Tile::getCreatureId(int stackPosition) const
+const Creature* Tile::getCreature(int stackPosition) const
 {
   if (stackPosition == 0 || static_cast<int>(things_.size()) < stackPosition)
   {
@@ -73,16 +73,26 @@ CreatureId Tile::getCreatureId(int stackPosition) const
               __func__,
               stackPosition,
               things_.size());
-    return Creature::INVALID_ID;
+    return nullptr;
   }
 
-  if (things_[stackPosition].isItem)
+  if (!things_[stackPosition].creature)
   {
     LOG_ERROR("%s: thing on stackPosition: %d is an Item", __func__, stackPosition);
-    return Creature::INVALID_ID;
+    return nullptr;
   }
 
-  return things_[stackPosition].creatureId;
+  return things_[stackPosition].creature;
+}
+
+CreatureId Tile::getCreatureId(int stackPosition) const
+{
+  const auto* creature = getCreature(stackPosition);
+  if (creature)
+  {
+    return creature->getCreatureId();
+  }
+  return Creature::INVALID_ID;
 }
 
 int Tile::getCreatureStackPos(CreatureId creatureId) const
@@ -91,7 +101,7 @@ int Tile::getCreatureStackPos(CreatureId creatureId) const
                                things_.cend(),
                                [&creatureId](const Thing& t)
   {
-    return !t.isItem && t.creatureId == creatureId;
+    return t.creature && t.creature->getCreatureId() == creatureId;
   });
   if (it == things_.cend())
   {
@@ -101,11 +111,11 @@ int Tile::getCreatureStackPos(CreatureId creatureId) const
   return std::distance(things_.cbegin(), it);
 }
 
-void Tile::addItem(ItemUniqueId itemUniqueId, bool onTop)
+void Tile::addItem(const Item& item)
 {
-  if (onTop)
+  if (item.getItemType().alwaysOnTop)
   {
-    things_.emplace(things_.cbegin() + 1, itemUniqueId, onTop);
+    things_.emplace(things_.cbegin() + 1, &item);
   }
   else
   {
@@ -113,13 +123,13 @@ void Tile::addItem(ItemUniqueId itemUniqueId, bool onTop)
     while (it != things_.cend())
     {
       // Iterate until we have reached first item with onTop = false or end
-      if (it->isItem && !it->item.onTop)
+      if (it->item && !it->item->getItemType().alwaysOnTop)
       {
         break;
       }
       ++it;
     }
-    things_.emplace(it, itemUniqueId, onTop);
+    things_.emplace(it, &item);
   }
 }
 
@@ -138,22 +148,32 @@ bool Tile::removeItem(int stackPosition)
   return true;
 }
 
-ItemUniqueId Tile::getItemUniqueId(int stackPosition) const
+const Item* Tile::getItem(int stackPosition) const
 {
-  if (stackPosition == 0 || static_cast<int>(things_.size()) < stackPosition)
+  if (stackPosition < 0 || static_cast<int>(things_.size()) < stackPosition)
   {
     LOG_ERROR("%s: invalid stackPosition: %d with things_.size(): %d",
               __func__,
               stackPosition,
               things_.size());
-    return Item::INVALID_UNIQUE_ID;
+    return nullptr;
   }
 
-  if (!things_[stackPosition].isItem)
+  if (!things_[stackPosition].item)
   {
     LOG_ERROR("%s: thing on stackPosition: %d is a Creature", __func__, stackPosition);
-    return Item::INVALID_UNIQUE_ID;
+    return nullptr;
   }
 
-  return things_[stackPosition].item.itemUniqueId;
+  return things_[stackPosition].item;
+}
+
+ItemUniqueId Tile::getItemUniqueId(int stackPosition) const
+{
+  const auto* item = getItem(stackPosition);
+  if (item)
+  {
+    return item->getItemUniqueId();
+  }
+  return Item::INVALID_UNIQUE_ID;
 }

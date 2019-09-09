@@ -86,13 +86,6 @@ const Item* ContainerManager::getItem(ItemUniqueId itemUniqueId, int containerSl
   return container->items[containerSlot];
 }
 
-Item* ContainerManager::getItem(ItemUniqueId itemUniqueId, int containerSlot)
-{
-  // According to https://stackoverflow.com/a/123995/969365
-  const auto* item = static_cast<const ContainerManager*>(this)->getItem(itemUniqueId, containerSlot);
-  return const_cast<Item*>(item);
-}
-
 void ContainerManager::useContainer(PlayerCtrl* playerCtrl,
                                     const Item& item,
                                     const GamePosition& gamePosition,
@@ -227,13 +220,13 @@ void ContainerManager::removeItem(ItemUniqueId itemUniqueId, int containerSlot)
   }
 }
 
-void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, Item* item)
+void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item)
 {
   LOG_DEBUG("%s: itemUniqueId: %d, containerSlot: %d, itemTypeId: %d",
             __func__,
             itemUniqueId,
             containerSlot,
-            item->getItemTypeId());
+            item.getItemTypeId());
 
   auto* container = getContainer(itemUniqueId);
   if (!container)
@@ -248,24 +241,24 @@ void ContainerManager::addItem(ItemUniqueId itemUniqueId, int containerSlot, Ite
   container = getInnerContainer(container, containerSlot);
 
   // Add the item at the front
-  container->items.insert(container->items.begin(), item);
+  container->items.insert(container->items.begin(), &item);
 
   // Check if the new item is a container
-  if (item->getItemType().isContainer)
+  if (item.getItemType().isContainer)
   {
     // Update parentItemUniqueId and rootGamePosition if there is a container created for this item
     // Otherwise it will be done in createContainer when the container is opened
-    if (containers_.count(item->getItemUniqueId()) == 1)
+    if (containers_.count(item.getItemUniqueId()) == 1)
     {
-      containers_[item->getItemUniqueId()].parentItemUniqueId = container->item->getItemUniqueId();
-      containers_[item->getItemUniqueId()].rootGamePosition = container->rootGamePosition;
+      containers_[item.getItemUniqueId()].parentItemUniqueId = container->item->getItemUniqueId();
+      containers_[item.getItemUniqueId()].rootGamePosition = container->rootGamePosition;
     }
   }
 
   // Inform players that have this container open about the change
   for (auto& playerCtrl : container->relatedPlayers)
   {
-    playerCtrl->onContainerAddItem(itemUniqueId, *item);
+    playerCtrl->onContainerAddItem(itemUniqueId, item);
   }
 }
 

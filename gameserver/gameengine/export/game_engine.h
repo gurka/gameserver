@@ -41,6 +41,7 @@
 class GameEngineQueue;
 class OutgoingPacket;
 class PlayerCtrl;
+class ItemManager;
 class ContainerManager;
 
 class GameEngine
@@ -58,6 +59,7 @@ class GameEngine
             const std::string& dataFilename,
             const std::string& itemsFilename,
             const std::string& worldFilename);
+  const WorldInterface* getWorldInterface() const { return world_.get(); }
 
   bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(CreatureId creatureId);
@@ -81,10 +83,10 @@ class GameEngine
   void openParentContainer(CreatureId creatureId, ItemUniqueId itemUniqueId, int newContainerId);
 
  private:
-  Item* getItem(CreatureId creatureId, const ItemPosition& position);
+  const Item* getItem(CreatureId creatureId, const ItemPosition& position);
   bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
   void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
-  void addItem(CreatureId creatureId, const GamePosition& position, Item* item, int count);
+  void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
 
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
@@ -106,6 +108,7 @@ class GameEngine
   const PlayerData& getPlayerData(CreatureId creatureId) const { return playerData_.at(creatureId); }
 
   std::unordered_map<CreatureId, PlayerData> playerData_;
+  std::unique_ptr<ItemManager> itemManager_;
   std::unique_ptr<World> world_;
   GameEngineQueue* gameEngineQueue_;
   std::string loginMessage_;

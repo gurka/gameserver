@@ -37,8 +37,6 @@
 #include "tile.h"
 #include "position.h"
 
-class ItemManager;
-
 class World : public WorldInterface
 {
  public:
@@ -59,8 +57,7 @@ class World : public WorldInterface
 
   World(int worldSizeX,
         int worldSizeY,
-        std::vector<Tile>&& tiles,
-        std::unique_ptr<ItemManager>&& itemManager);
+        std::vector<Tile>&& tiles);
   ~World();
 
   // Delete copy constructors
@@ -78,7 +75,7 @@ class World : public WorldInterface
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
-  ReturnCode addItem(Item* item, const Position& position);
+  ReturnCode addItem(const Item& item, const Position& position);
   ReturnCode removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId,
                       const Position& fromPosition,
@@ -86,8 +83,6 @@ class World : public WorldInterface
                       ItemTypeId itemTypeId,
                       int count,
                       const Position& toPosition);
-  Item* getItem(const Position& position, int stackPosition);
-  Item* getItem(ItemUniqueId itemUniqueId);
 
   // Creature checks
   bool creatureCanThrowTo(CreatureId creatureId, const Position& position) const;
@@ -95,7 +90,6 @@ class World : public WorldInterface
 
   // WorldInterface
   const Tile* getTile(const Position& position) const override;
-  const Item* getItem(ItemUniqueId itemUniqueId) const override;
   const Creature& getCreature(CreatureId creatureId) const override;
   const Position& getCreaturePosition(CreatureId creatureId) const override;
 
@@ -116,8 +110,6 @@ class World : public WorldInterface
   // No z axis yet
   // index = (((x - position_offset) * worldSizeY_) + (y - position_offset))
   std::vector<Tile> tiles_;
-
-  std::unique_ptr<ItemManager> itemManager_;
 
   struct CreatureData
   {
