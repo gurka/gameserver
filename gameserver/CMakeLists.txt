@@ -25,12 +25,12 @@ add_subdirectory("loginserver")
 add_subdirectory("worldserver")
 
 # -- Modules --
-add_subdirectory("account")
-add_subdirectory("utils")
-add_subdirectory("network")
 add_subdirectory("protocol")
-add_subdirectory("gameengine")
+add_subdirectory("utils")
 add_subdirectory("world")
+add_subdirectory("gameengine")
+add_subdirectory("network")
+add_subdirectory("account")
 
 # -- External --
 add_library(rapidxml INTERFACE)

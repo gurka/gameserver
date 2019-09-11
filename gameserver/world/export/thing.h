@@ -22,31 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_EXPORT_SERVER_FACTORY_H_
-#define NETWORK_EXPORT_SERVER_FACTORY_H_
+#ifndef WORLD_EXPORT_THING_H_
+#define WORLD_EXPORT_THING_H_
 
-#include <functional>
-#include <memory>
+class Creature;
+class Item;
 
-class Server;
-class Connection;
-
-namespace boost
+struct Thing
 {
-namespace asio
-{
-class io_context;
-}
-}
+  Thing(const Creature* creature)
+      : creature(creature),
+        item(nullptr)
+  {
+  }
 
-class ServerFactory
-{
- public:
-  using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
+  Thing(const Item* item)
+      : creature(nullptr),
+        item(item)
+  {
+  }
 
-  static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
-                                              int port,
-                                              const OnClientConnectedCallback& onClientConnected);
+  const Creature* creature;
+  const Item* item;
 };
 
-#endif  // NETWORK_EXPORT_SERVER_FACTORY_H_
+#endif  // WORLD_EXPORT_THING_H_

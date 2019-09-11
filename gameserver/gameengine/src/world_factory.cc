@@ -115,7 +115,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
 
       const auto groundItemTypeId = std::stoi(groundItemAttr->value());
       const auto groundItemId = itemManager->createItem(groundItemTypeId);
-      if (groundItemId == 0)  // TODO(simon): invalid ItemId
+      if (groundItemId == Item::INVALID_UNIQUE_ID)
       {
         LOG_ERROR("%s: groundItemTypeId: %d is invalid", __func__, groundItemTypeId);
         free(xmlString);
@@ -137,14 +137,14 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
 
         const auto itemTypeId = std::stoi(itemIdAttr->value());
         const auto itemId = itemManager->createItem(itemTypeId);
-        if (itemId == 0)  // TODO(simon): invalid ItemId
+        if (itemId == Item::INVALID_UNIQUE_ID)
         {
           LOG_ERROR("%s: itemTypeId: %d is invalid", __func__, itemTypeId);
           free(xmlString);
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addItem(itemManager->getItem(itemId));
+        tiles.back().addThing(itemManager->getItem(itemId));
       }
 
       // Go to next <tile> in XML

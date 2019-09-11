@@ -7,6 +7,7 @@ add_library(world
   "export/direction.h"
   "export/item.h"
   "export/position.h"
+  "export/thing.h"
   "export/tile.h"
   "export/world_interface.h"
   "export/world.h"
@@ -15,7 +16,7 @@ add_library(world
   "src/tile.cc"
   "src/world.cc"
 )
-target_include_directories(world PUBLIC "export")
 target_link_libraries(world
   utils
 )
+target_include_directories(world PUBLIC "export")

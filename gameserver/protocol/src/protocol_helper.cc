@@ -39,39 +39,290 @@
 namespace ProtocolHelper
 {
 
-bool canSee(const Position& player_position, const Position& to_position)
+void addLogin(CreatureId playerId, std::uint16_t serverBeat, OutgoingPacket* packet)
 {
-  // Note: client displays 15x11 tiles, but it know about 18x14 tiles.
-  //
-  //       Client know about one extra row north, one extra column west
-  //       two extra rows south and two extra rows east.
-  //
-  //       This function returns true if to_position is visible from player_position
-  //       with regards to what the client (player_position) knows about, e.g. 18x14 tiles.
-  //
-  //
-  //     00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
-  //     ________________________________________________________
-  // 00 |   _______________________________________________      |
-  // 01 |  |                                               |     |
-  // 02 |  |                                               |     |
-  // 03 |  |                                               |     |
-  // 04 |  |                                               |     |
-  // 05 |  |                                               |     |
-  // 06 |  |                                               |     |
-  // 07 |  |                                               |     |
-  // 08 |  |                                               |     |
-  // 09 |  |                                               |     |
-  // 10 |  |                                               |     |
-  // 11 |  |                                               |     |
-  // 12 |  |_______________________________________________|     |
-  // 13 |                                                        |
-  // 14 |________________________________________________________|
+  packet->addU8(0x0A);
+  packet->add(playerId);
+  packet->add(serverBeat);
+}
 
-  return to_position.getX() >= player_position.getX() - 8 &&
-         to_position.getX() <= player_position.getX() + 9 &&
-         to_position.getY() >= player_position.getY() - 6 &&
-         to_position.getY() <= player_position.getY() + 7;
+void addLoginFailed(const std::string& reason, OutgoingPacket* packet)
+{
+  packet->addU8(0x14);
+  packet->add(reason);
+}
+void addMapFull(const WorldInterface& worldInterface,
+                const Position& position,
+                KnownCreatures* knownCreatures,
+                OutgoingPacket* packet)
+{
+  packet->addU8(0x64);
+  addPosition(position, packet);
+  addMapData(worldInterface,
+             Position(position.getX() - 8, position.getY() - 6, position.getZ()),
+             18,
+             14,
+             knownCreatures,
+             packet);
+}
+
+void addMap(const WorldInterface& worldInterface,
+            const Position& oldPosition,
+            const Position& newPosition,
+            KnownCreatures* knownCreatures,
+            OutgoingPacket* packet)
+{
+  if (oldPosition.getY() > newPosition.getY())
+  {
+    // North
+    packet->addU8(0x65);
+    addMapData(worldInterface,
+               Position(oldPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+               18,
+               1,
+               knownCreatures,
+               packet);
+  }
+  else if (oldPosition.getY() < newPosition.getY())
+  {
+    // South
+    packet->addU8(0x67);
+    addMapData(worldInterface,
+               Position(oldPosition.getX() - 8, newPosition.getY() + 7, oldPosition.getZ()),
+               18,
+               1,
+               knownCreatures,
+               packet);
+  }
+
+  if (oldPosition.getX() > newPosition.getX())
+  {
+    // West
+    packet->addU8(0x68);
+    addMapData(worldInterface,
+               Position(newPosition.getX() - 8, newPosition.getY() - 6, oldPosition.getZ()),
+               1,
+               14,
+               knownCreatures,
+               packet);
+  }
+  else if (oldPosition.getX() < newPosition.getX())
+  {
+    // East
+    packet->addU8(0x66);
+    addMapData(worldInterface,
+               Position(newPosition.getX() + 9, newPosition.getY() - 6, oldPosition.getZ()),
+               1,
+               14,
+               knownCreatures,
+               packet);
+  }
+}
+
+void addTileUpdated(const Position& position,
+                    const WorldInterface& worldInterface,
+                    KnownCreatures* knownCreatures,
+                    OutgoingPacket* packet)
+{
+  packet->addU8(0x69);
+  addPosition(position, packet);
+  const auto* tile = worldInterface.getTile(position);
+  if (tile)
+  {
+    addTileData(*tile, knownCreatures, packet);
+    packet->addU8(0x0);
+  }
+  else
+  {
+    packet->addU8(0x01);
+  }
+  packet->addU8(0xFF);
+}
+
+void addThingAdded(const Position& position,
+                   const Thing& thing,
+                   KnownCreatures* knownCreatures,
+                   OutgoingPacket* packet)
+{
+  packet->addU8(0x6A);
+  addPosition(position, packet);
+  addThing(thing, knownCreatures, packet);
+}
+
+void addThingChanged(const Position& position,
+                     std::uint8_t stackpos,
+                     const Thing& thing,
+                     KnownCreatures* knownCreatures,
+                     OutgoingPacket* packet)
+{
+  packet->addU8(0x6B);
+  addPosition(position, packet);
+  packet->add(stackpos);
+  addThing(thing, knownCreatures, packet);
+
+  // Only for creature 0x0063?
+  if (thing.creature)
+  {
+    packet->add(static_cast<std::uint8_t>(thing.creature->getDirection()));
+  }
+}
+
+void addThingRemoved(const Position& position, std::uint8_t stackpos, OutgoingPacket* packet)
+{
+  packet->addU8(0x6C);
+  addPosition(position, packet);
+  packet->add(stackpos);
+}
+
+void addThingMoved(const Position& oldPosition,
+                   std::uint8_t oldStackpos,
+                   const Position& newPosition,
+                   OutgoingPacket* packet)
+{
+  packet->addU8(0x6D);
+  addPosition(oldPosition, packet);
+  packet->add(oldStackpos);
+  addPosition(newPosition, packet);
+}
+
+void addContainerOpen(std::uint8_t containerId,
+                      const Thing& thing,
+                      const Container& container,
+                      OutgoingPacket* packet)
+{
+  packet->addU8(0x6E);
+  packet->add(containerId);
+  addThing(thing, nullptr, packet);
+  packet->add(thing.item->getItemType().name);
+  packet->add(thing.item->getItemType().maxitems);
+  packet->addU8(container.parentItemUniqueId == Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
+  packet->addU8(container.items.size());
+  for (const auto* item : container.items)
+  {
+    packet->add(item->getItemTypeId());
+    if (item->getItemType().isStackable)  // or splash or fluid container?
+    {
+      packet->add(item->getCount());
+    }
+  }
+}
+
+void addContainerClose(std::uint8_t containerId, OutgoingPacket* packet)
+{
+  packet->addU8(0x6F);
+  packet->add(containerId);
+}
+
+void addContainerAddItem(std::uint8_t containerId, const Thing& thing, OutgoingPacket* packet)
+{
+  packet->addU8(0x70);
+  packet->add(containerId);
+  addThing(thing, nullptr, packet);
+}
+
+void addContainerUpdateItem(std::uint8_t containerId,
+                            std::uint8_t containerSlot,
+                            const Thing& thing,
+                            OutgoingPacket* packet)
+{
+  packet->addU8(0x71);
+  packet->add(containerId);
+  packet->add(containerSlot);
+  addThing(thing, nullptr, packet);
+}
+
+void addContainerRemoveItem(std::uint8_t containerId,
+                            std::uint8_t containerSlot,
+                            OutgoingPacket* packet)
+{
+  packet->addU8(0x72);
+  packet->add(containerId);
+  packet->add(containerSlot);
+}
+
+void addEquipmentUpdated(const Equipment& equipment, std::uint8_t inventoryIndex, OutgoingPacket* packet)
+{
+  const auto* item = equipment.getItem(inventoryIndex);
+  if (item)
+  {
+    packet->addU8(0x78);
+    packet->add(inventoryIndex);
+    addThing(Thing(item), nullptr, packet);
+  }
+  else
+  {
+    packet->addU8(0x79);  // No Item in this slot
+    packet->add(inventoryIndex);
+  }
+}
+
+void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet)
+{
+  packet->addU8(0x82);
+  packet->add(intensity);
+  packet->add(color);
+}
+
+void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet)
+{
+  packet->addU8(0x83);
+  addPosition(position, packet);
+  packet->add(type);
+}
+
+void addPlayerStats(const Player& player, OutgoingPacket* packet)
+{
+  packet->addU8(0xA0);
+  packet->add(player.getHealth());
+  packet->add(player.getMaxHealth());
+  packet->add(player.getCapacity());
+  packet->add(player.getExperience());
+  packet->add(player.getLevel());
+  packet->add(player.getMana());
+  packet->add(player.getMaxMana());
+  packet->add(player.getMagicLevel());
+}
+
+void addPlayerSkills(const Player& player, OutgoingPacket* packet)
+{
+  // TODO(simon): get skills from Player
+  (void)player;
+
+  packet->addU8(0xA1);
+  for (auto i = 0; i < 7; i++)
+  {
+    packet->addU8(10);
+  }
+}
+
+void addTalk(const std::string& name,
+             std::uint8_t type,
+             const Position& position,
+             const std::string& message,
+             OutgoingPacket* packet)
+{
+  packet->addU8(0xAA);
+  packet->add(name);
+  packet->add(type);
+
+  // TODO(simon): add full support
+  if (type < 4)
+  {
+    addPosition(position, packet);
+  }
+  packet->add(message);
+}
+
+void addTextMessage(std::uint8_t type, const std::string& text, OutgoingPacket* packet)
+{
+  packet->addU8(0xB4);
+  packet->add(type);
+  packet->add(text);
+}
+
+void addCancelMove(OutgoingPacket* packet)
+{
+  packet->addU8(0xB5);
 }
 
 void addPosition(const Position& position, OutgoingPacket* packet)
@@ -81,26 +332,77 @@ void addPosition(const Position& position, OutgoingPacket* packet)
   packet->add(position.getZ());
 }
 
-void addFullMapData(const WorldInterface& world_interface,
-                    const Position& position,
-                    std::array<CreatureId, 64>* knownCreatures,
-                    OutgoingPacket* packet)
+void addThing(const Thing& thing,
+              std::array<CreatureId, 64>* knownCreatures,
+              OutgoingPacket* packet)
 {
-  packet->addU8(0x64);
-  addPosition(position, packet);
-  addMapData(world_interface,
-             Position(position.getX() - 8, position.getY() - 6, position.getZ()),
-             18,
-             14,
-             knownCreatures,
-             packet);
+  if (thing.item)
+  {
+    const auto& item = *thing.item;
+
+    packet->add(item.getItemTypeId());
+    if (item.getItemType().isStackable)
+    {
+      packet->add(item.getCount());
+    }
+    else if (item.getItemType().isMultitype)
+    {
+      // TODO(simon): getSubType???
+      packet->addU8(0);
+    }
+  }
+  else  // thing.creature
+  {
+    const auto& creature = *thing.creature;
+
+    // First check if we know about this creature or not
+    auto it = std::find(knownCreatures->begin(), knownCreatures->end(), creature.getCreatureId());
+    if (it == knownCreatures->end())
+    {
+      // Find an empty spot
+      auto unused = std::find(knownCreatures->begin(), knownCreatures->end(), Creature::INVALID_ID);
+      if (unused == knownCreatures->end())
+      {
+        // No empty spot!
+        // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
+        LOG_ERROR("%s: knownCreatures_ is full!", __func__);
+        return;
+      }
+      else
+      {
+        *unused = creature.getCreatureId();
+      }
+
+      packet->addU16(0x0061);  // UnknownCreature
+      packet->addU32(0x00);  // creatureId to remove (0x00 = none)
+      packet->add(creature.getCreatureId());
+      packet->add(creature.getName());
+    }
+    else
+    {
+      // Client already know about this creature
+      packet->addU16(0x0062);  // OutdatedCreature
+      packet->add(creature.getCreatureId());
+    }
+    // TODO(simon): handle 0x0063 // Creature (+ direction)
+
+    // TODO(simon): This is only for 0x0061 and 0x0062...
+    packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
+    packet->add(static_cast<std::uint8_t>(creature.getDirection()));
+    addOutfitData(creature.getOutfit(), packet);
+
+    packet->addU8(0x00);
+    packet->addU8(0xDC);
+
+    packet->add(creature.getSpeed());
+  }
 }
 
-void addMapData(const WorldInterface& world_interface,
+void addMapData(const WorldInterface& worldInterface,
                 const Position& position,
                 int width,
                 int height,
-                std::array<CreatureId, 64>* knownCreatures,
+                KnownCreatures* knownCreatures,
                 OutgoingPacket* packet)
 {
   // Calculate how to iterate over z
@@ -144,7 +446,7 @@ void addMapData(const WorldInterface& world_interface,
     {
       for (auto y = position.getY(); y < position.getY() + height; y++)
       {
-        const auto* tile = world_interface.getTile(Position(x, y, position.getZ()));
+        const auto* tile = worldInterface.getTile(Position(x, y, position.getZ()));
         if (!tile)
         {
           skip += 1;
@@ -173,50 +475,7 @@ void addMapData(const WorldInterface& world_interface,
             skip = 0;
           }
 
-          const auto& items = tile->getItems();
-          const auto& creatureIds = tile->getCreatureIds();
-          auto itemIt = items.cbegin();
-          auto creatureIt = creatureIds.cbegin();
-
-          // Client can only handle ground + 9 items/creatures at most
-          auto count = 0;
-
-          // Add ground Item
-          addItem(*(*itemIt), packet);
-          count++;
-          ++itemIt;
-
-          // if splash; add; count++
-
-          // Add top Items
-          while (count < 10 && itemIt != items.cend())
-          {
-            if (!(*itemIt)->getItemType().alwaysOnTop)
-            {
-              break;
-            }
-
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
-          }
-
-          // Add Creatures
-          while (count < 10 && creatureIt != creatureIds.cend())
-          {
-            const Creature& creature = world_interface.getCreature(*creatureIt);
-            addCreature(creature, knownCreatures, packet);
-            count++;
-            ++creatureIt;
-          }
-
-          // Add bottom Item
-          while (count < 10 && itemIt != items.cend())
-          {
-            addItem(*(*itemIt), packet);
-            count++;
-            ++itemIt;
-          }
+          addTileData(*tile, knownCreatures, packet);
         }
       }
     }
@@ -230,7 +489,22 @@ void addMapData(const WorldInterface& world_interface,
   }
 }
 
-void addOutfit(const Outfit& outfit, OutgoingPacket* packet)
+void addTileData(const Tile& tile, KnownCreatures* knownCreatures, OutgoingPacket* packet)
+{
+  auto count = 0;
+  for (const auto& thing : tile.getThings())
+  {
+    if (count >= 10)
+    {
+      break;
+    }
+
+    addThing(thing, knownCreatures, packet);
+    count += 1;
+  }
+}
+
+void addOutfitData(const Outfit& outfit, OutgoingPacket* packet)
 {
   packet->add(outfit.type);
   packet->add(outfit.head);
@@ -239,141 +513,20 @@ void addOutfit(const Outfit& outfit, OutgoingPacket* packet)
   packet->add(outfit.feet);
 }
 
-void addCreature(const Creature& creature,
-                 std::array<CreatureId, 64>* knownCreatures,
-                 OutgoingPacket* packet)
+
+ProtocolTypes::Login getLogin(IncomingPacket* packet)
 {
-  // First check if we know about this creature or not
-  auto it = std::find(knownCreatures->begin(), knownCreatures->end(), creature.getCreatureId());
-  if (it == knownCreatures->end())
-  {
-    // Find an empty spot
-    auto unused = std::find(knownCreatures->begin(), knownCreatures->end(), Creature::INVALID_ID);
-    if (unused == knownCreatures->end())
-    {
-      // No empty spot!
-      // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
-      LOG_ERROR("%s: knownCreatures_ is full!", __func__);
-      return;
-    }
-    else
-    {
-      *unused = creature.getCreatureId();
-    }
-
-    packet->addU8(0x61);
-    packet->addU8(0x00);
-    packet->addU32(0x00);  // creatureId to remove (0x00 = none)
-    packet->add(creature.getCreatureId());
-    packet->add(creature.getName());
-  }
-  else
-  {
-    // We already know about this creature
-    packet->addU8(0x62);
-    packet->addU8(0x00);
-    packet->add(creature.getCreatureId());
-  }
-
-  packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
-  packet->add(static_cast<std::uint8_t>(creature.getDirection()));
-  addOutfit(creature.getOutfit(), packet);
-
-  packet->addU8(0x00);
-  packet->addU8(0xDC);
-
-  packet->add(creature.getSpeed());
+  ProtocolTypes::Login login;
+  packet->get(&login.playerId);
+  packet->get(&login.serverBeat);
+  return login;
 }
 
-void addItem(const Item& item, OutgoingPacket* packet)
+ProtocolTypes::LoginFailed getLoginFailed(IncomingPacket* packet)
 {
-  packet->add(item.getItemTypeId());
-  if (item.getItemType().isStackable)
-  {
-    packet->add(item.getCount());
-  }
-  else if (item.getItemType().isMultitype)
-  {
-    // TODO(simon): getSubType???
-    packet->addU8(0);
-  }
-}
-
-void addEquipment(const Equipment& equipment, std::uint8_t inventoryIndex, OutgoingPacket* packet)
-{
-  const auto* item = equipment.getItem(inventoryIndex);
-  if (!item)
-  {
-    packet->addU8(0x79);  // No Item in this slot
-    packet->add(inventoryIndex);
-  }
-  else
-  {
-    packet->addU8(0x78);
-    packet->add(inventoryIndex);
-    addItem(*item, packet);
-  }
-}
-
-void addMagicEffect(const Position& position,
-                    std::uint8_t type,
-                    OutgoingPacket* packet)
-{
-  packet->addU8(0x83);
-  addPosition(position, packet);
-  packet->add(type);
-}
-
-void addPlayerStats(const Player& player, OutgoingPacket* packet)
-{
-  packet->addU8(0xA0);
-  packet->add(player.getHealth());
-  packet->add(player.getMaxHealth());
-  packet->add(player.getCapacity());
-  packet->add(player.getExperience());
-  packet->add(player.getLevel());
-  packet->add(player.getMana());
-  packet->add(player.getMaxMana());
-  packet->add(player.getMagicLevel());
-}
-
-void addPlayerSkills(const Player& player, OutgoingPacket* packet)
-{
-  packet->addU8(0xA1);
-  // TODO(simon): add skills to Player
-  (void)player;
-  for (auto i = 0; i < 7; i++)
-  {
-    packet->addU8(10);
-  }
-}
-
-void addWorldLight(std::uint8_t intensity,
-                   std::uint8_t color,
-                   OutgoingPacket* packet)
-{
-  packet->addU8(0x82);
-  packet->add(intensity);
-  packet->add(color);
-}
-
-Position getPosition(IncomingPacket* packet)
-{
-  const auto x = packet->getU16();
-  const auto y = packet->getU16();
-  const auto z = packet->getU8();
-  return Position(x, y, z);
-}
-
-Outfit getOutfit(IncomingPacket* packet)
-{
-  Outfit outfit;
-  packet->get(&outfit.type);
-  packet->get(&outfit.head);
-  packet->get(&outfit.body);
-  packet->get(&outfit.legs);
-  packet->get(&outfit.feet);
-  return outfit;
+  ProtocolTypes::LoginFailed failed;
+  packet->get(&failed.reason);
+  return failed;
 }
 
 ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
@@ -393,6 +546,7 @@ ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
   packet->get(&creature.healthPercent);
   creature.direction = static_cast<Direction>(packet->getU8());
   creature.outfit = getOutfit(packet);
+  packet->getU16();  // unknown 0xDC00
   packet->get(&creature.speed);
   return creature;
 }
@@ -438,6 +592,141 @@ ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet)
   packet->get(&stats.maxMana);
   packet->get(&stats.magicLevel);
   return stats;
+}
+
+ProtocolTypes::WorldLight getWorldLight(IncomingPacket* packet)
+{
+  ProtocolTypes::WorldLight light;
+  packet->get(&light.intensity);
+  packet->get(&light.color);
+  return light;
+}
+
+ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet)
+{
+  ProtocolTypes::PlayerSkills skills;
+  packet->get(&skills.fist);
+  packet->get(&skills.club);
+  packet->get(&skills.sword);
+  packet->get(&skills.axe);
+  packet->get(&skills.dist);
+  packet->get(&skills.shield);
+  packet->get(&skills.fish);
+  return skills;
+}
+
+ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet)
+{
+  ProtocolTypes::TextMessage message;
+  packet->get(&message.type);
+  packet->get(&message.message);
+  return message;
+}
+
+ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet)
+{
+  ProtocolTypes::MapData map;
+
+  map.position = getPosition(packet);
+
+  // Assume that we always are on z=7
+  auto skip = 0;
+  for (auto z = 7; z >= 0; z--)
+  {
+    for (auto x = 0; x < width; x++)
+    {
+      for (auto y = 0; y < height; y++)
+      {
+        ProtocolTypes::MapData::TileData tile;
+        if (skip > 0)
+        {
+          skip -= 1;
+          tile.skip = true;
+          map.tiles.push_back(std::move(tile));
+          continue;
+        }
+
+        // Parse tile
+        tile.skip = false;
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+          }
+
+          if (packet->peekU16() == 0x0061 ||
+              packet->peekU16() == 0x0062)
+          {
+            ProtocolTypes::MapData::CreatureData creature;
+            creature.stackpos = stackpos;
+            creature.creature = getCreature(packet->getU16() == 0x0062, packet);
+            tile.creatures.push_back(std::move(creature));
+          }
+          else
+          {
+            ProtocolTypes::MapData::ItemData item;
+            item.stackpos = stackpos;
+            item.item = getItem(packet);
+            tile.items.push_back(std::move(item));
+          }
+        }
+
+        map.tiles.push_back(std::move(tile));
+      }
+    }
+  }
+
+  return map;
+}
+
+ProtocolTypes::CreatureMove getCreatureMove(bool canSeeOldPos, bool canSeeNewPos, IncomingPacket* packet)
+{
+  ProtocolTypes::CreatureMove move;
+  move.canSeeOldPos = canSeeOldPos;
+  move.canSeeNewPos = canSeeNewPos;
+  if (move.canSeeOldPos && move.canSeeNewPos)
+  {
+    move.oldPosition = getPosition(packet);
+    packet->get(&move.oldStackPosition);
+    move.newPosition = getPosition(packet);
+  }
+  else if (move.canSeeOldPos)
+  {
+    move.oldPosition = getPosition(packet);
+    packet->get(&move.oldStackPosition);
+  }
+  else  // if (move.canSeeNewPos)
+  {
+    move.newPosition = getPosition(packet);
+    move.creature = getCreature(packet->getU16() == 0x0062, packet);
+  }
+  return move;
+}
+
+Position getPosition(IncomingPacket* packet)
+{
+  const auto x = packet->getU16();
+  const auto y = packet->getU16();
+  const auto z = packet->getU8();
+  return Position(x, y, z);
+}
+
+Outfit getOutfit(IncomingPacket* packet)
+{
+  Outfit outfit;
+  packet->get(&outfit.type);
+  packet->get(&outfit.head);
+  packet->get(&outfit.body);
+  packet->get(&outfit.legs);
+  packet->get(&outfit.feet);
+  return outfit;
 }
 
 GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)

@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "creature.h"
+#include "item.h"
 
 class Tile;
 class Position;

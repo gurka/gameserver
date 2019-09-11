@@ -14,7 +14,7 @@ add_library(network
   "src/server_factory.cc"
   "src/server_impl.h"
 )
-target_include_directories(network PUBLIC "export")
 target_link_libraries(network
   utils
 )
+target_include_directories(network PUBLIC "export")

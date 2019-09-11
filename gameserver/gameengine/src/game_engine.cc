@@ -63,7 +63,15 @@ struct RecursiveTask
 
 }  // namespace
 
-GameEngine::GameEngine() = default;
+GameEngine::GameEngine()
+    : playerData_(),
+      itemManager_(),
+      world_(),
+      gameEngineQueue_(nullptr),
+      loginMessage_(),
+      containerManager_()
+{
+}
 GameEngine::~GameEngine() = default;
 
 bool GameEngine::init(GameEngineQueue* gameEngineQueue,
@@ -159,7 +167,7 @@ void GameEngine::move(CreatureId creatureId, Direction direction)
   if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
-    const auto& creature = world_->getCreature(creatureId);
+    const auto& creature = static_cast<const World*>(world_.get())->getCreature(creatureId);
     gameEngineQueue_->addTask(creatureId,
                               creature.getNextWalkTick() - Tick::now(),
                               [this, creatureId, direction](GameEngine* gameEngine)
@@ -286,41 +294,45 @@ void GameEngine::say(CreatureId creatureId,
         position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
       }
 
-      const auto* tile = world_->getTile(position);
+      const auto* tile = static_cast<const World*>(world_.get())->getTile(position);
 
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto* item : tile->getItems())
+      for (const auto& thing : tile->getThings())
       {
-        oss << "Item: " << item->getItemTypeId() << " (" << item->getItemType().name << ")\n";
-      }
-
-      for (const auto& creatureId : tile->getCreatureIds())
-      {
-        oss << "Creature: " << creatureId << "\n";
+        if (thing.item)
+        {
+          oss << "Item: " << thing.item->getItemUniqueId() << "\n";
+        }
+        else
+        {
+          oss << "Creature: " << thing.creature->getCreatureId() << "\n";
+        }
       }
 
       playerData.player_ctrl->sendTextMessage(0x13, oss.str());
     }
     else if (command == "put")
     {
-      std::istringstream iss(option);
-      ItemTypeId itemTypeId = 0;
-      iss >> itemTypeId;
+      // TODO(simon): replace itemManager->createItem/getItem with world->createItem/getItem
 
-      const auto itemId = itemManager_->createItem(itemTypeId);
-
-      if (itemId == 0)  // TODO(simon): see item_manager TODO
-      {
-        playerData.player_ctrl->sendTextMessage(0x13, "Invalid itemId");
-      }
-      else
-      {
-        auto* item = itemManager_->getItem(itemId);
-        const auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
-        world_->addItem(item, position);
-      }
+//      std::istringstream iss(option);
+//      ItemTypeId itemTypeId = 0;
+//      iss >> itemTypeId;
+//
+//      const auto itemId = itemManager_->createItem(itemTypeId);
+//
+//      if (itemId == 0)  // TODO(simon): see item_manager TODO
+//      {
+//        playerData.player_ctrl->sendTextMessage(0x13, "Invalid itemId");
+//      }
+//      else
+//      {
+//        auto* item = itemManager_->getItem(itemId);
+//        const auto position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
+//        world_->addItem(item, position);
+//      }
     }
     else
     {
@@ -379,7 +391,7 @@ void GameEngine::moveItem(CreatureId creatureId,
   removeItem(creatureId, fromPosition, count);
 
   // Add Item to toPosition
-  addItem(creatureId, toPosition, item, count);
+  addItem(creatureId, toPosition, *item, count);
 }
 
 void GameEngine::useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId)
@@ -473,7 +485,7 @@ void GameEngine::openParentContainer(CreatureId creatureId, ItemUniqueId itemUni
                                          newContainerId);
 }
 
-Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
+const Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
 {
   // TODO(simon): verify ItemId
   auto& playerData = getPlayerData(creatureId);
@@ -481,15 +493,17 @@ Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& position)
   const auto& gamePosition = position.getGamePosition();
   if (gamePosition.isPosition())
   {
-    return world_->getItem(gamePosition.getPosition(), position.getStackPosition());
+    const auto* tile = static_cast<const World*>(world_.get())->getTile(gamePosition.getPosition());
+    if (tile)
+    {
+      return tile->getThing(position.getStackPosition())->item;
+    }
   }
-
-  if (gamePosition.isInventory())
+  else if (gamePosition.isInventory())
   {
     return playerData.player.getEquipment().getItem(gamePosition.getInventorySlot());
   }
-
-  if (gamePosition.isContainer())
+  else if (gamePosition.isContainer())
   {
     return containerManager_->getItem(gamePosition.getItemUniqueId(),
                                       gamePosition.getContainerSlot());
@@ -555,7 +569,7 @@ void GameEngine::removeItem(CreatureId creatureId, const ItemPosition& position,
   }
 }
 
-void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, Item* item, int count)
+void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count)
 {
   auto& playerData = getPlayerData(creatureId);
 
@@ -583,8 +597,8 @@ void GameEngine::addItem(CreatureId creatureId, const GamePosition& position, It
   }
 
   // Handle case where a container is moved to a non-container
-  if (item->getItemType().isContainer && !position.isContainer())
+  if (item.getItemType().isContainer && !position.isContainer())
   {
-    containerManager_->updateRootPosition(item->getItemUniqueId(), position);
+    containerManager_->updateRootPosition(item.getItemUniqueId(), position);
   }
 }

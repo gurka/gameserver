@@ -27,7 +27,6 @@
 
 #include <string>
 
-class WorldInterface;
 class Creature;
 class Position;
 class Tile;
@@ -40,48 +39,40 @@ class CreatureCtrl
 
   // Called when the creature has spawned nearby this creature
   // Can be the creature itself that has spawned
-  virtual void onCreatureSpawn(const WorldInterface& world_interface,
-                               const Creature& creature,
+  virtual void onCreatureSpawn(const Creature& creature,
                                const Position& position) = 0;
 
   // Called when a creature has despawned nearby this creature
-  virtual void onCreatureDespawn(const WorldInterface& world_interface,
-                                 const Creature& creature,
+  virtual void onCreatureDespawn(const Creature& creature,
                                  const Position& position,
                                  std::uint8_t stackPos) = 0;
 
   // Called when a creature has moved
-  virtual void onCreatureMove(const WorldInterface& world_interface,
-                              const Creature& creature,
+  virtual void onCreatureMove(const Creature& creature,
                               const Position& oldPosition,
                               std::uint8_t oldStackPos,
                               const Position& newPosition) = 0;
 
   // Called when a creature has turned
-  virtual void onCreatureTurn(const WorldInterface& world_interface,
-                              const Creature& creature,
+  virtual void onCreatureTurn(const Creature& creature,
                               const Position& position,
                               std::uint8_t stackPos) = 0;
 
   // Called when a creature says something
-  virtual void onCreatureSay(const WorldInterface& world_interface,
-                             const Creature& creature,
+  virtual void onCreatureSay(const Creature& creature,
                              const Position& position,
                              const std::string& message) = 0;
 
   // Called when an Item was removed from a Tile
-  virtual void onItemRemoved(const WorldInterface& world_interface,
-                             const Position& position,
+  virtual void onItemRemoved(const Position& position,
                              std::uint8_t stackPos) = 0;
 
   // Called when an Item was added to a Tile
-  virtual void onItemAdded(const WorldInterface& world_interface,
-                           const Item& item,
+  virtual void onItemAdded(const Item& item,
                            const Position& position) = 0;
 
   // Called when a Tile has been updated
-  virtual void onTileUpdate(const WorldInterface& world_interface,
-                            const Position& position) = 0;
+  virtual void onTileUpdate(const Position& position) = 0;
 };
 
 #endif  // WORLD_EXPORT_CREATURE_CTRL_H_

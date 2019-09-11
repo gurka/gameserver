@@ -34,7 +34,7 @@
 #include "creature.h"
 #include "item.h"
 
-class Container;
+struct Container;
 class Item;
 class Player;
 

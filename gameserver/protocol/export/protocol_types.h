@@ -26,6 +26,7 @@
 #define WORLDSERVER_SRC_PROTOCOL_TYPES_H_
 
 #include <cstdint>
+#include <vector>
 
 #include "direction.h"
 #include "creature.h"
@@ -33,6 +34,17 @@
 
 namespace ProtocolTypes
 {
+
+struct Login
+{
+  std::uint32_t playerId;
+  std::uint16_t serverBeat;
+};
+
+struct LoginFailed
+{
+  std::string reason;
+};
 
 struct Creature
 {
@@ -75,6 +87,65 @@ struct PlayerStats
   std::uint16_t mana;
   std::uint16_t maxMana;
   std::uint8_t magicLevel;
+};
+
+struct WorldLight
+{
+  std::uint8_t intensity;
+  std::uint8_t color;
+};
+
+struct PlayerSkills
+{
+  std::uint8_t fist;
+  std::uint8_t club;
+  std::uint8_t sword;
+  std::uint8_t axe;
+  std::uint8_t dist;
+  std::uint8_t shield;
+  std::uint8_t fish;
+};
+
+struct TextMessage
+{
+  std::uint8_t type;
+  std::string message;
+};
+
+struct MapData
+{
+  struct CreatureData
+  {
+    Creature creature;
+    std::uint8_t stackpos;
+  };
+
+  struct ItemData
+  {
+    Item item;
+    std::uint8_t stackpos;
+  };
+
+  struct TileData
+  {
+    bool skip;
+    std::vector<CreatureData> creatures;
+    std::vector<ItemData> items;
+  };
+
+  Position position;
+  std::vector<TileData> tiles;
+};
+
+struct CreatureMove
+{
+  bool canSeeOldPos;
+  bool canSeeNewPos;
+
+  Position oldPosition;           // only if canSeeOldPos = true
+  std::uint8_t oldStackPosition;  // only if canSeeOldPos = true
+  Position newPosition;           // only if canSeeNewPos = true
+  Creature creature;              // only if canSeeOldPos = false and canSeeNewPos = true
 };
 
 }

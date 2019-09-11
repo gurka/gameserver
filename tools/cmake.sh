@@ -53,7 +53,7 @@ function travis_debug_asan {
 function eclipse {
   mkdir -p "$BUILD_DIR/eclipse"
   pushd "$BUILD_DIR/eclipse"
-  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
   ln -sf "$DATA_DIR" data
   popd
 }

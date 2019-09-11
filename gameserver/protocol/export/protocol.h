@@ -54,6 +54,7 @@ class Protocol : public PlayerCtrl
  public:
   Protocol(const std::function<void(void)>& closeProtocol,
              std::unique_ptr<Connection>&& connection,
+             const WorldInterface* worldInterface,
              GameEngineQueue* gameEngineQueue,
              AccountReader* accountReader);
 
@@ -62,35 +63,28 @@ class Protocol : public PlayerCtrl
   Protocol& operator=(const Protocol&) = delete;
 
   // Called by World (from CreatureCtrl)
-  void onCreatureSpawn(const WorldInterface& world_interface,
-                       const Creature& creature,
+  void onCreatureSpawn(const Creature& creature,
                        const Position& position) override;
-  void onCreatureDespawn(const WorldInterface& world_interface,
-                         const Creature& creature,
+  void onCreatureDespawn(const Creature& creature,
                          const Position& position,
                          std::uint8_t stackPos) override;
-  void onCreatureMove(const WorldInterface& world_interface,
-                      const Creature& creature,
+  void onCreatureMove(const Creature& creature,
                       const Position& oldPosition,
                       std::uint8_t oldStackPos,
                       const Position& newPosition) override;
-  void onCreatureTurn(const WorldInterface& world_interface,
-                      const Creature& creature,
+  void onCreatureTurn(const Creature& creature,
                       const Position& position,
                       std::uint8_t stackPos) override;
-  void onCreatureSay(const WorldInterface& world_interface,
-                     const Creature& creature,
+  void onCreatureSay(const Creature& creature,
                      const Position& position,
                      const std::string& message) override;
 
-  void onItemRemoved(const WorldInterface& world_interface,
-                     const Position& position,
+  void onItemRemoved(const Position& position,
                      std::uint8_t stackPos) override;
-  void onItemAdded(const WorldInterface& world_interface,
-                   const Item& item,
+  void onItemAdded(const Item& item,
                    const Position& position) override;
 
-  void onTileUpdate(const WorldInterface& world_interface, const Position& position) override;
+  void onTileUpdate(const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
   CreatureId getPlayerId() const override { return playerId_; }
@@ -133,8 +127,12 @@ class Protocol : public PlayerCtrl
   std::uint8_t getContainerId(ItemUniqueId itemUniqueId) const;
   ItemUniqueId getContainerItemUniqueId(std::uint8_t containerId) const;
 
+  // Other helpers
+  bool canSee(const Position& player_position, const Position& to_position);
+
   std::function<void(void)> closeProtocol_;
   std::unique_ptr<Connection> connection_;
+  const WorldInterface* worldInterface_;
   GameEngineQueue* gameEngineQueue_;
   AccountReader* accountReader_;
 

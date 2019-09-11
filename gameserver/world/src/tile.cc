@@ -24,178 +24,73 @@
 
 #include "tile.h"
 
-#include <algorithm>
-#include <iterator>
-
 #include "logger.h"
 
-void Tile::addCreature(CreatureId creatureId)
+void Tile::addThing(const Thing& thing)
 {
-  creatureIds_.insert(creatureIds_.begin(), creatureId);
+  if (thing.creature)
+  {
+    auto it = things_.cbegin() + 1;
+    while (it != things_.cend())
+    {
+      // Iterate until we have passed all items with onTop = true
+      // e.g. found a creature, an item with onTop = false, or end
+      if (!it->item || !it->item->getItemType().alwaysOnTop)
+      {
+        break;
+      }
+      ++it;
+    }
+    things_.insert(it, thing);
+  }
+  else  // thing.item
+  {
+    if (thing.item->getItemType().alwaysOnTop)
+    {
+      things_.insert(things_.cbegin() + 1, thing);
+    }
+    else
+    {
+      auto it = things_.cbegin() + 1;
+      while (it != things_.cend())
+      {
+        // Iterate until we have reached first item with onTop = false or end
+        if (it->item && !it->item->getItemType().alwaysOnTop)
+        {
+          break;
+        }
+        ++it;
+      }
+      things_.insert(it, thing);
+    }
+  }
 }
 
-bool Tile::removeCreature(CreatureId creatureId)
+bool Tile::removeThing(int stackPosition)
 {
-  auto it = std::find(creatureIds_.cbegin(), creatureIds_.cend(), creatureId);
-  if (it != creatureIds_.cend())
+  if (stackPosition == 0 || static_cast<int>(things_.size()) < stackPosition)
   {
-    creatureIds_.erase(it);
-    return true;
-  }
-  else
-  {
+    LOG_ERROR("%s: invalid stackPosition: %d with things_.size(): %d",
+              __func__,
+              stackPosition,
+              things_.size());
     return false;
   }
+
+  things_.erase(things_.cbegin() + stackPosition);
+  return true;
 }
 
-CreatureId Tile::getCreatureId(int stackPosition) const
+const Thing* Tile::getThing(int stackPosition) const
 {
-  // Calculate position in creatureIds_
-  int index = stackPosition - 1 - numberOfTopItems;
-  if (index < 0 || index >= static_cast<int>(creatureIds_.size()))
+  if (static_cast<int>(things_.size()) < stackPosition)
   {
-    LOG_ERROR("%s: No Creature found at stackPosition: %d", __func__, stackPosition);
-    return Creature::INVALID_ID;
-  }
-
-  auto creatureIt = creatureIds_.cbegin();
-  std::advance(creatureIt, index);
-  return *creatureIt;
-}
-
-int Tile::getCreatureStackPos(CreatureId creatureId) const
-{
-  // Find where in creatureIds_ the creatureId is
-  auto it = std::find(creatureIds_.cbegin(), creatureIds_.cend(), creatureId);
-  if (it == creatureIds_.cend())
-  {
-    LOG_ERROR("getCreatureStackPos(): No creature %d at this Tile", creatureId);
-    return 255;  // TODO(simon): Invalid stackPosition constant?
-  }
-  return 1 + numberOfTopItems + std::distance(creatureIds_.cbegin(), it);
-}
-
-void Tile::addItem(Item* item)
-{
-  auto itemIt = items_.cbegin();
-
-  if (item->getItemType().alwaysOnTop)
-  {
-    std::advance(itemIt, 1);
-    numberOfTopItems++;
-  }
-  else
-  {
-    std::advance(itemIt, 1 + numberOfTopItems);
-  }
-
-  items_.insert(itemIt, item);
-}
-
-bool Tile::removeItem(ItemTypeId itemTypeId, int stackPosition)
-{
-  if (stackPosition == 0)
-  {
-    // Ground Item
-    LOG_ERROR("%s: Stackposition is ground Item, cannot remove", __func__);
-  }
-  else if (stackPosition < 1 + numberOfTopItems)
-  {
-    // Top Item
-    auto itemIt = items_.cbegin();
-    std::advance(itemIt, stackPosition);
-    if ((*itemIt)->getItemTypeId() == itemTypeId)
-    {
-      items_.erase(itemIt);
-      return true;
-    }
-    else
-    {
-      LOG_ERROR("%s: Given ItemTypeId does not match Item at given stackpos", __func__);
-    }
-  }
-  else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
-  {
-    // Creature
-    LOG_ERROR("%s: Stackposition is Creature, cannot remove", __func__);
-  }
-  else if (stackPosition < 1 + static_cast<int>(items_.size() + creatureIds_.size()))
-  {
-    // Bottom Item
-    auto itemIt = items_.cbegin();
-    std::advance(itemIt, stackPosition - creatureIds_.size());
-    if ((*itemIt)->getItemTypeId() == itemTypeId)
-    {
-      items_.erase(itemIt);
-      return true;
-    }
-    else
-    {
-      LOG_ERROR("%s: Given ItemTypeId does not match Item at given stackpos", __func__);
-    }
-  }
-  else
-  {
-    // Invalid stackpos
-    LOG_ERROR("%s: Stackposition is invalid", __func__);
-  }
-
-  return false;
-}
-
-const Item* Tile::getItem(int stackPosition) const
-{
-  if (stackPosition == 0)
-  {
-    // Ground Item
-    return items_.front();
-  }
-  else if (stackPosition < 1 + numberOfTopItems)
-  {
-    // Top Item
-    auto itemIt = items_.cbegin();
-    std::advance(itemIt, stackPosition);
-    return *itemIt;
-  }
-  else if (stackPosition < 1 + numberOfTopItems + static_cast<int>(creatureIds_.size()))
-  {
-    // Creature
-    LOG_ERROR("%s: Stackposition is Creature", __func__);
+    LOG_ERROR("%s: invalid stackPosition: %d with things_.size(): %d",
+              __func__,
+              stackPosition,
+              things_.size());
     return nullptr;
   }
-  else if (stackPosition < 1 + static_cast<int>(items_.size() + creatureIds_.size()))
-  {
-    // Bottom Item
-    auto itemIt = items_.cbegin();
-    std::advance(itemIt, stackPosition - creatureIds_.size());
-    return *itemIt;
-  }
-  else
-  {
-    // Invalid stackpos
-    LOG_ERROR("%s: Stackposition is invalid", __func__);
-    return nullptr;
-  }
-}
 
-Item* Tile::getItem(int stackPosition)
-{
-  const auto* item = static_cast<const Tile*>(this)->getItem(stackPosition);
-  return const_cast<Item*>(item);
-}
-
-std::size_t Tile::getNumberOfThings() const
-{
-  return items_.size() + creatureIds_.size();
-}
-
-int Tile::getGroundSpeed() const
-{
-  if (items_.empty())
-  {
-    LOG_ERROR("%s: Tile does not have any items", __func__);
-    return 0;
-  }
-
-  return items_.front()->getItemType().speed;
+  return &things_[stackPosition];
 }

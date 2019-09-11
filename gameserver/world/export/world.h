@@ -58,6 +58,7 @@ class World : public WorldInterface
   World(int worldSizeX,
         int worldSizeY,
         std::vector<Tile>&& tiles);
+  ~World();
 
   // Delete copy constructors
   World(const World&) = delete;
@@ -74,7 +75,7 @@ class World : public WorldInterface
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
-  ReturnCode addItem(Item* item, const Position& position);
+  ReturnCode addItem(const Item& item, const Position& position);
   ReturnCode removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos);
   ReturnCode moveItem(CreatureId creatureId,
                       const Position& fromPosition,
@@ -82,7 +83,6 @@ class World : public WorldInterface
                       ItemTypeId itemTypeId,
                       int count,
                       const Position& toPosition);
-  Item* getItem(const Position& position, int stackPosition);
 
   // Creature checks
   bool creatureCanThrowTo(CreatureId creatureId, const Position& position) const;
@@ -94,13 +94,14 @@ class World : public WorldInterface
   const Position& getCreaturePosition(CreatureId creatureId) const override;
 
  private:
+  // Functions to use instead of accessing the containers directly
+  Tile* getTile(const Position& position);
+  Creature& getCreature(CreatureId creatureId);
+  CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
+
   // Helper functions
   std::vector<CreatureId> getCreatureIdsThatCanSeePosition(const Position& position) const;
-
-  // Functions to use instead of accessing the containers directly
-  Tile* internalGetTile(const Position& position);
-  Creature& internalGetCreature(CreatureId creatureId);
-  CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
+  int getCreatureStackpos(const Position& position, CreatureId creatureId) const;
 
   // World size
   int worldSizeX_;

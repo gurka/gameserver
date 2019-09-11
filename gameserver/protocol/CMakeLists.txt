@@ -4,10 +4,10 @@ project(protocol)
 add_library(protocol
   "export/protocol.h"
   "export/protocol_helper.h"
+  "export/protocol_types.h"
   "src/protocol.cc"
   "src/protocol_helper.cc"
 )
-target_include_directories(protocol PUBLIC "export")
 target_link_libraries(protocol
   account
   gameengine
@@ -15,3 +15,4 @@ target_link_libraries(protocol
   utils
   world
 )
+target_include_directories(protocol PUBLIC "export")

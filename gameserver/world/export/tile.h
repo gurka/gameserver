@@ -27,16 +27,18 @@
 
 #include <vector>
 
+#include "thing.h"
 #include "item.h"
 #include "creature.h"
 
 class Tile
 {
  public:
-  explicit Tile(Item* groundItem)
-    : numberOfTopItems(0),
-      items_({groundItem})
+  Tile() = default;
+
+  explicit Tile(const Item* groundItem)
   {
+    things_.emplace_back(groundItem);
   }
 
   // Delete copy constructors
@@ -47,28 +49,18 @@ class Tile
   Tile(Tile&&) = default;
   Tile& operator=(Tile&&) = default;
 
-  // Creatures
-  void addCreature(CreatureId creatureId);
-  bool removeCreature(CreatureId creatureId);
-  CreatureId getCreatureId(int stackPosition) const;
-  const std::vector<CreatureId>& getCreatureIds() const { return creatureIds_; }
-  int getCreatureStackPos(CreatureId creatureId) const;
-
-  // Items
-  void addItem(Item* item);
-  bool removeItem(ItemTypeId itemTypeId, int stackPosition);
-  const Item* getItem(int stackPosition) const;
-  Item* getItem(int stackPosition);
-  const std::vector<Item*>& getItems() const { return items_; }
-
-  // Other
-  std::size_t getNumberOfThings() const;
-  int getGroundSpeed() const;
+  void addThing(const Thing& thing);
+  bool removeThing(int stackPosition);
+  const Thing* getThing(int stackPosition) const;
+  const std::vector<Thing>& getThings() const { return things_; }
+  std::size_t getNumberOfThings() const { return things_.size(); }
 
  private:
-  int numberOfTopItems;
-  std::vector<Item*> items_;
-  std::vector<CreatureId> creatureIds_;
+  // First ground
+  // Then onTop items
+  // Then creatures
+  // Then other items
+  std::vector<Thing> things_;
 };
 
 #endif  // WORLD_EXPORT_TILE_H_

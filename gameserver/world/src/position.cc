@@ -55,7 +55,7 @@ bool Position::operator!=(const Position& other) const
 std::string Position::toString() const
 {
   std::ostringstream ss;
-  ss << "(" << x_ << ", " << y_ << ", " << z_ << ")";
+  ss << "(" << x_ << ", " << y_ << ", " << static_cast<int>(z_) << ")";
   return ss.str();
 }
 

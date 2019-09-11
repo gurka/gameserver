@@ -28,23 +28,6 @@
 
 #include "logger.h"
 
-const Item* Equipment::getItem(int inventorySlot) const
-{
-  if (inventorySlot < 1 || inventorySlot > 10)
-  {
-    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
-    return nullptr;
-  }
-
-  return items_[inventorySlot];
-}
-
-Item* Equipment::getItem(int inventorySlot)
-{
-  const auto* item = static_cast<const Equipment*>(this)->getItem(inventorySlot);
-  return const_cast<Item*>(item);
-}
-
 bool Equipment::canAddItem(const Item& item, int inventorySlot) const
 {
   if (inventorySlot < 1 || inventorySlot > 10)
@@ -139,7 +122,7 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
   return false;
 }
 
-bool Equipment::addItem(Item* item, int inventorySlot)
+bool Equipment::addItem(const Item& item, int inventorySlot)
 {
   if (inventorySlot < 1 || inventorySlot > 10)
   {
@@ -147,12 +130,12 @@ bool Equipment::addItem(Item* item, int inventorySlot)
     return false;
   }
 
-  if (!canAddItem(*item, inventorySlot))
+  if (!canAddItem(item, inventorySlot))
   {
     return false;
   }
 
-  items_[inventorySlot] = item;
+  items_[inventorySlot] = &item;
   return true;
 }
 
@@ -171,6 +154,17 @@ bool Equipment::removeItem(ItemTypeId itemTypeId, int inventorySlot)
 
   items_[inventorySlot] = nullptr;
   return true;
+}
+
+const Item* Equipment::getItem(int inventorySlot) const
+{
+  if (inventorySlot < 1 || inventorySlot > 10)
+  {
+    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    return nullptr;
+  }
+
+  return items_[inventorySlot];
 }
 
 Player::Player(const std::string& name)
