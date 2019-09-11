@@ -32,55 +32,47 @@
 class PlayerCtrlMock : public PlayerCtrl
 {
  public:
-  MOCK_METHOD3(onCreatureSpawn, void(const WorldInterface& world_interface,
-                                     const Creature& creature,
+  MOCK_METHOD2(onCreatureSpawn, void(const Creature& creature,
                                      const Position& position));
 
-  MOCK_METHOD4(onCreatureDespawn, void(const WorldInterface& world_interface,
-                                       const Creature& creature,
+  MOCK_METHOD3(onCreatureDespawn, void(const Creature& creature,
                                        const Position& position,
-                                       int stackPos));
+                                       std::uint8_t stackPos));
 
-  MOCK_METHOD5(onCreatureMove, void(const WorldInterface& world_interface,
-                                    const Creature& creature,
+  MOCK_METHOD4(onCreatureMove, void(const Creature& creature,
                                     const Position& oldPosition,
-                                    int oldStackPos,
+                                    std::uint8_t oldStackPos,
                                     const Position& newPosition));
 
-  MOCK_METHOD4(onCreatureTurn, void(const WorldInterface& world_interface,
-                                    const Creature& creature,
+  MOCK_METHOD3(onCreatureTurn, void(const Creature& creature,
                                     const Position& position,
-                                    int stackPos));
+                                    std::uint8_t stackPos));
 
-  MOCK_METHOD4(onCreatureSay, void(const WorldInterface& world_interface,
-                                   const Creature& creature,
+  MOCK_METHOD3(onCreatureSay, void(const Creature& creature,
                                    const Position& position,
                                    const std::string& message));
 
-  MOCK_METHOD3(onItemRemoved, void(const WorldInterface& world_interface,
-                                   const Position& position,
-                                   int stackPos));
+  MOCK_METHOD2(onItemRemoved, void(const Position& position,
+                                   std::uint8_t stackPos));
 
-  MOCK_METHOD3(onItemAdded, void (const WorldInterface& world_interface,
-                                  const Item& item,
+  MOCK_METHOD2(onItemAdded, void (const Item& item,
                                   const Position& position));
 
-  MOCK_METHOD2(onTileUpdate, void(const WorldInterface& world_interface,
-                                  const Position& position));
+  MOCK_METHOD1(onTileUpdate, void(const Position& position));
 
   MOCK_CONST_METHOD0(getPlayerId, CreatureId());
   MOCK_METHOD1(setPlayerId, void(CreatureId playerId));
 
-  MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, int inventoryIndex));
+  MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, std::uint8_t inventoryIndex));
 
-  MOCK_METHOD3(onOpenContainer, void(int newContainerId, const Container& container, const Item& item));
+  MOCK_METHOD3(onOpenContainer, void(std::uint8_t newContainerId, const Container& container, const Item& item));
   MOCK_METHOD2(onCloseContainer, void(ItemUniqueId itemUniqueId, bool resetContainerId));
 
   MOCK_METHOD2(onContainerAddItem, void(ItemUniqueId itemUniqueId, const Item& item));
-  MOCK_METHOD3(onContainerUpdateItem, void(ItemUniqueId itemUniqueId, int containerSlot, const Item& item));
-  MOCK_METHOD2(onContainerRemoveItem, void(ItemUniqueId itemUniqueId, int containerSlot));
+  MOCK_METHOD3(onContainerUpdateItem, void(ItemUniqueId itemUniqueId, std::uint8_t containerSlot, const Item& item));
+  MOCK_METHOD2(onContainerRemoveItem, void(ItemUniqueId itemUniqueId, std::uint8_t containerSlot));
 
-  MOCK_METHOD2(sendTextMessage, void(int message_type, const std::string& message));
+  MOCK_METHOD2(sendTextMessage, void(std::uint8_t message_type, const std::string& message));
 
   MOCK_METHOD1(sendCancel, void(const std::string& message));
   MOCK_METHOD0(cancelMove, void());

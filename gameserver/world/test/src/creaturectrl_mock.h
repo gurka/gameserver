@@ -32,41 +32,33 @@
 class MockCreatureCtrl : public CreatureCtrl
 {
  public:
-  MOCK_METHOD3(onCreatureSpawn, void(const WorldInterface& world_interface,
-                                     const Creature& creature,
+  MOCK_METHOD2(onCreatureSpawn, void(const Creature& creature,
                                      const Position& position));
 
-  MOCK_METHOD4(onCreatureDespawn, void(const WorldInterface& world_interface,
-                                       const Creature& creature,
+  MOCK_METHOD3(onCreatureDespawn, void(const Creature& creature,
                                        const Position& position,
-                                       int stackPos));
+                                       std::uint8_t stackPos));
 
-  MOCK_METHOD5(onCreatureMove, void(const WorldInterface& world_interface,
-                                    const Creature& creature,
+  MOCK_METHOD4(onCreatureMove, void(const Creature& creature,
                                     const Position& oldPosition,
-                                    int oldStackPos,
+                                    std::uint8_t oldStackPos,
                                     const Position& newPosition));
 
-  MOCK_METHOD4(onCreatureTurn, void(const WorldInterface& world_interface,
-                                    const Creature& creature,
+  MOCK_METHOD3(onCreatureTurn, void(const Creature& creature,
                                     const Position& position,
-                                    int stackPos));
+                                    std::uint8_t stackPos));
 
-  MOCK_METHOD4(onCreatureSay, void(const WorldInterface& world_interface,
-                                   const Creature& creature,
+  MOCK_METHOD3(onCreatureSay, void(const Creature& creature,
                                    const Position& position,
                                    const std::string& message));
 
-  MOCK_METHOD3(onItemRemoved, void(const WorldInterface& world_interface,
-                                   const Position& position,
-                                   int stackPos));
+  MOCK_METHOD2(onItemRemoved, void(const Position& position,
+                                   std::uint8_t stackPos));
 
-  MOCK_METHOD3(onItemAdded, void (const WorldInterface& world_interface,
-                                  const Item& item,
+  MOCK_METHOD2(onItemAdded, void (const Item& item,
                                   const Position& position));
 
-  MOCK_METHOD2(onTileUpdate, void(const WorldInterface& world_interface,
-                                  const Position& position));
+  MOCK_METHOD1(onTileUpdate, void(const Position& position));
 };
 
 #endif  // COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_

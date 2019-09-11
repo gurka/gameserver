@@ -232,15 +232,15 @@ TEST_F(ContainerManagerTest, innerContainer)
 
   // Add a regular item (slot 19, at the end of the container)
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, &itemNotContainerA);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, itemNotContainerA);
 
   // Add another container
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemContainerB)));
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, &itemContainerB);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, itemContainerB);
 
   // Add a regular item
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerB)));
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, &itemNotContainerB);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 19, itemNotContainerB);
 
   // The container should now contain:
   // itemContainerA:
@@ -258,7 +258,7 @@ TEST_F(ContainerManagerTest, innerContainer)
   // Before the call there should not exist a container for itemContainerB
   // After the call a container should exist
   EXPECT_TRUE(container_manager_.getContainer(itemContainerB.getItemUniqueId()) == nullptr);
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 1, &itemNotContainerC);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 1, itemNotContainerC);
   EXPECT_TRUE(container_manager_.getContainer(itemContainerB.getItemUniqueId()) != nullptr);
 
   // Now open the new container
@@ -316,15 +316,15 @@ TEST_F(ContainerManagerTest, moveContainer)
 
   // Add a regular item
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemNotContainerA)));
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemNotContainerA);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, itemNotContainerA);
 
   // Add another container
   EXPECT_CALL(player_ctrl_mock_, onContainerAddItem(itemContainerA.getItemUniqueId(), Ref(itemContainerB)));
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemContainerB);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, itemContainerB);
 
   // Add a regular item (will be placed in the inner container)
   // No onContainerAddItem as the player doesn't have the inner container open
-  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, &itemNotContainerB);
+  container_manager_.addItem(itemContainerA.getItemUniqueId(), 0, itemNotContainerB);
 
   // Just get container B without opening it
   const auto containerB = container_manager_.getContainer(itemContainerB.getItemUniqueId());
@@ -353,7 +353,7 @@ TEST_F(ContainerManagerTest, moveContainer)
   EXPECT_EQ(worldPositionB, containerB->rootGamePosition);
 
   // Move container A to inside container B
-  container_manager_.addItem(itemContainerB.getItemUniqueId(), 0, &itemContainerA);
+  container_manager_.addItem(itemContainerB.getItemUniqueId(), 0, itemContainerA);
 
   // Both container A and B's rootGamePosition should be changed to world position B
   EXPECT_EQ(worldPositionB, containerA->rootGamePosition);
