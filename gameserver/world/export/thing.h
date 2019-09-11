@@ -21,54 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_MAP_H_
-#define WSCLIENT_SRC_MAP_H_
 
-#include <array>
-#include <vector>
+#ifndef WORLD_EXPORT_THING_H_
+#define WORLD_EXPORT_THING_H_
 
-#include "position.h"
-#include "creature.h"
-#include "item.h"
-#include "protocol_types.h"
+class Creature;
+class Item;
 
-#include "types.h"
-
-class Map
+struct Thing
 {
- public:
-  struct Tile
+  // We want implicit constructors
+  Thing(const Creature* creature)  // NOLINT
+      : creature(creature),
+        item(nullptr)
   {
-    struct Thing
-    {
-      bool isItem;
-      union
-      {
-        CreatureId creatureId;
-        struct
-        {
-          ItemTypeId itemTypeId;
-          std::uint8_t extra;
-          bool onTop;
-        } item;
-      };
-    };
+  }
 
-    std::vector<Thing> things;
-  };
+  Thing(const Item* item)  // NOLINT
+      : creature(nullptr),
+        item(item)
+  {
+  }
 
-  void setMapData(const ProtocolTypes::Client::MapData& mapData);
-  void setPlayerPosition(const Position& position) { playerPosition_ = position; }
-
-  void addCreature(const Position& position, CreatureId creatureId);
-  void addItem(const Position& position, ItemTypeId itemTypeId, std::uint8_t extra, bool onTop);
-  void removeThing(const Position& position, std::uint8_t stackpos);
-
-  const Tile& getTile(const Position& position) const;
-
- private:
-  Position playerPosition_;
-  std::array<std::array<Tile, types::known_tiles_x>, types::known_tiles_y> tiles_;
+  const Creature* creature;
+  const Item* item;
 };
 
-#endif  // WSCLIENT_SRC_MAP_H_
+#endif  // WORLD_EXPORT_THING_H_

@@ -25,7 +25,7 @@
 
 #include "logger.h"
 
-void Map::setMapData(const ProtocolTypes::MapData& mapData)
+void Map::setMapData(const ProtocolTypes::Client::MapData& mapData)
 {
   playerPosition_ = mapData.position;
   auto it = mapData.tiles.begin();

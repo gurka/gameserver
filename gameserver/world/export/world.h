@@ -94,13 +94,14 @@ class World : public WorldInterface
   const Position& getCreaturePosition(CreatureId creatureId) const override;
 
  private:
+  // Functions to use instead of accessing the containers directly
+  Tile* getTile(const Position& position);
+  Creature& getCreature(CreatureId creatureId);
+  CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
+
   // Helper functions
   std::vector<CreatureId> getCreatureIdsThatCanSeePosition(const Position& position) const;
-
-  // Functions to use instead of accessing the containers directly
-  Tile* internalGetTile(const Position& position);
-  Creature& internalGetCreature(CreatureId creatureId);
-  CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
+  int getCreatureStackpos(const Position& position, CreatureId creatureId) const;
 
   // World size
   int worldSizeX_;

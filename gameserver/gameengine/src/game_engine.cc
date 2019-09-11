@@ -167,7 +167,7 @@ void GameEngine::move(CreatureId creatureId, Direction direction)
   if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creatureId);
-    const auto& creature = world_->getCreature(creatureId);
+    const auto& creature = static_cast<const World*>(world_.get())->getCreature(creatureId);
     gameEngineQueue_->addTask(creatureId,
                               creature.getNextWalkTick() - Tick::now(),
                               [this, creatureId, direction](GameEngine* gameEngine)
@@ -294,7 +294,7 @@ void GameEngine::say(CreatureId creatureId,
         position = world_->getCreaturePosition(creatureId).addDirection(playerData.player.getDirection());
       }
 
-      const auto* tile = world_->getTile(position);
+      const auto* tile = static_cast<const World*>(world_.get())->getTile(position);
 
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
@@ -493,15 +493,17 @@ const Item* GameEngine::getItem(CreatureId creatureId, const ItemPosition& posit
   const auto& gamePosition = position.getGamePosition();
   if (gamePosition.isPosition())
   {
-    return world_->getTile(gamePosition.getPosition())->getItem(position.getStackPosition());
+    const auto* tile = static_cast<const World*>(world_.get())->getTile(gamePosition.getPosition());
+    if (tile)
+    {
+      return tile->getThing(position.getStackPosition())->item;
+    }
   }
-
-  if (gamePosition.isInventory())
+  else if (gamePosition.isInventory())
   {
     return playerData.player.getEquipment().getItem(gamePosition.getInventorySlot());
   }
-
-  if (gamePosition.isContainer())
+  else if (gamePosition.isContainer())
   {
     return containerManager_->getItem(gamePosition.getItemUniqueId(),
                                       gamePosition.getContainerSlot());

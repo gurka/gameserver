@@ -22,17 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_SRC_PROTOCOL_TYPES_H_
-#define WORLDSERVER_SRC_PROTOCOL_TYPES_H_
+#ifndef PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
+#define PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
 
 #include <cstdint>
+#include <deque>
+#include <string>
 #include <vector>
 
 #include "direction.h"
 #include "creature.h"
 #include "position.h"
+#include "game_position.h"
 
 namespace ProtocolTypes
+{
+
+namespace Client
 {
 
 struct Login
@@ -150,4 +156,57 @@ struct CreatureMove
 
 }
 
-#endif  // WORLDSERVER_SRC_PROTOCOL_TYPES_H_
+struct Login
+{
+  std::uint8_t unknown1;
+  std::uint8_t clientOs;
+  std::uint16_t clientVersion;
+  std::uint8_t unknown2;
+  std::string characterName;
+  std::string password;
+};
+
+struct MoveClick
+{
+  std::deque<Direction> path;
+};
+
+struct MoveItem  // or MoveThing?
+{
+  ItemPosition fromItemPosition;
+  GamePosition toGamePosition;
+  std::uint8_t count;
+};
+
+struct UseItem
+{
+  ItemPosition itemPosition;
+  std::uint8_t newContainerId;
+};
+
+struct CloseContainer
+{
+  std::uint8_t containerId;
+};
+
+struct OpenParentContainer
+{
+  std::uint8_t containerId;
+};
+
+struct LookAt
+{
+  ItemPosition itemPosition;
+};
+
+struct Say
+{
+  std::uint8_t type;
+  std::string receiver;
+  std::uint16_t channelId;
+  std::string message;
+};
+
+}  // namespace ProtocolTypes
+
+#endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

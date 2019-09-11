@@ -27,30 +27,13 @@
 
 #include <vector>
 
+#include "thing.h"
 #include "item.h"
 #include "creature.h"
 
 class Tile
 {
  public:
-  struct Thing
-  {
-    Thing(const Creature* creature)
-        : creature(creature),
-          item(nullptr)
-    {
-    }
-
-    Thing(const Item* item)
-        : creature(nullptr),
-          item(item)
-    {
-    }
-
-    const Creature* creature;
-    const Item* item;
-  };
-
   Tile() = default;
 
   explicit Tile(const Item* groundItem)
@@ -66,20 +49,9 @@ class Tile
   Tile(Tile&&) = default;
   Tile& operator=(Tile&&) = default;
 
-  // Creatures (TODO: sort out Creature* vs CreatureId)
-  void addCreature(const Creature* creature);
-  bool removeCreature(CreatureId creatureId);
-  const Creature* getCreature(int stackPosition) const;
-  CreatureId getCreatureId(int stackPosition) const;
-  int getCreatureStackPos(CreatureId creatureId) const;
-
-  // Items (TODO: sort out Item* vs ItemUniqueId)
-  void addItem(const Item& item);
-  bool removeItem(int stackPosition);
-  const Item* getItem(int stackPosition) const;
-  ItemUniqueId getItemUniqueId(int stackPosition) const;
-
-  // Other
+  void addThing(const Thing& thing);
+  bool removeThing(int stackPosition);
+  const Thing* getThing(int stackPosition) const;
   const std::vector<Thing>& getThings() const { return things_; }
   std::size_t getNumberOfThings() const { return things_.size(); }
 

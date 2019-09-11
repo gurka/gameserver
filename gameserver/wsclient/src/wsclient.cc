@@ -40,51 +40,51 @@
 std::uint32_t playerId;
 Position playerPosition;
 Map map;
-std::vector<ProtocolTypes::Creature> creatures;
+std::vector<ProtocolTypes::Client::Creature> creatures;
 
-void handleLoginPacket(const ProtocolTypes::Login& login)
+void handleLoginPacket(const ProtocolTypes::Client::Login& login)
 {
   playerId = login.playerId;
 }
 
-void handleLoginFailedPacket(const ProtocolTypes::LoginFailed& failed)
+void handleLoginFailedPacket(const ProtocolTypes::Client::LoginFailed& failed)
 {
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const ProtocolTypes::MapData& mapData)
+void handleFullMapPacket(const ProtocolTypes::Client::MapData& mapData)
 {
   playerPosition = mapData.position;
   map.setMapData(mapData);
   Graphics::draw(map, playerPosition, playerId);
 }
 
-void handleMagicEffect(const ProtocolTypes::MagicEffect& effect)
+void handleMagicEffect(const ProtocolTypes::Client::MagicEffect& effect)
 {
 }
 
-void handlePlayerStats(const ProtocolTypes::PlayerStats& stats)
+void handlePlayerStats(const ProtocolTypes::Client::PlayerStats& stats)
 {
 }
 
-void handleWorldLight(const ProtocolTypes::WorldLight& light)
+void handleWorldLight(const ProtocolTypes::Client::WorldLight& light)
 {
 }
 
-void handlePlayerSkills(const ProtocolTypes::PlayerSkills& skills)
+void handlePlayerSkills(const ProtocolTypes::Client::PlayerSkills& skills)
 {
 }
 
-void handleEquipmentUpdate(const ProtocolTypes::Equipment& equipment)
+void handleEquipmentUpdate(const ProtocolTypes::Client::Equipment& equipment)
 {
 }
 
-void handleTextMessage(const ProtocolTypes::TextMessage& message)
+void handleTextMessage(const ProtocolTypes::Client::TextMessage& message)
 {
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
-void handleCreatureMove(const ProtocolTypes::CreatureMove& move)
+void handleCreatureMove(const ProtocolTypes::Client::CreatureMove& move)
 {
   LOG_INFO("%s: canSeeOldPos: %s, canSeeNewPos: %s",
            __func__,
@@ -117,7 +117,7 @@ void handleCreatureMove(const ProtocolTypes::CreatureMove& move)
 
 void handle_packet(IncomingPacket* packet)
 {
-  using namespace ProtocolHelper;
+  using namespace ProtocolHelper::Client;
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_SRC_PLAYER_H_
-#define GAMEENGINE_SRC_PLAYER_H_
+#ifndef GAMEENGINE_EXPORT_PLAYER_H_
+#define GAMEENGINE_EXPORT_PLAYER_H_
 
 #include <array>
 #include <deque>
@@ -113,4 +113,4 @@ class Player : public Creature
   Equipment equipment_;
 };
 
-#endif  // GAMEENGINE_SRC_PLAYER_H_
+#endif  // GAMEENGINE_EXPORT_PLAYER_H_

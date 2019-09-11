@@ -21,54 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_MAP_H_
-#define WSCLIENT_SRC_MAP_H_
 
-#include <array>
-#include <vector>
+#ifndef WORLD_TEST_SRC_CREATURE_MOCK_H_
+#define WORLD_TEST_SRC_CREATURE_MOCK_H_
 
-#include "position.h"
+#include <string>
 #include "creature.h"
-#include "item.h"
-#include "protocol_types.h"
+#include "gmock/gmock.h"
 
-#include "types.h"
-
-class Map
+class CreatureMock : public Creature
 {
  public:
-  struct Tile
+  CreatureMock(int id)
+      : Creature("CreatureMock-" + std::to_string(id))
   {
-    struct Thing
-    {
-      bool isItem;
-      union
-      {
-        CreatureId creatureId;
-        struct
-        {
-          ItemTypeId itemTypeId;
-          std::uint8_t extra;
-          bool onTop;
-        } item;
-      };
-    };
-
-    std::vector<Thing> things;
-  };
-
-  void setMapData(const ProtocolTypes::Client::MapData& mapData);
-  void setPlayerPosition(const Position& position) { playerPosition_ = position; }
-
-  void addCreature(const Position& position, CreatureId creatureId);
-  void addItem(const Position& position, ItemTypeId itemTypeId, std::uint8_t extra, bool onTop);
-  void removeThing(const Position& position, std::uint8_t stackpos);
-
-  const Tile& getTile(const Position& position) const;
-
- private:
-  Position playerPosition_;
-  std::array<std::array<Tile, types::known_tiles_x>, types::known_tiles_y> tiles_;
+  }
 };
 
-#endif  // WSCLIENT_SRC_MAP_H_
+#endif  // WORLD_TEST_SRC_CREATURE_MOCK_H_

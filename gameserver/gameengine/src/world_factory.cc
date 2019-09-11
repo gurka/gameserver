@@ -144,7 +144,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilenam
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addItem(*(itemManager->getItem(itemId)));
+        tiles.back().addThing(itemManager->getItem(itemId));
       }
 
       // Go to next <tile> in XML

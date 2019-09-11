@@ -25,12 +25,11 @@
 #ifndef GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 #define GAMEENGINE_EXPORT_PLAYER_CTRL_H_
 
-#include "creature_ctrl.h"
-
 #include <array>
 #include <string>
 #include <vector>
 
+#include "creature_ctrl.h"
 #include "creature.h"
 #include "item.h"
 
@@ -53,7 +52,9 @@ class PlayerCtrl : public CreatureCtrl
   virtual void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) = 0;
 
   virtual void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) = 0;
-  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot, const Item& item) = 0;
+  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId,
+                                     std::uint8_t containerSlot,
+                                     const Item& item) = 0;
   virtual void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot) = 0;
 
   virtual void sendTextMessage(std::uint8_t message_type, const std::string& message) = 0;
