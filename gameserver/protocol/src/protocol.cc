@@ -626,21 +626,16 @@ void Protocol::onDisconnected()
 
 void Protocol::parseLogin(IncomingPacket* packet)
 {
-  packet->getU8();  // Unknown (0x02)
-  const auto client_os = packet->getU8();
-  const auto client_version = packet->getU16();
-  packet->getU8();  // Unknown
-  std::string character_name = packet->getString();
-  std::string password = packet->getString();
+  const auto login = ProtocolHelper::getLogin(packet);
 
   LOG_DEBUG("Client OS: %d Client version: %d Character: %s Password: %s",
-            client_os,
-            client_version,
-            character_name.c_str(),
-            password.c_str());
+            login.clientOs,
+            login.clientVersion,
+            login.characterName.c_str(),
+            login.password.c_str());
 
   // Check if character exists
-  if (!accountReader_->characterExists(character_name))
+  if (!accountReader_->characterExists(login.characterName))
   {
     OutgoingPacket packet;
     ProtocolHelper::addLoginFailed("Invalid character.", &packet);
@@ -650,7 +645,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   }
 
   // Check if password is correct
-  if (!accountReader_->verifyPassword(character_name, password))
+  if (!accountReader_->verifyPassword(login.characterName, login.password))
   {
     OutgoingPacket packet;
     ProtocolHelper::addLoginFailed("Invalid password.", &packet);
@@ -660,9 +655,9 @@ void Protocol::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, spawn player
-  gameEngineQueue_->addTask(playerId_, [this, character_name](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, characterName = login.characterName](GameEngine* gameEngine)
   {
-    if (!gameEngine->spawn(character_name, this))
+    if (!gameEngine->spawn(characterName, this))
     {
       OutgoingPacket packet;
       ProtocolHelper::addLoginFailed("Could not spawn player.", &packet);
@@ -674,70 +669,63 @@ void Protocol::parseLogin(IncomingPacket* packet)
 
 void Protocol::parseMoveClick(IncomingPacket* packet)
 {
-  std::deque<Direction> moves;
-  const auto pathLength = packet->getU8();
-
-  if (pathLength == 0)
+  const auto move = ProtocolHelper::getMoveClick(packet);
+  if (move.path.empty())
   {
     LOG_ERROR("%s: Path length is zero!", __func__);
     disconnect();
     return;
   }
 
-  for (auto i = 0; i < pathLength; i++)
+  gameEngineQueue_->addTask(playerId_, [this, path = std::move(move.path)](GameEngine* gameEngine) mutable
   {
-    moves.push_back(static_cast<Direction>(packet->getU8()));
-  }
-
-  gameEngineQueue_->addTask(playerId_, [this, moves](GameEngine* gameEngine) mutable
-  {
-    gameEngine->movePath(playerId_, std::move(moves));
+    gameEngine->movePath(playerId_, std::move(path));
   });
 }
 
 void Protocol::parseMoveItem(IncomingPacket* packet)
 {
-  const auto fromItemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
-  const auto toGamePosition = ProtocolHelper::getGamePosition(&containerIds_, packet);
-  const auto count = packet->getU8();
+  const auto move = ProtocolHelper::getMoveItem(&containerIds_, packet);
 
   LOG_DEBUG("%s: from: %s, to: %s, count: %u",
             __func__,
-            fromItemPosition.toString().c_str(),
-            toGamePosition.toString().c_str(),
-            count);
+            move.fromItemPosition.toString().c_str(),
+            move.toGamePosition.toString().c_str(),
+            move.count);
 
-  gameEngineQueue_->addTask(playerId_, [this, fromItemPosition, toGamePosition, count](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, move](GameEngine* gameEngine)
   {
-    gameEngine->moveItem(playerId_, fromItemPosition, toGamePosition, count);
+    gameEngine->moveItem(playerId_, move.fromItemPosition, move.toGamePosition, move.count);
   });
 }
 
 void Protocol::parseUseItem(IncomingPacket* packet)
 {
-  const auto itemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
-  const auto newContainerId = packet->getU8();
+  const auto useItem = ProtocolHelper::getUseItem(&containerIds_, packet);
 
-  LOG_DEBUG("%s: itemPosition: %s, newContainerId: %u", __func__, itemPosition.toString().c_str(), newContainerId);
+  LOG_DEBUG("%s: itemPosition: %s, newContainerId: %u",
+            __func__,
+            useItem.itemPosition.toString().c_str(),
+            useItem.newContainerId);
 
-  gameEngineQueue_->addTask(playerId_, [this, itemPosition, newContainerId](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, useItem](GameEngine* gameEngine)
   {
-    gameEngine->useItem(playerId_, itemPosition, newContainerId);
+    gameEngine->useItem(playerId_, useItem.itemPosition, useItem.newContainerId);
   });
 }
 
 void Protocol::parseCloseContainer(IncomingPacket* packet)
 {
-  const auto containerId = packet->getU8();
-  const auto itemUniqueId = getContainerItemUniqueId(containerId);
+  const auto close = ProtocolHelper::getCloseContainer(packet);
+  const auto itemUniqueId = getContainerItemUniqueId(close.containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, close.containerId);
     disconnect();
     return;
   }
 
-  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, containerId, itemUniqueId);
+  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, close.containerId, itemUniqueId);
 
   gameEngineQueue_->addTask(playerId_, [this, itemUniqueId](GameEngine* gameEngine)
   {
@@ -747,61 +735,43 @@ void Protocol::parseCloseContainer(IncomingPacket* packet)
 
 void Protocol::parseOpenParentContainer(IncomingPacket* packet)
 {
-  const auto containerId = packet->getU8();
-  const auto itemUniqueId = getContainerItemUniqueId(containerId);
+  const auto openParent = ProtocolHelper::getOpenParentContainer(packet);
+  const auto itemUniqueId = getContainerItemUniqueId(openParent.containerId);
   if (itemUniqueId == Item::INVALID_UNIQUE_ID)
   {
-    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, containerId);
+    LOG_ERROR("%s: containerId: %d does not map to a valid ItemUniqueId", __func__, openParent.containerId);
     disconnect();
     return;
   }
 
-  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, containerId, itemUniqueId);
+  LOG_DEBUG("%s: containerId: %d -> itemUniqueId: %u", __func__, openParent.containerId, itemUniqueId);
 
-  gameEngineQueue_->addTask(playerId_, [this, itemUniqueId, containerId](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, itemUniqueId, openParent](GameEngine* gameEngine)
   {
-    gameEngine->openParentContainer(playerId_, itemUniqueId, containerId);
+    gameEngine->openParentContainer(playerId_, itemUniqueId, openParent.containerId);
   });
 }
 
 void Protocol::parseLookAt(IncomingPacket* packet)
 {
-  const auto itemPosition = ProtocolHelper::getItemPosition(&containerIds_, packet);
+  const auto lookAt = ProtocolHelper::getLookAt(&containerIds_, packet);
 
-  LOG_DEBUG("%s: itemPosition: %s", __func__, itemPosition.toString().c_str());
+  LOG_DEBUG("%s: itemPosition: %s", __func__, lookAt.itemPosition.toString().c_str());
 
-  gameEngineQueue_->addTask(playerId_, [this, itemPosition](GameEngine* gameEngine)
+  gameEngineQueue_->addTask(playerId_, [this, lookAt](GameEngine* gameEngine)
   {
-    gameEngine->lookAt(playerId_, itemPosition);
+    gameEngine->lookAt(playerId_, lookAt.itemPosition);
   });
 }
 
 void Protocol::parseSay(IncomingPacket* packet)
 {
-  const auto type = packet->getU8();
+  const auto say = ProtocolHelper::getSay(packet);
 
-  std::string receiver = "";
-  std::uint16_t channelId = 0;
-
-  switch (type)
+  gameEngineQueue_->addTask(playerId_, [this, say](GameEngine* gameEngine)
   {
-    case 0x06:  // PRIVATE
-    case 0x0B:  // PRIVATE RED
-      packet->get(&receiver);
-      break;
-    case 0x07:  // CHANNEL_Y
-    case 0x0A:  // CHANNEL_R1
-      packet->get(&channelId);
-      break;
-    default:
-      break;
-  }
-
-  const auto message = packet->getString();
-
-  gameEngineQueue_->addTask(playerId_, [this, type, message, receiver, channelId](GameEngine* gameEngine)
-  {
-    gameEngine->say(playerId_, type, message, receiver, channelId);
+    // TODO(simon): probably different calls depending on say.type
+    gameEngine->say(playerId_, say.type, say.message, say.receiver, say.channelId);
   });
 }
 

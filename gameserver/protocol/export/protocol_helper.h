@@ -165,23 +165,20 @@ void addOutfitData(const Outfit& outfit, OutgoingPacket* packet);
 
 // Reading packets
 ProtocolTypes::Login getLogin(IncomingPacket* packet);
-ProtocolTypes::LoginFailed getLoginFailed(IncomingPacket* packet);
-ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet);
-ProtocolTypes::Item getItem(IncomingPacket* packet);
-ProtocolTypes::Equipment getEquipment(bool empty, IncomingPacket* packet);
-ProtocolTypes::MagicEffect getMagicEffect(IncomingPacket* packet);
-ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet);
-ProtocolTypes::WorldLight getWorldLight(IncomingPacket* packet);
-ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet);
-ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet);
-ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet);
-ProtocolTypes::CreatureMove getCreatureMove(bool canSeeOldPos, bool canSeeNewPos, IncomingPacket* packet);
+ProtocolTypes::MoveClick getMoveClick(IncomingPacket* packet);
+ProtocolTypes::MoveItem getMoveItem(KnownContainers* containerIds, IncomingPacket* packet);
+ProtocolTypes::UseItem getUseItem(KnownContainers* containerIds, IncomingPacket* packet);
+ProtocolTypes::CloseContainer getCloseContainer(IncomingPacket* packet);
+ProtocolTypes::OpenParentContainer getOpenParentContainer(IncomingPacket* packet);
+ProtocolTypes::LookAt getLookAt(KnownContainers* containerIds, IncomingPacket* packet);
+ProtocolTypes::Say getSay(IncomingPacket* packet);
 
 // Reading helpers
 Position getPosition(IncomingPacket* packet);
 Outfit getOutfit(IncomingPacket* packet);
 GamePosition getGamePosition(KnownContainers* containerIds, IncomingPacket* packet);
 ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* packet);
+
 }  // namespace ProtocolHelper
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_HELPER_H_

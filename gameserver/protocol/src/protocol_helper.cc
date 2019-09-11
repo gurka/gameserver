@@ -333,7 +333,7 @@ void addPosition(const Position& position, OutgoingPacket* packet)
 }
 
 void addThing(const Thing& thing,
-              std::array<CreatureId, 64>* knownCreatures,
+              KnownCreatures* knownCreatures,
               OutgoingPacket* packet)
 {
   if (thing.item)
@@ -517,219 +517,86 @@ void addOutfitData(const Outfit& outfit, OutgoingPacket* packet)
 ProtocolTypes::Login getLogin(IncomingPacket* packet)
 {
   ProtocolTypes::Login login;
-  packet->get(&login.playerId);
-  packet->get(&login.serverBeat);
+  packet->get(&login.unknown1);
+  packet->get(&login.clientOs);
+  packet->get(&login.clientVersion);
+  packet->get(&login.unknown2);
+  packet->get(&login.characterName);
+  packet->get(&login.password);
   return login;
 }
 
-ProtocolTypes::LoginFailed getLoginFailed(IncomingPacket* packet)
+ProtocolTypes::MoveClick getMoveClick(IncomingPacket* packet)
 {
-  ProtocolTypes::LoginFailed failed;
-  packet->get(&failed.reason);
-  return failed;
-}
-
-ProtocolTypes::Creature getCreature(bool known, IncomingPacket* packet)
-{
-  ProtocolTypes::Creature creature;
-  creature.known = known;
-  if (creature.known)
+  ProtocolTypes::MoveClick move;
+  const auto length = packet->getU8();
+  for (auto i = 0u; i < length; i++)
   {
-    packet->get(&creature.id);
-  }
-  else
-  {
-    packet->get(&creature.idToRemove);
-    packet->get(&creature.id);
-    packet->get(&creature.name);
-  }
-  packet->get(&creature.healthPercent);
-  creature.direction = static_cast<Direction>(packet->getU8());
-  creature.outfit = getOutfit(packet);
-  packet->getU16();  // unknown 0xDC00
-  packet->get(&creature.speed);
-  return creature;
-}
-
-ProtocolTypes::Item getItem(IncomingPacket* packet)
-{
-  ProtocolTypes::Item item;
-  packet->get(&item.itemTypeId);
-  // Need to make ItemType available to be able to check if we should
-  // read extra or not. For now assume not to read it
-  return item;
-}
-
-ProtocolTypes::Equipment getEquipment(bool empty, IncomingPacket* packet)
-{
-  ProtocolTypes::Equipment equipment;
-  equipment.empty = empty;
-  packet->get(&equipment.inventoryIndex);
-  if (equipment.empty)
-  {
-    equipment.item = getItem(packet);
-  }
-  return equipment;
-}
-
-ProtocolTypes::MagicEffect getMagicEffect(IncomingPacket* packet)
-{
-  ProtocolTypes::MagicEffect effect;
-  effect.position = getPosition(packet);
-  packet->get(&effect.type);
-  return effect;
-}
-
-ProtocolTypes::PlayerStats getPlayerStats(IncomingPacket* packet)
-{
-  ProtocolTypes::PlayerStats stats;
-  packet->get(&stats.health);
-  packet->get(&stats.maxHealth);
-  packet->get(&stats.capacity);
-  packet->get(&stats.exp);
-  packet->get(&stats.level);
-  packet->get(&stats.mana);
-  packet->get(&stats.maxMana);
-  packet->get(&stats.magicLevel);
-  return stats;
-}
-
-ProtocolTypes::WorldLight getWorldLight(IncomingPacket* packet)
-{
-  ProtocolTypes::WorldLight light;
-  packet->get(&light.intensity);
-  packet->get(&light.color);
-  return light;
-}
-
-ProtocolTypes::PlayerSkills getPlayerSkills(IncomingPacket* packet)
-{
-  ProtocolTypes::PlayerSkills skills;
-  packet->get(&skills.fist);
-  packet->get(&skills.club);
-  packet->get(&skills.sword);
-  packet->get(&skills.axe);
-  packet->get(&skills.dist);
-  packet->get(&skills.shield);
-  packet->get(&skills.fish);
-  return skills;
-}
-
-ProtocolTypes::TextMessage getTextMessage(IncomingPacket* packet)
-{
-  ProtocolTypes::TextMessage message;
-  packet->get(&message.type);
-  packet->get(&message.message);
-  return message;
-}
-
-ProtocolTypes::MapData getMapData(int width, int height, IncomingPacket* packet)
-{
-  ProtocolTypes::MapData map;
-
-  map.position = getPosition(packet);
-
-  // Assume that we always are on z=7
-  auto skip = 0;
-  for (auto z = 7; z >= 0; z--)
-  {
-    for (auto x = 0; x < width; x++)
-    {
-      for (auto y = 0; y < height; y++)
-      {
-        ProtocolTypes::MapData::TileData tile;
-        if (skip > 0)
-        {
-          skip -= 1;
-          tile.skip = true;
-          map.tiles.push_back(std::move(tile));
-          continue;
-        }
-
-        // Parse tile
-        tile.skip = false;
-        for (auto stackpos = 0; true; stackpos++)
-        {
-          if (packet->peekU16() >= 0xFF00)
-          {
-            skip = packet->getU16() & 0xFF;
-            break;
-          }
-
-          if (stackpos > 10)
-          {
-            LOG_ERROR("%s: too many things on this tile", __func__);
-          }
-
-          if (packet->peekU16() == 0x0061 ||
-              packet->peekU16() == 0x0062)
-          {
-            ProtocolTypes::MapData::CreatureData creature;
-            creature.stackpos = stackpos;
-            creature.creature = getCreature(packet->getU16() == 0x0062, packet);
-            tile.creatures.push_back(std::move(creature));
-          }
-          else
-          {
-            ProtocolTypes::MapData::ItemData item;
-            item.stackpos = stackpos;
-            item.item = getItem(packet);
-            tile.items.push_back(std::move(item));
-          }
-        }
-
-        map.tiles.push_back(std::move(tile));
-      }
-    }
-  }
-
-  return map;
-}
-
-ProtocolTypes::CreatureMove getCreatureMove(bool canSeeOldPos, bool canSeeNewPos, IncomingPacket* packet)
-{
-  ProtocolTypes::CreatureMove move;
-  move.canSeeOldPos = canSeeOldPos;
-  move.canSeeNewPos = canSeeNewPos;
-  if (move.canSeeOldPos && move.canSeeNewPos)
-  {
-    move.oldPosition = getPosition(packet);
-    packet->get(&move.oldStackPosition);
-    move.newPosition = getPosition(packet);
-  }
-  else if (move.canSeeOldPos)
-  {
-    move.oldPosition = getPosition(packet);
-    packet->get(&move.oldStackPosition);
-  }
-  else  // if (move.canSeeNewPos)
-  {
-    move.newPosition = getPosition(packet);
-    move.creature = getCreature(packet->getU16() == 0x0062, packet);
+    move.path.push_back(static_cast<Direction>(packet->getU8()));
   }
   return move;
 }
 
-Position getPosition(IncomingPacket* packet)
+ProtocolTypes::MoveItem getMoveItem(KnownContainers* containerIds, IncomingPacket* packet)
 {
-  const auto x = packet->getU16();
-  const auto y = packet->getU16();
-  const auto z = packet->getU8();
-  return Position(x, y, z);
+  ProtocolTypes::MoveItem move;
+  move.fromItemPosition = getItemPosition(containerIds, packet);
+  move.toGamePosition = getGamePosition(containerIds, packet);
+  packet->get(&move.count);
+  return move;
 }
 
-Outfit getOutfit(IncomingPacket* packet)
+ProtocolTypes::UseItem getUseItem(KnownContainers* containerIds, IncomingPacket* packet)
 {
-  Outfit outfit;
-  packet->get(&outfit.type);
-  packet->get(&outfit.head);
-  packet->get(&outfit.body);
-  packet->get(&outfit.legs);
-  packet->get(&outfit.feet);
-  return outfit;
+  ProtocolTypes::UseItem use;
+  use.itemPosition = getItemPosition(containerIds, packet);
+  packet->get(&use.newContainerId);
+  return use;
 }
 
-GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)
+ProtocolTypes::CloseContainer getCloseContainer(IncomingPacket* packet)
+{
+  ProtocolTypes::CloseContainer close;
+  packet->get(&close.containerId);
+  return close;
+}
+
+ProtocolTypes::OpenParentContainer getOpenParentContainer(IncomingPacket* packet)
+{
+  ProtocolTypes::OpenParentContainer open;
+  packet->get(&open.containerId);
+  return open;
+}
+
+ProtocolTypes::LookAt getLookAt(KnownContainers* containerIds, IncomingPacket* packet)
+{
+  ProtocolTypes::LookAt look;
+  look.itemPosition = getItemPosition(containerIds, packet);
+  return look;
+}
+
+ProtocolTypes::Say getSay(IncomingPacket* packet)
+{
+  ProtocolTypes::Say say;
+  packet->get(&say.type);
+  switch (say.type)
+  {
+    case 0x06:  // PRIVATE
+    case 0x0B:  // PRIVATE RED
+      packet->get(&say.receiver);
+      break;
+    case 0x07:  // CHANNEL_Y
+    case 0x0A:  // CHANNEL_R1
+      packet->get(&say.channelId);
+      break;
+    default:
+      break;
+  }
+  packet->get(&say.message);
+  return say;
+}
+
+GamePosition getGamePosition(KnownContainers* containerIds, IncomingPacket* packet)
 {
   const auto x = packet->getU16();
   const auto y = packet->getU16();
@@ -769,7 +636,7 @@ GamePosition getGamePosition(std::array<ItemUniqueId, 64>* containerIds, Incomin
   }
 }
 
-ItemPosition getItemPosition(std::array<ItemUniqueId, 64>* containerIds, IncomingPacket* packet)
+ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* packet)
 {
   const auto gamePosition = getGamePosition(containerIds, packet);
   const auto itemId = packet->getU16();
