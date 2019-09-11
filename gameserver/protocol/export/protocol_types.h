@@ -38,21 +38,7 @@
 namespace ProtocolTypes
 {
 
-namespace Client
-{
-
 struct Login
-{
-  std::uint32_t playerId;
-  std::uint16_t serverBeat;
-};
-
-struct LoginFailed
-{
-  std::string reason;
-};
-
-struct Creature
 {
   std::uint8_t unknown1;
   std::uint8_t clientOs;
@@ -101,6 +87,63 @@ struct Say
   std::string receiver;
   std::uint16_t channelId;
   std::string message;
+};
+
+namespace Client
+{
+
+struct Login
+{
+  std::uint32_t playerId;
+  std::uint16_t serverBeat;
+};
+
+struct LoginFailed
+{
+  std::string reason;
+};
+
+struct Creature
+{
+  bool known;
+  std::uint32_t idToRemove;  // only if known = false
+  std::uint32_t id;
+  std::string name;  // only if known = false
+  std::uint8_t healthPercent;
+  Direction direction;
+  Outfit outfit;
+  std::uint16_t speed;
+};
+
+struct Item
+{
+  std::uint16_t itemTypeId;
+  std::uint8_t extra;  // only if type is stackable or multitype
+};
+
+struct Equipment
+{
+  bool empty;
+  std::uint8_t inventoryIndex;
+  Item item;  // only if empty = false
+};
+
+struct MagicEffect
+{
+  Position position;
+  std::uint8_t type;
+};
+
+struct PlayerStats
+{
+  std::uint16_t health;
+  std::uint16_t maxHealth;
+  std::uint16_t capacity;
+  std::uint32_t exp;
+  std::uint8_t level;
+  std::uint16_t mana;
+  std::uint16_t maxMana;
+  std::uint8_t magicLevel;
 };
 
 struct WorldLight
@@ -163,57 +206,6 @@ struct CreatureMove
 };
 
 }
-
-struct Login
-{
-  std::uint8_t unknown1;
-  std::uint8_t clientOs;
-  std::uint16_t clientVersion;
-  std::uint8_t unknown2;
-  std::string characterName;
-  std::string password;
-};
-
-struct MoveClick
-{
-  std::deque<Direction> path;
-};
-
-struct MoveItem  // or MoveThing?
-{
-  ItemPosition fromItemPosition;
-  GamePosition toGamePosition;
-  std::uint8_t count;
-};
-
-struct UseItem
-{
-  ItemPosition itemPosition;
-  std::uint8_t newContainerId;
-};
-
-struct CloseContainer
-{
-  std::uint8_t containerId;
-};
-
-struct OpenParentContainer
-{
-  std::uint8_t containerId;
-};
-
-struct LookAt
-{
-  ItemPosition itemPosition;
-};
-
-struct Say
-{
-  std::uint8_t type;
-  std::string receiver;
-  std::uint16_t channelId;
-  std::string message;
-};
 
 }  // namespace ProtocolTypes
 

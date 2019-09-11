@@ -182,7 +182,6 @@ ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* pack
 namespace Client
 {
 
-// WSCLIENT
 ProtocolTypes::Client::Login getLogin(IncomingPacket* packet);
 ProtocolTypes::Client::LoginFailed getLoginFailed(IncomingPacket* packet);
 ProtocolTypes::Client::Creature getCreature(bool known, IncomingPacket* packet);

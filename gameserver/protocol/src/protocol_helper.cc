@@ -596,20 +596,25 @@ ProtocolTypes::Say getSay(IncomingPacket* packet)
   return say;
 }
 
-ProtocolTypes::UseItem getUseItem(KnownContainers* containerIds, IncomingPacket* packet)
+Position getPosition(IncomingPacket* packet)
 {
-  ProtocolTypes::UseItem use;
-  use.itemPosition = getItemPosition(containerIds, packet);
-  packet->get(&use.newContainerId);
-  return use;
+  const auto x = packet->getU16();
+  const auto y = packet->getU16();
+  const auto z = packet->getU8();
+  return Position(x, y, z);
 }
 
-ProtocolTypes::CloseContainer getCloseContainer(IncomingPacket* packet)
+Outfit getOutfit(IncomingPacket* packet)
 {
-  ProtocolTypes::CloseContainer close;
-  packet->get(&close.containerId);
-  return close;
+  Outfit outfit;
+  packet->get(&outfit.type);
+  packet->get(&outfit.head);
+  packet->get(&outfit.body);
+  packet->get(&outfit.legs);
+  packet->get(&outfit.feet);
+  return outfit;
 }
+
 
 GamePosition getGamePosition(KnownContainers* containerIds, IncomingPacket* packet)
 {
@@ -716,16 +721,7 @@ ProtocolTypes::Client::Equipment getEquipment(bool empty, IncomingPacket* packet
   packet->get(&equipment.inventoryIndex);
   if (equipment.empty)
   {
-    case 0x06:  // PRIVATE
-    case 0x0B:  // PRIVATE RED
-      packet->get(&say.receiver);
-      break;
-    case 0x07:  // CHANNEL_Y
-    case 0x0A:  // CHANNEL_R1
-      packet->get(&say.channelId);
-      break;
-    default:
-      break;
+    equipment.item = getItem(packet);
   }
   return equipment;
 }
