@@ -778,4 +778,4 @@ ItemPosition getItemPosition(std::array<ItemUniqueId, 64>* containerIds, Incomin
   return ItemPosition(gamePosition, itemId, stackPosition);
 }
 
-}
+}  // namespace ProtocolHelper

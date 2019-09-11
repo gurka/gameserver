@@ -22,10 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_SRC_PROTOCOL_H_
-#define WORLDSERVER_SRC_PROTOCOL_H_
-
-#include "player_ctrl.h"
+#ifndef PROTOCOL_EXPORT_PROTOCOL_H_
+#define PROTOCOL_EXPORT_PROTOCOL_H_
 
 #include <array>
 #include <functional>
@@ -33,6 +31,7 @@
 #include <memory>
 
 // gameengine
+#include "player_ctrl.h"
 #include "player.h"
 #include "game_position.h"
 #include "container.h"
@@ -146,4 +145,4 @@ class Protocol : public PlayerCtrl
   std::array<ItemUniqueId, 64> containerIds_;
 };
 
-#endif  // WORLDSERVER_SRC_PROTOCOL_H_
+#endif  // PROTOCOL_EXPORT_PROTOCOL_H_

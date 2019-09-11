@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-#ifndef WORLDSERVER_SRC_PROTOCOL_TYPES_H_
-#define WORLDSERVER_SRC_PROTOCOL_TYPES_H_
+#ifndef PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
+#define PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "direction.h"
@@ -148,6 +149,6 @@ struct CreatureMove
   Creature creature;              // only if canSeeOldPos = false and canSeeNewPos = true
 };
 
-}
+}  // namespace ProtocolTypes
 
-#endif  // WORLDSERVER_SRC_PROTOCOL_TYPES_H_
+#endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

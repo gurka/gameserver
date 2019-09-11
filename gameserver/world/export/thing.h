@@ -30,13 +30,14 @@ class Item;
 
 struct Thing
 {
-  Thing(const Creature* creature)
+  // We want implicit constructors
+  Thing(const Creature* creature)  // NOLINT
       : creature(creature),
         item(nullptr)
   {
   }
 
-  Thing(const Item* item)
+  Thing(const Item* item)  // NOLINT
       : creature(nullptr),
         item(item)
   {
