@@ -54,45 +54,53 @@ struct LoginFailed
 
 struct Creature
 {
-  bool known;
-  std::uint32_t idToRemove;  // only if known = false
-  std::uint32_t id;
-  std::string name;  // only if known = false
-  std::uint8_t healthPercent;
-  Direction direction;
-  Outfit outfit;
-  std::uint16_t speed;
+  std::uint8_t unknown1;
+  std::uint8_t clientOs;
+  std::uint16_t clientVersion;
+  std::uint8_t unknown2;
+  std::string characterName;
+  std::string password;
 };
 
-struct Item
+struct MoveClick
 {
-  std::uint16_t itemTypeId;
-  std::uint8_t extra;  // only if type is stackable or multitype
+  std::deque<Direction> path;
 };
 
-struct Equipment
+struct MoveItem  // or MoveThing?
 {
-  bool empty;
-  std::uint8_t inventoryIndex;
-  Item item;  // only if empty = false
+  ItemPosition fromItemPosition;
+  GamePosition toGamePosition;
+  std::uint8_t count;
 };
 
-struct MagicEffect
+struct UseItem
 {
-  Position position;
+  ItemPosition itemPosition;
+  std::uint8_t newContainerId;
+};
+
+struct CloseContainer
+{
+  std::uint8_t containerId;
+};
+
+struct OpenParentContainer
+{
+  std::uint8_t containerId;
+};
+
+struct LookAt
+{
+  ItemPosition itemPosition;
+};
+
+struct Say
+{
   std::uint8_t type;
-};
-
-struct PlayerStats
-{
-  std::uint16_t health;
-  std::uint16_t maxHealth;
-  std::uint16_t capacity;
-  std::uint32_t exp;
-  std::uint8_t level;
-  std::uint16_t mana;
-  std::uint16_t maxMana;
-  std::uint8_t magicLevel;
+  std::string receiver;
+  std::uint16_t channelId;
+  std::string message;
 };
 
 struct WorldLight
