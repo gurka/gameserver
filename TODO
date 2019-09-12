@@ -10,25 +10,30 @@ General:
     addItem and removeItem should return success/failure (bool),
     so that we do not duplicate or make Items disappear.
 
-ContainerManager:
-  * Add support for moving container items (might need to update rootItemPosition and parentContainerId)
+  * All three "containers" (Tile, Equipment, Container)
+    should work with and hold 'const Thing*'s. Equipment and
+    Container should reject Creature Things.
 
+    Actual Item objects are owned and managed by ItemManager
+    Actual Creature objects are owned and managed by... GameEngine?
+
+  * Add namespaces to each module
+
+  * Change all variables to snake_case
+
+  * Update google test and google style/lint
+
+  * Check if we can force snake_case with linter
+
+ContainerManager:
   * Add support for weight calculation
 
-  * Fix TODOs
-
-  * Fix tests
-
-  * PRIO:
-    - GamePosition type CONTAINER is broken.
-    - clientContainerId belongs to a player, but ItemPosition is set to Container::rootItemPosition
-      (note: this can never happen, rootItemPosition is always inventory or world...)
-    - Printing GamePosition sucks
-    - Investigate moving clientContianerId stuff to Protocol
-    - NO CLIENTCONTAINERID SHOULD EVER LEAVE PROTOCOL_71
-      Only newContainerId for when using items that could be a container
-    - GamePosition should use ItemUniqueId and containerSlot for Type::CONTAINER
-
-World:
-  * Look at how Tile stores Creatures (using CreatureId)
-    Why not store them as Creature pointers, just like Items?
+Protocol:
+  * Put protocol.cc/.h back in GameEngine
+  * Split helper into something like
+    - PacketWriterServer
+    - PacketWriterClient
+    - PacketReaderServer
+    - PacketReaderClient
+  * Or perhaps put Packet*Server in GameEngine, Packet*Client in wsclient
+    and just remove protocol?
