@@ -59,7 +59,7 @@ class Logger
     WORLDSERVER,
   };
 
-  static void log(const char* fileFullPath, int line, Level level, ...);
+  static void log(const char* file_full_path, int line, Level level, ...);
   static void setLevel(Module module, const std::string& level);
   static void setLevel(Module module, Level level);
 
@@ -75,10 +75,10 @@ class Logger
   };
 
   // Maps filename to module
-  static const std::unordered_map<std::string, Module> file_to_module_;
+  static const std::unordered_map<std::string, Module> FILE_TO_MODULE;
 
   // Maps module to level
-  static std::unordered_map<Module, Level, ModuleHash> module_to_level_;
+  static std::unordered_map<Module, Level, ModuleHash> module_to_level;
 };
 
 // Log macros

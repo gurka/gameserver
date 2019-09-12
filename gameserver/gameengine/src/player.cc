@@ -28,55 +28,55 @@
 
 #include "logger.h"
 
-bool Equipment::canAddItem(const Item& item, int inventorySlot) const
+bool Equipment::canAddItem(const Item& item, int inventory_slot) const
 {
-  if (inventorySlot < 1 || inventorySlot > 10)
+  if (inventory_slot < 1 || inventory_slot > 10)
   {
-    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    LOG_ERROR("%s: inventory_slot: %d is invalid", __func__, inventory_slot);
     return false;
   }
 
   // TODO(simon): Check capacity
 
   // Get Item attributes
-  std::string itemType;
-  std::string itemPosition;
+  std::string item_type;
+  std::string item_position;
 
   if (!item.getItemType().type.empty())
   {
-    itemType = item.getItemType().type;
+    item_type = item.getItemType().type;
   }
 
   if (!item.getItemType().position.empty())
   {
-    itemPosition = item.getItemType().position;
+    item_position = item.getItemType().position;
   }
 
   LOG_DEBUG("canAddItem(): ItemTypeId: %d Type: %s Positon: %s",
             item.getItemTypeId(),
-            itemType.c_str(),
-            itemPosition.c_str());
+            item_type.c_str(),
+            item_position.c_str());
 
-  switch (inventorySlot)
+  switch (inventory_slot)
   {
     case HELMET:
     {
-      return itemType == "armor" && itemPosition == "helmet";
+      return item_type == "armor" && item_position == "helmet";
     }
 
     case AMULET:
     {
-      return itemType == "armor" && itemPosition == "amulet";
+      return item_type == "armor" && item_position == "amulet";
     }
 
     case BACKPACK:
     {
-      return itemType == "container";
+      return item_type == "container";
     }
 
     case ARMOR:
     {
-      return itemType == "armor" && itemPosition == "body";
+      return item_type == "armor" && item_position == "body";
     }
 
     case RIGHT_HAND:
@@ -85,94 +85,94 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
       // Just check that we don't equip an 2-hander if other hand is not empty
       if (item.getItemType().handed == 2)
       {
-        if (inventorySlot == RIGHT_HAND)
+        if (inventory_slot == RIGHT_HAND)
         {
-          return items_.at(LEFT_HAND) == nullptr;
+          return m_items.at(LEFT_HAND) == nullptr;
         }
 
-        return items_.at(RIGHT_HAND) == nullptr;
+        return m_items.at(RIGHT_HAND) == nullptr;
       }
       return true;
     }
 
     case LEGS:
     {
-      return itemType == "armor" && itemPosition == "legs";
+      return item_type == "armor" && item_position == "legs";
     }
 
     case FEET:
     {
-      return itemType == "armor" && itemPosition == "boots";
+      return item_type == "armor" && item_position == "boots";
     }
 
     case RING:
     {
-      return itemType == "armor" && itemPosition == "ring";
+      return item_type == "armor" && item_position == "ring";
     }
 
     case AMMO:
     {
       // TODO(simon): Not yet in items.xml
-      return itemType == "ammo";
+      return item_type == "ammo";
     }
   }
 
   return false;
 }
 
-bool Equipment::addItem(const Item& item, int inventorySlot)
+bool Equipment::addItem(const Item& item, int inventory_slot)
 {
-  if (inventorySlot < 1 || inventorySlot > 10)
+  if (inventory_slot < 1 || inventory_slot > 10)
   {
-    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    LOG_ERROR("%s: inventory_slot: %d is invalid", __func__, inventory_slot);
     return false;
   }
 
-  if (!canAddItem(item, inventorySlot))
+  if (!canAddItem(item, inventory_slot))
   {
     return false;
   }
 
-  items_[inventorySlot] = &item;
+  m_items[inventory_slot] = &item;
   return true;
 }
 
-bool Equipment::removeItem(ItemTypeId itemTypeId, int inventorySlot)
+bool Equipment::removeItem(ItemTypeId item_type_id, int inventory_slot)
 {
-  if (inventorySlot < 1 || inventorySlot > 10)
+  if (inventory_slot < 1 || inventory_slot > 10)
   {
-    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    LOG_ERROR("%s: inventory_slot: %d is invalid", __func__, inventory_slot);
     return false;
   }
 
-  if (items_[inventorySlot]->getItemTypeId() != itemTypeId)
+  if (m_items[inventory_slot]->getItemTypeId() != item_type_id)
   {
     return false;
   }
 
-  items_[inventorySlot] = nullptr;
+  m_items[inventory_slot] = nullptr;
   return true;
 }
 
-const Item* Equipment::getItem(int inventorySlot) const
+const Item* Equipment::getItem(int inventory_slot) const
 {
-  if (inventorySlot < 1 || inventorySlot > 10)
+  if (inventory_slot < 1 || inventory_slot > 10)
   {
-    LOG_ERROR("%s: inventorySlot: %d is invalid", __func__, inventorySlot);
+    LOG_ERROR("%s: inventory_slot: %d is invalid", __func__, inventory_slot);
     return nullptr;
   }
 
-  return items_[inventorySlot];
+  return m_items[inventory_slot];
 }
 
 Player::Player(const std::string& name)
   : Creature(name),
-    maxMana_(100),
-    mana_(100),
-    capacity_(300),
-    experience_(4200),
-    magicLevel_(1),
-    partyShield_(0)
+    m_max_mana(100),
+    m_mana(100),
+    m_capacity(300),
+    m_experience(4200),
+    m_magic_level(1),
+    m_party_shield(0)
 {
 }
 
@@ -183,12 +183,12 @@ std::uint16_t Player::getSpeed() const
 
 std::uint8_t Player::getLevel() const
 {
-  if (experience_ <  100) { return 1; }
-  if (experience_ <  200) { return 2; }
-  if (experience_ <  400) { return 3; }
-  if (experience_ <  800) { return 4; }
-  if (experience_ < 1500) { return 5; }
-  if (experience_ < 2600) { return 6; }
-  if (experience_ < 4200) { return 7; }
+  if (m_experience <  100) { return 1; }
+  if (m_experience <  200) { return 2; }
+  if (m_experience <  400) { return 3; }
+  if (m_experience <  800) { return 4; }
+  if (m_experience < 1500) { return 5; }
+  if (m_experience < 2600) { return 6; }
+  if (m_experience < 4200) { return 7; }
   return 8;
 }

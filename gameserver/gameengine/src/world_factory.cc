@@ -39,121 +39,123 @@
 
 #include "rapidxml.hpp"
 
-std::unique_ptr<World> WorldFactory::createWorld(const std::string& worldFilename,
-                                                 ItemManager* itemManager)
+std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filename,
+                                                 ItemManager* item_manager)
 {
   // Open world.xml and read it into a string
-  LOG_INFO("Loading world file: \"%s\"", worldFilename.c_str());
-  std::ifstream xmlFile(worldFilename);
-  if (!xmlFile.is_open())
+  LOG_INFO("Loading world file: \"%s\"", world_filename.c_str());
+  std::ifstream xml_file(world_filename);
+  if (!xml_file.is_open())
   {
-    LOG_ERROR("%s: Could not open file: \"%s\"", __func__, worldFilename.c_str());
+    LOG_ERROR("%s: Could not open file: \"%s\"", __func__, world_filename.c_str());
     return std::unique_ptr<World>();
   }
 
-  std::string tempString;
-  std::ostringstream xmlStringStream;
-  while (std::getline(xmlFile, tempString))
+  std::string tmp_string;
+  std::ostringstream xml_stream;
+  while (std::getline(xml_file, tmp_string))
   {
-    xmlStringStream << tempString << "\n";
+    xml_stream << tmp_string << "\n";
   }
 
   // Convert the std::string to a char*
-  char* xmlString = strdup(xmlStringStream.str().c_str());
+  char* xml_string = strdup(xml_stream.str().c_str());
 
   // Parse the XML string with Rapidxml
-  rapidxml::xml_document<> worldXml;
-  worldXml.parse<0>(xmlString);
+  rapidxml::xml_document<> world_xml;
+  world_xml.parse<0>(xml_string);
 
   // Get top node (<map>)
-  const auto* mapNode = worldXml.first_node();
+  const auto* map_node = world_xml.first_node();
 
   // Read width and height
-  const auto* widthAttr = mapNode->first_attribute("width");
-  const auto* heightAttr = mapNode->first_attribute("height");
-  if (widthAttr == nullptr || heightAttr == nullptr)
+  const auto* width_attr = map_node->first_attribute("width");
+  const auto* height_attr = map_node->first_attribute("height");
+  if (width_attr == nullptr || height_attr == nullptr)
   {
     LOG_ERROR("%s: Invalid file, missing attributes width or height in <map>-node", __func__);
-    free(xmlString);
+    free(xml_string);
     return std::unique_ptr<World>();
   }
 
-  const auto worldSizeX = std::stoi(widthAttr->value());
-  const auto worldSizeY = std::stoi(heightAttr->value());
+  const auto world_size_x = std::stoi(width_attr->value());
+  const auto world_size_y = std::stoi(height_attr->value());
 
   // Read tiles
   std::vector<Tile> tiles;
-  tiles.reserve(worldSizeX * worldSizeY);
-  const auto* tileNode = mapNode->first_node();
-  for (int y = World::position_offset; y < World::position_offset + worldSizeY; y++)
+  tiles.reserve(world_size_x * world_size_y);
+  const auto* tile_node = map_node->first_node();
+  for (int y = World::POSITION_OFFSET; y < World::POSITION_OFFSET + world_size_y; y++)
   {
-    for (int x = World::position_offset; x < World::position_offset + worldSizeX; x++)
+    for (int x = World::POSITION_OFFSET; x < World::POSITION_OFFSET + world_size_x; x++)
     {
-      if (tileNode == nullptr)
+      if (tile_node == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing <tile>-node", __func__);
-        free(xmlString);
+        free(xml_string);
         return std::unique_ptr<World>();
       }
 
       // Read the first <item> (there must be at least one, the ground item)
       // TODO(simon): Must there be one? What about "void", or is it also an Item?
-      const auto* groundItemNode = tileNode->first_node();
-      if (groundItemNode == nullptr)
+      const auto* ground_item_node = tile_node->first_node();
+      if (ground_item_node == nullptr)
       {
         LOG_ERROR("%s: Invalid file, <tile>-node is missing <item>-node", __func__);
-        free(xmlString);
+        free(xml_string);
         return std::unique_ptr<World>();
       }
-      const auto* groundItemAttr = groundItemNode->first_attribute("id");
-      if (groundItemAttr == nullptr)
+      const auto* ground_item_attr = ground_item_node->first_attribute("id");
+      if (ground_item_attr == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing attribute id in <item>-node", __func__);
-        free(xmlString);
+        free(xml_string);
         return std::unique_ptr<World>();
       }
 
-      const auto groundItemTypeId = std::stoi(groundItemAttr->value());
-      const auto groundItemId = itemManager->createItem(groundItemTypeId);
-      if (groundItemId == Item::INVALID_UNIQUE_ID)
+      const auto ground_item_type_id = std::stoi(ground_item_attr->value());
+      const auto ground_item_id = item_manager->createItem(ground_item_type_id);
+      if (ground_item_id == Item::INVALID_UNIQUE_ID)
       {
-        LOG_ERROR("%s: groundItemTypeId: %d is invalid", __func__, groundItemTypeId);
-        free(xmlString);
+        LOG_ERROR("%s: ground_item_type_id: %d is invalid", __func__, ground_item_type_id);
+        free(xml_string);
         return std::unique_ptr<World>();
       }
 
-      tiles.emplace_back(itemManager->getItem(groundItemId));
+      tiles.emplace_back(item_manager->getItem(ground_item_id));
 
       // Read more items to put in this tile
       // But due to the way otserv-3.0 made world.xml, do it backwards
-      for (auto* itemNode = tileNode->last_node(); itemNode != groundItemNode; itemNode = itemNode->previous_sibling())
+      for (auto* item_node = tile_node->last_node();
+           item_node != ground_item_node;
+           item_node = item_node->previous_sibling())
       {
-        const auto* itemIdAttr = itemNode->first_attribute("id");
-        if (itemIdAttr == nullptr)
+        const auto* item_id_attr = item_node->first_attribute("id");
+        if (item_id_attr == nullptr)
         {
           LOG_DEBUG("%s: Missing attribute id in <item>-node, skipping Item", __func__);
           continue;
         }
 
-        const auto itemTypeId = std::stoi(itemIdAttr->value());
-        const auto itemId = itemManager->createItem(itemTypeId);
-        if (itemId == Item::INVALID_UNIQUE_ID)
+        const auto item_type_id = std::stoi(item_id_attr->value());
+        const auto item_id = item_manager->createItem(item_type_id);
+        if (item_id == Item::INVALID_UNIQUE_ID)
         {
-          LOG_ERROR("%s: itemTypeId: %d is invalid", __func__, itemTypeId);
-          free(xmlString);
+          LOG_ERROR("%s: item_type_id: %d is invalid", __func__, item_type_id);
+          free(xml_string);
           return std::unique_ptr<World>();
         }
 
-        tiles.back().addThing(itemManager->getItem(itemId));
+        tiles.back().addThing(item_manager->getItem(item_id));
       }
 
       // Go to next <tile> in XML
-      tileNode = tileNode->next_sibling();
+      tile_node = tile_node->next_sibling();
     }
   }
 
-  LOG_INFO("World loaded, size: %d x %d", worldSizeX, worldSizeY);
-  free(xmlString);
+  LOG_INFO("World loaded, size: %d x %d", world_size_x, world_size_y);
+  free(xml_string);
 
-  return std::make_unique<World>(worldSizeX, worldSizeY, std::move(tiles));
+  return std::make_unique<World>(world_size_x, world_size_y, std::move(tiles));
 }

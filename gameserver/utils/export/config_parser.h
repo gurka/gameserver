@@ -40,7 +40,7 @@ class ConfigParser
  public:
   bool hasSection(const std::string& section) const
   {
-    return values_.count(section) == 1;
+    return m_values.count(section) == 1;
   }
 
   bool hasValue(const std::string& section, const std::string& key) const
@@ -50,72 +50,63 @@ class ConfigParser
       return false;
     }
 
-    return values_.at(section).count(key) == 1;
+    return m_values.at(section).count(key) == 1;
   }
 
-  int getInteger(const std::string& section, const std::string& key, int default_ = 0) const
+  int getInteger(const std::string& section, const std::string& key, int default_value = 0) const
   {
     if (hasValue(section, key))
     {
-      return std::stoi(values_.at(section).at(key));
+      return std::stoi(m_values.at(section).at(key));
     }
-    else
-    {
-      return default_;
-    }
+    return default_value;
   }
 
-  std::string getString(const std::string& section, const std::string& key, const std::string& default_ = "") const
+  std::string getString(const std::string& section, const std::string& key, const std::string& default_value = "") const
   {
     if (hasValue(section, key))
     {
-      return values_.at(section).at(key);
+      return m_values.at(section).at(key);
     }
-    else
-    {
-      return default_;
-    }
+    return default_value;
   }
 
-  bool getBoolean(const std::string& section, const std::string& key, bool default_ = false) const
+  bool getBoolean(const std::string& section, const std::string& key, bool default_value = false) const
   {
     if (hasValue(section, key))
     {
-      return values_.at(section).at(key) == "true";
+      return m_values.at(section).at(key) == "true";
     }
-    else
-    {
-      return default_;
-    }
+    return default_value;
   }
 
   bool parsedOk() const
   {
-    return !error_;
+    return !m_error;
   }
 
   std::string getErrorMessage() const
   {
-    return errorMessage_;
+    return m_error_message;
   }
 
-  static ConfigParser parseFile(const std::string& fileName)
+  static ConfigParser parseFile(const std::string& file_name)
   {
     // Open file
-    std::ifstream fileStream(fileName);
-    if (!fileStream.is_open())
+    std::ifstream file_stream(file_name);
+    if (!file_stream.is_open())
     {
       ConfigParser result;
-      result.error_ = true;
-      result.errorMessage_ = "Could not open file: " + fileName;
+      result.m_error = true;
+      result.m_error_message = "Could not open file: " + file_name;
       return result;
     }
 
-    ConfigParser result = parseStream(&fileStream);
-    if (result.error_)
+    ConfigParser result = parseStream(&file_stream);
+    if (result.m_error)
     {
-      auto temp = result.errorMessage_;
-      result.errorMessage_ = fileName + ":" + temp;
+      auto temp = result.m_error_message;
+      result.m_error_message = file_name + ":" + temp;
     }
 
     return result;
@@ -125,114 +116,114 @@ class ConfigParser
   {
     ConfigParser result;
 
-    std::unordered_map<std::string, std::string>* currentSection = nullptr;
+    std::unordered_map<std::string, std::string>* current_section = nullptr;
 
     // Read lines
     std::string line;
-    auto lineNumber = 0;
+    auto line_number = 0;
     while (std::getline(*stream, line))
     {
-      lineNumber++;
+      line_number++;
 
-      std::istringstream lineStream(line);
+      std::istringstream line_stream(line);
 
       // Discard leading whitespace
-      lineStream >> std::ws;
+      line_stream >> std::ws;
 
-      if (lineStream.eof())
+      if (line_stream.eof())
       {
         // Empty line
       }
-      else if (lineStream.peek() == ';')
+      else if (line_stream.peek() == ';')
       {
         // Comment
       }
-      else if (lineStream.peek() == '[')
+      else if (line_stream.peek() == '[')
       {
         // Read section name
-        std::stringbuf sectionNameBuf;
-        lineStream.ignore(1, '[');                // Discard '['
-        lineStream.get(sectionNameBuf, ']');      // Read until ']'
-        auto sectionName = sectionNameBuf.str();
+        std::stringbuf section_name_buf;
+        line_stream.ignore(1, '[');                // Discard '['
+        line_stream.get(section_name_buf, ']');      // Read until ']'
+        auto section_name = section_name_buf.str();
 
         // Get pointer to section's map
-        if (sectionName.length() == 0)
+        if (section_name.length() == 0)
         {
-          std::ostringstream errorMessageStream;
-          errorMessageStream << lineNumber << ": Invalid section name (empty)";
+          std::ostringstream m_errormessage_stream;
+          m_errormessage_stream << line_number << ": Invalid section name (empty)";
 
-          result.error_ = true;
-          result.errorMessage_ = errorMessageStream.str();
+          result.m_error = true;
+          result.m_error_message = m_errormessage_stream.str();
           return result;
         }
 
-        LOG_DEBUG("Read section name: {%s}", sectionName.c_str());
+        LOG_DEBUG("Read section name: {%s}", section_name.c_str());
 
         // operator[] creates a new element (if one not already exists)
         // and returns it, we keep the pointer
-        currentSection = &(result.values_[sectionName]);
+        current_section = &(result.m_values[section_name]);
       }
-      else if (currentSection == nullptr)
+      else if (current_section == nullptr)
       {
-        std::ostringstream errorMessageStream;
-        errorMessageStream << lineNumber << ": Key-value pair without section";
+        std::ostringstream m_errormessage_stream;
+        m_errormessage_stream << line_number << ": Key-value pair without section";
 
-        result.error_ = true;
-        result.errorMessage_ = errorMessageStream.str();
+        result.m_error = true;
+        result.m_error_message = m_errormessage_stream.str();
         return result;
       }
       else
       {
         // Read key-value pair
-        std::stringbuf keyBuf;
-        std::stringbuf valueBuf;
+        std::stringbuf key_buf;
+        std::stringbuf value_buf;
 
-        lineStream.get(keyBuf, '=');  // Read until '=' (can contain trailing whitespace)
-        lineStream.ignore(1, '=');    // Discard '='
-        lineStream >> std::ws;        // Discard leading whitespace
-        lineStream.get(valueBuf);     // Read until EOL (can contain trailing whitespace)
+        line_stream.get(key_buf, '=');  // Read until '=' (can contain trailing whitespace)
+        line_stream.ignore(1, '=');    // Discard '='
+        line_stream >> std::ws;        // Discard leading whitespace
+        line_stream.get(value_buf);     // Read until EOL (can contain trailing whitespace)
 
-        auto key = keyBuf.str();
-        auto value = valueBuf.str();
+        auto key = key_buf.str();
+        auto value = value_buf.str();
 
         // Remove trailing whitespace from both key and value
-        auto isSpace = [](int ch) { return std::isspace(ch); };
+        auto is_space = [](int ch) { return std::isspace(ch); };
 
-        auto keyTrailingWs = std::find_if_not(key.rbegin(), key.rend(), isSpace);
-        if (keyTrailingWs != key.rend())
+        auto key_trailing_ws = std::find_if_not(key.rbegin(), key.rend(), is_space);
+        if (key_trailing_ws != key.rend())
         {
-          key = std::string(key.begin(), keyTrailingWs.base());
+          key = std::string(key.begin(), key_trailing_ws.base());
         }
 
-        auto valueTrailingWs = std::find_if_not(value.rbegin(), value.rend(), isSpace);
-        if (valueTrailingWs != value.rend())
+        auto value_trailing_ws = std::find_if_not(value.rbegin(), value.rend(), is_space);
+        if (value_trailing_ws != value.rend())
         {
-          value = std::string(value.begin(), valueTrailingWs.base());
+          value = std::string(value.begin(), value_trailing_ws.base());
         }
 
         // Verify that it is a key-value pair line
         if (key.length() == 0 || value.length() == 0)
         {
-          std::ostringstream errorMessageStream;
-          errorMessageStream << lineNumber << ": Invalid key-value pair";
+          std::ostringstream error_message_stream;
+          error_message_stream << line_number << ": Invalid key-value pair";
 
-          result.error_ = true;
-          result.errorMessage_ = errorMessageStream.str();
+          result.m_error = true;
+          result.m_error_message = error_message_stream.str();
           return result;
         }
 
         // Verify that the key isn't already read
-        if (currentSection->count(key) == 1)
+        if (current_section->count(key) == 1)
         {
-          std::ostringstream errorMessageStream;
-          errorMessageStream << lineNumber << ": Key \"" << key << "\" read multiple times";
+          std::ostringstream error_message_stream;
+          error_message_stream << line_number << ": Key \"" << key << "\" read multiple times";
 
-          result.error_ = true;
-          result.errorMessage_ = errorMessageStream.str();
+          result.m_error = true;
+          result.m_error_message = error_message_stream.str();
           return result;
         }
 
-        currentSection->insert(std::make_pair(key, value));
+        current_section->insert(std::make_pair(key, value));
       }
     }
 
@@ -240,16 +231,13 @@ class ConfigParser
   }
 
  private:
-  ConfigParser()
-    : error_(false)
-  {
-  }
+  ConfigParser() = default;
 
-  bool error_;
-  std::string errorMessage_;
+  bool m_error{false};
+  std::string m_error_message;
 
   std::unordered_map<std::string,
-                     std::unordered_map<std::string, std::string>> values_;
+                     std::unordered_map<std::string, std::string>> m_values;
 };
 
 #endif  // UTILS_EXPORT_CONFIG_PARSER_H_

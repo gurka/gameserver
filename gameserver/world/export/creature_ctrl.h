@@ -45,18 +45,18 @@ class CreatureCtrl
   // Called when a creature has despawned nearby this creature
   virtual void onCreatureDespawn(const Creature& creature,
                                  const Position& position,
-                                 std::uint8_t stackPos) = 0;
+                                 std::uint8_t stackpos) = 0;
 
   // Called when a creature has moved
   virtual void onCreatureMove(const Creature& creature,
-                              const Position& oldPosition,
-                              std::uint8_t oldStackPos,
-                              const Position& newPosition) = 0;
+                              const Position& old_position,
+                              std::uint8_t old_stackpos,
+                              const Position& new_position) = 0;
 
   // Called when a creature has turned
   virtual void onCreatureTurn(const Creature& creature,
                               const Position& position,
-                              std::uint8_t stackPos) = 0;
+                              std::uint8_t stackpos) = 0;
 
   // Called when a creature says something
   virtual void onCreatureSay(const Creature& creature,
@@ -65,7 +65,7 @@ class CreatureCtrl
 
   // Called when an Item was removed from a Tile
   virtual void onItemRemoved(const Position& position,
-                             std::uint8_t stackPos) = 0;
+                             std::uint8_t stackpos) = 0;
 
   // Called when an Item was added to a Tile
   virtual void onItemAdded(const Item& item,

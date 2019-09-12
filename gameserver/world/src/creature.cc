@@ -26,38 +26,28 @@
 
 const Creature Creature::INVALID = Creature();
 const CreatureId Creature::INVALID_ID = 0;
-CreatureId Creature::nextCreatureId_ = 0x4713;
+CreatureId Creature::next_creature_id = 0x4713;
 
 Creature::Creature()
-  : creatureId_(Creature::INVALID_ID),
-    direction_(Direction::SOUTH),
-    maxHealth_(0),
-    health_(0),
-    speed_(0),
-    outfit_({0, 0, 0, 0, 0, 0}),
-    lightColor_(0),
-    lightLevel_(0),
-    nextWalkTick_(0)
+  : m_creature_id(Creature::INVALID_ID),
+    m_outfit({0, 0, 0, 0, 0, 0})
 {
 }
 
 Creature::Creature(std::string name)
-  : creatureId_(Creature::getFreeCreatureId()),
-    name_(std::move(name)),
-    direction_(Direction::SOUTH),
-    maxHealth_(100),
-    health_(100),
-    speed_(110),
-    outfit_({ 128, 0, 20, 30, 40, 50 }),
-    lightColor_(0),
-    lightLevel_(0),
-    nextWalkTick_(0)
+  : m_creature_id(Creature::getFreeCreatureId()),
+    m_name(std::move(name)),
+    m_max_health(100),
+    m_health(100),
+    m_speed(110),
+    m_outfit({ 128, 0, 20, 30, 40, 50 }),
+    m_next_walk_tick(0)
 {
 }
 
 bool Creature::operator==(const Creature& other) const
 {
-  return creatureId_ == other.creatureId_;
+  return m_creature_id == other.m_creature_id;
 }
 
 bool Creature::operator!=(const Creature& other) const

@@ -45,7 +45,7 @@ class Player;
 class IncomingPacket;
 class Tile;
 
-namespace ProtocolHelper
+namespace protocol_helper
 {
 using KnownCreatures = std::array<CreatureId, 64>;
 using KnownContainers = std::array<ItemUniqueId, 64>;
@@ -53,75 +53,75 @@ using KnownContainers = std::array<ItemUniqueId, 64>;
 // Writing packets
 
 // 0x0A
-void addLogin(CreatureId playerId, std::uint16_t serverBeat, OutgoingPacket* packet);
+void addLogin(CreatureId player_id, std::uint16_t server_beat, OutgoingPacket* packet);
 
 // 0x14
 void addLoginFailed(const std::string& reason, OutgoingPacket* packet);
 
 // 0x64
-void addMapFull(const WorldInterface& worldInterface,
+void addMapFull(const WorldInterface& world_interface,
                 const Position& position,
-                KnownCreatures* knownCreatures,
+                KnownCreatures* known_creatures,
                 OutgoingPacket* packet);
 
 // 0x65, 0x66, 0x67, 0x68
-void addMap(const WorldInterface& worldInterface,
-            const Position& oldPosition,
-            const Position& newPosition,
-            KnownCreatures* knownCreatures,
+void addMap(const WorldInterface& world_interface,
+            const Position& old_position,
+            const Position& new_position,
+            KnownCreatures* known_creatures,
             OutgoingPacket* packet);
 
 // 0x69
 void addTileUpdated(const Position& position,
-                    const WorldInterface& worldInterface,
-                    KnownCreatures* knownCreatures,
+                    const WorldInterface& world_interface,
+                    KnownCreatures* known_creatures,
                     OutgoingPacket* packet);
 
 // 0x6A
 void addThingAdded(const Position& position,
                    const Thing& thing,
-                   KnownCreatures* knownCreatures,
+                   KnownCreatures* known_creatures,
                    OutgoingPacket* packet);
 
 // 0x6B
 void addThingChanged(const Position& position,
                      std::uint8_t stackpos,
                      const Thing& thing,
-                     KnownCreatures* knownCreatures,
+                     KnownCreatures* known_creatures,
                      OutgoingPacket* packet);
 
 // 0x6C
 void addThingRemoved(const Position& position, std::uint8_t stackpos, OutgoingPacket* packet);
 
 // 0x6D
-void addThingMoved(const Position& oldPosition,
-                   std::uint8_t oldStackpos,
-                   const Position& newPosition,
+void addThingMoved(const Position& old_position,
+                   std::uint8_t old_stackpos,
+                   const Position& new_position,
                    OutgoingPacket* packet);
 
 // 0x6E
-void addContainerOpen(std::uint8_t containerId,
+void addContainerOpen(std::uint8_t container_id,
                       const Thing& thing,
                       const Container& container,
                       OutgoingPacket* packet);
 
 // 0x6F
-void addContainerClose(std::uint8_t containerId, OutgoingPacket* packet);
+void addContainerClose(std::uint8_t container_id, OutgoingPacket* packet);
 
 // 0x70
-void addContainerAddItem(std::uint8_t containerId, const Thing& thing, OutgoingPacket* packet);
+void addContainerAddItem(std::uint8_t container_id, const Thing& thing, OutgoingPacket* packet);
 
 // 0x71
-void addContainerUpdateItem(std::uint8_t containerId,
-                            std::uint8_t containerSlot,
+void addContainerUpdateItem(std::uint8_t container_id,
+                            std::uint8_t container_slot,
                             const Thing& thing,
                             OutgoingPacket* packet);
 
 // 0x72
-void addContainerRemoveItem(std::uint8_t containerId, std::uint8_t containerSlot, OutgoingPacket* packet);
+void addContainerRemoveItem(std::uint8_t container_id, std::uint8_t container_slot, OutgoingPacket* packet);
 
 // 0x78, 0x79
-void addEquipmentUpdated(const Equipment& equipment, std::uint8_t inventoryIndex, OutgoingPacket* packet);
+void addEquipmentUpdated(const Equipment& equipment, std::uint8_t inventory_index, OutgoingPacket* packet);
 
 // 0x82
 void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet);
@@ -151,34 +151,34 @@ void addCancelMove(OutgoingPacket* packet);
 // Writing helpers
 void addPosition(const Position& position, OutgoingPacket* packet);
 void addThing(const Thing& thing,
-              KnownCreatures* knownCreatures,
+              KnownCreatures* known_creatures,
               OutgoingPacket* packet);
-void addMapData(const WorldInterface& worldInterface,
+void addMapData(const WorldInterface& world_interface,
                 const Position& position,
                 int width,
                 int height,
-                KnownCreatures* knownCreatures,
+                KnownCreatures* known_creatures,
                 OutgoingPacket* packet);
-void addTileData(const Tile& tile, KnownCreatures* knownCreatures, OutgoingPacket* packet);
+void addTileData(const Tile& tile, KnownCreatures* known_creatures, OutgoingPacket* packet);
 void addOutfitData(const Outfit& outfit, OutgoingPacket* packet);
 
 
 // Reading packets
-ProtocolTypes::Login getLogin(IncomingPacket* packet);
-ProtocolTypes::MoveClick getMoveClick(IncomingPacket* packet);
-ProtocolTypes::MoveItem getMoveItem(KnownContainers* containerIds, IncomingPacket* packet);
-ProtocolTypes::UseItem getUseItem(KnownContainers* containerIds, IncomingPacket* packet);
-ProtocolTypes::CloseContainer getCloseContainer(IncomingPacket* packet);
-ProtocolTypes::OpenParentContainer getOpenParentContainer(IncomingPacket* packet);
-ProtocolTypes::LookAt getLookAt(KnownContainers* containerIds, IncomingPacket* packet);
-ProtocolTypes::Say getSay(IncomingPacket* packet);
+protocol_types::Login getLogin(IncomingPacket* packet);
+protocol_types::MoveClick getMoveClick(IncomingPacket* packet);
+protocol_types::MoveItem getMoveItem(KnownContainers* container_ids, IncomingPacket* packet);
+protocol_types::UseItem getUseItem(KnownContainers* container_ids, IncomingPacket* packet);
+protocol_types::CloseContainer getCloseContainer(IncomingPacket* packet);
+protocol_types::OpenParentContainer getOpenParentContainer(IncomingPacket* packet);
+protocol_types::LookAt getLookAt(KnownContainers* container_ids, IncomingPacket* packet);
+protocol_types::Say getSay(IncomingPacket* packet);
 
 // Reading helpers
 Position getPosition(IncomingPacket* packet);
 Outfit getOutfit(IncomingPacket* packet);
-GamePosition getGamePosition(KnownContainers* containerIds, IncomingPacket* packet);
-ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* packet);
+GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* packet);
+ItemPosition getItemPosition(KnownContainers* container_ids, IncomingPacket* packet);
 
-}  // namespace ProtocolHelper
+}  // namespace protocol_helper
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_HELPER_H_

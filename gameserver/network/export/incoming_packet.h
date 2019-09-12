@@ -36,9 +36,9 @@ class IncomingPacket
  public:
   IncomingPacket(const std::uint8_t* buffer, std::size_t length);
 
-  std::size_t getLength() const { return length_; }
-  bool isEmpty() const { return position_ >= length_; }
-  std::size_t bytesLeft() const { return length_ - position_; }
+  std::size_t getLength() const { return m_length; }
+  bool isEmpty() const { return m_position >= m_length; }
+  std::size_t bytesLeft() const { return m_length - m_position; }
 
   std::uint8_t peekU8() const;
   std::uint8_t getU8();
@@ -65,9 +65,9 @@ class IncomingPacket
   void get(T*) = delete;
 
  private:
-  const std::uint8_t* buffer_;
-  std::size_t length_;
-  std::size_t position_;
+  const std::uint8_t* m_buffer;
+  std::size_t m_length;
+  std::size_t m_position;
 };
 
 #endif  // NETWORK_EXPORT_INCOMING_PACKET_H_

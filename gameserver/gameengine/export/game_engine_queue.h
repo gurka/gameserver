@@ -38,7 +38,7 @@ class GameEngineQueue
  public:
   using Task = std::function<void(GameEngine*)>;
 
-  GameEngineQueue(GameEngine* gameEngine, boost::asio::io_context* io_context);
+  GameEngineQueue(GameEngine* game_engine, boost::asio::io_context* io_context);
 
   // Delete copy constructors
   GameEngineQueue(const GameEngineQueue&) = delete;
@@ -51,8 +51,8 @@ class GameEngineQueue
  private:
   struct TaskWrapper
   {
-    TaskWrapper(const Task& task, int tag, const boost::posix_time::ptime& expire)
-      : task(task),
+    TaskWrapper(Task task, int tag, const boost::posix_time::ptime& expire)
+      : task(std::move(task)),
         tag(tag),
         expire(expire)
     {
@@ -66,14 +66,14 @@ class GameEngineQueue
   void startTimer();
   void onTimeout(const boost::system::error_code& ec);
 
-  GameEngine* gameEngine_;
+  GameEngine* m_game_engine;
 
   // The vector should be sorted on TaskWrapper.expire
   // This is handled by addTask()
-  std::vector<TaskWrapper> queue_;
+  std::vector<TaskWrapper> m_queue;
 
-  boost::asio::deadline_timer timer_;
-  bool timer_started_;
+  boost::asio::deadline_timer m_timer;
+  bool m_timer_started;
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_QUEUE_H_

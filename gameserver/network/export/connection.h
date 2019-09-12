@@ -33,8 +33,8 @@ class Connection
  public:
   struct Callbacks
   {
-    std::function<void(IncomingPacket*)> onPacketReceived;
-    std::function<void(void)> onDisconnected;
+    std::function<void(IncomingPacket*)> on_packet_received;
+    std::function<void(void)> on_disconnected;
   };
 
   virtual ~Connection() = default;

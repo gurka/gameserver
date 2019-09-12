@@ -35,16 +35,16 @@
 #include "position.h"
 #include "game_position.h"
 
-namespace ProtocolTypes
+namespace protocol_types
 {
 
 struct Login
 {
   std::uint8_t unknown1;
-  std::uint8_t clientOs;
-  std::uint16_t clientVersion;
+  std::uint8_t client_os;
+  std::uint16_t client_version;
   std::uint8_t unknown2;
-  std::string characterName;
+  std::string character_name;
   std::string password;
 };
 
@@ -55,40 +55,40 @@ struct MoveClick
 
 struct MoveItem  // or MoveThing?
 {
-  ItemPosition fromItemPosition;
-  GamePosition toGamePosition;
+  ItemPosition from_item_position;
+  GamePosition to_game_position;
   std::uint8_t count;
 };
 
 struct UseItem
 {
-  ItemPosition itemPosition;
-  std::uint8_t newContainerId;
+  ItemPosition item_position;
+  std::uint8_t new_container_id;
 };
 
 struct CloseContainer
 {
-  std::uint8_t containerId;
+  std::uint8_t container_id;
 };
 
 struct OpenParentContainer
 {
-  std::uint8_t containerId;
+  std::uint8_t container_id;
 };
 
 struct LookAt
 {
-  ItemPosition itemPosition;
+  ItemPosition item_position;
 };
 
 struct Say
 {
   std::uint8_t type;
   std::string receiver;
-  std::uint16_t channelId;
+  std::uint16_t channel_id;
   std::string message;
 };
 
-}  // namespace ProtocolTypes
+}  // namespace protocol_types
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

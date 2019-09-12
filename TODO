@@ -19,13 +19,6 @@ General:
 
   * Add namespaces to each module
 
-  * Change all variables to snake_case
-
-  * Get rid of cppcheck and cpplint, use clang-tidy with CMake
-    instead. Need to get build to fail on clang-tidy (but only on Travis?)
-
-  * Get clang-tidy to check snake_case on variables
-
 ContainerManager:
   * Add support for weight calculation
 

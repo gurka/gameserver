@@ -24,10 +24,10 @@
 
 #include "game_engine_queue.h"
 
-GameEngineQueue::GameEngineQueue(GameEngine* gameEngine, boost::asio::io_context* io_context)
-  : gameEngine_(gameEngine),
-    timer_(*io_context),
-    timer_started_(false)
+GameEngineQueue::GameEngineQueue(GameEngine* game_engine, boost::asio::io_context* io_context)
+  : m_game_engine(game_engine),
+    m_timer(*io_context),
+    m_timer_started(false)
 {
 }
 
@@ -42,46 +42,46 @@ void GameEngineQueue::addTask(int tag, std::int64_t expire_ms, const Task& task)
                 boost::posix_time::millisec(expire_ms);
 
   // Locate a task with greater, or equal, expire than the given expire
-  auto it = std::find_if(queue_.cbegin(), queue_.cend(), [expire](const TaskWrapper& tw)
+  auto it = std::find_if(m_queue.cbegin(), m_queue.cend(), [expire](const TaskWrapper& tw)
   {
     return tw.expire >= expire;
   });
 
   // Add the new task before the task we found
-  queue_.emplace(it, task, tag, expire);
+  m_queue.emplace(it, task, tag, expire);
 
-  if (!timer_started_)
+  if (!m_timer_started)
   {
     // If the timer isn't started, start it!
     startTimer();
   }
-  else if (it == queue_.cbegin())
+  else if (it == m_queue.cbegin())
   {
     // If the timer is started but we added a task with lower expire than the
     // previously lowest expire, then cancel the timer and let it restart
-    timer_.cancel();
+    m_timer.cancel();
   }
 }
 
 void GameEngineQueue::cancelAllTasks(int tag)
 {
-  if (!queue_.empty())
+  if (!m_queue.empty())
   {
     // If the first task in the queue has this tag we need to restart the timer after removing them
     bool restart_timer = false;
-    if (queue_.front().tag == tag)
+    if (m_queue.front().tag == tag)
     {
       restart_timer = true;
     }
 
     // Erase all tasks with given tag
     auto pred = [tag](const TaskWrapper& tw) { return tw.tag == tag; };
-    queue_.erase(std::remove_if(queue_.begin(), queue_.end(), pred), queue_.end());
+    m_queue.erase(std::remove_if(m_queue.begin(), m_queue.end(), pred), m_queue.end());
 
     // Restart the timer if restart_timer is true AND if the queue is not empty
-    if (restart_timer && !queue_.empty())
+    if (restart_timer && !m_queue.empty())
     {
-      timer_.cancel();
+      m_timer.cancel();
     }
   }
 }
@@ -90,15 +90,15 @@ void GameEngineQueue::startTimer()
 {
   // Start timer
   boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-  boost::posix_time::ptime taskExpire(queue_.front().expire);
-  timer_.expires_from_now(taskExpire - now);
+  boost::posix_time::ptime task_expire(m_queue.front().expire);
+  m_timer.expires_from_now(task_expire - now);
 
-  timer_.async_wait([this](const boost::system::error_code& ec)
+  m_timer.async_wait([this](const boost::system::error_code& ec)
   {
     onTimeout(ec);
   });
 
-  timer_started_ = true;
+  m_timer_started = true;
 }
 
 void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
@@ -118,27 +118,27 @@ void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
 
   // Call all tasks that have expired
   boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-  while (!queue_.empty())
+  while (!m_queue.empty())
   {
-    if (queue_.front().expire > now)
+    if (m_queue.front().expire > now)
     {
       break;
     }
 
     // More tasks can be added to the queue when calling task()
     // So copy the task and remove it from the queue before calling task(), to avoid problems
-    auto tw = queue_.front();
-    queue_.erase(queue_.begin());
-    tw.task(gameEngine_);
+    auto tw = m_queue.front();
+    m_queue.erase(m_queue.begin());
+    tw.task(m_game_engine);
   }
 
   // Start the timer again if there are more tasks in the queue
-  if (!queue_.empty())
+  if (!m_queue.empty())
   {
     startTimer();
   }
   else
   {
-    timer_started_ = false;
+    m_timer_started = false;
   }
 }

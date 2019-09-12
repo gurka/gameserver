@@ -66,12 +66,12 @@ class ConnectionTest : public ::testing::Test
       callbacks_(),
       connection_()  // Created in each test case
   {
-    callbacks_.onPacketReceived = [this](IncomingPacket* packet)
+    callbacks_.on_packet_received = [this](IncomingPacket* packet)
     {
       callbacksMock_.onPacketReceived(packet);
     };
 
-    callbacks_.onDisconnected = [this]()
+    callbacks_.on_disconnected = [this]()
     {
       callbacksMock_.onDisconnected();
     };

@@ -39,50 +39,45 @@ class Item;
 class ContainerManager
 {
  public:
-  ContainerManager()
-    : containers_()
-  {
-  }
+  void playerDespawn(const PlayerCtrl* player_ctrl);
 
-  void playerDespawn(const PlayerCtrl* playerCtrl);
+  const Container* getContainer(ItemUniqueId item_unique_id) const;
+  Container* getContainer(ItemUniqueId item_unique_id);
 
-  const Container* getContainer(ItemUniqueId itemUniqueId) const;
-  Container* getContainer(ItemUniqueId itemUniqueId);
+  const Item* getItem(ItemUniqueId item_unique_id, int container_slot) const;
 
-  const Item* getItem(ItemUniqueId itemUniqueId, int containerSlot) const;
-
-  void useContainer(PlayerCtrl* playerCtrl,
+  void useContainer(PlayerCtrl* player_ctrl,
                     const Item& item,
-                    const GamePosition& gamePosition,
-                    int newContainerId);
-  void closeContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
-  void openParentContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
+                    const GamePosition& game_position,
+                    int new_container_id);
+  void closeContainer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id);
+  void openParentContainer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id, int new_container_id);
 
-  bool canAddItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
-  void removeItem(ItemUniqueId itemUniqueId, int containerSlot);
-  void addItem(ItemUniqueId itemUniqueId, int containerSlot, const Item& item);
+  bool canAddItem(ItemUniqueId item_unique_id, int container_slot, const Item& item);
+  void removeItem(ItemUniqueId item_unique_id, int container_slot);
+  void addItem(ItemUniqueId item_unique_id, int container_slot, const Item& item);
 
-  void updateRootPosition(ItemUniqueId itemUniqueId, const GamePosition& gamePosition);
+  void updateRootPosition(ItemUniqueId item_unique_id, const GamePosition& game_position);
 
  private:
-  Container* getInnerContainer(Container* container, int containerSlot);
+  Container* getInnerContainer(Container* container, int container_slot);
 
-  void createContainer(const Item* item, const GamePosition& gamePosition);
-  void openContainer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId, int newContainerId);
+  void createContainer(const Item* item, const GamePosition& game_position);
+  void openContainer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id, int new_container_id);
 
-  void addRelatedPlayer(PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
-  void removeRelatedPlayer(const PlayerCtrl* playerCtrl, ItemUniqueId itemUniqueId);
+  void addRelatedPlayer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id);
+  void removeRelatedPlayer(const PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id);
 
   // Maps ItemUniqueId to Container
-  std::unordered_map<ItemUniqueId, Container> containers_;
+  std::unordered_map<ItemUniqueId, Container> m_containers;
 
 #ifdef UNITTEST
  public:
   bool noRelatedPlayers()
   {
-    for (const auto& pair : containers_)
+    for (const auto& pair : m_containers)
     {
-      if (!pair.second.relatedPlayers.empty())
+      if (!pair.second.related_players.empty())
       {
         return false;
       }

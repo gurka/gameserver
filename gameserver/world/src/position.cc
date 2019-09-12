@@ -28,23 +28,16 @@
 
 const Position Position::INVALID = Position();
 
-Position::Position()
-  : x_(0),
-    y_(0),
-    z_(0)
-{
-}
-
 Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
-  : x_(x),
-    y_(y),
-    z_(z)
+  : m_x(x),
+    m_y(y),
+    m_z(z)
 {
 }
 
 bool Position::operator==(const Position& other) const
 {
-  return (x_ == other.x_) && (y_ == other.y_) && (z_ == other.z_);
+  return (m_x == other.m_x) && (m_y == other.m_y) && (m_z == other.m_z);
 }
 
 bool Position::operator!=(const Position& other) const
@@ -55,7 +48,7 @@ bool Position::operator!=(const Position& other) const
 std::string Position::toString() const
 {
   std::ostringstream ss;
-  ss << "(" << x_ << ", " << y_ << ", " << static_cast<int>(z_) << ")";
+  ss << "(" << m_x << ", " << m_y << ", " << static_cast<int>(m_z) << ")";
   return ss.str();
 }
 
@@ -64,13 +57,13 @@ Position Position::addDirection(const Direction& direction) const
   switch (direction)
   {
   case Direction::EAST:
-    return { std::uint16_t(x_ + 1),                    y_, z_ };
+    return { std::uint16_t(m_x + 1),                    m_y, m_z };
   case Direction::NORTH:
-    return {                    x_, std::uint16_t(y_ - 1), z_ };
+    return {                    m_x, std::uint16_t(m_y - 1), m_z };
   case Direction::SOUTH:
-    return {                    x_, std::uint16_t(y_ + 1), z_ };
+    return {                    m_x, std::uint16_t(m_y + 1), m_z };
   case Direction::WEST:
-    return { std::uint16_t(x_ - 1),                    y_, z_ };
+    return { std::uint16_t(m_x - 1),                    m_y, m_z };
   }
 
   return {};

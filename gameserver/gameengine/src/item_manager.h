@@ -36,56 +36,54 @@ class ItemManager
 {
  public:
   ItemManager()
-    : items_(),
-      nextItemUniqueId_(1),
-      itemTypes_(),
-      itemTypesIdFirst_(0),
-      itemTypesIdLast_(0)
+    : m_next_item_unique_id(1),
+      m_item_types_id_first(0),
+      m_item_types_id_last(0)
   {
   }
 
-  bool loadItemTypes(const std::string& dataFilename, const std::string& itemsFilename);
+  bool loadItemTypes(const std::string& data_filename, const std::string& items_filename);
 
-  ItemUniqueId createItem(ItemTypeId itemTypeId);
-  void destroyItem(ItemUniqueId itemUniqueId);
+  ItemUniqueId createItem(ItemTypeId item_type_id);
+  void destroyItem(ItemUniqueId item_unique_id);
 
-  Item* getItem(ItemUniqueId itemUniqueId);
+  Item* getItem(ItemUniqueId item_unique_id);
 
  private:
-  bool loadItemTypesDataFile(const std::string& dataFilename);
-  bool loadItemTypesItemsFile(const std::string& itemsFilename);
+  bool loadItemTypesDataFile(const std::string& data_filename);
+  bool loadItemTypesItemsFile(const std::string& items_filename);
   void dumpItemTypeToJson() const;
 
   class ItemImpl : public Item
   {
    public:
-    ItemImpl(ItemUniqueId itemUniqueId, const ItemType* itemType)
-      : itemUniqueId_(itemUniqueId),
-        itemType_(itemType),
-        count_(1)
+    ItemImpl(ItemUniqueId item_unique_id, const ItemType* item_type)
+      : m_item_unique_id(item_unique_id),
+        m_itemType(item_type),
+        m_count(1)
     {
     }
 
-    ItemUniqueId getItemUniqueId() const override { return itemUniqueId_; }
-    ItemTypeId getItemTypeId() const override { return itemType_->id; }
+    ItemUniqueId getItemUniqueId() const override { return m_item_unique_id; }
+    ItemTypeId getItemTypeId() const override { return m_itemType->id; }
 
-    const ItemType& getItemType() const override { return *itemType_; }
+    const ItemType& getItemType() const override { return *m_itemType; }
 
-    std::uint8_t getCount() const override { return count_; }
-    void setCount(std::uint8_t count) override { count_ = count; }
+    std::uint8_t getCount() const override { return m_count; }
+    void setCount(std::uint8_t count) override { m_count = count; }
 
    private:
-    ItemUniqueId itemUniqueId_;
-    const ItemType* itemType_;
-    std::uint8_t count_;
+    ItemUniqueId m_item_unique_id;
+    const ItemType* m_itemType;
+    std::uint8_t m_count;
   };
 
-  std::unordered_map<ItemUniqueId, ItemImpl> items_;
-  ItemUniqueId nextItemUniqueId_;
+  std::unordered_map<ItemUniqueId, ItemImpl> m_items;
+  ItemUniqueId m_next_item_unique_id{1};
 
-  std::array<ItemType, 4096> itemTypes_;
-  ItemTypeId itemTypesIdFirst_;
-  ItemTypeId itemTypesIdLast_;
+  std::array<ItemType, 4096> m_item_types;
+  ItemTypeId m_item_types_id_first{0};
+  ItemTypeId m_item_types_id_last{0};
 };
 
 #endif  // GAMEENGINE_SRC_ITEM_MANAGER_H_

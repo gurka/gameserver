@@ -54,47 +54,46 @@ class GameEngine
   GameEngine(const GameEngine&) = delete;
   GameEngine& operator=(const GameEngine&) = delete;
 
-  bool init(GameEngineQueue* gameEngineQueue,
-            const std::string& loginMessage,
-            const std::string& dataFilename,
-            const std::string& itemsFilename,
-            const std::string& worldFilename);
-  const WorldInterface* getWorldInterface() const { return world_.get(); }
+  bool init(GameEngineQueue* game_engine_queue,
+            const std::string& login_message,
+            const std::string& data_filename,
+            const std::string& items_filename,
+            const std::string& world_filename);
+  const WorldInterface* getWorldInterface() const { return m_world.get(); }
 
   bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
-  void despawn(CreatureId creatureId);
+  void despawn(CreatureId creature_id);
 
-  void move(CreatureId creatureId, Direction direction);
-  void movePath(CreatureId creatureId, std::deque<Direction>&& path);
-  void cancelMove(CreatureId creatureId);
-  void turn(CreatureId creatureId, Direction direction);
+  void move(CreatureId creature_id, Direction direction);
+  void movePath(CreatureId creature_id, std::deque<Direction>&& path);
+  void cancelMove(CreatureId creature_id);
+  void turn(CreatureId creature_id, Direction direction);
 
-  void say(CreatureId creatureId,
+  void say(CreatureId creature_id,
            int type,
            const std::string& message,
            const std::string& receiver,
-           int channelId);
+           int channel_id);
 
-  void moveItem(CreatureId creatureId, const ItemPosition& fromPosition, const GamePosition& toPosition, int count);
-  void useItem(CreatureId creatureId, const ItemPosition& position, int newContainerId);
-  void lookAt(CreatureId creatureId, const ItemPosition& position);
+  void moveItem(CreatureId creature_id, const ItemPosition& from_position, const GamePosition& to_position, int count);
+  void useItem(CreatureId creature_id, const ItemPosition& position, int new_container_id);
+  void lookAt(CreatureId creature_id, const ItemPosition& position);
 
-  void closeContainer(CreatureId creatureId, ItemUniqueId itemUniqueId);
-  void openParentContainer(CreatureId creatureId, ItemUniqueId itemUniqueId, int newContainerId);
+  void closeContainer(CreatureId creature_id, ItemUniqueId item_unique_id);
+  void openParentContainer(CreatureId creature_id, ItemUniqueId item_unique_id, int new_container_id);
 
  private:
-  const Item* getItem(CreatureId creatureId, const ItemPosition& position);
-  bool canAddItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
-  void removeItem(CreatureId creatureId, const ItemPosition& position, int count);
-  void addItem(CreatureId creatureId, const GamePosition& position, const Item& item, int count);
+  const Item* getItem(CreatureId creature_id, const ItemPosition& position);
+  bool canAddItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count);
+  void removeItem(CreatureId creature_id, const ItemPosition& position, int count);
+  void addItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count);
 
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
   {
     PlayerData(Player&& player, PlayerCtrl* player_ctrl)
       : player(std::move(player)),
-        player_ctrl(player_ctrl),
-        queued_moves()
+        player_ctrl(player_ctrl)
     {
     }
 
@@ -104,15 +103,15 @@ class GameEngine
   };
 
   // Use these instead of the unordered_map directly
-  PlayerData& getPlayerData(CreatureId creatureId) { return playerData_.at(creatureId); }
-  const PlayerData& getPlayerData(CreatureId creatureId) const { return playerData_.at(creatureId); }
+  PlayerData& getPlayerData(CreatureId creature_id) { return m_player_data.at(creature_id); }
+  const PlayerData& getPlayerData(CreatureId creature_id) const { return m_player_data.at(creature_id); }
 
-  std::unordered_map<CreatureId, PlayerData> playerData_;
-  std::unique_ptr<ItemManager> itemManager_;
-  std::unique_ptr<World> world_;
-  GameEngineQueue* gameEngineQueue_;
-  std::string loginMessage_;
-  std::unique_ptr<ContainerManager> containerManager_;
+  std::unordered_map<CreatureId, PlayerData> m_player_data;
+  std::unique_ptr<ItemManager> m_item_manager;
+  std::unique_ptr<World> m_world;
+  GameEngineQueue* m_game_engine_queue{nullptr};
+  std::string m_login_message;
+  std::unique_ptr<ContainerManager> m_container_manager;
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_

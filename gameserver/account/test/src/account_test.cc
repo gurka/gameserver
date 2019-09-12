@@ -83,8 +83,8 @@ TEST_F(AccountTest, Accounts)
   EXPECT_NE(nullptr, accountReader.getAccount(ACCOUNT_2));
   EXPECT_EQ(nullptr, accountReader.getAccount(ACCOUNT_INVALID));
 
-  EXPECT_EQ(90, accountReader.getAccount(ACCOUNT_1)->premiumDays);
-  EXPECT_EQ(1337, accountReader.getAccount(ACCOUNT_2)->premiumDays);
+  EXPECT_EQ(90, accountReader.getAccount(ACCOUNT_1)->premium_days);
+  EXPECT_EQ(1337, accountReader.getAccount(ACCOUNT_2)->premium_days);
 }
 
 TEST_F(AccountTest, Characters)
@@ -129,6 +129,6 @@ TEST_F(AccountTest, Characters)
   EXPECT_NE(accountAlice->characters.cend(), it);
 
   const auto* characterBob = accountReader.getCharacter("Bob");
-  EXPECT_EQ("Default", characterBob->worldName);
-  EXPECT_EQ(7172, characterBob->worldPort);
+  EXPECT_EQ("Default", characterBob->world_name);
+  EXPECT_EQ(7172, characterBob->world_port);
 }

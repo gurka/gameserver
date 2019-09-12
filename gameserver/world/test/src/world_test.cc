@@ -60,7 +60,7 @@ class WorldTest : public ::testing::Test
     // Have all ground items be non-blocking
     itemType_.ground = true;
     itemType_.speed = 0;
-    itemType_.isBlocking = false;
+    itemType_.is_blocking = false;
     EXPECT_CALL(itemMock_, getItemType()).WillRepeatedly(ReturnRef(itemType_));
 
     world = std::make_unique<World>(16, 16, std::move(tiles));

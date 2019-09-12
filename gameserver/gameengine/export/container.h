@@ -37,12 +37,8 @@ class PlayerCtrl;
 struct Container
 {
   Container()
-    : weight(0),
-      item(nullptr),
-      parentItemUniqueId(Item::INVALID_UNIQUE_ID),
-      rootGamePosition(),
-      items(),
-      relatedPlayers()
+    : item(nullptr),
+      parent_item_unique_id(Item::INVALID_UNIQUE_ID)
   {
   }
 
@@ -53,24 +49,24 @@ struct Container
   Container& operator=(Container&&) = delete;
 
   // The total weight of this Container and all Items in it (including other Containers)
-  int weight;
+  int weight{0};
 
   // The Item that corresponds to this Container
-  const Item* item;
+  const Item* item{nullptr};
 
   // Container id of the parent container, or INVALID_ID if no parent
-  ItemUniqueId parentItemUniqueId;
+  ItemUniqueId parent_item_unique_id;
 
   // GamePosition of the root item that this Container belongs to
   // Is either a world position or an inventory position
   // Note: changed from ItemPosition to GamePosition, is it OK?
-  GamePosition rootGamePosition;
+  GamePosition root_game_position;
 
   // Collection of Items in the Container
   std::vector<const Item*> items;
 
   // List of Players that have this Container open
-  std::vector<PlayerCtrl*> relatedPlayers;
+  std::vector<PlayerCtrl*> related_players;
 
   std::string toString(int indent = 2) const;
 };

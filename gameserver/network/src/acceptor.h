@@ -37,17 +37,17 @@ class Acceptor
  public:
   Acceptor(typename Backend::Service* io_context,
            int port,
-           const std::function<void(typename Backend::Socket&&)>& onAccept)
-    : acceptor_(*io_context, port),
-      socket_(*io_context),
-      onAccept_(onAccept)
+           std::function<void(typename Backend::Socket&&)> on_accept)
+    : m_acceptor(*io_context, port),
+      m_socket(*io_context),
+      m_on_accept(std::move(on_accept))
   {
     accept();
   }
 
   virtual ~Acceptor()
   {
-    acceptor_.cancel();
+    m_acceptor.cancel();
   }
 
   // Delete copy constructors
@@ -57,21 +57,22 @@ class Acceptor
  private:
   void accept()
   {
-    acceptor_.async_accept(socket_, [this](const typename Backend::ErrorCode& errorCode)
+    m_acceptor.async_accept(m_socket, [this](const typename Backend::ErrorCode& error_code)
     {
-      if (errorCode == Backend::Error::operation_aborted)
+      if (error_code == Backend::Error::operation_aborted)
       {
         // This instance might be deleted, so don't touch any instance variables
         return;
       }
-      else if (errorCode)
+
+      if (error_code)
       {
-        LOG_DEBUG("Could not accept connection: %s", errorCode.message().c_str());
+        LOG_DEBUG("Could not accept connection: %s", error_code.message().c_str());
       }
       else
       {
         LOG_INFO("Accepted connection");
-        onAccept_(std::move(socket_));
+        m_on_accept(std::move(m_socket));
       }
 
       // Continue to accept new connections
@@ -79,9 +80,9 @@ class Acceptor
     });
   }
 
-  typename Backend::Acceptor acceptor_;
-  typename Backend::Socket socket_;
-  std::function<void(typename Backend::Socket&&)> onAccept_;
+  typename Backend::Acceptor m_acceptor;
+  typename Backend::Socket m_socket;
+  std::function<void(typename Backend::Socket&&)> m_on_accept;
 };
 
 #endif  // NETWORK_SRC_ACCEPTOR_H_

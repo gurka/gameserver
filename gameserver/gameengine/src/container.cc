@@ -36,19 +36,19 @@ std::string Container::toString(int indent) const
   std::ostringstream ss;
   ss << indents << "Weight:             " << weight << '\n';
   ss << indents << "ItemUniqueId:       " << item->getItemUniqueId()
-     << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
-  ss << indents << "parentItemUniqueId: " << parentItemUniqueId << '\n';
-  ss << indents << "rootGamePosition:   " << rootGamePosition.toString() << '\n';
+     << " (" << (item->getItemType().is_container ? "" : "not ") << "container)\n";
+  ss << indents << "parent_item_unique_id: " << parent_item_unique_id << '\n';
+  ss << indents << "root_game_position:   " << root_game_position.toString() << '\n';
   ss << indents << "items:\n";
   for (const auto* item : items)
   {
     ss << indents << indents << "ItemUniqueId: " << item->getItemUniqueId()
-       << " (" << (item->getItemType().isContainer ? "" : "not ") << "container)\n";
+       << " (" << (item->getItemType().is_container ? "" : "not ") << "container)\n";
   }
-  ss << indents << "relatedPlayers:\n";
-  for (const auto* playerCtrl : relatedPlayers)
+  ss << indents << "related_players:\n";
+  for (const auto* player_ctrl : related_players)
   {
-    ss << indents << indents << "PlayerID: " << playerCtrl->getPlayerId() << '\n';
+    ss << indents << indents << "PlayerID: " << player_ctrl->getPlayerId() << '\n';
   }
   return ss.str();
 }

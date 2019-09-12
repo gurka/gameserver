@@ -85,11 +85,11 @@ class ContainerManagerTest : public ::testing::Test
 
     ItemType itemTypeContainer;
     itemTypeContainer.id = 123;
-    itemTypeContainer.isContainer = true;
+    itemTypeContainer.is_container = true;
 
     ItemType itemTypeNotContainer;
     itemTypeNotContainer.id = 456;
-    itemTypeNotContainer.isContainer = false;
+    itemTypeNotContainer.is_container = false;
 
     itemContainerA = ItemStub { 100u, itemTypeContainer.id, itemTypeContainer, 1 };
     itemContainerB = ItemStub { 101u, itemTypeContainer.id, itemTypeContainer, 1 };
@@ -163,22 +163,22 @@ TEST_F(ContainerManagerTest, useContainer)
   ASSERT_TRUE(containerA != nullptr);
   EXPECT_EQ(0,                       containerA->weight);
   EXPECT_EQ(itemContainerA,         *containerA->item);
-  EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerA->parentItemUniqueId);
-  EXPECT_EQ(itemContainerPosA,       containerA->rootGamePosition);
+  EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerA->parent_item_unique_id);
+  EXPECT_EQ(itemContainerPosA,       containerA->root_game_position);
   EXPECT_TRUE(containerA->items.empty());
-  EXPECT_EQ(1u,                      containerA->relatedPlayers.size());
-  EXPECT_EQ(&player_ctrl_mock_,      containerA->relatedPlayers.front());
+  EXPECT_EQ(1u,                      containerA->related_players.size());
+  EXPECT_EQ(&player_ctrl_mock_,      containerA->related_players.front());
 
   // Create, use/open and validate a new container
   auto* containerB = createAndOpenContainer(itemContainerB, itemContainerPosB, clientContainerIdB);
   ASSERT_TRUE(containerB != nullptr);
   EXPECT_EQ(0,                       containerB->weight);
   EXPECT_EQ(itemContainerB,         *containerB->item);
-  EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerB->parentItemUniqueId);
-  EXPECT_EQ(itemContainerPosB,       containerB->rootGamePosition);
+  EXPECT_EQ(Item::INVALID_UNIQUE_ID, containerB->parent_item_unique_id);
+  EXPECT_EQ(itemContainerPosB,       containerB->root_game_position);
   EXPECT_TRUE(containerB->items.empty());
-  EXPECT_EQ(1u,                      containerB->relatedPlayers.size());
-  EXPECT_EQ(&player_ctrl_mock_,      containerB->relatedPlayers.front());
+  EXPECT_EQ(1u,                      containerB->related_players.size());
+  EXPECT_EQ(&player_ctrl_mock_,      containerB->related_players.front());
 
   std::cout << containerA->toString() << '\n';
   std::cout << containerB->toString() << '\n';
@@ -290,10 +290,10 @@ TEST_F(ContainerManagerTest, innerContainer)
   EXPECT_EQ(itemNotContainerC, *(containerB->items[0]));
 
   // Verify parentContainer and rootPosition
-  EXPECT_EQ(Item::INVALID_UNIQUE_ID,          containerA->parentItemUniqueId);
-  EXPECT_EQ(itemContainerA.getItemUniqueId(), containerB->parentItemUniqueId);
-  EXPECT_EQ(itemContainerPosA,                containerA->rootGamePosition);
-  EXPECT_EQ(itemContainerPosA,                containerB->rootGamePosition);
+  EXPECT_EQ(Item::INVALID_UNIQUE_ID,          containerA->parent_item_unique_id);
+  EXPECT_EQ(itemContainerA.getItemUniqueId(), containerB->parent_item_unique_id);
+  EXPECT_EQ(itemContainerPosA,                containerA->root_game_position);
+  EXPECT_EQ(itemContainerPosA,                containerB->root_game_position);
 
   std::cout << containerA->toString() << '\n';
   std::cout << containerB->toString() << '\n';
@@ -333,38 +333,38 @@ TEST_F(ContainerManagerTest, moveContainer)
   const auto worldPositionB = GamePosition(Position(1, 1, 1));
   const auto inventoryPositionA = GamePosition(5);
 
-  // Both container A and B's rootGamePosition should be itemContainerPosA
-  EXPECT_EQ(itemContainerPosA, containerA->rootGamePosition);
-  EXPECT_EQ(itemContainerPosA, containerB->rootGamePosition);
+  // Both container A and B's root_game_position should be itemContainerPosA
+  EXPECT_EQ(itemContainerPosA, containerA->root_game_position);
+  EXPECT_EQ(itemContainerPosA, containerB->root_game_position);
 
   // Move container A to a world position A
   container_manager_.updateRootPosition(itemContainerA.getItemUniqueId(), worldPositionA);
 
-  // Both container A and B's rootGamePosition should be changed to the world position A
-  EXPECT_EQ(worldPositionA, containerA->rootGamePosition);
-  EXPECT_EQ(worldPositionA, containerB->rootGamePosition);
+  // Both container A and B's root_game_position should be changed to the world position A
+  EXPECT_EQ(worldPositionA, containerA->root_game_position);
+  EXPECT_EQ(worldPositionA, containerB->root_game_position);
 
   // Move container B to world position B
   EXPECT_CALL(player_ctrl_mock_, onContainerRemoveItem(itemContainerA.getItemUniqueId(), 0));
   container_manager_.removeItem(itemContainerA.getItemUniqueId(), 0);
   container_manager_.updateRootPosition(itemContainerB.getItemUniqueId(), worldPositionB);
 
-  // Container B's rootGamePosition should be changed to the world position B
-  EXPECT_EQ(worldPositionB, containerB->rootGamePosition);
+  // Container B's root_game_position should be changed to the world position B
+  EXPECT_EQ(worldPositionB, containerB->root_game_position);
 
   // Move container A to inside container B
   container_manager_.addItem(itemContainerB.getItemUniqueId(), 0, itemContainerA);
 
-  // Both container A and B's rootGamePosition should be changed to world position B
-  EXPECT_EQ(worldPositionB, containerA->rootGamePosition);
-  EXPECT_EQ(worldPositionB, containerB->rootGamePosition);
+  // Both container A and B's root_game_position should be changed to world position B
+  EXPECT_EQ(worldPositionB, containerA->root_game_position);
+  EXPECT_EQ(worldPositionB, containerB->root_game_position);
 
   // Move container B to inventory position
   container_manager_.updateRootPosition(itemContainerB.getItemUniqueId(), inventoryPositionA);
 
-  // Both container A and B's rootGamePosition should be changed to inventory position
-  EXPECT_EQ(inventoryPositionA, containerA->rootGamePosition);
-  EXPECT_EQ(inventoryPositionA, containerB->rootGamePosition);
+  // Both container A and B's root_game_position should be changed to inventory position
+  EXPECT_EQ(inventoryPositionA, containerA->root_game_position);
+  EXPECT_EQ(inventoryPositionA, containerB->root_game_position);
 
   std::cout << containerA->toString() << '\n';
   std::cout << containerB->toString() << '\n';

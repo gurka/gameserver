@@ -20,16 +20,7 @@ if(GAMESERVER_USE_ASAN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
 endif()
 
-set(CMAKE_CXX_CLANG_TIDY
-"clang-tidy;\
--config={\
-Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*,-readability-magic-numbers', \
-CheckOptions: [\
-{key: readability-implicit-bool-conversion.AllowPointerConditions, value: 1},\
-{key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: 1}\
-]};\
--warnings-as-errors=*"
-)
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
 
 # -- Binaries --
 add_subdirectory("loginserver")
@@ -47,7 +38,7 @@ set(CMAKE_CXX_CLANG_TIDY "")
 
 # -- External --
 add_library(rapidxml INTERFACE)
-target_include_directories(rapidxml INTERFACE "../external/rapidxml")
+target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 
 # -- Unit tests --
 add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)

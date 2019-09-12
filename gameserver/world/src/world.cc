@@ -36,22 +36,22 @@
 #include "tick.h"
 #include "thing.h"
 
-World::World(int worldSizeX,
-             int worldSizeY,
+World::World(int world_size_x,
+             int world_size_y,
              std::vector<Tile>&& tiles)
-  : worldSizeX_(worldSizeX),
-    worldSizeY_(worldSizeY),
-    tiles_(std::move(tiles))
+  : m_world_size_x(world_size_x),
+    m_world_size_y(world_size_y),
+    m_tiles(std::move(tiles))
 {
 }
 
 World::~World() = default;
 
-World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position)
+World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position)
 {
-  auto creatureId = creature->getCreatureId();
+  auto creature_id = creature->getCreatureId();
 
-  if (creatureExists(creatureId))
+  if (creatureExists(creature_id))
   {
     LOG_ERROR("%s: Creature already exists: %s (%d)",
               __func__,
@@ -62,7 +62,7 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
 
   // Offsets for other possible positions
   // (0, 0) MUST be the first element
-  static std::array<std::tuple<int, int>, 9> positionOffsets
+  static std::array<std::tuple<int, int>, 9> position_offsets
   {{
     { std::make_tuple( 0,  0) },  //NOLINT
     { std::make_tuple(-1, -1) },  //NOLINT
@@ -79,17 +79,17 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
   // TODO(simon): Have global random_device
   std::random_device rd;
   std::mt19937 g(rd());
-  std::shuffle(positionOffsets.begin() + 1, positionOffsets.end(), g);
+  std::shuffle(position_offsets.begin() + 1, position_offsets.end(), g);
 
-  auto adjustedPosition = position;
+  auto adjusted_position = position;
   Tile* tile = nullptr;
-  for (const auto& offsets : positionOffsets)
+  for (const auto& offsets : position_offsets)
   {
-    adjustedPosition = Position(position.getX() + std::get<0>(offsets),
+    adjusted_position = Position(position.getX() + std::get<0>(offsets),
                                 position.getY() + std::get<1>(offsets),
                                 position.getZ());
 
-    tile = getTile(adjustedPosition);
+    tile = getTile(adjusted_position);
     if (!tile)
     {
       continue;
@@ -114,19 +114,19 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
 
   if (tile)
   {
-    LOG_INFO("%s: spawning creature: %d at position: %s", __func__, creatureId, adjustedPosition.toString().c_str());
+    LOG_INFO("%s: spawning creature: %d at position: %s", __func__, creature_id, adjusted_position.toString().c_str());
     tile->addThing(Thing(creature));
 
-    creature_data_.emplace(std::piecewise_construct,
-                           std::forward_as_tuple(creatureId),
-                           std::forward_as_tuple(creature, creatureCtrl, adjustedPosition));
+    m_creature_data.emplace(std::piecewise_construct,
+                           std::forward_as_tuple(creature_id),
+                           std::forward_as_tuple(creature, creature_ctrl, adjusted_position));
 
     // Tell near creatures that a creature has spawned
     // Including the spawned creature!
-    auto nearCreatureIds = getCreatureIdsThatCanSeePosition(adjustedPosition);
-    for (const auto& nearCreatureId : nearCreatureIds)
+    auto near_creature_ids = getCreatureIdsThatCanSeePosition(adjusted_position);
+    for (const auto& near_creature_id : near_creature_ids)
     {
-      getCreatureCtrl(nearCreatureId).onCreatureSpawn(*creature, adjustedPosition);
+      getCreatureCtrl(near_creature_id).onCreatureSpawn(*creature, adjusted_position);
     }
 
     return ReturnCode::OK;
@@ -135,62 +135,62 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
   LOG_DEBUG("%s: could not find a tile around position %s to spawn creature: %d",
             __func__,
             position.toString().c_str(),
-            creatureId);
+            creature_id);
   return ReturnCode::OTHER_ERROR;
 }
 
-void World::removeCreature(CreatureId creatureId)
+void World::removeCreature(CreatureId creature_id)
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("%s: called with non-existent CreatureId", __func__);
     return;
   }
 
-  const auto& creature = getCreature(creatureId);
-  const auto& position = getCreaturePosition(creatureId);
+  const auto& creature = getCreature(creature_id);
+  const auto& position = getCreaturePosition(creature_id);
   auto* tile = getTile(position);
-  const auto stackPos = getCreatureStackpos(position, creatureId);
+  const auto stackpos = getCreatureStackpos(position, creature_id);
 
   // Tell near creatures that a creature has despawned
   // Including the despawning creature!
-  auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureDespawn(creature, position, stackPos);
+    getCreatureCtrl(near_creature_id).onCreatureDespawn(creature, position, stackpos);
   }
 
-  creature_data_.erase(creatureId);
-  tile->removeThing(stackPos);
+  m_creature_data.erase(creature_id);
+  tile->removeThing(stackpos);
 }
 
-bool World::creatureExists(CreatureId creatureId) const
+bool World::creatureExists(CreatureId creature_id) const
 {
-  return creatureId != Creature::INVALID_ID && creature_data_.count(creatureId) == 1;
+  return creature_id != Creature::INVALID_ID && m_creature_data.count(creature_id) == 1;
 }
 
-World::ReturnCode World::creatureMove(CreatureId creatureId, Direction direction)
+World::ReturnCode World::creatureMove(CreatureId creature_id, Direction direction)
 {
-  return creatureMove(creatureId, getCreaturePosition(creatureId).addDirection(direction));
+  return creatureMove(creature_id, getCreaturePosition(creature_id).addDirection(direction));
 }
 
-World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toPosition)
+World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_position)
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("%s: called with non-existent CreatureId", __func__);
     return ReturnCode::INVALID_CREATURE;
   }
 
-  auto* toTile = getTile(toPosition);
-  if (!toTile)
+  auto* to_tile = getTile(to_position);
+  if (!to_tile)
   {
-    LOG_ERROR("%s: no tile found at toPosition: %s", __func__, toPosition.toString().c_str());
+    LOG_ERROR("%s: no tile found at to_position: %s", __func__, to_position.toString().c_str());
     return ReturnCode::INVALID_POSITION;
   }
 
   // Get Creature
-  auto& creature = getCreature(creatureId);
+  auto& creature = getCreature(creature_id);
 
   // Check if Creature may move at this time
   auto current_tick = Tick::now();
@@ -203,39 +203,39 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
     return ReturnCode::MAY_NOT_MOVE_YET;
   }
 
-  // Check if toTile is blocking or not
-  for (const auto& thing : toTile->getThings())
+  // Check if to_tile is blocking or not
+  for (const auto& thing : to_tile->getThings())
   {
-    if (thing.item && thing.item->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().is_blocking)
     {
-      LOG_DEBUG("%s: Item on toTile is blocking", __func__);
+      LOG_DEBUG("%s: Item on to_tile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
 
     if (thing.creature)
     {
-      LOG_DEBUG("%s: Item on toTile has creatures", __func__);
+      LOG_DEBUG("%s: Item on to_tile has creatures", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
 
   // Move the actual creature
-  auto fromPosition = getCreaturePosition(creatureId);  // Need to create a new Position here (i.e. not auto&)
-  auto* fromTile = getTile(fromPosition);
-  auto fromStackPos = getCreatureStackpos(fromPosition, creatureId);
-  fromTile->removeThing(fromStackPos);
+  auto from_position = getCreaturePosition(creature_id);  // Need to create a new Position here (i.e. not auto&)
+  auto* from_tile = getTile(from_position);
+  auto from_stackpos = getCreatureStackpos(from_position, creature_id);
+  from_tile->removeThing(from_stackpos);
 
-  toTile->addThing(creature_data_.at(creatureId).creature);
-  creature_data_.at(creatureId).position = toPosition;
+  to_tile->addThing(m_creature_data.at(creature_id).creature);
+  m_creature_data.at(creature_id).position = to_position;
 
   // Set new nextWalkTime for this Creature
-  auto groundSpeed = fromTile->getThing(0)->item->getItemType().speed;
-  auto creatureSpeed = creature.getSpeed();
-  auto duration = (1000 * groundSpeed) / creatureSpeed;
+  auto ground_speed = from_tile->getThing(0)->item->getItemType().speed;
+  auto creature_speed = creature.getSpeed();
+  auto duration = (1000 * ground_speed) / creature_speed;
 
   // Walking diagonally?
-  if (fromPosition.getX() != toPosition.getX() &&
-      fromPosition.getY() != toPosition.getY())
+  if (from_position.getX() != to_position.getX() &&
+      from_position.getY() != to_position.getY())
   {
     // Or is it times 3?
     duration *= 2;
@@ -244,19 +244,19 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   creature.setNextWalkTick(current_tick + duration);
 
   // Update direction
-  if (fromPosition.getY() > toPosition.getY())
+  if (from_position.getY() > to_position.getY())
   {
     creature.setDirection(Direction::NORTH);
   }
-  else if (fromPosition.getY() < toPosition.getY())
+  else if (from_position.getY() < to_position.getY())
   {
     creature.setDirection(Direction::SOUTH);
   }
-  if (fromPosition.getX() > toPosition.getX())
+  if (from_position.getX() > to_position.getX())
   {
     creature.setDirection(Direction::WEST);
   }
-  else if (fromPosition.getX() < toPosition.getX())
+  else if (from_position.getX() < to_position.getX())
   {
     creature.setDirection(Direction::EAST);
   }
@@ -269,10 +269,10 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
   // in Protocol71::canSee we want to know "can we see them move?"
   // TODO(simon): refactor this and Protocol71::canSee to get rid of all these
   //              constant integers
-  const auto x_min = std::min(fromPosition.getX(), toPosition.getX());
-  const auto x_max = std::max(fromPosition.getX(), toPosition.getX());
-  const auto y_min = std::min(fromPosition.getY(), toPosition.getY());
-  const auto y_max = std::max(fromPosition.getY(), toPosition.getY());
+  const auto x_min = std::min(from_position.getX(), to_position.getX());
+  const auto x_max = std::max(from_position.getX(), to_position.getX());
+  const auto y_min = std::min(from_position.getY(), to_position.getY());
+  const auto y_max = std::max(from_position.getY(), to_position.getY());
   for (auto x = x_min - 9; x <= x_max + 8; x++)
   {
     for (auto y = y_min - 7; y <= y_max + 6; y++)
@@ -288,64 +288,64 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
         if (thing.creature)
         {
           getCreatureCtrl(thing.creature->getCreatureId()).onCreatureMove(creature,
-                                                                          fromPosition,
-                                                                          fromStackPos,
-                                                                          toPosition);
+                                                                          from_position,
+                                                                          from_stackpos,
+                                                                          to_position);
         }
       }
     }
   }
 
-  // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
+  // The client can only show ground + 9 Items/Creatures, so if the number of things on the from_tile
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
-  if (fromTile->getNumberOfThings() >= 10)
+  if (from_tile->getNumberOfThings() >= 10)
   {
-    auto nearCreatureIds = getCreatureIdsThatCanSeePosition(fromPosition);
-    for (const auto& nearCreatureId : nearCreatureIds)
+    auto near_creature_ids = getCreatureIdsThatCanSeePosition(from_position);
+    for (const auto& near_creature_id : near_creature_ids)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      getCreatureCtrl(near_creature_id).onTileUpdate(from_position);
     }
   }
 
   return ReturnCode::OK;
 }
 
-void World::creatureTurn(CreatureId creatureId, Direction direction)
+void World::creatureTurn(CreatureId creature_id, Direction direction)
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("creatureTurn called with non-existent CreatureId");
     return;
   }
 
-  auto& creature = getCreature(creatureId);
+  auto& creature = getCreature(creature_id);
   creature.setDirection(direction);
 
   // Call onCreatureTurn on all creatures that can see the turn
   // including the turning creature itself
-  const auto& position = getCreaturePosition(creatureId);
-  const auto stackPos = getCreatureStackpos(position, creatureId);
-  const auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  const auto& position = getCreaturePosition(creature_id);
+  const auto stackpos = getCreatureStackpos(position, creature_id);
+  const auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureTurn(creature, position, stackPos);
+    getCreatureCtrl(near_creature_id).onCreatureTurn(creature, position, stackpos);
   }
 }
 
-void World::creatureSay(CreatureId creatureId, const std::string& message)
+void World::creatureSay(CreatureId creature_id, const std::string& message)
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("creatureSay called with non-existent CreatureId");
     return;
   }
 
-  const auto& creature = getCreature(creatureId);
-  const auto& position = getCreaturePosition(creatureId);
-  auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  const auto& creature = getCreature(creature_id);
+  const auto& position = getCreaturePosition(creature_id);
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(nearCreatureId).onCreatureSay(creature, position, message);
+    getCreatureCtrl(near_creature_id).onCreatureSay(creature, position, message);
   }
 }
 
@@ -363,7 +363,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
 
   for (const auto& thing : tile->getThings())
   {
-    if (thing.item && thing.item->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().is_blocking)
     {
       return false;
     }
@@ -381,20 +381,20 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
     return ReturnCode::INVALID_POSITION;
   }
 
-  // Add Item to toTile
+  // Add Item to to_tile
   tile->addThing(&item);
 
   // Call onItemAdded on all creatures that can see position
-  auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(item, position);
+    getCreatureCtrl(near_creature_id).onItemAdded(item, position);
   }
 
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos)
+World::ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos)
 {
   // TODO(simon): implement count
   (void)count;
@@ -406,198 +406,198 @@ World::ReturnCode World::removeItem(ItemTypeId itemTypeId, int count, const Posi
     return ReturnCode::INVALID_POSITION;
   }
 
-  // Get the item and verify itemTypeId
-  const auto* item = tile->getThing(stackPos)->item;
-  if (!item || item->getItemTypeId() != itemTypeId)
+  // Get the item and verify item_type_id
+  const auto* item = tile->getThing(stackpos)->item;
+  if (!item || item->getItemTypeId() != item_type_id)
   {
-    LOG_ERROR("%s: item with given stackPos does not match given itemTypeId", __func__);
+    LOG_ERROR("%s: item with given stackpos does not match given item_type_id", __func__);
     return ReturnCode::ITEM_NOT_FOUND;
   }
 
   // Try to remove Item from the tile
-  if (!tile->removeThing(stackPos))
+  if (!tile->removeThing(stackpos))
   {
-    LOG_ERROR("%s: could not remove item with itemTypeId %d from %s",
+    LOG_ERROR("%s: could not remove item with item_type_id %d from %s",
               __func__,
-              itemTypeId,
+              item_type_id,
               position.toString().c_str());
     return ReturnCode::ITEM_NOT_FOUND;
   }
 
   // Call onItemRemoved on all creatures that can see the position
-  auto nearCreatureIds = getCreatureIdsThatCanSeePosition(position);
-  for (const auto& nearCreatureId : nearCreatureIds)
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(position, stackPos);
+    getCreatureCtrl(near_creature_id).onItemRemoved(position, stackpos);
   }
 
   // The client can only show ground + 9 Items/Creatures, so if the number of things on the tile
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
   if (tile->getNumberOfThings() >= 10)
   {
-    for (const auto& nearCreatureId : nearCreatureIds)
+    for (const auto& near_creature_id : near_creature_ids)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(position);
+      getCreatureCtrl(near_creature_id).onTileUpdate(position);
     }
   }
 
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::moveItem(CreatureId creatureId,
-                                  const Position& fromPosition,
-                                  int fromStackPos,
-                                  ItemTypeId itemTypeId,
+World::ReturnCode World::moveItem(CreatureId creature_id,
+                                  const Position& from_position,
+                                  int from_stackpos,
+                                  ItemTypeId item_type_id,
                                   int count,
-                                  const Position& toPosition)
+                                  const Position& to_position)
 {
   // TODO(simon): implement count
   (void)count;
 
   // TODO(simon): re-use addItem and removeItem
 
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("%s: called with non-existent CreatureId", __func__);
     return ReturnCode::INVALID_CREATURE;
   }
 
   // Get tiles
-  auto* fromTile = getTile(fromPosition);
-  if (!fromTile)
+  auto* from_tile = getTile(from_position);
+  if (!from_tile)
   {
     LOG_ERROR("%s: could not find tile at position: %s",
               __func__,
-              fromPosition.toString().c_str());
+              from_position.toString().c_str());
     return ReturnCode::INVALID_POSITION;
   }
 
-  auto* toTile = getTile(toPosition);
-  if (!toTile)
+  auto* to_tile = getTile(to_position);
+  if (!to_tile)
   {
     LOG_ERROR("%s: could not find tile at position: %s",
               __func__,
-              toPosition.toString().c_str());
+              to_position.toString().c_str());
     return ReturnCode::INVALID_POSITION;
   }
 
   // Only allow move if the player is standing at or 1 sqm near the item
-  const auto& position = getCreaturePosition(creatureId);
-  if (std::abs(position.getX() - fromPosition.getX()) > 1 ||
-      std::abs(position.getY() - fromPosition.getY()) > 1 ||
-      position.getZ() != fromPosition.getZ())
+  const auto& position = getCreaturePosition(creature_id);
+  if (std::abs(position.getX() - from_position.getX()) > 1 ||
+      std::abs(position.getY() - from_position.getY()) > 1 ||
+      position.getZ() != from_position.getZ())
   {
     LOG_DEBUG("%s: player is too far away", __func__);
     return ReturnCode::CANNOT_REACH_THAT_OBJECT;
   }
 
-  // Check if we can add Item to toTile
-  for (const auto& thing : toTile->getThings())
+  // Check if we can add Item to to_tile
+  for (const auto& thing : to_tile->getThings())
   {
-    if (thing.item && thing.item->getItemType().isBlocking)
+    if (thing.item && thing.item->getItemType().is_blocking)
     {
-      LOG_DEBUG("%s: Item on toTile is blocking", __func__);
+      LOG_DEBUG("%s: Item on to_tile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
   }
 
-  // Get the Item from fromTile
-  auto* item = fromTile->getThing(fromStackPos)->item;
-  if (!item || item->getItemTypeId() != itemTypeId)
+  // Get the Item from from_tile
+  auto* item = from_tile->getThing(from_stackpos)->item;
+  if (!item || item->getItemTypeId() != item_type_id)
   {
     LOG_ERROR("%s: Could not find the item to move", __func__);
     return ReturnCode::ITEM_NOT_FOUND;
   }
-  // Try to remove Item from fromTile
-  if (!fromTile->removeThing(fromStackPos))
+  // Try to remove Item from from_tile
+  if (!from_tile->removeThing(from_stackpos))
   {
-    LOG_DEBUG("%s: Could not remove item with itemTypeId %d from %s",
+    LOG_DEBUG("%s: Could not remove item with item_type_id %d from %s",
               __func__,
-              itemTypeId,
-              fromPosition.toString().c_str());
+              item_type_id,
+              from_position.toString().c_str());
     return ReturnCode::ITEM_NOT_FOUND;
   }
 
-  // Add Item to toTile
-  toTile->addThing(item);
+  // Add Item to to_tile
+  to_tile->addThing(item);
 
-  // Call onItemRemoved on all creatures that can see fromPosition
-  const auto nearCreatureIdsFrom = getCreatureIdsThatCanSeePosition(fromPosition);
-  for (const auto& nearCreatureId : nearCreatureIdsFrom)
+  // Call onItemRemoved on all creatures that can see from_position
+  const auto near_creature_ids_from = getCreatureIdsThatCanSeePosition(from_position);
+  for (const auto& near_creature_id : near_creature_ids_from)
   {
-    getCreatureCtrl(nearCreatureId).onItemRemoved(fromPosition, fromStackPos);
+    getCreatureCtrl(near_creature_id).onItemRemoved(from_position, from_stackpos);
   }
 
-  // Call onItemAdded on all creatures that can see toPosition
-  const auto nearCreatureIdsTo = getCreatureIdsThatCanSeePosition(toPosition);
-  for (const auto& nearCreatureId : nearCreatureIdsTo)
+  // Call onItemAdded on all creatures that can see to_position
+  const auto near_creature_ids_to = getCreatureIdsThatCanSeePosition(to_position);
+  for (const auto& near_creature_id : near_creature_ids_to)
   {
-    getCreatureCtrl(nearCreatureId).onItemAdded(*item, toPosition);
+    getCreatureCtrl(near_creature_id).onItemAdded(*item, to_position);
   }
 
-  // The client can only show ground + 9 Items/Creatures, so if the number of things on the fromTile
+  // The client can only show ground + 9 Items/Creatures, so if the number of things on the from_tile
   // is >= 10 then some items on the tile is unknown to the client, so update the Tile for each nearby Creature
-  if (fromTile->getNumberOfThings() >= 10)
+  if (from_tile->getNumberOfThings() >= 10)
   {
-    for (const auto& nearCreatureId : nearCreatureIdsFrom)
+    for (const auto& near_creature_id : near_creature_ids_from)
     {
-      getCreatureCtrl(nearCreatureId).onTileUpdate(fromPosition);
+      getCreatureCtrl(near_creature_id).onTileUpdate(from_position);
     }
   }
 
   return ReturnCode::OK;
 }
 
-bool World::creatureCanThrowTo(CreatureId creatureId, const Position& position) const
+bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position) const
 {
   // TODO(simon): Fix
-  (void)creatureId;
+  (void)creature_id;
   (void)position;
   return true;
 }
 
-bool World::creatureCanReach(CreatureId creatureId, const Position& position) const
+bool World::creatureCanReach(CreatureId creature_id, const Position& position) const
 {
-  const auto& creaturePosition = getCreaturePosition(creatureId);
-  return !(std::abs(creaturePosition.getX() - position.getX()) > 1 ||
-           std::abs(creaturePosition.getY() - position.getY()) > 1 ||
-           creaturePosition.getZ() != position.getZ());
+  const auto& creature_position = getCreaturePosition(creature_id);
+  return !(std::abs(creature_position.getX() - position.getX()) > 1 ||
+           std::abs(creature_position.getY() - position.getY()) > 1 ||
+           creature_position.getZ() != position.getZ());
 }
 
 const Tile* World::getTile(const Position& position) const
 {
-  if (position.getX() < position_offset ||
-      position.getX() >= position_offset + worldSizeX_ ||
-      position.getY() < position_offset ||
-      position.getY() >= position_offset + worldSizeY_ ||
+  if (position.getX() < POSITION_OFFSET ||
+      position.getX() >= POSITION_OFFSET + m_world_size_x ||
+      position.getY() < POSITION_OFFSET ||
+      position.getY() >= POSITION_OFFSET + m_world_size_y ||
       position.getZ() != 7)
   {
     return nullptr;
   }
 
-  const auto index = ((position.getX() - position_offset) * worldSizeY_) +
-                      (position.getY() - position_offset);
-  return &tiles_[index];
+  const auto index = ((position.getX() - POSITION_OFFSET) * m_world_size_y) +
+                      (position.getY() - POSITION_OFFSET);
+  return &m_tiles[index];
 }
 
-const Creature& World::getCreature(CreatureId creatureId) const
+const Creature& World::getCreature(CreatureId creature_id) const
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
-    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creatureId);
+    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creature_id);
     return Creature::INVALID;
   }
-  return *(creature_data_.at(creatureId).creature);
+  return *(m_creature_data.at(creature_id).creature);
 }
 
-const Position& World::getCreaturePosition(CreatureId creatureId) const
+const Position& World::getCreaturePosition(CreatureId creature_id) const
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
     return Position::INVALID;
   }
-  return creature_data_.at(creatureId).position;
+  return m_creature_data.at(creature_id).position;
 }
 
 Tile* World::getTile(const Position& position)
@@ -607,33 +607,32 @@ Tile* World::getTile(const Position& position)
   return const_cast<Tile*>(tile);
 }
 
-Creature& World::getCreature(CreatureId creatureId)
+Creature& World::getCreature(CreatureId creature_id)
 {
   // According to https://stackoverflow.com/a/123995/969365
-  const auto& creature = static_cast<const World*>(this)->getCreature(creatureId);
+  const auto& creature = static_cast<const World*>(this)->getCreature(creature_id);
   return const_cast<Creature&>(creature);
 }
 
-CreatureCtrl& World::getCreatureCtrl(CreatureId creatureId)
+CreatureCtrl& World::getCreatureCtrl(CreatureId creature_id)
 {
-  if (!creatureExists(creatureId))
+  if (!creatureExists(creature_id))
   {
     LOG_ERROR("getCreatureCtrl called with non-existent CreatureId");
   }
-  return *(creature_data_.at(creatureId).creature_ctrl);
+  return *(m_creature_data.at(creature_id).creature_ctrl);
 }
 
 std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& position) const
 {
-  std::vector<CreatureId> creatureIds;
+  std::vector<CreatureId> creature_ids;
 
   // TODO(simon): fix these constants (see creatureMove)
   for (int x = position.getX() - 9; x <= position.getX() + 8; ++x)
   {
     for (int y = position.getY() - 7; y <= position.getY() + 6; ++y)
     {
-      Position tempPosition(x, y, position.getZ());
-      const auto* tile = getTile(tempPosition);
+      const auto* tile = getTile(Position(x, y, position.getZ()));
       if (!tile)
       {
         continue;
@@ -643,16 +642,16 @@ std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& 
       {
         if (thing.creature)
         {
-          creatureIds.push_back(thing.creature->getCreatureId());
+          creature_ids.push_back(thing.creature->getCreatureId());
         }
       }
     }
   }
 
-  return creatureIds;
+  return creature_ids;
 }
 
-int World::getCreatureStackpos(const Position& position, CreatureId creatureId) const
+int World::getCreatureStackpos(const Position& position, CreatureId creature_id) const
 {
   const auto* tile = getTile(position);
   if (!tile)
@@ -662,18 +661,18 @@ int World::getCreatureStackpos(const Position& position, CreatureId creatureId) 
   const auto& things = tile->getThings();
   const auto it = std::find_if(things.cbegin(),
                                things.cend(),
-                               [&creatureId](const Thing& thing)
+                               [&creature_id](const Thing& thing)
   {
-    return thing.creature && thing.creature->getCreatureId() == creatureId;  // NOLINT
+    return thing.creature && thing.creature->getCreatureId() == creature_id;  // NOLINT
   });
   if (it != things.cend())
   {
     return std::distance(things.cbegin(), it);
   }
 
-  LOG_ERROR("%s: could not find creatureId: %d in Tile: %s",
+  LOG_ERROR("%s: could not find creature_id: %d in Tile: %s",
             __func__,
-            creatureId,
+            creature_id,
             position.toString().c_str());
   return 255;  // TODO(simon): invalid stackpos
 }

@@ -46,7 +46,7 @@ class ServerFactory
 
   static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
                                               int port,
-                                              const OnClientConnectedCallback& onClientConnected);
+                                              const OnClientConnectedCallback& on_client_connected);
 };
 
 #endif  // NETWORK_EXPORT_SERVER_FACTORY_H_
