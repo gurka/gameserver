@@ -21,9 +21,10 @@ General:
 
   * Change all variables to snake_case
 
-  * Update google test and google style/lint
+  * Get rid of cppcheck and cpplint, use clang-tidy with CMake
+    instead. Need to get build to fail on clang-tidy (but only on Travis?)
 
-  * Check if we can force snake_case with linter
+  * Get clang-tidy to check snake_case on variables
 
 ContainerManager:
   * Add support for weight calculation
