@@ -4,6 +4,6 @@
 [submodule "lib/googletest"]
 	path = external/googletest
 	url = https://github.com/google/googletest.git
-[submodule "tools/google-styleguide"]
-	path = external/google-styleguide
-	url = https://github.com/google/styleguide.git
+[submodule "external/cpplint"]
+	path = external/cpplint
+	url = https://github.com/cpplint/cpplint.git
