@@ -51,11 +51,11 @@ class WorldInterface;
 class Protocol : public PlayerCtrl
 {
  public:
-  Protocol(const std::function<void(void)>& closeProtocol,
-             std::unique_ptr<Connection>&& connection,
-             const WorldInterface* worldInterface,
-             GameEngineQueue* gameEngineQueue,
-             AccountReader* accountReader);
+  Protocol(std::function<void(void)> closeProtocol,
+           std::unique_ptr<Connection>&& connection,
+           const WorldInterface* worldInterface,
+           GameEngineQueue* gameEngineQueue,
+           AccountReader* accountReader);
 
   // Delete copy constructors
   Protocol(const Protocol&) = delete;

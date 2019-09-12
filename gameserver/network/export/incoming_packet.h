@@ -52,7 +52,7 @@ class IncomingPacket
   std::string getString();
 
   std::vector<std::uint8_t> peekBytes(int num_bytes) const;
-  std::vector<std::uint8_t> getBytes(int numBytes);
+  std::vector<std::uint8_t> getBytes(int num_bytes);
 
   // Generic functions
   void get(std::uint8_t*  val) { *val = getU8();     }

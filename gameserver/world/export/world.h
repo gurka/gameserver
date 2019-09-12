@@ -69,7 +69,7 @@ class World : public WorldInterface
   void removeCreature(CreatureId creatureId);
   bool creatureExists(CreatureId creatureId) const;
   ReturnCode creatureMove(CreatureId creatureId, Direction direction);
-  ReturnCode creatureMove(CreatureId creatureId, const Position& newPosition);
+  ReturnCode creatureMove(CreatureId creatureId, const Position& toPosition);
   void creatureTurn(CreatureId creatureId, Direction direction);
   void creatureSay(CreatureId creatureId, const std::string& message);
 

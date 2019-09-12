@@ -1,5 +1,4 @@
-/**
- * The MIT License (MIT)
+/* The MIT License (MIT)
  *
  * Copyright (c) 2018 Simon Sandström
  *
@@ -346,23 +345,23 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
       // Handle attributes here
       if (attrName == "weight")
       {
-        itemType.weight = std::stoi(attrValue.c_str());
+        itemType.weight = std::stoi(attrValue);
       }
       else if (attrName == "decayto")
       {
-        itemType.decayto = std::stoi(attrValue.c_str());
+        itemType.decayto = std::stoi(attrValue);
       }
       else if (attrName == "decaytime")
       {
-        itemType.decaytime = std::stoi(attrValue.c_str());
+        itemType.decaytime = std::stoi(attrValue);
       }
       else if (attrName == "damage")
       {
-        itemType.damage = std::stoi(attrValue.c_str());
+        itemType.damage = std::stoi(attrValue);
       }
       else if (attrName == "maxitems")
       {
-        itemType.maxitems = std::stoi(attrValue.c_str());
+        itemType.maxitems = std::stoi(attrValue);
       }
       else if (attrName == "type")
       {
@@ -374,15 +373,15 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
       }
       else if (attrName == "attack")
       {
-        itemType.attack = std::stoi(attrValue.c_str());
+        itemType.attack = std::stoi(attrValue);
       }
       else if (attrName == "defence")
       {
-        itemType.defence = std::stoi(attrValue.c_str());
+        itemType.defence = std::stoi(attrValue);
       }
       else if (attrName == "arm")
       {
-        itemType.arm = std::stoi(attrValue.c_str());
+        itemType.arm = std::stoi(attrValue);
       }
       else if (attrName == "skill")
       {
@@ -394,11 +393,11 @@ bool ItemManager::loadItemTypesItemsFile(const std::string& itemsFilename)
       }
       else if (attrName == "handed")
       {
-        itemType.handed = std::stoi(attrValue.c_str());
+        itemType.handed = std::stoi(attrValue);
       }
       else if (attrName == "shottype")
       {
-        itemType.shottype = std::stoi(attrValue.c_str());
+        itemType.shottype = std::stoi(attrValue);
       }
       else if (attrName == "amutype")
       {
@@ -473,7 +472,7 @@ void ItemManager::dumpItemTypeToJson() const
 #undef VALUE_BOOL
 
     // Go back two characters
-    ofs.seekp(-2, ofs.cur);
+    ofs.seekp(-2, std::ofstream::cur);
     ofs << " }";
 
     if (id != itemTypesIdLast_)

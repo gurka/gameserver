@@ -55,12 +55,12 @@
 
 constexpr std::uint8_t Protocol::INVALID_CONTAINER_ID;
 
-Protocol::Protocol(const std::function<void(void)>& closeProtocol,
+Protocol::Protocol(std::function<void(void)> closeProtocol,
                    std::unique_ptr<Connection>&& connection,
                    const WorldInterface* worldInterface,
                    GameEngineQueue* gameEngineQueue,
                    AccountReader* accountReader)
-  : closeProtocol_(closeProtocol),
+  : closeProtocol_(std::move(closeProtocol)),
     connection_(std::move(connection)),
     worldInterface_(worldInterface),
     gameEngineQueue_(gameEngineQueue),
@@ -669,7 +669,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
 
 void Protocol::parseMoveClick(IncomingPacket* packet)
 {
-  const auto move = ProtocolHelper::getMoveClick(packet);
+  auto move = ProtocolHelper::getMoveClick(packet);
   if (move.path.empty())
   {
     LOG_ERROR("%s: Path length is zero!", __func__);
@@ -789,10 +789,7 @@ std::uint8_t Protocol::getContainerId(ItemUniqueId itemUniqueId) const
   {
     return std::distance(containerIds_.cbegin(), it);
   }
-  else
-  {
-    return INVALID_CONTAINER_ID;
-  }
+  return INVALID_CONTAINER_ID;
 }
 
 ItemUniqueId Protocol::getContainerItemUniqueId(std::uint8_t containerId) const

@@ -41,9 +41,9 @@ Creature::Creature()
 {
 }
 
-Creature::Creature(const std::string& name)
+Creature::Creature(std::string name)
   : creatureId_(Creature::getFreeCreatureId()),
-    name_(name),
+    name_(std::move(name)),
     direction_(Direction::SOUTH),
     maxHealth_(100),
     health_(100),

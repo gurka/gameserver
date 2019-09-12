@@ -326,7 +326,7 @@ Container* ContainerManager::getInnerContainer(Container* container, int contain
 
 void ContainerManager::createContainer(const Item* item, const GamePosition& gamePosition)
 {
-  if (containers_.count(item->getItemUniqueId()))
+  if (containers_.count(item->getItemUniqueId()) == 1)
   {
     LOG_ERROR("%s: container is already created for itemUniqueId: %d", __func__, item->getItemUniqueId());
     return;

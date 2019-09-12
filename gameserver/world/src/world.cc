@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <deque>
+#include <random>
 #include <sstream>
 #include <tuple>
 #include <utility>
@@ -75,7 +76,10 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
   }};
 
   // Shuffle the offsets (keep first element at its position)
-  std::random_shuffle(positionOffsets.begin() + 1, positionOffsets.end());
+  // TODO(simon): Have global random_device
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::shuffle(positionOffsets.begin() + 1, positionOffsets.end(), g);
 
   auto adjustedPosition = position;
   Tile* tile = nullptr;
@@ -127,14 +131,12 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creatureC
 
     return ReturnCode::OK;
   }
-  else
-  {
-    LOG_DEBUG("%s: could not find a tile around position %s to spawn creature: %d",
-              __func__,
-              position.toString().c_str(),
-              creatureId);
-    return ReturnCode::OTHER_ERROR;
-  }
+
+  LOG_DEBUG("%s: could not find a tile around position %s to spawn creature: %d",
+            __func__,
+            position.toString().c_str(),
+            creatureId);
+  return ReturnCode::OTHER_ERROR;
 }
 
 void World::removeCreature(CreatureId creatureId)
@@ -209,7 +211,8 @@ World::ReturnCode World::creatureMove(CreatureId creatureId, const Position& toP
       LOG_DEBUG("%s: Item on toTile is blocking", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
     }
-    else if (thing.creature)
+
+    if (thing.creature)
     {
       LOG_DEBUG("%s: Item on toTile has creatures", __func__);
       return ReturnCode::THERE_IS_NO_ROOM;
@@ -661,7 +664,7 @@ int World::getCreatureStackpos(const Position& position, CreatureId creatureId) 
                                things.cend(),
                                [&creatureId](const Thing& thing)
   {
-    return thing.creature && thing.creature->getCreatureId() == creatureId;
+    return thing.creature && thing.creature->getCreatureId() == creatureId;  // NOLINT
   });
   if (it != things.cend())
   {

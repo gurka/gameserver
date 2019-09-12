@@ -109,7 +109,8 @@ void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
     startTimer();
     return;
   }
-  else if (ec)
+
+  if (ec)
   {
     // TODO(simon): abort() isn't good.
     abort();

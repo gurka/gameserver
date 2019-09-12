@@ -48,7 +48,7 @@ class Creature
   static const Creature INVALID;
 
   Creature();
-  explicit Creature(const std::string& name);
+  explicit Creature(std::string name);
   virtual ~Creature() = default;
 
   bool operator==(const Creature& other) const;

@@ -351,7 +351,7 @@ void addThing(const Thing& thing,
       packet->addU8(0);
     }
   }
-  else  // thing.creature
+  else if (thing.creature && knownCreatures)
   {
     const auto& creature = *thing.creature;
 
@@ -368,10 +368,8 @@ void addThing(const Thing& thing,
         LOG_ERROR("%s: knownCreatures_ is full!", __func__);
         return;
       }
-      else
-      {
-        *unused = creature.getCreatureId();
-      }
+
+      *unused = creature.getCreatureId();
 
       packet->addU16(0x0061);  // UnknownCreature
       packet->addU32(0x00);  // creatureId to remove (0x00 = none)
@@ -530,7 +528,7 @@ ProtocolTypes::MoveClick getMoveClick(IncomingPacket* packet)
 {
   ProtocolTypes::MoveClick move;
   const auto length = packet->getU8();
-  for (auto i = 0u; i < length; i++)
+  for (auto i = 0U; i < length; i++)
   {
     move.path.push_back(static_cast<Direction>(packet->getU8()));
   }
@@ -609,31 +607,32 @@ GamePosition getGamePosition(KnownContainers* containerIds, IncomingPacket* pack
     // Positions have x not fully set
     return GamePosition(Position(x, y, z));
   }
-  else if ((y & 0x40) == 0x00)
+
+  if ((y & 0x40) == 0x00)
   {
     // Inventory have x fully set and 7th bit in y not set
     // Inventory slot is 4 lower bits in y
     return GamePosition(y & ~0x40);
   }
-  else
+
+  // Container have x fully set and 7th bit in y set
+  // Container id is lower 6 bits in y
+  // Container slot is z
+  const auto containerId = y & ~0x40;
+  if (containerId < 0 || containerId > 64)
   {
-    // Container have x fully set and 7th bit in y set
-    // Container id is lower 6 bits in y
-    // Container slot is z
-    const auto containerId = y & ~0x40;
-    if (containerId < 0 || containerId > 64)
-    {
-      LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
-      return GamePosition();
-    }
-    const auto itemUniqueId = containerIds->at(containerId);
-    if (itemUniqueId == Item::INVALID_UNIQUE_ID)
-    {
-      LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
-      return GamePosition();
-    }
-    return GamePosition(itemUniqueId, z);
+    LOG_ERROR("%s: invalid containerId: %d", __func__, containerId);
+    return {};
   }
+
+  const auto itemUniqueId = containerIds->at(containerId);
+  if (itemUniqueId == Item::INVALID_UNIQUE_ID)
+  {
+    LOG_ERROR("%s: containerId does not map to a valid ItemUniqueId: %d", __func__, containerId);
+    return {};
+  }
+
+  return { itemUniqueId, z };
 }
 
 ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* packet)
@@ -642,7 +641,7 @@ ItemPosition getItemPosition(KnownContainers* containerIds, IncomingPacket* pack
   const auto itemId = packet->getU16();
   const auto stackPosition = packet->getU8();
 
-  return ItemPosition(gamePosition, itemId, stackPosition);
+  return { gamePosition, itemId, stackPosition };
 }
 
 }  // namespace ProtocolHelper

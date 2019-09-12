@@ -28,6 +28,7 @@
 #include <ctime>
 #include <cstdarg>
 #include <cstring>
+#include <array>
 
 const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
 {
@@ -121,11 +122,11 @@ void Logger::log(const char* fileFullPath, int line, Level level, ...)
   if (level <= moduleLevel)
   {
     // Get current date and time
-    time_t now = time(0);
+    time_t now = time(nullptr);
     struct tm tstruct{};
-    char time_str[32];
+    std::array<char, 32> time_str;
     localtime_r(&now, &tstruct);
-    strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
+    strftime(time_str.data(), time_str.size(), "%Y-%m-%d %X", &tstruct);
 
     // Extract variadic function arguments
     va_list args;
@@ -133,13 +134,13 @@ void Logger::log(const char* fileFullPath, int line, Level level, ...)
                             // Which also must be a non-reference according to CppCheck
                             // otherwise va_start invokes undefined behaviour
     const char* format = va_arg(args, const char*);
-    char message[256];
+    std::array<char, 256> message;
     // Use the rest of the arguments together with the
     // format string to construct the actual log message
-    vsnprintf(message, sizeof(message), format, args);
+    vsnprintf(message.data(), message.size(), format, args);
     va_end(args);
 
-    printf("[%s][%s:%d] %s: %s\n", time_str, filename, line, levelToString(level).c_str(), message);
+    printf("[%s][%s:%d] %s: %s\n", time_str.data(), filename, line, levelToString(level).c_str(), message.data());
     std::fflush(stdout);
   }
 }

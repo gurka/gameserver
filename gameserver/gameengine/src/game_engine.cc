@@ -48,27 +48,25 @@ namespace
 
 struct RecursiveTask
 {
-  explicit RecursiveTask(const std::function<void(const RecursiveTask&, GameEngine* gameEngine)>& func)
-    : func_(func)
+  explicit RecursiveTask(std::function<void(const RecursiveTask&, GameEngine* gameEngine)> func)
+    : func(std::move(func))
   {
   }
 
   void operator()(GameEngine* gameEngine) const
   {
-    func_(*this, gameEngine);
+    func(*this, gameEngine);
   }
 
-  std::function<void(const RecursiveTask&, GameEngine* gameEngine)> func_;
+  std::function<void(const RecursiveTask&, GameEngine* gameEngine)> func;
 };
 
 }  // namespace
 
 GameEngine::GameEngine()
-    : playerData_(),
-      itemManager_(),
+    : itemManager_(),
       world_(),
       gameEngineQueue_(nullptr),
-      loginMessage_(),
       containerManager_()
 {
 }
@@ -256,7 +254,7 @@ void GameEngine::say(CreatureId creatureId,
   LOG_DEBUG("%s: creatureId: %d, message: %s", __func__, creatureId, message.c_str());
 
   // Check if message is a command
-  if (message.size() > 0 && message[0] == '/')
+  if (!message.empty() && message[0] == '/')
   {
     // Extract everything after '/'
     auto fullCommand = message.substr(1, std::string::npos);
@@ -524,11 +522,13 @@ bool GameEngine::canAddItem(CreatureId creatureId, const GamePosition& position,
   {
     return world_->canAddItem(item, position.getPosition());
   }
-  else if (position.isInventory())
+
+  if (position.isInventory())
   {
     return playerData.player.getEquipment().canAddItem(item, position.getInventorySlot());
   }
-  else if (position.isContainer())
+
+  if (position.isContainer())
   {
     // TODO(simon): check capacity of Player if root Container is in Player inventory
     return containerManager_->canAddItem(position.getItemUniqueId(),

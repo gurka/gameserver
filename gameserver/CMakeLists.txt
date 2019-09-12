@@ -15,8 +15,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++14 -pedant
 set(CMAKE_CXX_CLANG_TIDY
 "clang-tidy;\
 -config={\
-Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*', \
-CheckOptions: [{key: readability-implicit-bool-conversion.AllowPointerConditions, value: 1} ]};\
+Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*,-readability-magic-numbers', \
+CheckOptions: [\
+{key: readability-implicit-bool-conversion.AllowPointerConditions, value: 1},\
+{key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: 1}\
+]};\
 -warnings-as-errors=*"
 )
 

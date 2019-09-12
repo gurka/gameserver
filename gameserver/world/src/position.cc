@@ -64,14 +64,14 @@ Position Position::addDirection(const Direction& direction) const
   switch (direction)
   {
   case Direction::EAST:
-    return Position(x_ + 1, y_    , z_);
+    return { std::uint16_t(x_ + 1),                    y_, z_ };
   case Direction::NORTH:
-    return Position(x_    , y_ - 1, z_);
+    return {                    x_, std::uint16_t(y_ - 1), z_ };
   case Direction::SOUTH:
-    return Position(x_    , y_ + 1, z_);
+    return {                    x_, std::uint16_t(y_ + 1), z_ };
   case Direction::WEST:
-    return Position(x_ - 1, y_    , z_);
+    return { std::uint16_t(x_ - 1),                    y_, z_ };
   }
 
-  return Position();
+  return {};
 }

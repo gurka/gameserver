@@ -89,10 +89,8 @@ bool Equipment::canAddItem(const Item& item, int inventorySlot) const
         {
           return items_.at(LEFT_HAND) == nullptr;
         }
-        else
-        {
-          return items_.at(RIGHT_HAND) == nullptr;
-        }
+
+        return items_.at(RIGHT_HAND) == nullptr;
       }
       return true;
     }
@@ -185,12 +183,12 @@ std::uint16_t Player::getSpeed() const
 
 std::uint8_t Player::getLevel() const
 {
-  if (experience_ < 100) return 1;
-  else if (experience_ < 200) return 2;
-  else if (experience_ < 400) return 3;
-  else if (experience_ < 800) return 4;
-  else if (experience_ < 1500) return 5;
-  else if (experience_ < 2600) return 6;
-  else if (experience_ < 4200) return 7;
-  else return 8;
+  if (experience_ <  100) { return 1; }
+  if (experience_ <  200) { return 2; }
+  if (experience_ <  400) { return 3; }
+  if (experience_ <  800) { return 4; }
+  if (experience_ < 1500) { return 5; }
+  if (experience_ < 2600) { return 6; }
+  if (experience_ < 4200) { return 7; }
+  return 8;
 }
