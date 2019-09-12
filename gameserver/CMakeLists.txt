@@ -12,6 +12,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++14 -pedantic -pthread")
 
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-config={Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*', CheckOptions: [{key: readability-implicit-bool-conversion.AllowPointerConditions, value: 1} ]}")
+
 if(GAMESERVER_USE_LD_GOLD)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
 endif()
