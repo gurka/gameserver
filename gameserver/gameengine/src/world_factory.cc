@@ -157,5 +157,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
   LOG_INFO("World loaded, size: %d x %d", world_size_x, world_size_y);
   free(xml_string);
 
-  return std::make_unique<World>(world_size_x, world_size_y, std::move(tiles));
+  return std::make_unique<World>(world_size_x, world_size_y, std::move(tiles));  // NOLINT bug in clang-tidy used in Travis (?)
 }

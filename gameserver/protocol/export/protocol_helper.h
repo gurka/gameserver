@@ -153,6 +153,10 @@ void addPosition(const Position& position, OutgoingPacket* packet);
 void addThing(const Thing& thing,
               KnownCreatures* known_creatures,
               OutgoingPacket* packet);
+void addCreature(const Creature* creature,
+                 KnownCreatures* known_creatures,
+                 OutgoingPacket* packet);
+void addItem(const Item* item, OutgoingPacket* packet);
 void addMapData(const WorldInterface& world_interface,
                 const Position& position,
                 int width,

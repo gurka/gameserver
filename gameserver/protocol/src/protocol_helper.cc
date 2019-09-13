@@ -332,67 +332,74 @@ void addPosition(const Position& position, OutgoingPacket* packet)
   packet->add(position.getZ());
 }
 
-void addThing(const Thing& thing,
-              KnownCreatures* known_creatures,
-              OutgoingPacket* packet)
+void addThing(const Thing& thing, KnownCreatures* known_creatures, OutgoingPacket* packet)
 {
-  const auto creature_func = [&packet, &known_creatures](const Creature* creature)
+  thing.visit(
+    [&thing, &known_creatures, &packet](const Creature* creature)
+    {
+      addCreature(creature, known_creatures, packet);
+    },
+    [&thing, &packet](const Item* item)
+    {
+      addItem(item, packet);
+    }
+  );
+}
+
+void addCreature(const Creature* creature, KnownCreatures* known_creatures, OutgoingPacket* packet)
+{
+  // First check if we know about this creature or not
+  auto it = std::find(known_creatures->begin(), known_creatures->end(), creature->getCreatureId());
+  if (it == known_creatures->end())
   {
-    // First check if we know about this creature or not
-    auto it = std::find(known_creatures->begin(), known_creatures->end(), creature->getCreatureId());
-    if (it == known_creatures->end())
+    // Find an empty spot
+    auto unused = std::find(known_creatures->begin(), known_creatures->end(), Creature::INVALID_ID);
+    if (unused == known_creatures->end())
     {
-      // Find an empty spot
-      auto unused = std::find(known_creatures->begin(), known_creatures->end(), Creature::INVALID_ID);
-      if (unused == known_creatures->end())
-      {
-        // No empty spot!
-        // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
-        LOG_ERROR("%s: known_creatures_ is full!", __func__);
-        return;
-      }
-
-      *unused = creature->getCreatureId();
-
-      packet->addU16(0x0061);  // UnknownCreature
-      packet->addU32(0x00);  // creatureId to remove (0x00 = none)
-      packet->add(creature->getCreatureId());
-      packet->add(creature->getName());
+      // No empty spot!
+      // TODO(simon): Figure out how to handle this - related to "creatureId to remove" below?
+      LOG_ERROR("%s: known_creatures_ is full!", __func__);
+      return;
     }
-    else
-    {
-      // Client already know about this creature
-      packet->addU16(0x0062);  // OutdatedCreature
-      packet->add(creature->getCreatureId());
-    }
-    // TODO(simon): handle 0x0063 // Creature (+ direction)
 
-    // TODO(simon): This is only for 0x0061 and 0x0062...
-    packet->addU8(creature->getHealth() / creature->getMaxHealth() * 100);
-    packet->add(static_cast<std::uint8_t>(creature->getDirection()));
-    addOutfitData(creature->getOutfit(), packet);
+    *unused = creature->getCreatureId();
 
-    packet->addU8(0x00);
-    packet->addU8(0xDC);
-
-    packet->add(creature->getSpeed());
-  };
-
-  const auto item_func = [&packet](const Item* item)
+    packet->addU16(0x0061);  // UnknownCreature
+    packet->addU32(0x00);  // creatureId to remove (0x00 = none)
+    packet->add(creature->getCreatureId());
+    packet->add(creature->getName());
+  }
+  else
   {
-    packet->add(item->getItemTypeId());
-    if (item->getItemType().is_stackable)
-    {
-      packet->add(item->getCount());
-    }
-    else if (item->getItemType().is_multitype)
-    {
-      // TODO(simon): getSubType???
-      packet->addU8(0);
-    }
-  };
+    // Client already know about this creature
+    packet->addU16(0x0062);  // OutdatedCreature
+    packet->add(creature->getCreatureId());
+  }
+  // TODO(simon): handle 0x0063 // Creature (+ direction)
 
-  thing.visit(creature_func, item_func);
+  // TODO(simon): This is only for 0x0061 and 0x0062...
+  packet->addU8(creature->getHealth() / creature->getMaxHealth() * 100);
+  packet->add(static_cast<std::uint8_t>(creature->getDirection()));
+  addOutfitData(creature->getOutfit(), packet);
+
+  packet->addU8(0x00);
+  packet->addU8(0xDC);
+
+  packet->add(creature->getSpeed());
+}
+
+void addItem(const Item* item, OutgoingPacket* packet)
+{
+  packet->add(item->getItemTypeId());
+  if (item->getItemType().is_stackable)
+  {
+    packet->add(item->getCount());
+  }
+  else if (item->getItemType().is_multitype)
+  {
+    // TODO(simon): getSubType???
+    packet->addU8(0);
+  }
 }
 
 void addMapData(const WorldInterface& world_interface,
