@@ -53,8 +53,6 @@
 // account
 #include "account.h"
 
-constexpr std::uint8_t Protocol::INVALID_CONTAINER_ID;
-
 Protocol::Protocol(std::function<void(void)> close_protocol,
                    std::unique_ptr<Connection>&& connection,
                    const WorldInterface* world_interface,

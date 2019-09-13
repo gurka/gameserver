@@ -297,17 +297,16 @@ void GameEngine::say(CreatureId creature_id,
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto& thing : tile->getThings())
-      {
-        if (thing.item)
+      tile->visitThings(
+        [&oss](const Creature* creature)
         {
-          oss << "Item: " << thing.item->getItemUniqueId() << "\n";
-        }
-        else
+          oss << "Creature: " << creature->getCreatureId() << "\n";
+        },
+        [&oss](const Item* item)
         {
-          oss << "Creature: " << thing.creature->getCreatureId() << "\n";
+          oss << "Item: " << item->getItemUniqueId() << "\n";
         }
-      }
+      );
 
       player_data.player_ctrl->sendTextMessage(0x13, oss.str());
     }
@@ -494,7 +493,7 @@ const Item* GameEngine::getItem(CreatureId creature_id, const ItemPosition& posi
     const auto* tile = static_cast<const World*>(m_world.get())->getTile(game_position.getPosition());
     if (tile)
     {
-      return tile->getThing(position.getStackPosition())->item;
+      return tile->getItem(position.getStackPosition());
     }
   }
   else if (game_position.isInventory())

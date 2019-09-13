@@ -161,9 +161,9 @@ void addThingChanged(const Position& position,
   addThing(thing, known_creatures, packet);
 
   // Only for creature 0x0063?
-  if (thing.creature)
+  if (thing.creature())
   {
-    packet->add(static_cast<std::uint8_t>(thing.creature->getDirection()));
+    packet->add(static_cast<std::uint8_t>(thing.creature()->getDirection()));
   }
 }
 
@@ -193,8 +193,8 @@ void addContainerOpen(std::uint8_t container_id,
   packet->addU8(0x6E);
   packet->add(container_id);
   addThing(thing, nullptr, packet);
-  packet->add(thing.item->getItemType().name);
-  packet->add(thing.item->getItemType().maxitems);
+  packet->add(thing.item()->getItemType().name);
+  packet->add(thing.item()->getItemType().maxitems);
   packet->addU8(container.parent_item_unique_id == Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
   packet->addU8(container.items.size());
   for (const auto* item : container.items)
@@ -336,27 +336,10 @@ void addThing(const Thing& thing,
               KnownCreatures* known_creatures,
               OutgoingPacket* packet)
 {
-  if (thing.item)
+  const auto creature_func = [&packet, &known_creatures](const Creature* creature)
   {
-    const auto& item = *thing.item;
-
-    packet->add(item.getItemTypeId());
-    if (item.getItemType().is_stackable)
-    {
-      packet->add(item.getCount());
-    }
-    else if (item.getItemType().is_multitype)
-    {
-      // TODO(simon): getSubType???
-      packet->addU8(0);
-    }
-  }
-  else if (thing.creature && known_creatures)
-  {
-    const auto& creature = *thing.creature;
-
     // First check if we know about this creature or not
-    auto it = std::find(known_creatures->begin(), known_creatures->end(), creature.getCreatureId());
+    auto it = std::find(known_creatures->begin(), known_creatures->end(), creature->getCreatureId());
     if (it == known_creatures->end())
     {
       // Find an empty spot
@@ -369,31 +352,47 @@ void addThing(const Thing& thing,
         return;
       }
 
-      *unused = creature.getCreatureId();
+      *unused = creature->getCreatureId();
 
       packet->addU16(0x0061);  // UnknownCreature
       packet->addU32(0x00);  // creatureId to remove (0x00 = none)
-      packet->add(creature.getCreatureId());
-      packet->add(creature.getName());
+      packet->add(creature->getCreatureId());
+      packet->add(creature->getName());
     }
     else
     {
       // Client already know about this creature
       packet->addU16(0x0062);  // OutdatedCreature
-      packet->add(creature.getCreatureId());
+      packet->add(creature->getCreatureId());
     }
     // TODO(simon): handle 0x0063 // Creature (+ direction)
 
     // TODO(simon): This is only for 0x0061 and 0x0062...
-    packet->addU8(creature.getHealth() / creature.getMaxHealth() * 100);
-    packet->add(static_cast<std::uint8_t>(creature.getDirection()));
-    addOutfitData(creature.getOutfit(), packet);
+    packet->addU8(creature->getHealth() / creature->getMaxHealth() * 100);
+    packet->add(static_cast<std::uint8_t>(creature->getDirection()));
+    addOutfitData(creature->getOutfit(), packet);
 
     packet->addU8(0x00);
     packet->addU8(0xDC);
 
-    packet->add(creature.getSpeed());
-  }
+    packet->add(creature->getSpeed());
+  };
+
+  const auto item_func = [&packet](const Item* item)
+  {
+    packet->add(item->getItemTypeId());
+    if (item->getItemType().is_stackable)
+    {
+      packet->add(item->getCount());
+    }
+    else if (item->getItemType().is_multitype)
+    {
+      // TODO(simon): getSubType???
+      packet->addU8(0);
+    }
+  };
+
+  thing.visit(creature_func, item_func);
 }
 
 void addMapData(const WorldInterface& world_interface,

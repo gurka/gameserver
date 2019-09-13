@@ -25,6 +25,7 @@
 #ifndef WORLD_EXPORT_TILE_H_
 #define WORLD_EXPORT_TILE_H_
 
+#include <functional>
 #include <vector>
 
 #include "thing.h"
@@ -49,11 +50,24 @@ class Tile
   Tile(Tile&&) = default;
   Tile& operator=(Tile&&) = default;
 
+  // Thing management
   void addThing(const Thing& thing);
   bool removeThing(int stackpos);
-  const Thing* getThing(int stackpos) const;
   const std::vector<Thing>& getThings() const { return m_things; }
   std::size_t getNumberOfThings() const { return m_things.size(); }
+
+  const Creature* getCreature(int stackpos) const;
+  const Item* getItem(int stackpos) const;
+
+  // Helpers
+  bool isBlocking() const;
+  int getCreatureStackpos(CreatureId creature_id) const;
+
+  // Visitor pattern stuff
+  void visitThings(const std::function<void(const Creature*)>& creature_func,
+                   const std::function<void(const Item*)>& item_func) const;
+  void visitCreatures(const std::function<void(const Creature*)>& func) const;
+  void visitItems(const std::function<void(const Item*)>& func) const;
 
  private:
   // First ground

@@ -25,26 +25,68 @@
 #ifndef WORLD_EXPORT_THING_H_
 #define WORLD_EXPORT_THING_H_
 
+#include <functional>
+#include <type_traits>
+#include <variant>
+
 class Creature;
 class Item;
 
 struct Thing
 {
-  // We want implicit constructors
   Thing(const Creature* creature)  // NOLINT
-      : creature(creature),
-        item(nullptr)
+      : thing(creature)
   {
   }
 
   Thing(const Item* item)  // NOLINT
-      : creature(nullptr),
-        item(item)
+      : thing(item)
   {
   }
 
-  const Creature* creature;
-  const Item* item;
+  const Creature* creature() const
+  {
+    return thing.index() == 0 ? std::get<0>(thing) : nullptr;
+  }
+
+  const Item* item() const
+  {
+    return thing.index() == 1 ? std::get<1>(thing) : nullptr;
+  }
+
+  void visit(const std::function<void(const Creature*)>& creature_func,
+             const std::function<void(const Item*)>& item_func) const
+  {
+    std::visit([&creature_func, &item_func](auto&& arg)
+    {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, const Creature*>)  // NOLINT clang-tidy bug?
+      {
+        if (creature_func)
+        {
+          creature_func(arg);
+        }
+      }
+      else if constexpr (std::is_same_v<T, const Item*>)
+      {
+        if (item_func)
+        {
+          item_func(arg);
+        }
+      }
+      else
+      {
+        static_assert(AlwaysFalse<T>::value, "Invalid type T");
+      }
+    }, thing);
+  }
+
+
+  std::variant<const Creature*, const Item*> thing;
+
+ private:
+  template<typename T>
+  struct AlwaysFalse : std::false_type {};
 };
 
 #endif  // WORLD_EXPORT_THING_H_

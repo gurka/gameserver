@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <deque>
+#include <functional>
 #include <random>
 #include <sstream>
 #include <tuple>
@@ -34,7 +35,6 @@
 
 #include "logger.h"
 #include "tick.h"
-#include "thing.h"
 
 World::World(int world_size_x,
              int world_size_y,
@@ -95,27 +95,18 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_
       continue;
     }
 
-    // Check if other creature already there
-    const auto& things = tile->getThings();
-    const auto it = std::find_if(things.cbegin(),
-                                 things.cend(),
-                                 [](const Thing& thing)
-    {
-      return thing.creature != nullptr;
-    });
-    if (it != things.cend())
+    if (tile->isBlocking())
     {
       tile = nullptr;
       continue;
     }
-
     break;
   }
 
   if (tile)
   {
     LOG_INFO("%s: spawning creature: %d at position: %s", __func__, creature_id, adjusted_position.toString().c_str());
-    tile->addThing(Thing(creature));
+    tile->addThing(creature);
 
     m_creature_data.emplace(std::piecewise_construct,
                            std::forward_as_tuple(creature_id),
@@ -204,19 +195,10 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
   }
 
   // Check if to_tile is blocking or not
-  for (const auto& thing : to_tile->getThings())
+  if (to_tile->isBlocking())
   {
-    if (thing.item && thing.item->getItemType().is_blocking)
-    {
-      LOG_DEBUG("%s: Item on to_tile is blocking", __func__);
-      return ReturnCode::THERE_IS_NO_ROOM;
-    }
-
-    if (thing.creature)
-    {
-      LOG_DEBUG("%s: Item on to_tile has creatures", __func__);
-      return ReturnCode::THERE_IS_NO_ROOM;
-    }
+    LOG_DEBUG("%s: to_tile is blocking", __func__);
+    return ReturnCode::THERE_IS_NO_ROOM;
   }
 
   // Move the actual creature
@@ -225,11 +207,11 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
   auto from_stackpos = getCreatureStackpos(from_position, creature_id);
   from_tile->removeThing(from_stackpos);
 
-  to_tile->addThing(m_creature_data.at(creature_id).creature);
+  to_tile->addThing(&creature);
   m_creature_data.at(creature_id).position = to_position;
 
   // Set new nextWalkTime for this Creature
-  auto ground_speed = from_tile->getThing(0)->item->getItemType().speed;
+  auto ground_speed = from_tile->getItem(0)->getItemType().speed;
   auto creature_speed = creature.getSpeed();
   auto duration = (1000 * ground_speed) / creature_speed;
 
@@ -283,16 +265,14 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
       {
         continue;
       }
-      for (const auto& thing : tile->getThings())
+
+      tile->visitCreatures([this, &from_position, &from_stackpos, &to_position](const Creature* creature)
       {
-        if (thing.creature)
-        {
-          getCreatureCtrl(thing.creature->getCreatureId()).onCreatureMove(creature,
-                                                                          from_position,
-                                                                          from_stackpos,
-                                                                          to_position);
-        }
-      }
+        getCreatureCtrl(creature->getCreatureId()).onCreatureMove(*creature,
+                                                                  from_position,
+                                                                  from_stackpos,
+                                                                  to_position);
+      });
     }
   }
 
@@ -361,15 +341,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
     return false;
   }
 
-  for (const auto& thing : tile->getThings())
-  {
-    if (thing.item && thing.item->getItemType().is_blocking)
-    {
-      return false;
-    }
-  }
-
-  return true;
+  return !tile->isBlocking();
 }
 
 World::ReturnCode World::addItem(const Item& item, const Position& position)
@@ -407,7 +379,7 @@ World::ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Po
   }
 
   // Get the item and verify item_type_id
-  const auto* item = tile->getThing(stackpos)->item;
+  const auto* item = tile->getItem(stackpos);
   if (!item || item->getItemTypeId() != item_type_id)
   {
     LOG_ERROR("%s: item with given stackpos does not match given item_type_id", __func__);
@@ -492,22 +464,20 @@ World::ReturnCode World::moveItem(CreatureId creature_id,
   }
 
   // Check if we can add Item to to_tile
-  for (const auto& thing : to_tile->getThings())
+  if (to_tile->isBlocking())
   {
-    if (thing.item && thing.item->getItemType().is_blocking)
-    {
-      LOG_DEBUG("%s: Item on to_tile is blocking", __func__);
-      return ReturnCode::THERE_IS_NO_ROOM;
-    }
+    LOG_DEBUG("%s: to_tile is blocking", __func__);
+    return ReturnCode::THERE_IS_NO_ROOM;
   }
 
   // Get the Item from from_tile
-  auto* item = from_tile->getThing(from_stackpos)->item;
+  auto* item = from_tile->getItem(from_stackpos);
   if (!item || item->getItemTypeId() != item_type_id)
   {
     LOG_ERROR("%s: Could not find the item to move", __func__);
     return ReturnCode::ITEM_NOT_FOUND;
   }
+
   // Try to remove Item from from_tile
   if (!from_tile->removeThing(from_stackpos))
   {
@@ -638,13 +608,10 @@ std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& 
         continue;
       }
 
-      for (const auto& thing : tile->getThings())
+      tile->visitCreatures([&creature_ids](const Creature* creature)
       {
-        if (thing.creature)
-        {
-          creature_ids.push_back(thing.creature->getCreatureId());
-        }
-      }
+        creature_ids.push_back(creature->getCreatureId());
+      });
     }
   }
 
@@ -658,21 +625,6 @@ int World::getCreatureStackpos(const Position& position, CreatureId creature_id)
   {
     return 255;  // TODO(simon): invalid stackpos
   }
-  const auto& things = tile->getThings();
-  const auto it = std::find_if(things.cbegin(),
-                               things.cend(),
-                               [&creature_id](const Thing& thing)
-  {
-    return thing.creature && thing.creature->getCreatureId() == creature_id;  // NOLINT
-  });
-  if (it != things.cend())
-  {
-    return std::distance(things.cbegin(), it);
-  }
 
-  LOG_ERROR("%s: could not find creature_id: %d in Tile: %s",
-            __func__,
-            creature_id,
-            position.toString().c_str());
-  return 255;  // TODO(simon): invalid stackpos
+  return tile->getCreatureStackpos(creature_id);
 }

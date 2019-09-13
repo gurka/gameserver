@@ -31,34 +31,6 @@
 using ItemUniqueId = std::uint64_t;
 using ItemTypeId = std::uint16_t;
 
-struct ItemType;
-
-class Item
-{
- public:
-  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0U;
-
-  virtual ~Item() = default;
-
-  virtual ItemUniqueId getItemUniqueId() const = 0;
-  virtual ItemTypeId getItemTypeId() const = 0;
-
-  virtual const ItemType& getItemType() const = 0;
-
-  virtual std::uint8_t getCount() const = 0;
-  virtual void setCount(std::uint8_t count) = 0;
-
-  bool operator==(const Item& other) const
-  {
-    return getItemUniqueId() == other.getItemUniqueId();
-  }
-
-  bool operator!=(const Item& other) const
-  {
-    return !(*this == other);
-  }
-};
-
 struct ItemType
 {
   ItemTypeId id     = 0;
@@ -92,6 +64,32 @@ struct ItemType
   int handed            = 0;
   int shottype          = 0;
   std::string amutype   = "";
+};
+
+class Item
+{
+ public:
+  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0U;
+
+  ~Item() = default;
+
+  virtual ItemUniqueId getItemUniqueId() const = 0;
+  virtual ItemTypeId getItemTypeId() const = 0;
+
+  virtual const ItemType& getItemType() const = 0;
+
+  virtual std::uint8_t getCount() const = 0;
+  virtual void setCount(std::uint8_t count) = 0;
+
+  bool operator==(const Item& other) const
+  {
+    return getItemUniqueId() == other.getItemUniqueId();
+  }
+
+  bool operator!=(const Item& other) const
+  {
+    return !(*this == other);
+  }
 };
 
 #endif  // WORLD_EXPORT_ITEM_H_

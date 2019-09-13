@@ -31,8 +31,6 @@
 #include "rapidxml.hpp"
 #include "logger.h"
 
-constexpr ItemUniqueId Item::INVALID_UNIQUE_ID;
-
 bool ItemManager::loadItemTypes(const std::string& data_filename, const std::string& items_filename)
 {
   if (!loadItemTypesDataFile(data_filename))
