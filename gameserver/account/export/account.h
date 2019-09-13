@@ -33,42 +33,42 @@
 struct Character
 {
   std::string name;
-  std::string worldName;
-  std::uint32_t worldIp;
-  int worldPort;
+  std::string world_name;
+  std::uint32_t world_ip;
+  int world_port;
 };
 
 struct Account
 {
-  Account(int premiumDays, const std::vector<Character>& characters)
-    : premiumDays(premiumDays),
-      characters(characters)
+  Account(int premium_days, std::vector<Character> characters)
+    : premium_days(premium_days),
+      characters(std::move(characters))
   {
   }
 
-  int premiumDays;
+  int premium_days;
   std::vector<Character> characters;
 };
 
 class AccountReader
 {
  public:
-  bool loadFile(const std::string& accountsFilename);
-  bool loadFile(std::istream* accountsFileStream);
+  bool loadFile(const std::string& accounts_filename);
+  bool loadFile(std::istream* accounts_file_stream);
 
-  bool accountExists(int accountNumber) const;
-  bool verifyPassword(int accountNumber, const std::string& password) const;
-  const Account* getAccount(int accountNumber) const;
+  bool accountExists(int account_number) const;
+  bool verifyPassword(int account_number, const std::string& password) const;
+  const Account* getAccount(int account_number) const;
 
-  bool characterExists(const std::string& characterName) const;
-  bool verifyPassword(const std::string& characterName, const std::string& password) const;
-  const Character* getCharacter(const std::string& characterName) const;
-  const Account* getAccount(const std::string& characterName) const;
+  bool characterExists(const std::string& character_name) const;
+  bool verifyPassword(const std::string& character_name, const std::string& password) const;
+  const Character* getCharacter(const std::string& character_name) const;
+  const Account* getAccount(const std::string& character_name) const;
 
  private:
-  std::unordered_map<int, Account> accounts_;
-  std::unordered_map<int, std::string> passwords_;
-  std::unordered_map<std::string, int> characterToAccountNumber_;
+  std::unordered_map<int, Account> m_accounts;
+  std::unordered_map<int, std::string> m_passwords;
+  std::unordered_map<std::string, int> m_char_to_acc_num;
 };
 
 #endif  // ACCOUNT_EXPORT_ACCOUNT_H_

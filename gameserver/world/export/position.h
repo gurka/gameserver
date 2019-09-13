@@ -35,7 +35,7 @@ class Position
  public:
   static const Position INVALID;
 
-  Position();
+  Position() = default;
   Position(std::uint16_t x, std::uint16_t y, std::uint8_t z);
 
   bool operator==(const Position& other) const;
@@ -44,14 +44,14 @@ class Position
   std::string toString() const;
   Position addDirection(const Direction& direction) const;
 
-  std::uint16_t getX() const { return x_; }
-  std::uint16_t getY() const { return y_; }
-  std::uint8_t  getZ() const { return z_; }
+  std::uint16_t getX() const { return m_x; }
+  std::uint16_t getY() const { return m_y; }
+  std::uint8_t  getZ() const { return m_z; }
 
  private:
-  std::uint16_t x_;
-  std::uint16_t y_;
-  std::uint8_t z_;
+  std::uint16_t m_x{0};
+  std::uint16_t m_y{0};
+  std::uint8_t m_z{0};
 };
 
 #endif  // WORLD_EXPORT_POSITION_H_

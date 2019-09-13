@@ -51,11 +51,11 @@ class WorldInterface;
 class Protocol : public PlayerCtrl
 {
  public:
-  Protocol(const std::function<void(void)>& closeProtocol,
-             std::unique_ptr<Connection>&& connection,
-             const WorldInterface* worldInterface,
-             GameEngineQueue* gameEngineQueue,
-             AccountReader* accountReader);
+  Protocol(std::function<void(void)> close_protocol,
+           std::unique_ptr<Connection>&& connection,
+           const WorldInterface* world_interface,
+           GameEngineQueue* game_engine_queue,
+           AccountReader* account_reader);
 
   // Delete copy constructors
   Protocol(const Protocol&) = delete;
@@ -66,45 +66,45 @@ class Protocol : public PlayerCtrl
                        const Position& position) override;
   void onCreatureDespawn(const Creature& creature,
                          const Position& position,
-                         std::uint8_t stackPos) override;
+                         std::uint8_t stackpos) override;
   void onCreatureMove(const Creature& creature,
-                      const Position& oldPosition,
-                      std::uint8_t oldStackPos,
-                      const Position& newPosition) override;
+                      const Position& old_position,
+                      std::uint8_t old_stackpos,
+                      const Position& new_position) override;
   void onCreatureTurn(const Creature& creature,
                       const Position& position,
-                      std::uint8_t stackPos) override;
+                      std::uint8_t stackpos) override;
   void onCreatureSay(const Creature& creature,
                      const Position& position,
                      const std::string& message) override;
 
   void onItemRemoved(const Position& position,
-                     std::uint8_t stackPos) override;
+                     std::uint8_t stackpos) override;
   void onItemAdded(const Item& item,
                    const Position& position) override;
 
   void onTileUpdate(const Position& position) override;
 
   // Called by GameEngine (from PlayerCtrl)
-  CreatureId getPlayerId() const override { return playerId_; }
-  void setPlayerId(CreatureId playerId) override { playerId_ = playerId; }
-  void onEquipmentUpdated(const Player& player, std::uint8_t inventoryIndex) override;
-  void onOpenContainer(std::uint8_t newContainerId, const Container& container, const Item& item) override;
-  void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) override;
-  void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) override;
-  void onContainerUpdateItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot, const Item& item) override;
-  void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot) override;
+  CreatureId getPlayerId() const override { return m_player_id; }
+  void setPlayerId(CreatureId player_id) override { m_player_id = player_id; }
+  void onEquipmentUpdated(const Player& player, std::uint8_t inventory_index) override;
+  void onOpenContainer(std::uint8_t new_container_id, const Container& container, const Item& item) override;
+  void onCloseContainer(ItemUniqueId container_item_unique_id, bool reset_container_id) override;
+  void onContainerAddItem(ItemUniqueId container_item_unique_id, const Item& item) override;
+  void onContainerUpdateItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const Item& item) override;
+  void onContainerRemoveItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot) override;
   void sendTextMessage(std::uint8_t message_type, const std::string& message) override;
   void sendCancel(const std::string& message) override;
   void cancelMove() override;
 
   // Called by ContainerManager (from PlayerCtrl)
-  const std::array<ItemUniqueId, 64>& getContainerIds() const override { return containerIds_; }
-  bool hasContainerOpen(ItemUniqueId itemUniqueId) const override;
+  const std::array<ItemUniqueId, 64>& getContainerIds() const override { return m_container_ids; }
+  bool hasContainerOpen(ItemUniqueId item_unique_id) const override;
 
  private:
-  bool isLoggedIn() const { return playerId_ != Creature::INVALID_ID; }
-  bool isConnected() const { return static_cast<bool>(connection_); }
+  bool isLoggedIn() const { return m_player_id != Creature::INVALID_ID; }
+  bool isConnected() const { return static_cast<bool>(m_connection); }
   void disconnect() const;
 
   // Connection callbacks
@@ -122,27 +122,27 @@ class Protocol : public PlayerCtrl
   void parseSay(IncomingPacket* packet);
 
   // Helper functions for containerId
-  void setContainerId(std::uint8_t containerId, ItemUniqueId itemUniqueId);
-  std::uint8_t getContainerId(ItemUniqueId itemUniqueId) const;
-  ItemUniqueId getContainerItemUniqueId(std::uint8_t containerId) const;
+  void setContainerId(std::uint8_t container_id, ItemUniqueId item_unique_id);
+  std::uint8_t getContainerId(ItemUniqueId item_unique_id) const;
+  ItemUniqueId getContainerItemUniqueId(std::uint8_t container_id) const;
 
   // Other helpers
   bool canSee(const Position& player_position, const Position& to_position);
 
-  std::function<void(void)> closeProtocol_;
-  std::unique_ptr<Connection> connection_;
-  const WorldInterface* worldInterface_;
-  GameEngineQueue* gameEngineQueue_;
-  AccountReader* accountReader_;
+  std::function<void(void)> m_close_protocol;
+  std::unique_ptr<Connection> m_connection;
+  const WorldInterface* m_world_interface;
+  GameEngineQueue* m_game_engine_queue;
+  AccountReader* m_account_reader;
 
-  CreatureId playerId_;
+  CreatureId m_player_id;
 
-  std::array<CreatureId, 64> knownCreatures_;
+  std::array<CreatureId, 64> m_known_creatures;
 
   // Known/opened containers
   // clientContainerId maps to a container's ItemUniqueId
   static constexpr std::uint8_t INVALID_CONTAINER_ID = -1;
-  std::array<ItemUniqueId, 64> containerIds_;
+  std::array<ItemUniqueId, 64> m_container_ids;
 };
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_H_

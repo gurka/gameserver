@@ -40,9 +40,9 @@
  * class ConnectionImpl
  *
  * Callbacks:
- *   onPacketReceived:   called when a packet has been received
+ *   on_packet_received:   called when a packet has been received
  *
- *   onDisconnected:     called when the connection is closed and
+ *   on_disconnected:     called when the connection is closed and
  *                       this instance is ready for deletion
  *
  * There are three ways a connection can be closed:
@@ -51,9 +51,9 @@
  *      Any queued packets will be sent before the connection is closed.
  *
  *      When all queued packets have been sent and the socket is closed the
- *      onDisconnected callback is called.
+ *      on_disconnected callback is called.
  *
- *      If there are no queued packets to send the onDisconnected callback
+ *      If there are no queued packets to send the on_disconnected callback
  *      is called either in the same context or in a later context, depending on
  *      if there are any send or receive calls in progress.
  *
@@ -62,7 +62,7 @@
  *   2. Owner asks to close the connection forcefully, using close(force=true).
  *
  *      The socket is closed and any queued packets to send are lost. The
- *      onDisconnected callback is called, either in the same context or in
+ *      on_disconnected callback is called, either in the same context or in
  *      a later context, depending on if there are any send or receive calls
  *      in progress.
  *
@@ -70,7 +70,7 @@
  *
  *   3. An error occurs in a send or receive call.
  *
- *      The onDisconnected callback is called as soon as there is no send and
+ *      The on_disconnected callback is called as soon as there is no send and
  *      no receive call in progress.
  *
  * Connection handles its receive loop itself, which is started in its constructor:
@@ -86,22 +86,22 @@ class ConnectionImpl : public Connection
 {
  public:
   explicit ConnectionImpl(typename Backend::Socket&& socket)
-    : socket_(std::move(socket)),
-      closing_(false),
-      receiveInProgress_(false),
-      sendInProgress_(false)
+    : m_socket(std::move(socket)),
+      m_closing(false),
+      m_receive_in_progress(false),
+      m_send_in_progress(false)
   {
   }
 
-  virtual ~ConnectionImpl()
+  ~ConnectionImpl() override
   {
-    if (receiveInProgress_ || sendInProgress_)
+    if (m_receive_in_progress || m_send_in_progress)
     {
-      LOG_ERROR("%s: called with closing_: %s, receiveInProgress_: %s, sendInProgress_: %s",
+      LOG_ERROR("%s: called with m_closing: %s, m_receive_in_progress: %s, m_send_in_progress: %s",
                 __func__,
-                (closing_           ? "true" : "false"),
-                (receiveInProgress_ ? "true" : "false"),
-                (sendInProgress_    ? "true" : "false"));
+                (m_closing           ? "true" : "false"),
+                (m_receive_in_progress ? "true" : "false"),
+                (m_send_in_progress    ? "true" : "false"));
     }
   }
 
@@ -111,29 +111,29 @@ class ConnectionImpl : public Connection
 
   void init(const Callbacks& callbacks) override
   {
-    callbacks_ = callbacks;
+    m_callbacks = callbacks;
     receivePacket();
   }
 
   void close(bool force) override
   {
-    if (closing_)
+    if (m_closing)
     {
       LOG_ERROR("%s: called with shutdown_: true", __func__);
       return;
     }
 
-    closing_ = true;
+    m_closing = true;
 
-    LOG_DEBUG("%s: force: %s, receiveInProgress_: %s, sendInProgress_: %s",
+    LOG_DEBUG("%s: force: %s, m_receive_in_progress: %s, m_send_in_progress: %s",
               __func__,
               (force              ? "true" : "false"),
-              (receiveInProgress_ ? "true" : "false"),
-              (sendInProgress_    ? "true" : "false"));
+              (m_receive_in_progress ? "true" : "false"),
+              (m_send_in_progress    ? "true" : "false"));
 
     // We can close the socket now if either we should force close,
     // or if there are no send in progress (i.e. no queued packets)
-    if (force || !sendInProgress_)
+    if (force || !m_send_in_progress)
     {
       closeSocket();  // Note that this instance might be deleted during this call
     }
@@ -143,17 +143,17 @@ class ConnectionImpl : public Connection
 
   void sendPacket(OutgoingPacket&& packet) override
   {
-    if (closing_)
+    if (m_closing)
     {
       // We are about to close the connection, so don't allow more packets to be sent
-      LOG_DEBUG("%s: cannot send packet, closing_: true", __func__);
+      LOG_DEBUG("%s: cannot send packet, m_closing: true", __func__);
       return;
     }
 
-    outgoingPackets_.push_back(std::move(packet));
+    m_outgoing_packets.push_back(std::move(packet));
 
     // Start to send packet if this is the only packet in the queue
-    if (!sendInProgress_)
+    if (!m_send_in_progress)
     {
       sendPacketInternal();
     }
@@ -162,34 +162,34 @@ class ConnectionImpl : public Connection
  private:
   void sendPacketInternal()
   {
-    if (outgoingPackets_.empty())
+    if (m_outgoing_packets.empty())
     {
       LOG_ERROR("%s: there are no packets to send", __func__);
       return;
     }
 
-    sendInProgress_ = true;
+    m_send_in_progress = true;
 
-    const auto& packet = outgoingPackets_.front();
+    const auto& packet = m_outgoing_packets.front();
     auto packet_length = packet.getLength();
 
     LOG_DEBUG("%s: sending packet header, packet length: %d", __func__, packet_length);
 
-    outgoingHeaderBuffer_[0] = packet_length & 0xFF;
-    outgoingHeaderBuffer_[1] = (packet_length >> 8) & 0xFF;
+    m_outgoing_header_buffer[0] = packet_length & 0xFF;
+    m_outgoing_header_buffer[1] = (packet_length >> 8) & 0xFF;
 
-    Backend::async_write(socket_,
-                         outgoingHeaderBuffer_.data(),
+    Backend::async_write(m_socket,
+                         m_outgoing_header_buffer.data(),
                          2,
-                         [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                         [this](const typename Backend::ErrorCode& error_code, std::size_t len)
                          {
-                           if (errorCode || len != 2u)
+                           if (error_code || len != 2u)
                            {
-                             LOG_DEBUG("%s: errorCode: %s, len: %d (expected: 2)",
+                             LOG_DEBUG("%s: error_code: %s, len: %d (expected: 2)",
                                        __func__,
-                                       errorCode.message().c_str(),
+                                       error_code.message().c_str(),
                                        len);
-                             sendInProgress_ = false;
+                             m_send_in_progress = false;
                              closeSocket();  // Note that this instance might be deleted during this call
                              return;
                            }
@@ -202,21 +202,21 @@ class ConnectionImpl : public Connection
   {
     LOG_DEBUG("%s: packet header sent, sending data", __func__);
 
-    const auto& packet = outgoingPackets_.front();
-    auto packet_length = outgoingPackets_.front().getLength();
-    Backend::async_write(socket_,
+    const auto& packet = m_outgoing_packets.front();
+    auto packet_length = m_outgoing_packets.front().getLength();
+    Backend::async_write(m_socket,
                          packet.getBuffer(),
                          packet.getLength(),
-                         [this, packet_length](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                         [this, packet_length](const typename Backend::ErrorCode& error_code, std::size_t len)
                          {
-                           if (errorCode || len != packet_length)
+                           if (error_code || len != packet_length)
                            {
-                             LOG_DEBUG("%s: errorCode: %s, len: %d (expected: %d)",
+                             LOG_DEBUG("%s: error_code: %s, len: %d (expected: %d)",
                                        __func__,
-                                       errorCode.message().c_str(),
+                                       error_code.message().c_str(),
                                        len,
                                        packet_length);
-                             sendInProgress_ = false;
+                             m_send_in_progress = false;
                              closeSocket();  // Note that this instance might be deleted during this call
                              return;
                            }
@@ -227,21 +227,21 @@ class ConnectionImpl : public Connection
 
   void onPacketDataSent()
   {
-    outgoingPackets_.pop_front();
-    if (!outgoingPackets_.empty())
+    m_outgoing_packets.pop_front();
+    if (!m_outgoing_packets.empty())
     {
       // More packet(s) to send
       LOG_DEBUG("%s: sending next packet in queue, number of packets in queue: %u",
                 __func__,
-                outgoingPackets_.size());
+                m_outgoing_packets.size());
 
       sendPacketInternal();
     }
     else
     {
-      sendInProgress_ = false;
+      m_send_in_progress = false;
 
-      if (closing_)
+      if (m_closing)
       {
         closeSocket();  // Note that this instance might be deleted during this call
       }
@@ -250,21 +250,21 @@ class ConnectionImpl : public Connection
 
   void receivePacket()
   {
-    receiveInProgress_ = true;
+    m_receive_in_progress = true;
 
-    Backend::async_read(socket_,
-                        readBuffer_.data(),
+    Backend::async_read(m_socket,
+                        m_read_buffer.data(),
                         2,
-                        [this](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                        [this](const typename Backend::ErrorCode& error_code, std::size_t len)
                         {
-                          if (errorCode || len != 2u || closing_)
+                          if (error_code || len != 2u || m_closing)
                           {
-                            LOG_DEBUG("%s: errorCode: %s, len: %d (expected: 2), closing_: %s",
+                            LOG_DEBUG("%s: error_code: %s, len: %d (expected: 2), m_closing: %s",
                                       __func__,
-                                      errorCode.message().c_str(),
+                                      error_code.message().c_str(),
                                       len,
-                                      (closing_ ? "true" : "false"));
-                            receiveInProgress_ = false;
+                                      (m_closing ? "true" : "false"));
+                            m_receive_in_progress = false;
                             closeSocket();  // Note that this instance might be deleted during this call
                             return;
                           }
@@ -276,38 +276,38 @@ class ConnectionImpl : public Connection
   void onPacketHeaderReceived()
   {
     // Receive data
-    const auto packet_length = (readBuffer_[1] << 8) | readBuffer_[0];
+    const auto packet_length = (m_read_buffer[1] << 8) | m_read_buffer[0];
 
     LOG_DEBUG("%s: received packet header, packet length: %d", __func__, packet_length);
 
     if (packet_length == 0)
     {
       LOG_DEBUG("%s: packet length 0 is invalid, closing connection", __func__);
-      receiveInProgress_ = false;
+      m_receive_in_progress = false;
       closeSocket();
       return;
     }
 
-    Backend::async_read(socket_,
-                        readBuffer_.data(),
+    Backend::async_read(m_socket,
+                        m_read_buffer.data(),
                         packet_length,
-                        [this, packet_length](const typename Backend::ErrorCode& errorCode, std::size_t len)
+                        [this, packet_length](const typename Backend::ErrorCode& error_code, std::size_t len)
                         {
-                          if (errorCode || static_cast<int>(len) != packet_length || closing_)
+                          if (error_code || static_cast<int>(len) != packet_length || m_closing)
                           {
-                            LOG_DEBUG("%s: errorCode: %s, len: %d (expected: %d), closing_: %s",
+                            LOG_DEBUG("%s: error_code: %s, len: %d (expected: %d), m_closing: %s",
                                       __func__,
-                                      errorCode.message().c_str(),
+                                      error_code.message().c_str(),
                                       len,
                                       packet_length,
-                                      (closing_ ? "true" : "false"));
-                            receiveInProgress_ = false;
+                                      (m_closing ? "true" : "false"));
+                            m_receive_in_progress = false;
 
-                            // Only close the socket on error or if closing_ is true and send not in
+                            // Only close the socket on error or if m_closing is true and send not in
                             // progress (i.e. close(force=false))
-                            if (errorCode ||
+                            if (error_code ||
                                 static_cast<int>(len) != packet_length ||
-                                (closing_ && !sendInProgress_))
+                                (m_closing && !m_send_in_progress))
                             {
                               closeSocket();  // Note that this instance might be deleted during this call
                             }
@@ -324,17 +324,17 @@ class ConnectionImpl : public Connection
 
     // Call handler
     // Maybe it should stated somewhere that the IncomingPacket is only valid to read/use
-    // during the onPacketReceived call
-    IncomingPacket packet(readBuffer_.data(), len);
-    callbacks_.onPacketReceived(&packet);
+    // during the on_packet_received call
+    IncomingPacket packet(m_read_buffer.data(), len);
+    m_callbacks.on_packet_received(&packet);
 
-    // closing_ might have been changed due to the packet that was received above
+    // m_closing might have been changed due to the packet that was received above
     // so check it again
-    if (closing_)
+    if (m_closing)
     {
       // Don't continue if we are about to shut down
-      receiveInProgress_ = false;
-      if (!sendInProgress_)
+      m_receive_in_progress = false;
+      if (!m_send_in_progress)
       {
         closeSocket();  // Note that this instance might be deleted during this call
       }
@@ -347,44 +347,44 @@ class ConnectionImpl : public Connection
 
   void closeSocket()
   {
-    closing_ = true;
+    m_closing = true;
 
-    if (socket_.is_open())
+    if (m_socket.is_open())
     {
       typename Backend::ErrorCode error;
 
-      socket_.shutdown(Backend::shutdown_type::shutdown_both, error);
+      m_socket.shutdown(Backend::shutdown_type::shutdown_both, error);
       if (error)
       {
         LOG_DEBUG("%s: could not shutdown socket: %s", __func__, error.message().c_str());
       }
 
-      socket_.close(error);
+      m_socket.close(error);
       if (error)
       {
         LOG_DEBUG("%s: could not close socket: %s", __func__, error.message().c_str());
       }
     }
 
-    if (!receiveInProgress_ && !sendInProgress_)
+    if (!m_receive_in_progress && !m_send_in_progress)
     {
       // Time to delete this instance
-      callbacks_.onDisconnected();
+      m_callbacks.on_disconnected();
     }
   }
 
-  typename Backend::Socket socket_;
-  Callbacks callbacks_;
+  typename Backend::Socket m_socket;
+  Callbacks m_callbacks;
 
-  bool closing_;
-  bool receiveInProgress_;
-  bool sendInProgress_;
+  bool m_closing;
+  bool m_receive_in_progress;
+  bool m_send_in_progress;
 
   // I/O Buffers
-  std::array<std::uint8_t, 8192> readBuffer_;
+  std::array<std::uint8_t, 8192> m_read_buffer;
 
-  std::array<std::uint8_t, 2> outgoingHeaderBuffer_;
-  std::deque<OutgoingPacket> outgoingPackets_;
+  std::array<std::uint8_t, 2> m_outgoing_header_buffer;
+  std::deque<OutgoingPacket> m_outgoing_packets;
 };
 
 #endif  // NETWORK_SRC_CONNECTION_IMPL_H_

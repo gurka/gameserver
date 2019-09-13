@@ -28,8 +28,9 @@
 #include <ctime>
 #include <cstdarg>
 #include <cstring>
+#include <array>
 
-const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
+const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 {
   // utils
   { "config_parser.h",      Module::UTILS       },
@@ -79,7 +80,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::file_to_module_ =
   { "map.cc",               Module::NETWORK     },
 };
 
-std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level_ =
+std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =
 {
   // Default settings
   { Module::ACCOUNT,     Level::DEBUG },
@@ -92,48 +93,48 @@ std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::mo
   { Module::WORLDSERVER, Level::DEBUG },
 };
 
-void Logger::log(const char* fileFullPath, int line, Level level, ...)
+void Logger::log(const char* file_full_path, int line, Level level, ...)
 {
-  // Remove directories in fileFullPath ("network/server.cc" => "server.cc")
+  // Remove directories in file_full_path ("network/server.cc" => "server.cc")
   const char* filename;
-  if (strrchr(fileFullPath, '/'))
+  if (strrchr(file_full_path, '/'))
   {
-    filename = strrchr(fileFullPath, '/') + 1;
+    filename = strrchr(file_full_path, '/') + 1;
   }
   else
   {
-    filename = fileFullPath;
+    filename = file_full_path;
   }
 
   // Get the Module for this filename
-  if (file_to_module_.count(filename) == 0)
+  if (FILE_TO_MODULE.count(filename) == 0)
   {
     // Not in levels map, always print it
-    printf("Logger::log: ERROR: Filename not in Logger::file_to_module_: %s\n", filename);
+    printf("Logger::log: ERROR: Filename not in Logger::FILE_TO_MODULE: %s\n", filename);
     return;
   }
 
-  const auto& module = file_to_module_.at(filename);
+  const auto& module = FILE_TO_MODULE.at(filename);
 
   // Get the current level for this module
-  if (module_to_level_.count(module) == 0)
+  if (module_to_level.count(module) == 0)
   {
-    printf("Logger::log: ERROR: Module not in Logger::module_to_level_: %d\n", static_cast<int>(module));
+    printf("Logger::log: ERROR: Module not in Logger::module_to_level: %d\n", static_cast<int>(module));
     return;
   }
 
-  const auto& moduleLevel = module_to_level_.at(module);
+  const auto& module_level = module_to_level.at(module);
 
   // Only print if given level is less than or equal to moduleLevel
   // e.g. if INFO is enabled we print ERROR and INFO
-  if (level <= moduleLevel)
+  if (level <= module_level)
   {
     // Get current date and time
-    time_t now = time(0);
+    time_t now = time(nullptr);
     struct tm tstruct{};
-    char time_str[32];
+    std::array<char, 32> time_str;
     localtime_r(&now, &tstruct);
-    strftime(time_str, sizeof(time_str), "%Y-%m-%d %X", &tstruct);
+    strftime(time_str.data(), time_str.size(), "%Y-%m-%d %X", &tstruct);
 
     // Extract variadic function arguments
     va_list args;
@@ -141,13 +142,13 @@ void Logger::log(const char* fileFullPath, int line, Level level, ...)
                             // Which also must be a non-reference according to CppCheck
                             // otherwise va_start invokes undefined behaviour
     const char* format = va_arg(args, const char*);
-    char message[256];
+    std::array<char, 256> message;
     // Use the rest of the arguments together with the
     // format string to construct the actual log message
-    vsnprintf(message, sizeof(message), format, args);
+    vsnprintf(message.data(), message.size(), format, args);
     va_end(args);
 
-    printf("[%s][%s:%d] %s: %s\n", time_str, filename, line, levelToString(level).c_str(), message);
+    printf("[%s][%s:%d] %s: %s\n", time_str.data(), filename, line, levelToString(level).c_str(), message.data());
     std::fflush(stdout);
   }
 }
@@ -176,15 +177,15 @@ void Logger::setLevel(Module module, const std::string& level)
 
 void Logger::setLevel(Module module, Level level)
 {
-  if (module_to_level_.count(module) == 0)
+  if (module_to_level.count(module) == 0)
   {
-    printf("%s: ERROR: Module %d does not exist in module_to_level_!\n",
+    printf("%s: ERROR: Module %d does not exist in module_to_level!\n",
            __func__,
            static_cast<int>(module));
     return;
   }
 
-  module_to_level_[module] = level;
+  module_to_level[module] = level;
 }
 
 const std::string& Logger::levelToString(const Level& level)

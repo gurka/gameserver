@@ -40,7 +40,7 @@
 class World : public WorldInterface
 {
  public:
-  static constexpr int position_offset = 192;
+  static constexpr int POSITION_OFFSET = 192;
 
   enum class ReturnCode
   {
@@ -55,62 +55,62 @@ class World : public WorldInterface
     OTHER_ERROR,
   };
 
-  World(int worldSizeX,
-        int worldSizeY,
+  World(int world_size_x,
+        int world_size_y,
         std::vector<Tile>&& tiles);
-  ~World();
+  ~World() override;
 
   // Delete copy constructors
   World(const World&) = delete;
   World& operator=(const World&) = delete;
 
   // Creature management
-  ReturnCode addCreature(Creature* creature, CreatureCtrl* creatureCtrl, const Position& position);
-  void removeCreature(CreatureId creatureId);
-  bool creatureExists(CreatureId creatureId) const;
-  ReturnCode creatureMove(CreatureId creatureId, Direction direction);
-  ReturnCode creatureMove(CreatureId creatureId, const Position& newPosition);
-  void creatureTurn(CreatureId creatureId, Direction direction);
-  void creatureSay(CreatureId creatureId, const std::string& message);
+  ReturnCode addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position);
+  void removeCreature(CreatureId creature_id);
+  bool creatureExists(CreatureId creature_id) const;
+  ReturnCode creatureMove(CreatureId creature_id, Direction direction);
+  ReturnCode creatureMove(CreatureId creature_id, const Position& to_position);
+  void creatureTurn(CreatureId creature_id, Direction direction);
+  void creatureSay(CreatureId creature_id, const std::string& message);
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
   ReturnCode addItem(const Item& item, const Position& position);
-  ReturnCode removeItem(ItemTypeId itemTypeId, int count, const Position& position, int stackPos);
-  ReturnCode moveItem(CreatureId creatureId,
-                      const Position& fromPosition,
-                      int fromStackPos,
-                      ItemTypeId itemTypeId,
+  ReturnCode removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos);
+  ReturnCode moveItem(CreatureId creature_id,
+                      const Position& from_position,
+                      int from_stackpos,
+                      ItemTypeId item_type_id,
                       int count,
-                      const Position& toPosition);
+                      const Position& to_position);
 
   // Creature checks
-  bool creatureCanThrowTo(CreatureId creatureId, const Position& position) const;
-  bool creatureCanReach(CreatureId creatureId, const Position& position) const;
+  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
+  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
 
   // WorldInterface
   const Tile* getTile(const Position& position) const override;
-  const Creature& getCreature(CreatureId creatureId) const override;
-  const Position& getCreaturePosition(CreatureId creatureId) const override;
+  const Creature& getCreature(CreatureId creature_id) const override;
+  const Position& getCreaturePosition(CreatureId creature_id) const override;
 
  private:
   // Functions to use instead of accessing the containers directly
   Tile* getTile(const Position& position);
-  Creature& getCreature(CreatureId creatureId);
-  CreatureCtrl& getCreatureCtrl(CreatureId creatureId);
+  Creature& getCreature(CreatureId creature_id);
+  CreatureCtrl& getCreatureCtrl(CreatureId creature_id);
 
   // Helper functions
   std::vector<CreatureId> getCreatureIdsThatCanSeePosition(const Position& position) const;
-  int getCreatureStackpos(const Position& position, CreatureId creatureId) const;
+  int getCreatureStackpos(const Position& position, CreatureId creature_id) const;
 
   // World size
-  int worldSizeX_;
-  int worldSizeY_;
+  int m_world_size_x;
+  int m_world_size_y;
 
   // Column-major order, due to how map blocks are sent to client
   // No z axis yet
-  // index = (((x - position_offset) * worldSizeY_) + (y - position_offset))
-  std::vector<Tile> tiles_;
+  // index = (((x - POSITION_OFFSET) * m_world_size_y) + (y - POSITION_OFFSET))
+  std::vector<Tile> m_tiles;
 
   struct CreatureData
   {
@@ -127,7 +127,7 @@ class World : public WorldInterface
     CreatureCtrl* creature_ctrl;
     Position position;
   };
-  std::unordered_map<CreatureId, CreatureData> creature_data_;
+  std::unordered_map<CreatureId, CreatureData> m_creature_data;
 };
 
 #endif  // WORLD_EXPORT_WORLD_H_

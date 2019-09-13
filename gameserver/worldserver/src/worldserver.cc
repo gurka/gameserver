@@ -50,37 +50,37 @@
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<GameEngineQueue> gameEngineQueue;
-static std::unique_ptr<GameEngine> gameEngine;
-static std::unique_ptr<AccountReader> accountReader;
+static std::unique_ptr<GameEngineQueue> game_engine_queue;
+static std::unique_ptr<GameEngine> game_engine;
+static std::unique_ptr<AccountReader> account_reader;
 static std::unique_ptr<Server> server;
-static std::unique_ptr<Server> websocketServer;
+static std::unique_ptr<Server> websocket_server;
 
 using ProtocolId = int;
 static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
 
 void onClientConnected(std::unique_ptr<Connection>&& connection)
 {
-  static ProtocolId nextProtocolId = 0;
+  static ProtocolId next_protocol_id = 0;
 
-  const auto protocolId = nextProtocolId;
-  nextProtocolId += 1;
+  const auto protocol_id = next_protocol_id;
+  next_protocol_id += 1;
 
-  LOG_DEBUG("%s: protocolId: %d", __func__, protocolId);
+  LOG_DEBUG("%s: protocol_id: %d", __func__, protocol_id);
 
   // Create and store Protocol for this Connection
-  auto protocol = std::make_unique<Protocol>([protocolId]()
+  auto protocol = std::make_unique<Protocol>([protocol_id]()
                                              {
-                                               LOG_DEBUG("onCloseProtocol: protocolId: %d", protocolId);
-                                               protocols.erase(protocolId);
+                                               LOG_DEBUG("onCloseProtocol: protocol_id: %d", protocol_id);
+                                               protocols.erase(protocol_id);
                                              },
                                              std::move(connection),
-                                             gameEngine->getWorldInterface(),
-                                             gameEngineQueue.get(),
-                                             accountReader.get());
+                                             game_engine->getWorldInterface(),
+                                             game_engine_queue.get(),
+                                             account_reader.get());
 
   protocols.emplace(std::piecewise_construct,
-                    std::forward_as_tuple(protocolId),
+                    std::forward_as_tuple(protocol_id),
                     std::forward_as_tuple(std::move(protocol)));
 }
 
@@ -95,15 +95,15 @@ int main()
   }
 
   // Read [server] settings
-  const auto serverPort = config.getInteger("server", "port", 7172);
-  const auto wsServerPort = serverPort + 1000;
+  const auto server_port = config.getInteger("server", "port", 7172);
+  const auto ws_server_port = server_port + 1000;
 
   // Read [world] settings
-  const auto loginMessage     = config.getString("world", "login_message", "Welcome to LoginServer!");
-  const auto accountsFilename = config.getString("world", "accounts_file", "data/accounts.xml");
-  const auto dataFilename     = config.getString("world", "data_file", "data/data.dat");
-  const auto itemsFilename    = config.getString("world", "item_file", "data/items.xml");
-  const auto worldFilename    = config.getString("world", "world_file", "data/world.xml");
+  const auto login_message     = config.getString("world", "login_message", "Welcome to LoginServer!");
+  const auto accounts_filename = config.getString("world", "accounts_file", "data/accounts.xml");
+  const auto data_filename     = config.getString("world", "data_file",     "data/data.dat");
+  const auto items_filename    = config.getString("world", "item_file",     "data/items.xml");
+  const auto world_filename    = config.getString("world", "world_file",    "data/world.xml");
 
   // Read [logger] settings
   const auto logger_account     = config.getString("logger", "account", "ERROR");
@@ -125,14 +125,14 @@ int main()
   printf("--------------------------------------------------------------------------------\n");
   printf("WorldServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
-  printf("Server port:               %d\n", serverPort);
-  printf("Websocket server port:     %d\n", wsServerPort);
+  printf("Server port:               %d\n", server_port);
+  printf("Websocket server port:     %d\n", ws_server_port);
   printf("\n");
-  printf("Login message:             %s\n", loginMessage.c_str());
-  printf("Accounts filename:         %s\n", accountsFilename.c_str());
-  printf("Data filename:             %s\n", dataFilename.c_str());
-  printf("Items filename:            %s\n", itemsFilename.c_str());
-  printf("World filename:            %s\n", worldFilename.c_str());
+  printf("Login message:             %s\n", login_message.c_str());
+  printf("Accounts filename:         %s\n", accounts_filename.c_str());
+  printf("Data filename:             %s\n", data_filename.c_str());
+  printf("Items filename:            %s\n", items_filename.c_str());
+  printf("World filename:            %s\n", world_filename.c_str());
   printf("\n");
   printf("Account logging:           %s\n", logger_account.c_str());
   printf("Network logging:           %s\n", logger_network.c_str());
@@ -147,29 +147,29 @@ int main()
   boost::asio::io_context io_context;
 
   // Create GameEngine and GameEngineQueue
-  gameEngine = std::make_unique<GameEngine>();
-  gameEngineQueue = std::make_unique<GameEngineQueue>(gameEngine.get(), &io_context);
+  game_engine = std::make_unique<GameEngine>();
+  game_engine_queue = std::make_unique<GameEngineQueue>(game_engine.get(), &io_context);
 
   // Initialize GameEngine
-  if (!gameEngine->init(gameEngineQueue.get(), loginMessage, dataFilename, itemsFilename, worldFilename))
+  if (!game_engine->init(game_engine_queue.get(), login_message, data_filename, items_filename, world_filename))
   {
     LOG_ERROR("Could not initialize GameEngine");
     return 1;
   }
 
   // Create and load AccountReader
-  accountReader = std::make_unique<AccountReader>();
-  if (!accountReader->loadFile(accountsFilename))
+  account_reader = std::make_unique<AccountReader>();
+  if (!account_reader->loadFile(accounts_filename))
   {
-    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
+    LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
     return 1;
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
+  server = ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
   // Create websocket server
-  websocketServer = ServerFactory::createWebsocketServer(&io_context, wsServerPort, &onClientConnected);
+  websocket_server = ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
 
   LOG_INFO("WorldServer started!");
 
@@ -189,11 +189,11 @@ int main()
 
   // Deallocate things (in reverse order of construction)
   protocols.clear();
-  websocketServer.reset();
+  websocket_server.reset();
   server.reset();
-  accountReader.reset();
-  gameEngine.reset();
-  gameEngineQueue.reset();
+  account_reader.reset();
+  game_engine.reset();
+  game_engine_queue.reset();
 
   return 0;
 }

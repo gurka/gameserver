@@ -36,7 +36,7 @@ struct ItemType;
 class Item
 {
  public:
-  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0u;
+  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0U;
 
   virtual ~Item() = default;
 
@@ -66,14 +66,14 @@ struct ItemType
   // Loaded from data file
   bool ground       = false;
   int  speed        = 0;
-  bool isBlocking   = false;
-  bool alwaysOnTop  = false;
-  bool isContainer  = false;
-  bool isStackable  = false;
-  bool isUsable     = false;
-  bool isMultitype  = false;
-  bool isNotMovable = false;
-  bool isEquipable  = false;
+  bool is_blocking   = false;
+  bool always_on_top  = false;
+  bool is_container  = false;
+  bool is_stackable  = false;
+  bool is_usable     = false;
+  bool is_multitype  = false;
+  bool is_not_movable = false;
+  bool is_equipable  = false;
 
   // Loaded from xml file
   std::string name      = "";

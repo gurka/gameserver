@@ -4,7 +4,7 @@ language: cpp
 before_install:
   - sudo add-apt-repository ppa:mhier/libboost-latest -y
   - sudo apt update -q
-  - sudo apt install libboost1.70-dev valgrind cppcheck -y
+  - sudo apt install libboost1.70-dev valgrind clang-tidy -y
 
 jobs:
   include:
@@ -12,5 +12,3 @@ jobs:
       script: tools/travis/build.sh
     - stage: test
       script: tools/travis/test.sh
-    - stage: lint
-      script: tools/travis/lint.sh

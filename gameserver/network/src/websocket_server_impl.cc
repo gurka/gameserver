@@ -26,13 +26,14 @@
 
 #include "logger.h"
 
-bool WebsocketBackend::Socket::is_open() const
+bool WebsocketBackend::Socket::is_open() const  // NOLINT
 {
-  return server->is_open(hdl);
+  return server->isOpen(hdl);
 }
 
-void WebsocketBackend::Socket::shutdown(shutdown_type, ErrorCode& ec)
+void WebsocketBackend::Socket::shutdown(shutdown_type type, ErrorCode& ec)
 {
+  (void)type;
   server->shutdown(hdl, ec);
 }
 
@@ -41,106 +42,106 @@ void WebsocketBackend::Socket::close(ErrorCode& ec)
   server->close(hdl, ec);
 }
 
-void WebsocketBackend::async_read(Socket socket,
+void WebsocketBackend::async_read(Socket socket,  // NOLINT
                                   std::uint8_t* buffer,
                                   unsigned length,
-                                  const std::function<void(ErrorCode, std::size_t)> callback)
+                                  const std::function<void(ErrorCode, std::size_t)>& callback)
 {
-  socket.server->async_read(socket, buffer, length, callback);
+  socket.server->asyncRead(socket, buffer, length, callback);
 }
 
-void WebsocketBackend::async_write(Socket socket,
+void WebsocketBackend::async_write(Socket socket,  // NOLINT
                                    const std::uint8_t* buffer,
                                    unsigned length,
-                                   const std::function<void(ErrorCode, std::size_t)> callback)
+                                   const std::function<void(ErrorCode, std::size_t)>& callback)
 {
-  socket.server->async_write(socket, buffer, length, callback);
+  socket.server->asyncWrite(socket, buffer, length, callback);
 }
 
 WebsocketServerImpl::WebsocketServerImpl(boost::asio::io_context* io_context,
                                          int port,
-                                         const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected)
-    : server_(),
-      onClientConnected_(onClientConnected)
+                                         std::function<void(std::unique_ptr<Connection>&&)> on_client_connected)
+    : m_on_client_connected(std::move(on_client_connected))
 {
   websocketpp::lib::error_code ec;
-  server_.init_asio(io_context, ec);
-  server_.set_reuse_addr(true);
+  m_server.init_asio(io_context, ec);
+  m_server.set_reuse_addr(true);
   if (ec)
   {
     LOG_ERROR("%s: could not initialize WebsocketServer: %s", __func__, ec.message().c_str());
     return;
   }
 
-  server_.set_open_handler([this](websocketpp::connection_hdl hdl)
+  m_server.set_open_handler([this](const websocketpp::connection_hdl& hdl)
   {
     LOG_DEBUG("%s: new connection", __func__);
 
     auto socket = WebsocketBackend::Socket();
     socket.server = this;
     socket.hdl = hdl;
-    onClientConnected_(std::make_unique<ConnectionImpl<WebsocketBackend>>(std::move(socket)));
+    m_on_client_connected(std::make_unique<ConnectionImpl<WebsocketBackend>>(std::move(socket)));
   });
 
-  server_.set_close_handler([this](websocketpp::connection_hdl hdl)
+  m_server.set_close_handler([this](const websocketpp::connection_hdl& hdl)
   {
     closeConnection(hdl);
   });
 
-  server_.set_message_handler([this](websocketpp::connection_hdl hdl, WebsocketServer::message_ptr msg)
+  m_server.set_message_handler([this](const websocketpp::connection_hdl& hdl,
+                                      const WebsocketServer::message_ptr& msg)
   {
     LOG_DEBUG("%s: new message", __func__);
 
     const auto hdl_lock = hdl.lock();
 
     // Add to BufferedData
-    auto it = std::find_if(bufferedData_.begin(),
-                           bufferedData_.end(),
+    auto it = std::find_if(m_buffered_data.begin(),
+                           m_buffered_data.end(),
                            [&hdl_lock](const BufferedData& data) { return data.hdl.lock() == hdl_lock; });
-    if (it == bufferedData_.end())
+    if (it == m_buffered_data.end())
     {
       // Create new BufferedData
-      bufferedData_.emplace_back(hdl);
-      it = bufferedData_.end() - 1;
+      m_buffered_data.emplace_back(hdl);
+      it = m_buffered_data.end() - 1;
     }
 
-    auto& bufferedData = *it;
-    bufferedData.payload.insert(bufferedData.payload.begin(),
-                                reinterpret_cast<const std::uint8_t*>(msg->get_payload().c_str()),
-                                reinterpret_cast<const std::uint8_t*>(msg->get_payload().c_str()) + msg->get_payload().length());
+    auto& buffered_data = *it;
+    buffered_data.payload.insert(buffered_data.payload.begin(),
+                                 reinterpret_cast<const std::uint8_t*>(msg->get_payload().c_str()),
+                                 reinterpret_cast<const std::uint8_t*>(msg->get_payload().c_str()) + msg->get_payload().length());
 
     // Call fix, which might forward the data if there is a AsyncRead waiting and we have enough data
     fix(hdl_lock);
   });
 
-  server_.listen(port);
-  server_.start_accept();
+  m_server.listen(port);
+  m_server.start_accept();
 }
 
-void WebsocketServerImpl::async_read(WebsocketBackend::Socket socket,
-                                     std::uint8_t* buffer,
-                                     unsigned length,
-                                     const std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback)
+void WebsocketServerImpl::asyncRead(const WebsocketBackend::Socket& socket,
+                                    std::uint8_t* buffer,
+                                    unsigned length,
+                                    const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback)
 {
   LOG_DEBUG("%s: new async_read with length: %u", __func__, length);
 
   // Add the AsyncRead
-  asyncReads_.emplace_back(socket.hdl, buffer, length, callback);
+  m_async_reads.emplace_back(socket.hdl, buffer, length, callback);
 
   // Call fix, which might send a response if we have enough buffered data
   fix(socket.hdl.lock());
 }
 
-void WebsocketServerImpl::async_write(WebsocketBackend::Socket socket,
-                                      const std::uint8_t* buffer,
-                                      unsigned length,
-                                      const std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback)
+void WebsocketServerImpl::asyncWrite(const WebsocketBackend::Socket& socket,
+                                     const std::uint8_t* buffer,
+                                     unsigned length,
+                                     const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback)
 {
   websocketpp::lib::error_code error;
-  server_.send(socket.hdl, buffer, length, websocketpp::frame::opcode::BINARY, error);
+  m_server.send(socket.hdl, buffer, length, websocketpp::frame::opcode::BINARY, error);
   if (error)
   {
-    callback(WebsocketBackend::ErrorCode(error.message()), 0u);
+    callback(WebsocketBackend::ErrorCode(error.message()), 0U);
   }
   else
   {
@@ -148,22 +149,23 @@ void WebsocketServerImpl::async_write(WebsocketBackend::Socket socket,
   }
 }
 
-bool WebsocketServerImpl::is_open(websocketpp::connection_hdl hdl) const
+bool WebsocketServerImpl::isOpen(const websocketpp::connection_hdl& hdl) const
 {
   return static_cast<bool>(hdl.lock());
 }
 
-void WebsocketServerImpl::shutdown(websocketpp::connection_hdl, WebsocketBackend::ErrorCode& ec)
+void WebsocketServerImpl::shutdown(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec)
 {
   // Do nothing here, ConnectionImpl will call is_open() -> shutdown() -> close()
+  (void)hdl;
   ec = WebsocketBackend::ErrorCode();
 }
 
-void WebsocketServerImpl::close(websocketpp::connection_hdl hdl, WebsocketBackend::ErrorCode& ec)
+void WebsocketServerImpl::close(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec)
 {
   // Close socket
   websocketpp::lib::error_code websocketpp_ec;
-  server_.close(hdl, websocketpp::close::status::normal, "Closing connection", websocketpp_ec);
+  m_server.close(hdl, websocketpp::close::status::normal, "Closing connection", websocketpp_ec);
   if (websocketpp_ec)
   {
     ec = WebsocketBackend::ErrorCode(websocketpp_ec.message());
@@ -176,50 +178,50 @@ void WebsocketServerImpl::close(websocketpp::connection_hdl hdl, WebsocketBacken
   closeConnection(hdl);
 }
 
-void WebsocketServerImpl::closeConnection(websocketpp::connection_hdl hdl)
+void WebsocketServerImpl::closeConnection(const websocketpp::connection_hdl& hdl)
 {
   LOG_DEBUG("%s", __func__);
 
   // Abort and delete AsyncRead if any ongoing
   const auto hdl_lock = hdl.lock();
-  const auto ait = std::find_if(asyncReads_.begin(),
-                                asyncReads_.end(),
+  const auto ait = std::find_if(m_async_reads.begin(),
+                                m_async_reads.end(),
                                 [&hdl_lock](const AsyncRead& read) { return read.hdl.lock() == hdl_lock; });
-  if (ait != asyncReads_.end())
+  if (ait != m_async_reads.end())
   {
     const auto read = *ait;
-    asyncReads_.erase(ait);
+    m_async_reads.erase(ait);
     LOG_DEBUG("%s: aborting AsyncRead", __func__);
-    read.callback(WebsocketBackend::ErrorCode("Connection closed"), 0u);
+    read.callback(WebsocketBackend::ErrorCode("Connection closed"), 0U);
   }
 
   // Delete BufferedData if any
-  const auto bit = std::find_if(bufferedData_.begin(),
-                                bufferedData_.end(),
+  const auto bit = std::find_if(m_buffered_data.begin(),
+                                m_buffered_data.end(),
                                 [&hdl_lock](const BufferedData& data) { return data.hdl.lock() == hdl_lock; });
-  if (bit != bufferedData_.end())
+  if (bit != m_buffered_data.end())
   {
-    bufferedData_.erase(bit);
+    m_buffered_data.erase(bit);
   }
 }
 
 void WebsocketServerImpl::fix(websocketpp::lib::shared_ptr<void> hdl_lock)
 {
   // Check if there is any AsyncRead for this connection
-  const auto ait = std::find_if(asyncReads_.begin(),
-                                asyncReads_.end(),
+  const auto ait = std::find_if(m_async_reads.begin(),
+                                m_async_reads.end(),
                                 [&hdl_lock](const AsyncRead& read) { return read.hdl.lock() == hdl_lock; });
-  if (ait == asyncReads_.end())
+  if (ait == m_async_reads.end())
   {
     return;
   }
   auto& read = *ait;
 
   // Check if there is any BufferedData for this connection
-  const auto bit = std::find_if(bufferedData_.begin(),
-                                bufferedData_.end(),
+  const auto bit = std::find_if(m_buffered_data.begin(),
+                                m_buffered_data.end(),
                                 [&hdl_lock](const BufferedData& data) { return data.hdl.lock() == hdl_lock; });
-  if (bit == bufferedData_.end())
+  if (bit == m_buffered_data.end())
   {
     return;
   }
@@ -236,7 +238,7 @@ void WebsocketServerImpl::fix(websocketpp::lib::shared_ptr<void> hdl_lock)
     // can be made within the callback
     const auto callback = read.callback;
     const auto length = read.length;
-    asyncReads_.erase(ait);
+    m_async_reads.erase(ait);
 
     LOG_DEBUG("%s: forwarding data to async_read call with length: %u", __func__, length);
 

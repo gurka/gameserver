@@ -36,9 +36,9 @@ class Tile
  public:
   Tile() = default;
 
-  explicit Tile(const Item* groundItem)
+  explicit Tile(const Item* ground_item)
   {
-    things_.emplace_back(groundItem);
+    m_things.emplace_back(ground_item);
   }
 
   // Delete copy constructors
@@ -50,17 +50,17 @@ class Tile
   Tile& operator=(Tile&&) = default;
 
   void addThing(const Thing& thing);
-  bool removeThing(int stackPosition);
-  const Thing* getThing(int stackPosition) const;
-  const std::vector<Thing>& getThings() const { return things_; }
-  std::size_t getNumberOfThings() const { return things_.size(); }
+  bool removeThing(int stackpos);
+  const Thing* getThing(int stackpos) const;
+  const std::vector<Thing>& getThings() const { return m_things; }
+  std::size_t getNumberOfThings() const { return m_things.size(); }
 
  private:
   // First ground
   // Then onTop items
   // Then creatures
   // Then other items
-  std::vector<Thing> things_;
+  std::vector<Thing> m_things;
 };
 
 #endif  // WORLD_EXPORT_TILE_H_

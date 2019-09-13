@@ -25,6 +25,8 @@ if(GAMESERVER_USE_ASAN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
 endif()
 
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
+
 # -- Binaries --
 if(NOT GAMESERVER_WSCLIENT)
   add_subdirectory("loginserver")
@@ -44,12 +46,14 @@ if(NOT GAMESERVER_WSCLIENT)
   add_subdirectory("account")
 endif()
 
+set(CMAKE_CXX_CLANG_TIDY "")
+
 # -- External --
 if(NOT GAMESERVER_WSCLIENT)
   add_library(websocketpp INTERFACE)
-  target_include_directories(websocketpp INTERFACE "../external/websocketpp")
+  target_include_directories(websocketpp SYSTEM INTERFACE "../external/websocketpp")
   add_library(rapidxml INTERFACE)
-  target_include_directories(rapidxml INTERFACE "../external/rapidxml")
+  target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 endif()
 
 # -- Unit tests --

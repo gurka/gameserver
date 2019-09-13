@@ -30,67 +30,67 @@ void Tile::addThing(const Thing& thing)
 {
   if (thing.creature)
   {
-    auto it = things_.cbegin() + 1;
-    while (it != things_.cend())
+    auto it = m_things.cbegin() + 1;
+    while (it != m_things.cend())
     {
       // Iterate until we have passed all items with onTop = true
       // e.g. found a creature, an item with onTop = false, or end
-      if (!it->item || !it->item->getItemType().alwaysOnTop)
+      if (!it->item || !it->item->getItemType().always_on_top)
       {
         break;
       }
       ++it;
     }
-    things_.insert(it, thing);
+    m_things.insert(it, thing);
   }
   else  // thing.item
   {
-    if (thing.item->getItemType().alwaysOnTop)
+    if (thing.item->getItemType().always_on_top)
     {
-      things_.insert(things_.cbegin() + 1, thing);
+      m_things.insert(m_things.cbegin() + 1, thing);
     }
     else
     {
-      auto it = things_.cbegin() + 1;
-      while (it != things_.cend())
+      auto it = m_things.cbegin() + 1;
+      while (it != m_things.cend())
       {
         // Iterate until we have reached first item with onTop = false or end
-        if (it->item && !it->item->getItemType().alwaysOnTop)
+        if (it->item && !it->item->getItemType().always_on_top)
         {
           break;
         }
         ++it;
       }
-      things_.insert(it, thing);
+      m_things.insert(it, thing);
     }
   }
 }
 
-bool Tile::removeThing(int stackPosition)
+bool Tile::removeThing(int stackpos)
 {
-  if (stackPosition == 0 || static_cast<int>(things_.size()) < stackPosition)
+  if (stackpos == 0 || static_cast<int>(m_things.size()) < stackpos)
   {
-    LOG_ERROR("%s: invalid stackPosition: %d with things_.size(): %d",
+    LOG_ERROR("%s: invalid stackpos: %d with m_things.size(): %d",
               __func__,
-              stackPosition,
-              things_.size());
+              stackpos,
+              m_things.size());
     return false;
   }
 
-  things_.erase(things_.cbegin() + stackPosition);
+  m_things.erase(m_things.cbegin() + stackpos);
   return true;
 }
 
-const Thing* Tile::getThing(int stackPosition) const
+const Thing* Tile::getThing(int stackpos) const
 {
-  if (static_cast<int>(things_.size()) < stackPosition)
+  if (static_cast<int>(m_things.size()) < stackpos)
   {
-    LOG_ERROR("%s: invalid stackPosition: %d with things_.size(): %d",
+    LOG_ERROR("%s: invalid stackpos: %d with m_things.size(): %d",
               __func__,
-              stackPosition,
-              things_.size());
+              stackpos,
+              m_things.size());
     return nullptr;
   }
 
-  return &things_[stackPosition];
+  return &m_things[stackpos];
 }

@@ -35,16 +35,16 @@
 #include "position.h"
 #include "game_position.h"
 
-namespace ProtocolTypes
+namespace protocol_types
 {
 
 struct Login
 {
   std::uint8_t unknown1;
-  std::uint8_t clientOs;
-  std::uint16_t clientVersion;
+  std::uint8_t client_os;
+  std::uint16_t client_version;
   std::uint8_t unknown2;
-  std::string characterName;
+  std::string character_name;
   std::string password;
 };
 
@@ -55,47 +55,47 @@ struct MoveClick
 
 struct MoveItem  // or MoveThing?
 {
-  ItemPosition fromItemPosition;
-  GamePosition toGamePosition;
+  ItemPosition from_item_position;
+  GamePosition to_game_position;
   std::uint8_t count;
 };
 
 struct UseItem
 {
-  ItemPosition itemPosition;
-  std::uint8_t newContainerId;
+  ItemPosition item_position;
+  std::uint8_t new_container_id;
 };
 
 struct CloseContainer
 {
-  std::uint8_t containerId;
+  std::uint8_t container_id;
 };
 
 struct OpenParentContainer
 {
-  std::uint8_t containerId;
+  std::uint8_t container_id;
 };
 
 struct LookAt
 {
-  ItemPosition itemPosition;
+  ItemPosition item_position;
 };
 
 struct Say
 {
   std::uint8_t type;
   std::string receiver;
-  std::uint16_t channelId;
+  std::uint16_t channel_id;
   std::string message;
 };
 
-namespace Client
+namespace client
 {
 
 struct Login
 {
-  std::uint32_t playerId;
-  std::uint16_t serverBeat;
+  std::uint32_t player_id;
+  std::uint16_t server_beat;
 };
 
 struct LoginFailed
@@ -106,10 +106,10 @@ struct LoginFailed
 struct Creature
 {
   bool known;
-  std::uint32_t idToRemove;  // only if known = false
+  std::uint32_t id_to_remove;  // only if known = false
   std::uint32_t id;
   std::string name;  // only if known = false
-  std::uint8_t healthPercent;
+  std::uint8_t health_percent;
   Direction direction;
   Outfit outfit;
   std::uint16_t speed;
@@ -117,14 +117,14 @@ struct Creature
 
 struct Item
 {
-  std::uint16_t itemTypeId;
+  std::uint16_t item_type_id;
   std::uint8_t extra;  // only if type is stackable or multitype
 };
 
 struct Equipment
 {
   bool empty;
-  std::uint8_t inventoryIndex;
+  std::uint8_t inventory_index;
   Item item;  // only if empty = false
 };
 
@@ -137,13 +137,13 @@ struct MagicEffect
 struct PlayerStats
 {
   std::uint16_t health;
-  std::uint16_t maxHealth;
+  std::uint16_t max_health;
   std::uint16_t capacity;
   std::uint32_t exp;
   std::uint8_t level;
   std::uint16_t mana;
-  std::uint16_t maxMana;
-  std::uint8_t magicLevel;
+  std::uint16_t max_mana;
+  std::uint8_t magic_level;
 };
 
 struct WorldLight
@@ -196,17 +196,17 @@ struct MapData
 
 struct CreatureMove
 {
-  bool canSeeOldPos;
-  bool canSeeNewPos;
+  bool can_see_old_pos;
+  bool can_see_new_pos;
 
-  Position oldPosition;           // only if canSeeOldPos = true
-  std::uint8_t oldStackPosition;  // only if canSeeOldPos = true
-  Position newPosition;           // only if canSeeNewPos = true
-  Creature creature;              // only if canSeeOldPos = false and canSeeNewPos = true
+  Position old_position;      // only if canSeeOldPos = true
+  std::uint8_t old_stackpos;  // only if canSeeOldPos = true
+  Position new_position;      // only if canSeeNewPos = true
+  Creature creature;          // only if canSeeOldPos = false and canSeeNewPos = true
 };
 
-}
+}  // namespace client
 
-}  // namespace ProtocolTypes
+}  // namespace protocol_types
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

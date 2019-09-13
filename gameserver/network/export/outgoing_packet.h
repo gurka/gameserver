@@ -45,8 +45,8 @@ class OutgoingPacket
   OutgoingPacket(const OutgoingPacket&) = delete;
   OutgoingPacket& operator=(const OutgoingPacket&) = delete;
 
-  const std::uint8_t* getBuffer() const { return buffer_->data(); }
-  std::size_t getLength() const { return position_; }
+  const std::uint8_t* getBuffer() const { return m_buffer->data(); }
+  std::size_t getLength() const { return m_position; }
 
   void skipBytes(std::size_t num_bytes);
   void addU8(std::uint8_t val);
@@ -66,10 +66,10 @@ class OutgoingPacket
   void add(T) = delete;
 
  private:
-  std::unique_ptr<std::array<std::uint8_t, 8192>> buffer_;
-  std::size_t position_;
+  std::unique_ptr<std::array<std::uint8_t, 8192>> m_buffer;
+  std::size_t m_position{0};
 
-  static std::stack<std::unique_ptr<std::array<std::uint8_t, 8192>>> buffer_pool_;
+  static std::stack<std::unique_ptr<std::array<std::uint8_t, 8192>>> m_bufferpool;
 };
 
 #endif  // NETWORK_EXPORT_OUTGOING_PACKET_H_

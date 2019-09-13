@@ -40,22 +40,22 @@ class Player;
 class PlayerCtrl : public CreatureCtrl
 {
  public:
-  virtual ~PlayerCtrl() = default;
+  ~PlayerCtrl() override = default;
 
   // Called by GameEngine
   virtual CreatureId getPlayerId() const = 0;
-  virtual void setPlayerId(CreatureId playerId) = 0;
+  virtual void setPlayerId(CreatureId player_id) = 0;
 
-  virtual void onEquipmentUpdated(const Player& player, std::uint8_t inventoryIndex) = 0;
+  virtual void onEquipmentUpdated(const Player& player, std::uint8_t inventory_index) = 0;
 
-  virtual void onOpenContainer(std::uint8_t newContainerId, const Container& container, const Item& item) = 0;
-  virtual void onCloseContainer(ItemUniqueId containerItemUniqueId, bool resetContainerId) = 0;
+  virtual void onOpenContainer(std::uint8_t new_container_id, const Container& container, const Item& item) = 0;
+  virtual void onCloseContainer(ItemUniqueId container_item_unique_id, bool reset_container_id) = 0;
 
-  virtual void onContainerAddItem(ItemUniqueId containerItemUniqueId, const Item& item) = 0;
-  virtual void onContainerUpdateItem(ItemUniqueId containerItemUniqueId,
-                                     std::uint8_t containerSlot,
+  virtual void onContainerAddItem(ItemUniqueId container_item_unique_id, const Item& item) = 0;
+  virtual void onContainerUpdateItem(ItemUniqueId container_item_unique_id,
+                                     std::uint8_t container_slot,
                                      const Item& item) = 0;
-  virtual void onContainerRemoveItem(ItemUniqueId containerItemUniqueId, std::uint8_t containerSlot) = 0;
+  virtual void onContainerRemoveItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot) = 0;
 
   virtual void sendTextMessage(std::uint8_t message_type, const std::string& message) = 0;
 
@@ -64,7 +64,7 @@ class PlayerCtrl : public CreatureCtrl
 
   // Called by ContainerManager
   virtual const std::array<ItemUniqueId, 64>& getContainerIds() const = 0;
-  virtual bool hasContainerOpen(ItemUniqueId itemUniqueId) const = 0;
+  virtual bool hasContainerOpen(ItemUniqueId item_unique_id) const = 0;
 };
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_CTRL_H_

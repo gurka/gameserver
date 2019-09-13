@@ -44,14 +44,14 @@ struct WebsocketBackend
 {
   struct ErrorCode
   {
-    ErrorCode() : error_(false), msg_("") {}
-    ErrorCode(const std::string& msg) : error_(true), msg_(msg) {}
+    ErrorCode() : msg("") {}
+    explicit ErrorCode(std::string msg) : error(true), msg(std::move(msg)) {}
 
-    operator bool() const { return error_; }
-    std::string message() const { return msg_; }
+    explicit operator bool() const { return error; }
+    std::string message() const { return msg; }
 
-    bool error_;
-    std::string msg_;
+    bool error{false};
+    std::string msg;
   };
 
   enum shutdown_type
@@ -64,20 +64,20 @@ struct WebsocketBackend
     WebsocketServerImpl* server;
     websocketpp::connection_hdl hdl;
 
-    bool is_open() const;
-    void shutdown(shutdown_type, ErrorCode&);
-    void close(ErrorCode&);
+    bool is_open() const;  // NOLINT
+    void shutdown(shutdown_type, ErrorCode&);  // NOLINT
+    void close(ErrorCode&);  // NOLINT
   };
 
-  static void async_read(Socket socket,
+  static void async_read(Socket socket,  // NOLINT
                          std::uint8_t* buffer,
                          unsigned length,
-                         const std::function<void(ErrorCode, std::size_t)> callback);
+                         const std::function<void(ErrorCode, std::size_t)>& callback);
 
-  static void async_write(Socket socket,
+  static void async_write(Socket socket,  // NOLINT
                           const std::uint8_t* buffer,
                           unsigned length,
-                          const std::function<void(ErrorCode, std::size_t)> callback);
+                          const std::function<void(ErrorCode, std::size_t)>& callback);
 };
 
 class WebsocketServerImpl : public Server
@@ -87,46 +87,46 @@ class WebsocketServerImpl : public Server
  public:
   WebsocketServerImpl(boost::asio::io_context* io_context,
                       int port,
-                      const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected);
+                      std::function<void(std::unique_ptr<Connection>&&)> on_client_connected);
 
-  ~WebsocketServerImpl()
+  ~WebsocketServerImpl() override
   {
-    server_.stop_listening();
+    m_server.stop_listening();
   }
 
   // Called from static functions in WebsocketBackend
-  void async_read(WebsocketBackend::Socket socket,
-                  std::uint8_t* buffer,
-                  unsigned length,
-                  const std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback);
+  void asyncRead(const WebsocketBackend::Socket& socket,
+                 std::uint8_t* buffer,
+                 unsigned length,
+                 const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback);
 
-  void async_write(WebsocketBackend::Socket socket,
-                   const std::uint8_t* buffer,
-                   unsigned length,
-                   const std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback);
+  void asyncWrite(const WebsocketBackend::Socket& socket,
+                  const std::uint8_t* buffer,
+                  unsigned length,
+                  const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback);
 
   // Called from functions in WebsocketBackend::Socket
-  bool is_open(websocketpp::connection_hdl hdl) const;
-  void shutdown(websocketpp::connection_hdl hdl, WebsocketBackend::ErrorCode& ec);
-  void close(websocketpp::connection_hdl hdl, WebsocketBackend::ErrorCode& ec);
+  bool isOpen(const websocketpp::connection_hdl& hdl) const;
+  void shutdown(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec);  // NOLINT
+  void close(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec);  // NOLINT
 
  private:
-  void closeConnection(websocketpp::connection_hdl hdl);
+  void closeConnection(const websocketpp::connection_hdl& hdl);
   void fix(websocketpp::lib::shared_ptr<void> hdl_lock);
 
-  WebsocketServer server_;
-  std::function<void(std::unique_ptr<Connection>&&)> onClientConnected_;
+  WebsocketServer m_server;
+  std::function<void(std::unique_ptr<Connection>&&)> m_on_client_connected;
 
   struct AsyncRead
   {
     AsyncRead(websocketpp::connection_hdl hdl,
               uint8_t* buffer,
               unsigned length,
-              const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback)
-        : hdl(hdl),
+              std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback)
+        : hdl(std::move(hdl)),
           buffer(buffer),
           length(length),
-          callback(callback)
+          callback(std::move(callback))
     {
     }
 
@@ -135,16 +135,19 @@ class WebsocketServerImpl : public Server
     unsigned length;
     std::function<void(WebsocketBackend::ErrorCode, std::size_t)> callback;
   };
-  std::vector<AsyncRead> asyncReads_;
+  std::vector<AsyncRead> m_async_reads;
 
   struct BufferedData
   {
-    BufferedData(websocketpp::connection_hdl hdl) : hdl(hdl), payload() {}
+    explicit BufferedData(websocketpp::connection_hdl hdl)
+        : hdl(std::move(hdl))
+    {
+    }
 
     websocketpp::connection_hdl hdl;
     std::vector<std::uint8_t> payload;
   };
-  std::vector<BufferedData> bufferedData_;
+  std::vector<BufferedData> m_buffered_data;
 };
 
 #endif  // NETWORK_SRC_WEBSOCKET_SERVER_IMPL_H_

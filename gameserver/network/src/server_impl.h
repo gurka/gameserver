@@ -41,14 +41,14 @@ class ServerImpl : public Server
  public:
   ServerImpl(typename Backend::Service* io_context,
              int port,
-             const std::function<void(std::unique_ptr<Connection>&&)>& onClientConnected)
-    : acceptor_(io_context,
-                port,
-                [onClientConnected](typename Backend::Socket&& socket)
-                {
-                  LOG_DEBUG("onAccept()");
-                  onClientConnected(std::make_unique<ConnectionImpl<Backend>>(std::move(socket)));
-                })
+             const std::function<void(std::unique_ptr<Connection>&&)>& on_client_connected)
+      : m_acceptor(io_context,
+                   port,
+                   [on_client_connected](typename Backend::Socket&& socket)
+                   {
+                     LOG_DEBUG("onAccept()");
+                     on_client_connected(std::make_unique<ConnectionImpl<Backend>>(std::move(socket)));
+                   })
   {
   }
 
@@ -57,7 +57,7 @@ class ServerImpl : public Server
   ServerImpl& operator=(const ServerImpl&) = delete;
 
  private:
-  Acceptor<Backend> acceptor_;
+  Acceptor<Backend> m_acceptor;
 };
 
 #endif  // NETWORK_SRC_SERVER_IMPL_H_

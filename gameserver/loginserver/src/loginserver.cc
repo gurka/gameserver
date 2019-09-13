@@ -44,9 +44,9 @@
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<AccountReader> accountReader;
+static std::unique_ptr<AccountReader> account_reader;
 static std::unique_ptr<Server> server;
-static std::unique_ptr<Server> websocketServer;
+static std::unique_ptr<Server> websocket_server;
 
 // Due to "Static/global string variables are not permitted."
 static struct
@@ -57,29 +57,29 @@ static struct
 using ConnectionId = int;
 static std::unordered_map<ConnectionId, std::unique_ptr<Connection>> connections;
 
-void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
+void onPacketReceived(ConnectionId connection_id, IncomingPacket* packet)
 {
-  LOG_DEBUG("Parsing packet from connection id: %d", connectionId);
+  LOG_DEBUG("Parsing packet from connection id: %d", connection_id);
 
   while (!packet->isEmpty())
   {
-    const auto packetId = packet->getU8();
-    switch (packetId)
+    const auto packet_id = packet->getU8();
+    switch (packet_id)
     {
       case 0x01:
       {
-        LOG_DEBUG("Parsing login packet from connection id: %d", connectionId);
+        LOG_DEBUG("Parsing login packet from connection id: %d", connection_id);
 
-        const auto clientOs = packet->getU16();       // Client OS
-        const auto clientVersion = packet->getU16();  // Client version
+        const auto client_os = packet->getU16();       // Client OS
+        const auto client_version = packet->getU16();  // Client version
         packet->getBytes(12);                         // Client OS info
-        const auto accountNumber = packet->getU32();
+        const auto account_number = packet->getU32();
         std::string password = packet->getString();
 
         LOG_DEBUG("Client OS: %d Client version: %d Account number: %d Password: %s",
-                  clientOs,
-                  clientVersion,
-                  accountNumber,
+                  client_os,
+                  client_version,
+                  account_number,
                   password.c_str());
 
         // Send outgoing packet
@@ -90,47 +90,47 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
         response.addString("0\n" + motd.motd);
 
         // Check if account exists
-        if (!accountReader->accountExists(accountNumber))
+        if (!account_reader->accountExists(account_number))
         {
-          LOG_DEBUG("%s: Account (%d) not found", __func__, accountNumber);
+          LOG_DEBUG("%s: Account (%d) not found", __func__, account_number);
           response.addU8(0x0A);
           response.addString("Invalid account number");
         }
         // Check if password is correct
-        else if (!accountReader->verifyPassword(accountNumber, password))
+        else if (!account_reader->verifyPassword(account_number, password))
         {
-          LOG_DEBUG("%s: Invalid password (%s) for account (%d)", __func__, password.c_str(), accountNumber);
+          LOG_DEBUG("%s: Invalid password (%s) for account (%d)", __func__, password.c_str(), account_number);
           response.addU8(0x0A);
           response.addString("Invalid password");
         }
         else
         {
-          const auto* account = accountReader->getAccount(accountNumber);
-          LOG_DEBUG("%s: Account number (%d) and password (%s) OK", __func__, accountNumber, password.c_str());
+          const auto* account = account_reader->getAccount(account_number);
+          LOG_DEBUG("%s: Account number (%d) and password (%s) OK", __func__, account_number, password.c_str());
           response.addU8(0x64);
           response.addU8(account->characters.size());
           for (const auto& character : account->characters)
           {
             response.addString(character.name);
-            response.addString(character.worldName);
-            response.addU32(character.worldIp);
-            response.addU16(character.worldPort);
+            response.addString(character.world_name);
+            response.addU32(character.world_ip);
+            response.addU16(character.world_port);
           }
-          response.addU16(account->premiumDays);
+          response.addU16(account->premium_days);
         }
 
-        LOG_DEBUG("Sending login response to connection_id: %d", connectionId);
-        connections.at(connectionId)->sendPacket(std::move(response));
+        LOG_DEBUG("Sending login response to connection_id: %d", connection_id);
+        connections.at(connection_id)->sendPacket(std::move(response));
 
-        LOG_DEBUG("Closing connection id: %d", connectionId);
-        connections.at(connectionId)->close(false);
+        LOG_DEBUG("Closing connection id: %d", connection_id);
+        connections.at(connection_id)->close(false);
       }
       break;
 
       default:
       {
-        LOG_DEBUG("Unknown packet from connection id: %d, packet id: %d", connectionId, packetId);
-        connections.at(connectionId)->close(true);
+        LOG_DEBUG("Unknown packet from connection id: %d, packet id: %d", connection_id, packet_id);
+        connections.at(connection_id)->close(true);
       }
       break;
     }
@@ -139,34 +139,34 @@ void onPacketReceived(ConnectionId connectionId, IncomingPacket* packet)
 
 void onClientConnected(std::unique_ptr<Connection> connection)
 {
-  static ConnectionId nextConnectionId = 0;
+  static ConnectionId next_connection_id = 0;
 
-  const auto connectionId = nextConnectionId;
-  nextConnectionId += 1;
+  const auto connection_id = next_connection_id;
+  next_connection_id += 1;
 
-  LOG_DEBUG("%s: connectionId: %d", __func__, connectionId);
+  LOG_DEBUG("%s: connection_id: %d", __func__, connection_id);
 
   connections.emplace(std::piecewise_construct,
-                      std::forward_as_tuple(connectionId),
+                      std::forward_as_tuple(connection_id),
                       std::forward_as_tuple(std::move(connection)));
 
   Connection::Callbacks callbacks
   {
     // onPacketReceived
-    [connectionId](IncomingPacket* packet)
+    [connection_id](IncomingPacket* packet)
     {
-      LOG_DEBUG("onPacketReceived: connectionId: %d", connectionId);
-      onPacketReceived(connectionId, packet);
+      LOG_DEBUG("onPacketReceived: connection_id: %d", connection_id);
+      onPacketReceived(connection_id, packet);
     },
 
     // onDisconnected
-    [connectionId]()
+    [connection_id]()
     {
-      LOG_DEBUG("onDisconnected: connectionId: %d", connectionId);
-      connections.erase(connectionId);
+      LOG_DEBUG("onDisconnected: connection_id: %d", connection_id);
+      connections.erase(connection_id);
     }
   };
-  connections.at(connectionId)->init(callbacks);
+  connections.at(connection_id)->init(callbacks);
 }
 
 int main()
@@ -180,12 +180,12 @@ int main()
   }
 
   // Read [server] settings
-  auto serverPort = config.getInteger("server", "port", 7171);
-  const auto wsServerPort = serverPort + 1000;
+  const auto server_port = config.getInteger("server", "port", 7171);
+  const auto ws_server_port = server_port + 1000;
 
   // Read [login] settings
   motd.motd = config.getString("login", "motd", "Welcome to LoginServer!");
-  auto accountsFilename = config.getString("login", "accounts_file", "data/accounts.xml");
+  auto accounts_filename = config.getString("login", "accounts_file", "data/accounts.xml");
 
   // Read [logger] settings
   auto logger_account     = config.getString("logger", "account", "ERROR");
@@ -203,10 +203,10 @@ int main()
   printf("--------------------------------------------------------------------------------\n");
   printf("LoginServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
-  printf("Server port:               %d\n", serverPort);
-  printf("Websocket server port:     %d\n", wsServerPort);
+  printf("Server port:               %d\n", server_port);
+  printf("Websocket server port:     %d\n", ws_server_port);
   printf("\n");
-  printf("Accounts filename:         %s\n", accountsFilename.c_str());
+  printf("Accounts filename:         %s\n", accounts_filename.c_str());
   printf("Message of the day:        %s\n", motd.motd.c_str());
   printf("\n");
   printf("Account logging:           %s\n", logger_account.c_str());
@@ -219,18 +219,18 @@ int main()
   boost::asio::io_context io_context;
 
   // Create and load AccountReader
-  accountReader = std::make_unique<AccountReader>();
-  if (!accountReader->loadFile(accountsFilename))
+  account_reader = std::make_unique<AccountReader>();
+  if (!account_reader->loadFile(accounts_filename))
   {
-    LOG_ERROR("Could not load accounts file: %s", accountsFilename.c_str());
+    LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
     return 1;
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_context, serverPort, &onClientConnected);
+  server = ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
   // Create websocket server
-  websocketServer = ServerFactory::createWebsocketServer(&io_context, wsServerPort, &onClientConnected);
+  websocket_server = ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
 
   LOG_INFO("LoginServer started!");
 
@@ -249,9 +249,9 @@ int main()
   LOG_INFO("Stopping LoginServer!");
 
   // Deallocate things
-  websocketServer.reset();
+  websocket_server.reset();
   server.reset();
-  accountReader.reset();
+  account_reader.reset();
 
   return 0;
 }

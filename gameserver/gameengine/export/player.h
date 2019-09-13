@@ -39,17 +39,17 @@ class Equipment
 {
  public:
   Equipment()
-    : items_()
+    : m_items()
   {
   }
 
-  bool canAddItem(const Item& item, int inventorySlot) const;
-  bool addItem(const Item& item, int inventorySlot);
-  bool removeItem(ItemTypeId itemTypeId, int inventorySlot);
-  const Item* getItem(int inventorySlot) const;
+  bool canAddItem(const Item& item, int inventory_slot) const;
+  bool addItem(const Item& item, int inventory_slot);
+  bool removeItem(ItemTypeId item_type_id, int inventory_slot);
+  const Item* getItem(int inventory_slot) const;
 
  private:
-  std::array<const Item*, 11> items_;  // index 0 is invalid
+  std::array<const Item*, 11> m_items;  // index 0 is invalid
   enum InventorySlotInfo
   {
     HELMET     = 1,
@@ -73,44 +73,44 @@ class Player : public Creature
   // From Creature
   std::uint16_t getSpeed() const override;
 
-  std::uint16_t getMaxMana() const { return maxMana_; }
-  void setMaxMana(std::uint16_t maxMana) { maxMana_ = maxMana; }
+  std::uint16_t getMaxMana() const { return m_max_mana; }
+  void setMaxMana(std::uint16_t max_mana) { m_max_mana = max_mana; }
 
-  std::uint16_t getMana() const { return mana_; }
-  void setMana(std::uint16_t mana) { mana_ = mana; }
+  std::uint16_t getMana() const { return m_mana; }
+  void setMana(std::uint16_t mana) { m_mana = mana; }
 
-  std::uint16_t getCapacity() const { return capacity_; }
-  void setCapacity(std::uint16_t capacity) { capacity_ = capacity; }
+  std::uint16_t getCapacity() const { return m_capacity; }
+  void setCapacity(std::uint16_t capacity) { m_capacity = capacity; }
 
-  std::uint32_t getExperience() const { return experience_; }
-  void setExperience(std::uint32_t experience) { experience_ = experience; }
+  std::uint32_t getExperience() const { return m_experience; }
+  void setExperience(std::uint32_t experience) { m_experience = experience; }
 
-  std::uint8_t getMagicLevel() const { return magicLevel_; }
-  void setMagicLevel(std::uint8_t magicLevel) { magicLevel_ = magicLevel; }
+  std::uint8_t getMagicLevel() const { return m_magic_level; }
+  void setMagicLevel(std::uint8_t magic_level) { m_magic_level = magic_level; }
 
-  int getPartyShield() const { return partyShield_; }
-  void setPartyShield(int partyShield) { partyShield_ = partyShield; }
+  int getPartyShield() const { return m_party_shield; }
+  void setPartyShield(int party_shield) { m_party_shield = party_shield; }
 
   std::uint8_t getLevel() const;
 
   const Equipment& getEquipment() const
   {
-    return equipment_;
+    return m_equipment;
   }
 
   Equipment& getEquipment()
   {
-    return equipment_;
+    return m_equipment;
   }
 
  private:
-  std::uint16_t maxMana_;
-  std::uint16_t mana_;
-  std::uint16_t capacity_;
-  std::uint32_t experience_;
-  std::uint8_t magicLevel_;
-  int partyShield_;
-  Equipment equipment_;
+  std::uint16_t m_max_mana;
+  std::uint16_t m_mana;
+  std::uint16_t m_capacity;
+  std::uint32_t m_experience;
+  std::uint8_t m_magic_level;
+  int m_party_shield;
+  Equipment m_equipment;
 };
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_H_

@@ -40,8 +40,8 @@ class WorldInterface
   virtual ~WorldInterface() = default;
 
   virtual const Tile* getTile(const Position& position) const = 0;
-  virtual const Creature& getCreature(CreatureId creatureId) const = 0;
-  virtual const Position& getCreaturePosition(CreatureId creatureId) const = 0;
+  virtual const Creature& getCreature(CreatureId creature_id) const = 0;
+  virtual const Position& getCreaturePosition(CreatureId creature_id) const = 0;
 };
 
 #endif  // WORLD_EXPORT_WORLD_INTERFACE_H_

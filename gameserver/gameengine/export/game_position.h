@@ -35,39 +35,38 @@
 class GamePosition
 {
  public:
-  GamePosition()
-    : type_(Type::INVALID)
+  GamePosition()  // NOLINT due to bug in clang-tidy
   {
   }
 
   explicit GamePosition(const Position& position)
-    : type_(Type::POSITION),
-      position_(position)
+    : m_type(Type::POSITION),
+      position(position)
   {
   }
 
-  explicit GamePosition(int inventorySlot)
-    : type_(Type::INVENTORY),
-      inventorySlot_(inventorySlot)
+  explicit GamePosition(int inventory_slot)
+    : m_type(Type::INVENTORY),
+      inventory_slot(inventory_slot)
   {
   }
 
-  GamePosition(ItemUniqueId itemUniqueId, int containerSlot)
-    : type_(Type::CONTAINER),
-      container_{itemUniqueId, containerSlot}
+  GamePosition(ItemUniqueId item_unique_id, int container_slot)
+    : m_type(Type::CONTAINER),
+      m_container{item_unique_id, container_slot}
   {
   }
 
   bool operator==(const GamePosition& other) const
   {
     // TODO(simon): test this
-    return type_ == other.type_ &&
-           ((type_ == Type::INVALID) ||  // should INVALID positions be equal?
-            (type_ == Type::POSITION && position_ == other.position_) ||
-            (type_ == Type::INVENTORY && inventorySlot_ == other.inventorySlot_) ||
-            (type_ == Type::CONTAINER &&
-             container_.itemUniqueId == other.container_.itemUniqueId &&
-             container_.slot == other.container_.slot));
+    return m_type == other.m_type &&
+           ((m_type == Type::INVALID) ||  // should INVALID positions be equal?
+            (m_type == Type::POSITION && position == other.position) ||
+            (m_type == Type::INVENTORY && inventory_slot == other.inventory_slot) ||
+            (m_type == Type::CONTAINER &&
+             m_container.item_unique_id == other.m_container.item_unique_id &&
+             m_container.slot == other.m_container.slot));
   }
 
   bool operator!=(const GamePosition& other) const
@@ -77,36 +76,37 @@ class GamePosition
 
   std::string toString() const
   {
-    if (type_ == Type::INVALID)
+    if (m_type == Type::INVALID)
     {
       return "INVALID";
     }
-    else if (type_ == Type::POSITION)
+
+    if (m_type == Type::POSITION)
     {
-      return std::string("(Position) ") + position_.toString();
+      return std::string("(Position) ") + position.toString();
     }
-    else if (type_ == Type::INVENTORY)
+
+    if (m_type == Type::INVENTORY)
     {
-      return std::string("(Inventory) ") + std::to_string(inventorySlot_);
+      return std::string("(Inventory) ") + std::to_string(inventory_slot);
     }
-    else  // type_ == Type::CONTAINER
-    {
-      return std::string("(Container) ") +
-             std::to_string(container_.itemUniqueId) + ", " + std::to_string(container_.slot);
-    }
+
+    // m_type == Type::CONTAINER
+    return std::string("(Container) ") +
+           std::to_string(m_container.item_unique_id) + ", " + std::to_string(m_container.slot);
   }
 
-  bool isValid() const { return type_ != Type::INVALID; }
+  bool isValid() const { return m_type != Type::INVALID; }
 
-  bool isPosition() const { return type_ == Type::POSITION; }
-  const Position& getPosition() const { return position_; }
+  bool isPosition() const { return m_type == Type::POSITION; }
+  const Position& getPosition() const { return position; }
 
-  bool isInventory() const { return type_ == Type::INVENTORY; }
-  int getInventorySlot() const { return inventorySlot_; }
+  bool isInventory() const { return m_type == Type::INVENTORY; }
+  int getInventorySlot() const { return inventory_slot; }
 
-  bool isContainer() const { return type_ == Type::CONTAINER; }
-  ItemUniqueId getItemUniqueId() const { return container_.itemUniqueId; }
-  int getContainerSlot() const { return container_.slot; }
+  bool isContainer() const { return m_type == Type::CONTAINER; }
+  ItemUniqueId getItemUniqueId() const { return m_container.item_unique_id; }
+  int getContainerSlot() const { return m_container.slot; }
 
  private:
   enum class Type
@@ -115,17 +115,17 @@ class GamePosition
     POSITION,
     INVENTORY,
     CONTAINER,
-  } type_;
+  } m_type{Type::INVALID};
 
   union
   {
-    Position position_;
-    int inventorySlot_;
+    Position position;
+    int inventory_slot;
     struct
     {
-      ItemUniqueId itemUniqueId;
+      ItemUniqueId item_unique_id;
       int slot;
-    } container_;
+    } m_container;
   };
 };
 
@@ -133,32 +133,29 @@ class ItemPosition
 {
  public:
   ItemPosition()
-    : gamePosition_(),
-      itemTypeId_(0),  // TODO(simon): Item::INVALID_ID ?
-      stackPosition_(0)
+    : m_item_type_id(0)  // TODO(simon): Item::INVALID_ID ?
   {
   }
 
-  // TODO(simon): stackPosition is only used for GamePosition Type::POSITION, or??
-  ItemPosition(const GamePosition& gamePosition, ItemTypeId itemTypeId)
-    : gamePosition_(gamePosition),
-      itemTypeId_(itemTypeId),
-      stackPosition_(0)
+  // TODO(simon): stackpos is only used for GamePosition Type::POSITION, or??
+  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id)
+    : m_game_position(game_position),
+      m_item_type_id(item_type_id)
   {
   }
 
-  ItemPosition(const GamePosition& gamePosition, ItemTypeId itemTypeId, int stackPosition)
-    : gamePosition_(gamePosition),
-      itemTypeId_(itemTypeId),
-      stackPosition_(stackPosition)
+  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id, int stackpos)
+    : m_game_position(game_position),
+      m_item_type_id(item_type_id),
+      m_stackpos(stackpos)
   {
   }
 
   bool operator==(const ItemPosition& other) const
   {
-    return gamePosition_  == other.gamePosition_ &&
-           itemTypeId_    == other.itemTypeId_ &&
-           stackPosition_ == other.stackPosition_;
+    return m_game_position  == other.m_game_position &&
+           m_item_type_id    == other.m_item_type_id &&
+           m_stackpos == other.m_stackpos;
   }
 
   bool operator!=(const ItemPosition& other) const
@@ -168,17 +165,17 @@ class ItemPosition
 
   std::string toString() const
   {
-    return gamePosition_.toString() + ", " + std::to_string(itemTypeId_) + ", " + std::to_string(stackPosition_);
+    return m_game_position.toString() + ", " + std::to_string(m_item_type_id) + ", " + std::to_string(m_stackpos);
   }
 
-  const GamePosition& getGamePosition() const { return gamePosition_; }
-  ItemTypeId getItemTypeId() const { return itemTypeId_; }
-  int getStackPosition() const { return stackPosition_; }
+  const GamePosition& getGamePosition() const { return m_game_position; }
+  ItemTypeId getItemTypeId() const { return m_item_type_id; }
+  int getStackPosition() const { return m_stackpos; }
 
  private:
-  GamePosition gamePosition_;
-  ItemTypeId itemTypeId_;
-  int stackPosition_;
+  GamePosition m_game_position;
+  ItemTypeId m_item_type_id{0};
+  int m_stackpos{0};
 };
 
 #endif  // GAMEENGINE_EXPORT_GAME_POSITION_H_
