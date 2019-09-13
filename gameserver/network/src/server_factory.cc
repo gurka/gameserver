@@ -24,7 +24,7 @@
 
 #include "server_factory.h"
 
-#include <boost/asio.hpp>  //NOLINT
+#include <boost/asio.hpp>
 
 #include "server_impl.h"
 

@@ -28,8 +28,8 @@
 #include <functional>
 #include <vector>
 
-#include <boost/asio.hpp>  //NOLINT
-#include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 class GameEngine;
 

@@ -64,15 +64,15 @@ World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_
   // (0, 0) MUST be the first element
   static std::array<std::tuple<int, int>, 9> position_offsets
   {{
-    { std::make_tuple( 0,  0) },  //NOLINT
-    { std::make_tuple(-1, -1) },  //NOLINT
-    { std::make_tuple(-1,  0) },  //NOLINT
-    { std::make_tuple(-1,  1) },  //NOLINT
-    { std::make_tuple( 0, -1) },  //NOLINT
-    { std::make_tuple( 0,  1) },  //NOLINT
-    { std::make_tuple( 1, -1) },  //NOLINT
-    { std::make_tuple( 1,  0) },  //NOLINT
-    { std::make_tuple( 1,  1) }   //NOLINT
+    { std::make_tuple( 0,  0) },
+    { std::make_tuple(-1, -1) },
+    { std::make_tuple(-1,  0) },
+    { std::make_tuple(-1,  1) },
+    { std::make_tuple( 0, -1) },
+    { std::make_tuple( 0,  1) },
+    { std::make_tuple( 1, -1) },
+    { std::make_tuple( 1,  0) },
+    { std::make_tuple( 1,  1) }
   }};
 
   // Shuffle the offsets (keep first element at its position)

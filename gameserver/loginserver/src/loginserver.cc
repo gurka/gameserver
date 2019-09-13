@@ -26,7 +26,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include <boost/asio.hpp>  //NOLINT
+#include <boost/asio.hpp>
 
 // utils
 #include "config_parser.h"

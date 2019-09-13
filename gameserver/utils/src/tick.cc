@@ -24,7 +24,7 @@
 
 #include "tick.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>  //NOLINT
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using ms_clock = boost::posix_time::microsec_clock;
 static const decltype(ms_clock::universal_time()) START = ms_clock::universal_time();
