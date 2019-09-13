@@ -36,7 +36,7 @@ struct ItemType;
 class Item
 {
  public:
-  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0u;
+  static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0U;
 
   virtual ~Item() = default;
 
