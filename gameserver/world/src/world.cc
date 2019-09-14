@@ -184,7 +184,7 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
   auto& creature = getCreature(creature_id);
 
   // Check if Creature may move at this time
-  auto current_tick = Tick::now();
+  auto current_tick = utils::Tick::now();
   if (creature.getNextWalkTick() > current_tick)
   {
     LOG_DEBUG("%s: current_tick = %d nextWalkTick = %d => MAY_NOT_MOVE_YET",

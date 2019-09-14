@@ -26,6 +26,9 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace utils
+{
+
 using ms_clock = boost::posix_time::microsec_clock;
 static const decltype(ms_clock::universal_time()) START = ms_clock::universal_time();
 
@@ -35,3 +38,5 @@ std::int64_t Tick::now()
                 "boost::posix_time::microsec_clock::time_duration_type::tick_type needs to be 64 bits");
   return (ms_clock::universal_time() - START).total_milliseconds();
 }
+
+}  // namespace utils

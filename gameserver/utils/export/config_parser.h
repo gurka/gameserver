@@ -35,6 +35,9 @@
 
 #include "logger.h"
 
+namespace utils
+{
+
 class ConfigParser
 {
  public:
@@ -239,5 +242,7 @@ class ConfigParser
   std::unordered_map<std::string,
                      std::unordered_map<std::string, std::string>> m_values;
 };
+
+}  // namespace utils
 
 #endif  // UTILS_EXPORT_CONFIG_PARSER_H_

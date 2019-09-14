@@ -170,7 +170,7 @@ void GameEngine::move(CreatureId creature_id, Direction direction)
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creature_id);
     const auto& creature = static_cast<const World*>(m_world.get())->getCreature(creature_id);
     m_game_engine_queue->addTask(creature_id,
-                              creature.getNextWalkTick() - Tick::now(),
+                              creature.getNextWalkTick() - utils::Tick::now(),
                               [this, creature_id, direction](GameEngine* game_engine)
     {
       (void)game_engine;
@@ -213,7 +213,7 @@ void GameEngine::movePath(CreatureId creature_id, std::deque<Direction>&& path)
       {
         // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
         // to move yet, add a new task
-        m_game_engine_queue->addTask(creature_id, player_data.player.getNextWalkTick() - Tick::now(), task);
+        m_game_engine_queue->addTask(creature_id, player_data.player.getNextWalkTick() - utils::Tick::now(), task);
       }
     }
   });

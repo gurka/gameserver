@@ -171,7 +171,7 @@ void onClientConnected(std::unique_ptr<network::Connection> connection)
 int main()
 {
   // Read configuration
-  auto config = ConfigParser::parseFile("data/loginserver.cfg");
+  auto config = utils::ConfigParser::parseFile("data/loginserver.cfg");
   if (!config.parsedOk())
   {
     LOG_INFO("Could not parse config file: %s", config.getErrorMessage().c_str());
@@ -192,10 +192,10 @@ int main()
   auto logger_utils       = config.getString("logger", "utils", "ERROR");
 
   // Set logger settings
-  Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
-  Logger::setLevel(Logger::Module::LOGINSERVER, logger_loginserver);
-  Logger::setLevel(Logger::Module::NETWORK,     logger_network);
-  Logger::setLevel(Logger::Module::UTILS,       logger_utils);
+  utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
+  utils::Logger::setLevel(utils::Logger::Module::LOGINSERVER, logger_loginserver);
+  utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
+  utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

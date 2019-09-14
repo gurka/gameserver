@@ -86,7 +86,7 @@ void onClientConnected(std::unique_ptr<network::Connection>&& connection)
 int main()
 {
   // Read configuration
-  const auto config = ConfigParser::parseFile("data/worldserver.cfg");
+  const auto config = utils::ConfigParser::parseFile("data/worldserver.cfg");
   if (!config.parsedOk())
   {
     printf("Could not parse config file: %s\n", config.getErrorMessage().c_str());
@@ -112,12 +112,12 @@ int main()
   const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
   // Set logger settings
-  Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
-  Logger::setLevel(Logger::Module::NETWORK,     logger_network);
-  Logger::setLevel(Logger::Module::PROTOCOL,    logger_protocol);
-  Logger::setLevel(Logger::Module::UTILS,       logger_utils);
-  Logger::setLevel(Logger::Module::WORLD,       logger_world);
-  Logger::setLevel(Logger::Module::WORLDSERVER, logger_worldserver);
+  utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
+  utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
+  utils::Logger::setLevel(utils::Logger::Module::PROTOCOL,    logger_protocol);
+  utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
+  utils::Logger::setLevel(utils::Logger::Module::WORLD,       logger_world);
+  utils::Logger::setLevel(utils::Logger::Module::WORLDSERVER, logger_worldserver);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

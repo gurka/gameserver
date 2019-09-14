@@ -29,6 +29,9 @@
 #include <string>
 #include <unordered_map>
 
+namespace utils
+{
+
 class Logger
 {
  public:
@@ -81,9 +84,11 @@ class Logger
   static std::unordered_map<Module, Level, ModuleHash> module_to_level;
 };
 
+}  // namespace utils
+
 // Log macros
-#define LOG_ERROR(...) Logger::log(__FILE__, __LINE__, Logger::Level::ERROR, __VA_ARGS__)
-#define LOG_INFO(...) Logger::log(__FILE__, __LINE__, Logger::Level::INFO, __VA_ARGS__)
-#define LOG_DEBUG(...) Logger::log(__FILE__, __LINE__, Logger::Level::DEBUG, __VA_ARGS__)
+#define LOG_ERROR(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::ERROR, __VA_ARGS__)
+#define LOG_INFO(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::INFO, __VA_ARGS__)
+#define LOG_DEBUG(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::DEBUG, __VA_ARGS__)
 
 #endif  // UTILS_EXPORT_LOGGER_H_

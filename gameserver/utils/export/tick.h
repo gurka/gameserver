@@ -27,10 +27,15 @@
 
 #include <cstdint>
 
+namespace utils
+{
+
 class Tick
 {
  public:
   static std::int64_t now();
 };
+
+}  // namespace utils
 
 #endif  // UTILS_EXPORT_TICK_H_
