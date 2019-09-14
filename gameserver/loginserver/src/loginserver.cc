@@ -45,7 +45,7 @@
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
 static std::unique_ptr<account::AccountReader> account_reader;
-static std::unique_ptr<Server> server;
+static std::unique_ptr<network::Server> server;
 
 // Due to "Static/global string variables are not permitted."
 static struct
@@ -54,9 +54,9 @@ static struct
 } motd;
 
 using ConnectionId = int;
-static std::unordered_map<ConnectionId, std::unique_ptr<Connection>> connections;
+static std::unordered_map<ConnectionId, std::unique_ptr<network::Connection>> connections;
 
-void onPacketReceived(ConnectionId connection_id, IncomingPacket* packet)
+void onPacketReceived(ConnectionId connection_id, network::IncomingPacket* packet)
 {
   LOG_DEBUG("Parsing packet from connection id: %d", connection_id);
 
@@ -82,7 +82,7 @@ void onPacketReceived(ConnectionId connection_id, IncomingPacket* packet)
                   password.c_str());
 
         // Send outgoing packet
-        OutgoingPacket response;
+        network::OutgoingPacket response;
 
           // Add MOTD
         response.addU8(0x14);  // MOTD
@@ -136,7 +136,7 @@ void onPacketReceived(ConnectionId connection_id, IncomingPacket* packet)
   }
 }
 
-void onClientConnected(std::unique_ptr<Connection> connection)
+void onClientConnected(std::unique_ptr<network::Connection> connection)
 {
   static ConnectionId next_connection_id = 0;
 
@@ -149,10 +149,10 @@ void onClientConnected(std::unique_ptr<Connection> connection)
                       std::forward_as_tuple(connection_id),
                       std::forward_as_tuple(std::move(connection)));
 
-  Connection::Callbacks callbacks
+  network::Connection::Callbacks callbacks
   {
     // onPacketReceived
-    [connection_id](IncomingPacket* packet)
+    [connection_id](network::IncomingPacket* packet)
     {
       LOG_DEBUG("onPacketReceived: connection_id: %d", connection_id);
       onPacketReceived(connection_id, packet);
@@ -224,7 +224,7 @@ int main()
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_context, server_port, &onClientConnected);
+  server = network::ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
   LOG_INFO("LoginServer started!");
 

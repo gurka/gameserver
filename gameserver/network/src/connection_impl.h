@@ -36,6 +36,9 @@
 #include "outgoing_packet.h"
 #include "logger.h"
 
+namespace network
+{
+
 /**
  * class ConnectionImpl
  *
@@ -386,5 +389,7 @@ class ConnectionImpl : public Connection
   std::array<std::uint8_t, 2> m_outgoing_header_buffer;
   std::deque<OutgoingPacket> m_outgoing_packets;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_SRC_CONNECTION_IMPL_H_

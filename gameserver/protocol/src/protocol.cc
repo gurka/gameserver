@@ -54,7 +54,7 @@
 #include "account.h"
 
 Protocol::Protocol(std::function<void(void)> close_protocol,
-                   std::unique_ptr<Connection>&& connection,
+                   std::unique_ptr<network::Connection>&& connection,
                    const WorldInterface* world_interface,
                    gameengine::GameEngineQueue* game_engine_queue,
                    account::AccountReader* account_reader)
@@ -68,10 +68,10 @@ Protocol::Protocol(std::function<void(void)> close_protocol,
   m_known_creatures.fill(Creature::INVALID_ID);
   m_container_ids.fill(Item::INVALID_UNIQUE_ID);
 
-  Connection::Callbacks callbacks
+  network::Connection::Callbacks callbacks
   {
     // onPacketReceived
-    [this](IncomingPacket* packet)
+    [this](network::IncomingPacket* packet)
     {
       LOG_DEBUG("onPacketReceived");
       parsePacket(packet);
@@ -94,7 +94,7 @@ void Protocol::onCreatureSpawn(const Creature& creature, const Position& positio
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
 
   if (creature.getCreatureId() == m_player_id)
   {
@@ -137,7 +137,7 @@ void Protocol::onCreatureDespawn(const Creature& creature, const Position& posit
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addMagicEffect(position, 0x02, &packet);
   protocol_helper::addThingRemoved(position, stackpos, &packet);
   m_connection->sendPacket(std::move(packet));
@@ -163,7 +163,7 @@ void Protocol::onCreatureMove(const Creature& creature,
   }
 
   // Build outgoing packet
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
 
   const auto& player_position = m_world_interface->getCreaturePosition(m_player_id);
   bool can_see_old_pos = canSee(player_position, old_position);
@@ -217,7 +217,7 @@ void Protocol::onCreatureTurn(const Creature& creature, const Position& position
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addThingChanged(position, stackpos, &creature, &m_known_creatures, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -229,7 +229,7 @@ void Protocol::onCreatureSay(const Creature& creature, const Position& position,
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addTalk(creature.getName(), 0x01, position, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -241,7 +241,7 @@ void Protocol::onItemRemoved(const Position& position, std::uint8_t stackpos)
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addThingRemoved(position, stackpos, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -253,7 +253,7 @@ void Protocol::onItemAdded(const Item& item, const Position& position)
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addThingAdded(position, &item, nullptr, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -265,7 +265,7 @@ void Protocol::onTileUpdate(const Position& position)
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addTileUpdated(position, *m_world_interface, &m_known_creatures, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -277,7 +277,7 @@ void Protocol::onEquipmentUpdated(const gameengine::Player& player, std::uint8_t
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addEquipmentUpdated(player.getEquipment(), inventory_index, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -301,7 +301,7 @@ void Protocol::onOpenContainer(std::uint8_t new_container_id, const gameengine::
 
   LOG_DEBUG("%s: new_container_id: %u", __func__, new_container_id);
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addContainerOpen(new_container_id, &item, container, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -329,7 +329,7 @@ void Protocol::onCloseContainer(ItemUniqueId container_item_unique_id, bool rese
 
   LOG_DEBUG("%s: container_item_unique_id: %u -> container_id: %d", __func__, container_item_unique_id, container_id);
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addContainerClose(container_id, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -355,7 +355,7 @@ void Protocol::onContainerAddItem(ItemUniqueId container_item_unique_id, const I
             container_id,
             item.getItemTypeId());
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addContainerAddItem(container_id, &item, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -382,7 +382,7 @@ void Protocol::onContainerUpdateItem(ItemUniqueId container_item_unique_id, std:
             container_slot,
             item.getItemTypeId());
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addContainerUpdateItem(container_id, container_slot, &item, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -408,7 +408,7 @@ void Protocol::onContainerRemoveItem(ItemUniqueId container_item_unique_id, std:
             container_id,
             container_slot);
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addContainerRemoveItem(container_id, container_slot, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -421,7 +421,7 @@ void Protocol::sendTextMessage(std::uint8_t message_type, const std::string& mes
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addTextMessage(message_type, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -433,7 +433,7 @@ void Protocol::sendCancel(const std::string& message)
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addTextMessage(0x14, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -445,7 +445,7 @@ void Protocol::cancelMove()
     return;
   }
 
-  OutgoingPacket packet;
+  network::OutgoingPacket packet;
   protocol_helper::addCancelMove(&packet);
   m_connection->sendPacket(std::move(packet));
 }
@@ -468,7 +468,7 @@ void Protocol::disconnect() const
   m_connection->close(true);
 }
 
-void Protocol::parsePacket(IncomingPacket* packet)
+void Protocol::parsePacket(network::IncomingPacket* packet)
 {
   if (!isConnected())
   {
@@ -622,7 +622,7 @@ void Protocol::onDisconnected()
   }
 }
 
-void Protocol::parseLogin(IncomingPacket* packet)
+void Protocol::parseLogin(network::IncomingPacket* packet)
 {
   const auto login = protocol_helper::getLogin(packet);
 
@@ -635,7 +635,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   // Check if character exists
   if (!m_account_reader->characterExists(login.character_name))
   {
-    OutgoingPacket packet;
+    network::OutgoingPacket packet;
     protocol_helper::addLoginFailed("Invalid character.", &packet);
     m_connection->sendPacket(std::move(packet));
     m_connection->close(false);
@@ -645,7 +645,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   // Check if password is correct
   if (!m_account_reader->verifyPassword(login.character_name, login.password))
   {
-    OutgoingPacket packet;
+    network::OutgoingPacket packet;
     protocol_helper::addLoginFailed("Invalid password.", &packet);
     m_connection->sendPacket(std::move(packet));
     m_connection->close(false);
@@ -657,7 +657,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   {
     if (!game_engine->spawn(character_name, this))
     {
-      OutgoingPacket packet;
+      network::OutgoingPacket packet;
       protocol_helper::addLoginFailed("Could not spawn player.", &packet);
       m_connection->sendPacket(std::move(packet));
       m_connection->close(false);
@@ -665,7 +665,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseMoveClick(IncomingPacket* packet)
+void Protocol::parseMoveClick(network::IncomingPacket* packet)
 {
   auto move = protocol_helper::getMoveClick(packet);
   if (move.path.empty())
@@ -681,7 +681,7 @@ void Protocol::parseMoveClick(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseMoveItem(IncomingPacket* packet)
+void Protocol::parseMoveItem(network::IncomingPacket* packet)
 {
   const auto move = protocol_helper::getMoveItem(&m_container_ids, packet);
 
@@ -697,7 +697,7 @@ void Protocol::parseMoveItem(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseUseItem(IncomingPacket* packet)
+void Protocol::parseUseItem(network::IncomingPacket* packet)
 {
   const auto use_item = protocol_helper::getUseItem(&m_container_ids, packet);
 
@@ -712,7 +712,7 @@ void Protocol::parseUseItem(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseCloseContainer(IncomingPacket* packet)
+void Protocol::parseCloseContainer(network::IncomingPacket* packet)
 {
   const auto close = protocol_helper::getCloseContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(close.container_id);
@@ -731,7 +731,7 @@ void Protocol::parseCloseContainer(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseOpenParentContainer(IncomingPacket* packet)
+void Protocol::parseOpenParentContainer(network::IncomingPacket* packet)
 {
   const auto open_parent = protocol_helper::getOpenParentContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(open_parent.container_id);
@@ -750,7 +750,7 @@ void Protocol::parseOpenParentContainer(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseLookAt(IncomingPacket* packet)
+void Protocol::parseLookAt(network::IncomingPacket* packet)
 {
   const auto look_at = protocol_helper::getLookAt(&m_container_ids, packet);
 
@@ -762,7 +762,7 @@ void Protocol::parseLookAt(IncomingPacket* packet)
   });
 }
 
-void Protocol::parseSay(IncomingPacket* packet)
+void Protocol::parseSay(network::IncomingPacket* packet)
 {
   const auto say = protocol_helper::getSay(packet);
 

@@ -28,6 +28,9 @@
 
 #include "server_impl.h"
 
+namespace network
+{
+
 struct Backend
 {
   using Service = boost::asio::io_context;
@@ -69,3 +72,5 @@ std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_context* io_
 {
   return std::make_unique<ServerImpl<Backend>>(io_context, port, on_client_connected);
 }
+
+}  // namespace network

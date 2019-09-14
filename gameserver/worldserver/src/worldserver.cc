@@ -53,12 +53,12 @@
 static std::unique_ptr<gameengine::GameEngineQueue> game_engine_queue;
 static std::unique_ptr<gameengine::GameEngine> game_engine;
 static std::unique_ptr<account::AccountReader> account_reader;
-static std::unique_ptr<Server> server;
+static std::unique_ptr<network::Server> server;
 
 using ProtocolId = int;
 static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
 
-void onClientConnected(std::unique_ptr<Connection>&& connection)
+void onClientConnected(std::unique_ptr<network::Connection>&& connection)
 {
   static ProtocolId next_protocol_id = 0;
 
@@ -163,7 +163,7 @@ int main()
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_context, server_port, &onClientConnected);
+  server = network::ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
   LOG_INFO("WorldServer started!");
 

@@ -28,6 +28,9 @@
 
 #include "logger.h"
 
+namespace network
+{
+
 // Initialize static packet pool
 std::stack<std::unique_ptr<std::array<std::uint8_t, 8192>>> OutgoingPacket::m_bufferpool;
 
@@ -90,3 +93,5 @@ void OutgoingPacket::addString(const std::string& string)
     m_buffer->at(m_position++) = c;
   }
 }
+
+}  // namespace network

@@ -35,6 +35,9 @@
 #include "connection_impl.h"
 #include "logger.h"
 
+namespace network
+{
+
 template <typename Backend>
 class ServerImpl : public Server
 {
@@ -59,5 +62,7 @@ class ServerImpl : public Server
  private:
   Acceptor<Backend> m_acceptor;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_SRC_SERVER_IMPL_H_

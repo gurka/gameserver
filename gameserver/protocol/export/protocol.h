@@ -45,20 +45,25 @@ namespace account
 {
 class AccountReader;
 }
+
 namespace gameengine
 {
 class GameEngineQueue;
 }
+
+namespace network
+{
 class Connection;
 class IncomingPacket;
-class OutgoingPacket;
+}
+
 class WorldInterface;
 
 class Protocol : public gameengine::PlayerCtrl
 {
  public:
   Protocol(std::function<void(void)> close_protocol,
-           std::unique_ptr<Connection>&& connection,
+           std::unique_ptr<network::Connection>&& connection,
            const WorldInterface* world_interface,
            gameengine::GameEngineQueue* game_engine_queue,
            account::AccountReader* account_reader);
@@ -114,18 +119,18 @@ class Protocol : public gameengine::PlayerCtrl
   void disconnect() const;
 
   // Connection callbacks
-  void parsePacket(IncomingPacket* packet);
+  void parsePacket(network::IncomingPacket* packet);
   void onDisconnected();
 
   // Functions to parse IncomingPackets
-  void parseLogin(IncomingPacket* packet);
-  void parseMoveClick(IncomingPacket* packet);
-  void parseMoveItem(IncomingPacket* packet);
-  void parseUseItem(IncomingPacket* packet);
-  void parseCloseContainer(IncomingPacket* packet);
-  void parseOpenParentContainer(IncomingPacket* packet);
-  void parseLookAt(IncomingPacket* packet);
-  void parseSay(IncomingPacket* packet);
+  void parseLogin(network::IncomingPacket* packet);
+  void parseMoveClick(network::IncomingPacket* packet);
+  void parseMoveItem(network::IncomingPacket* packet);
+  void parseUseItem(network::IncomingPacket* packet);
+  void parseCloseContainer(network::IncomingPacket* packet);
+  void parseOpenParentContainer(network::IncomingPacket* packet);
+  void parseLookAt(network::IncomingPacket* packet);
+  void parseSay(network::IncomingPacket* packet);
 
   // Helper functions for containerId
   void setContainerId(std::uint8_t container_id, ItemUniqueId item_unique_id);
@@ -136,7 +141,7 @@ class Protocol : public gameengine::PlayerCtrl
   bool canSee(const Position& player_position, const Position& to_position);
 
   std::function<void(void)> m_close_protocol;
-  std::unique_ptr<Connection> m_connection;
+  std::unique_ptr<network::Connection> m_connection;
   const WorldInterface* m_world_interface;
   gameengine::GameEngineQueue* m_game_engine_queue;
   account::AccountReader* m_account_reader;
