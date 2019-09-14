@@ -32,6 +32,9 @@
 
 #include "item.h"
 
+namespace gameengine
+{
+
 class ItemManager
 {
  public:
@@ -85,5 +88,7 @@ class ItemManager
   ItemTypeId m_item_types_id_first{0};
   ItemTypeId m_item_types_id_last{0};
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_SRC_ITEM_MANAGER_H_

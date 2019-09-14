@@ -48,20 +48,23 @@ namespace
 
 struct RecursiveTask
 {
-  explicit RecursiveTask(std::function<void(const RecursiveTask&, GameEngine* game_engine)> func)
+  explicit RecursiveTask(std::function<void(const RecursiveTask&, gameengine::GameEngine* game_engine)> func)
     : func(std::move(func))
   {
   }
 
-  void operator()(GameEngine* game_engine) const
+  void operator()(gameengine::GameEngine* game_engine) const
   {
     func(*this, game_engine);
   }
 
-  std::function<void(const RecursiveTask&, GameEngine* game_engine)> func;
+  std::function<void(const RecursiveTask&, gameengine::GameEngine* game_engine)> func;
 };
 
 }  // namespace
+
+namespace gameengine
+{
 
 GameEngine::GameEngine()
     : m_item_manager(),
@@ -601,3 +604,5 @@ void GameEngine::addItem(CreatureId creature_id, const GamePosition& position, c
     m_container_manager->updateRootPosition(item.getItemUniqueId(), position);
   }
 }
+
+}  // namespace gameengine

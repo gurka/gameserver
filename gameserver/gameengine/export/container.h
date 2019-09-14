@@ -32,6 +32,10 @@
 #include "game_position.h"
 
 class Item;
+
+namespace gameengine
+{
+
 class PlayerCtrl;
 
 struct Container
@@ -70,5 +74,7 @@ struct Container
 
   std::string toString(int indent = 2) const;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_CONTAINER_H_

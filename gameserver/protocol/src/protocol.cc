@@ -56,7 +56,7 @@
 Protocol::Protocol(std::function<void(void)> close_protocol,
                    std::unique_ptr<Connection>&& connection,
                    const WorldInterface* world_interface,
-                   GameEngineQueue* game_engine_queue,
+                   gameengine::GameEngineQueue* game_engine_queue,
                    account::AccountReader* account_reader)
   : m_close_protocol(std::move(close_protocol)),
     m_connection(std::move(connection)),
@@ -99,7 +99,7 @@ void Protocol::onCreatureSpawn(const Creature& creature, const Position& positio
   if (creature.getCreatureId() == m_player_id)
   {
     // We are spawning!
-    const auto& player = static_cast<const Player&>(creature);
+    const auto& player = static_cast<const gameengine::Player&>(creature);
     const auto server_beat = 50;  // TODO(simon): customizable?
 
     // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
@@ -270,7 +270,7 @@ void Protocol::onTileUpdate(const Position& position)
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onEquipmentUpdated(const Player& player, std::uint8_t inventory_index)
+void Protocol::onEquipmentUpdated(const gameengine::Player& player, std::uint8_t inventory_index)
 {
   if (!isConnected())
   {
@@ -282,7 +282,7 @@ void Protocol::onEquipmentUpdated(const Player& player, std::uint8_t inventory_i
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onOpenContainer(std::uint8_t new_container_id, const Container& container, const Item& item)
+void Protocol::onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const Item& item)
 {
   if (!isConnected())
   {
@@ -500,7 +500,7 @@ void Protocol::parsePacket(IncomingPacket* packet)
     {
       case 0x14:
       {
-        m_game_engine_queue->addTask(m_player_id, [this](GameEngine* game_engine)
+        m_game_engine_queue->addTask(m_player_id, [this](gameengine::GameEngine* game_engine)
         {
           game_engine->despawn(m_player_id);
         });
@@ -518,7 +518,7 @@ void Protocol::parsePacket(IncomingPacket* packet)
       case 0x67:  // South = 2
       case 0x68:  // West  = 3
       {
-        m_game_engine_queue->addTask(m_player_id, [this, packet_id](GameEngine* game_engine)
+        m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
           game_engine->move(m_player_id, static_cast<Direction>(packet_id - 0x65));
         });
@@ -527,7 +527,7 @@ void Protocol::parsePacket(IncomingPacket* packet)
 
       case 0x69:
       {
-        m_game_engine_queue->addTask(m_player_id, [this](GameEngine* game_engine)
+        m_game_engine_queue->addTask(m_player_id, [this](gameengine::GameEngine* game_engine)
         {
           game_engine->cancelMove(m_player_id);
         });
@@ -539,7 +539,7 @@ void Protocol::parsePacket(IncomingPacket* packet)
       case 0x71:  // South = 2
       case 0x72:  // West  = 3
       {
-        m_game_engine_queue->addTask(m_player_id, [this, packet_id](GameEngine* game_engine)
+        m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
           game_engine->turn(m_player_id, static_cast<Direction>(packet_id - 0x6F));
         });
@@ -586,7 +586,7 @@ void Protocol::parsePacket(IncomingPacket* packet)
       {
         // Note: this packet more likely means "stop all actions", not only moving
         //       so, maybe we should cancel all player's task here?
-        m_game_engine_queue->addTask(m_player_id, [this](GameEngine* game_engine)
+        m_game_engine_queue->addTask(m_player_id, [this](gameengine::GameEngine* game_engine)
         {
           game_engine->cancelMove(m_player_id);
         });
@@ -615,7 +615,7 @@ void Protocol::onDisconnected()
   else
   {
     // We need to tell the gameengine to despawn us
-    m_game_engine_queue->addTask(m_player_id, [this](GameEngine* game_engine)
+    m_game_engine_queue->addTask(m_player_id, [this](gameengine::GameEngine* game_engine)
     {
       game_engine->despawn(m_player_id);
     });
@@ -653,7 +653,7 @@ void Protocol::parseLogin(IncomingPacket* packet)
   }
 
   // Login OK, spawn player
-  m_game_engine_queue->addTask(m_player_id, [this, character_name = login.character_name](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, character_name = login.character_name](gameengine::GameEngine* game_engine)
   {
     if (!game_engine->spawn(character_name, this))
     {
@@ -675,7 +675,7 @@ void Protocol::parseMoveClick(IncomingPacket* packet)
     return;
   }
 
-  m_game_engine_queue->addTask(m_player_id, [this, path = std::move(move.path)](GameEngine* game_engine) mutable
+  m_game_engine_queue->addTask(m_player_id, [this, path = std::move(move.path)](gameengine::GameEngine* game_engine) mutable
   {
     game_engine->movePath(m_player_id, std::move(path));
   });
@@ -691,7 +691,7 @@ void Protocol::parseMoveItem(IncomingPacket* packet)
             move.to_game_position.toString().c_str(),
             move.count);
 
-  m_game_engine_queue->addTask(m_player_id, [this, move](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, move](gameengine::GameEngine* game_engine)
   {
     game_engine->moveItem(m_player_id, move.from_item_position, move.to_game_position, move.count);
   });
@@ -706,7 +706,7 @@ void Protocol::parseUseItem(IncomingPacket* packet)
             use_item.item_position.toString().c_str(),
             use_item.new_container_id);
 
-  m_game_engine_queue->addTask(m_player_id, [this, use_item](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, use_item](gameengine::GameEngine* game_engine)
   {
     game_engine->useItem(m_player_id, use_item.item_position, use_item.new_container_id);
   });
@@ -725,7 +725,7 @@ void Protocol::parseCloseContainer(IncomingPacket* packet)
 
   LOG_DEBUG("%s: container_id: %d -> item_unique_id: %u", __func__, close.container_id, item_unique_id);
 
-  m_game_engine_queue->addTask(m_player_id, [this, item_unique_id](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, item_unique_id](gameengine::GameEngine* game_engine)
   {
     game_engine->closeContainer(m_player_id, item_unique_id);
   });
@@ -744,7 +744,7 @@ void Protocol::parseOpenParentContainer(IncomingPacket* packet)
 
   LOG_DEBUG("%s: container_id: %d -> item_unique_id: %u", __func__, open_parent.container_id, item_unique_id);
 
-  m_game_engine_queue->addTask(m_player_id, [this, item_unique_id, open_parent](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, item_unique_id, open_parent](gameengine::GameEngine* game_engine)
   {
     game_engine->openParentContainer(m_player_id, item_unique_id, open_parent.container_id);
   });
@@ -756,7 +756,7 @@ void Protocol::parseLookAt(IncomingPacket* packet)
 
   LOG_DEBUG("%s: item_position: %s", __func__, look_at.item_position.toString().c_str());
 
-  m_game_engine_queue->addTask(m_player_id, [this, look_at](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, look_at](gameengine::GameEngine* game_engine)
   {
     game_engine->lookAt(m_player_id, look_at.item_position);
   });
@@ -766,7 +766,7 @@ void Protocol::parseSay(IncomingPacket* packet)
 {
   const auto say = protocol_helper::getSay(packet);
 
-  m_game_engine_queue->addTask(m_player_id, [this, say](GameEngine* game_engine)
+  m_game_engine_queue->addTask(m_player_id, [this, say](gameengine::GameEngine* game_engine)
   {
     // TODO(simon): probably different calls depending on say.type
     game_engine->say(m_player_id, say.type, say.message, say.receiver, say.channel_id);

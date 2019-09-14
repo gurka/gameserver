@@ -31,6 +31,9 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace gameengine
+{
+
 class GameEngine;
 
 class GameEngineQueue
@@ -75,5 +78,7 @@ class GameEngineQueue
   boost::asio::deadline_timer m_timer;
   bool m_timer_started;
 };
+
+} // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_QUEUE_H_

@@ -33,8 +33,12 @@
 #include "creature.h"
 #include "item.h"
 
-struct Container;
 class Item;
+
+namespace gameengine
+{
+
+struct Container;
 class Player;
 
 class PlayerCtrl : public CreatureCtrl
@@ -66,5 +70,7 @@ class PlayerCtrl : public CreatureCtrl
   virtual const std::array<ItemUniqueId, 64>& getContainerIds() const = 0;
   virtual bool hasContainerOpen(ItemUniqueId item_unique_id) const = 0;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_CTRL_H_

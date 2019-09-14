@@ -33,8 +33,12 @@
 #include "creature.h"
 #include "game_position.h"
 
-class PlayerCtrl;
 class Item;
+
+namespace gameengine
+{
+
+class PlayerCtrl;
 
 class ContainerManager
 {
@@ -86,5 +90,7 @@ class ContainerManager
   }
 #endif
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_SRC_CONTAINER_MANAGER_H_

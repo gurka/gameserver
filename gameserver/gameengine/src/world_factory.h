@@ -29,6 +29,10 @@
 #include <string>
 
 class World;
+
+namespace gameengine
+{
+
 class ItemManager;
 
 class WorldFactory
@@ -37,5 +41,7 @@ class WorldFactory
   static std::unique_ptr<World> createWorld(const std::string& world_filename,
                                             ItemManager* item_manager);
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_SRC_WORLD_FACTORY_H_

@@ -24,6 +24,9 @@
 
 #include "game_engine_queue.h"
 
+namespace gameengine
+{
+
 GameEngineQueue::GameEngineQueue(GameEngine* game_engine, boost::asio::io_context* io_context)
   : m_game_engine(game_engine),
     m_timer(*io_context),
@@ -142,3 +145,5 @@ void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
     m_timer_started = false;
   }
 }
+
+}  // namespace gameengine

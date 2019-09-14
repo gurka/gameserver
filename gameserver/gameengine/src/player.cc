@@ -28,6 +28,9 @@
 
 #include "logger.h"
 
+namespace gameengine
+{
+
 bool Equipment::canAddItem(const Item& item, int inventory_slot) const
 {
   if (inventory_slot < 1 || inventory_slot > 10)
@@ -192,3 +195,5 @@ std::uint8_t Player::getLevel() const
   if (m_experience < 4200) { return 7; }
   return 8;
 }
+
+}  // namespace gameengine

@@ -36,12 +36,16 @@
 #include "item.h"
 #include "container.h"
 
+namespace gameengine
+{
+class Equipment;
+class Player;
+}
+
 class Position;
 class OutgoingPacket;
 class WorldInterface;
 struct Outfit;
-class Equipment;
-class Player;
 class IncomingPacket;
 class Tile;
 
@@ -102,7 +106,7 @@ void addThingMoved(const Position& old_position,
 // 0x6E
 void addContainerOpen(std::uint8_t container_id,
                       const Thing& thing,
-                      const Container& container,
+                      const gameengine::Container& container,
                       OutgoingPacket* packet);
 
 // 0x6F
@@ -121,7 +125,7 @@ void addContainerUpdateItem(std::uint8_t container_id,
 void addContainerRemoveItem(std::uint8_t container_id, std::uint8_t container_slot, OutgoingPacket* packet);
 
 // 0x78, 0x79
-void addEquipmentUpdated(const Equipment& equipment, std::uint8_t inventory_index, OutgoingPacket* packet);
+void addEquipmentUpdated(const gameengine::Equipment& equipment, std::uint8_t inventory_index, OutgoingPacket* packet);
 
 // 0x82
 void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* packet);
@@ -130,10 +134,10 @@ void addWorldLight(std::uint8_t intensity, std::uint8_t color, OutgoingPacket* p
 void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket* packet);
 
 // 0xA0
-void addPlayerStats(const Player& player, OutgoingPacket* packet);
+void addPlayerStats(const gameengine::Player& player, OutgoingPacket* packet);
 
 // 0xA1
-void addPlayerSkills(const Player& player, OutgoingPacket* packet);
+void addPlayerSkills(const gameengine::Player& player, OutgoingPacket* packet);
 
 // 0xAA
 void addTalk(const std::string& name,
@@ -180,8 +184,8 @@ protocol_types::Say getSay(IncomingPacket* packet);
 // Reading helpers
 Position getPosition(IncomingPacket* packet);
 Outfit getOutfit(IncomingPacket* packet);
-GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* packet);
-ItemPosition getItemPosition(KnownContainers* container_ids, IncomingPacket* packet);
+gameengine::GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* packet);
+gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, IncomingPacket* packet);
 
 }  // namespace protocol_helper
 

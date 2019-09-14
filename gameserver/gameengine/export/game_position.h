@@ -32,6 +32,9 @@
 #include "position.h"
 #include "item.h"
 
+namespace gameengine
+{
+
 class GamePosition
 {
  public:
@@ -177,5 +180,7 @@ class ItemPosition
   ItemTypeId m_item_type_id{0};
   int m_stackpos{0};
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_GAME_POSITION_H_

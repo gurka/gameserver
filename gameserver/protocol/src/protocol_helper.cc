@@ -187,7 +187,7 @@ void addThingMoved(const Position& old_position,
 
 void addContainerOpen(std::uint8_t container_id,
                       const Thing& thing,
-                      const Container& container,
+                      const gameengine::Container& container,
                       OutgoingPacket* packet)
 {
   packet->addU8(0x6E);
@@ -240,7 +240,7 @@ void addContainerRemoveItem(std::uint8_t container_id,
   packet->add(container_slot);
 }
 
-void addEquipmentUpdated(const Equipment& equipment, std::uint8_t inventory_index, OutgoingPacket* packet)
+void addEquipmentUpdated(const gameengine::Equipment& equipment, std::uint8_t inventory_index, OutgoingPacket* packet)
 {
   const auto* item = equipment.getItem(inventory_index);
   if (item)
@@ -270,7 +270,7 @@ void addMagicEffect(const Position& position, std::uint8_t type, OutgoingPacket*
   packet->add(type);
 }
 
-void addPlayerStats(const Player& player, OutgoingPacket* packet)
+void addPlayerStats(const gameengine::Player& player, OutgoingPacket* packet)
 {
   packet->addU8(0xA0);
   packet->add(player.getHealth());
@@ -283,7 +283,7 @@ void addPlayerStats(const Player& player, OutgoingPacket* packet)
   packet->add(player.getMagicLevel());
 }
 
-void addPlayerSkills(const Player& player, OutgoingPacket* packet)
+void addPlayerSkills(const gameengine::Player& player, OutgoingPacket* packet)
 {
   // TODO(simon): get skills from Player
   (void)player;
@@ -600,7 +600,7 @@ protocol_types::Say getSay(IncomingPacket* packet)
   return say;
 }
 
-GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* packet)
+gameengine::GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* packet)
 {
   const auto x = packet->getU16();
   const auto y = packet->getU16();
@@ -611,14 +611,14 @@ GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* pac
   if (x != 0xFFFF)
   {
     // Positions have x not fully set
-    return GamePosition(Position(x, y, z));
+    return gameengine::GamePosition(Position(x, y, z));
   }
 
   if ((y & 0x40) == 0x00)
   {
     // Inventory have x fully set and 7th bit in y not set
     // Inventory slot is 4 lower bits in y
-    return GamePosition(y & ~0x40);
+    return gameengine::GamePosition(y & ~0x40);
   }
 
   // Container have x fully set and 7th bit in y set
@@ -641,7 +641,7 @@ GamePosition getGamePosition(KnownContainers* container_ids, IncomingPacket* pac
   return { item_unique_id, z };
 }
 
-ItemPosition getItemPosition(KnownContainers* container_ids, IncomingPacket* packet)
+gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, IncomingPacket* packet)
 {
   const auto game_position = getGamePosition(container_ids, packet);
   const auto item_id = packet->getU16();

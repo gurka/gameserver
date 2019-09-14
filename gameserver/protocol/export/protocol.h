@@ -41,23 +41,26 @@
 #include "position.h"
 #include "item.h"
 
-class Connection;
-class IncomingPacket;
-class OutgoingPacket;
-class GameEngineQueue;
 namespace account
 {
 class AccountReader;
 }
+namespace gameengine
+{
+class GameEngineQueue;
+}
+class Connection;
+class IncomingPacket;
+class OutgoingPacket;
 class WorldInterface;
 
-class Protocol : public PlayerCtrl
+class Protocol : public gameengine::PlayerCtrl
 {
  public:
   Protocol(std::function<void(void)> close_protocol,
            std::unique_ptr<Connection>&& connection,
            const WorldInterface* world_interface,
-           GameEngineQueue* game_engine_queue,
+           gameengine::GameEngineQueue* game_engine_queue,
            account::AccountReader* account_reader);
 
   // Delete copy constructors
@@ -91,8 +94,8 @@ class Protocol : public PlayerCtrl
   // Called by GameEngine (from PlayerCtrl)
   CreatureId getPlayerId() const override { return m_player_id; }
   void setPlayerId(CreatureId player_id) override { m_player_id = player_id; }
-  void onEquipmentUpdated(const Player& player, std::uint8_t inventory_index) override;
-  void onOpenContainer(std::uint8_t new_container_id, const Container& container, const Item& item) override;
+  void onEquipmentUpdated(const gameengine::Player& player, std::uint8_t inventory_index) override;
+  void onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const Item& item) override;
   void onCloseContainer(ItemUniqueId container_item_unique_id, bool reset_container_id) override;
   void onContainerAddItem(ItemUniqueId container_item_unique_id, const Item& item) override;
   void onContainerUpdateItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const Item& item) override;
@@ -135,7 +138,7 @@ class Protocol : public PlayerCtrl
   std::function<void(void)> m_close_protocol;
   std::unique_ptr<Connection> m_connection;
   const WorldInterface* m_world_interface;
-  GameEngineQueue* m_game_engine_queue;
+  gameengine::GameEngineQueue* m_game_engine_queue;
   account::AccountReader* m_account_reader;
 
   CreatureId m_player_id;

@@ -50,8 +50,8 @@
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<GameEngineQueue> game_engine_queue;
-static std::unique_ptr<GameEngine> game_engine;
+static std::unique_ptr<gameengine::GameEngineQueue> game_engine_queue;
+static std::unique_ptr<gameengine::GameEngine> game_engine;
 static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<Server> server;
 
@@ -144,8 +144,8 @@ int main()
   boost::asio::io_context io_context;
 
   // Create GameEngine and GameEngineQueue
-  game_engine = std::make_unique<GameEngine>();
-  game_engine_queue = std::make_unique<GameEngineQueue>(game_engine.get(), &io_context);
+  game_engine = std::make_unique<gameengine::GameEngine>();
+  game_engine_queue = std::make_unique<gameengine::GameEngineQueue>(game_engine.get(), &io_context);
 
   // Initialize GameEngine
   if (!game_engine->init(game_engine_queue.get(), login_message, data_filename, items_filename, world_filename))

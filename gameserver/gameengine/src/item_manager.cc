@@ -31,6 +31,9 @@
 #include "rapidxml.hpp"
 #include "logger.h"
 
+namespace gameengine
+{
+
 bool ItemManager::loadItemTypes(const std::string& data_filename, const std::string& items_filename)
 {
   if (!loadItemTypesDataFile(data_filename))
@@ -487,3 +490,5 @@ void ItemManager::dumpItemTypeToJson() const
 
   LOG_INFO("%s: done", __func__);
 }
+
+}  // namespace gameengine

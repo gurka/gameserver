@@ -39,6 +39,9 @@
 
 #include "rapidxml.hpp"
 
+namespace gameengine
+{
+
 std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filename,
                                                  ItemManager* item_manager)
 {
@@ -159,3 +162,5 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
 
   return std::make_unique<World>(world_size_x, world_size_y, std::move(tiles));  // NOLINT bug in clang-tidy used in Travis (?)
 }
+
+}  // namespace gameengine

@@ -35,6 +35,9 @@
 #include "direction.h"
 #include "item.h"
 
+namespace gameengine
+{
+
 class Equipment
 {
  public:
@@ -112,5 +115,7 @@ class Player : public Creature
   int m_party_shield;
   Equipment m_equipment;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_H_

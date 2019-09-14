@@ -32,6 +32,9 @@
 #include "logger.h"
 #include "player_ctrl.h"
 
+namespace gameengine
+{
+
 void ContainerManager::playerDespawn(const PlayerCtrl* player_ctrl)
 {
   for (auto item_unique_id : player_ctrl->getContainerIds())
@@ -415,3 +418,5 @@ void ContainerManager::removeRelatedPlayer(const PlayerCtrl* player_ctrl, ItemUn
 
   container->related_players.erase(it);
 }
+
+}  // namespace gameengine

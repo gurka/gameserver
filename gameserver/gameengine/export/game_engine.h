@@ -38,8 +38,12 @@
 #include "position.h"
 #include "game_position.h"
 
-class GameEngineQueue;
 class OutgoingPacket;
+
+namespace gameengine
+{
+
+class GameEngineQueue;
 class PlayerCtrl;
 class ItemManager;
 class ContainerManager;
@@ -113,5 +117,7 @@ class GameEngine
   std::string m_login_message;
   std::unique_ptr<ContainerManager> m_container_manager;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_GAME_ENGINE_H_

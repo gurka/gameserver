@@ -55,14 +55,14 @@ struct MoveClick
 
 struct MoveItem  // or MoveThing?
 {
-  ItemPosition from_item_position;
-  GamePosition to_game_position;
+  gameengine::ItemPosition from_item_position;
+  gameengine::GamePosition to_game_position;
   std::uint8_t count;
 };
 
 struct UseItem
 {
-  ItemPosition item_position;
+  gameengine::ItemPosition item_position;
   std::uint8_t new_container_id;
 };
 
@@ -78,7 +78,7 @@ struct OpenParentContainer
 
 struct LookAt
 {
-  ItemPosition item_position;
+  gameengine::ItemPosition item_position;
 };
 
 struct Say
