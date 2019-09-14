@@ -29,6 +29,9 @@
 #include <type_traits>
 #include <variant>
 
+namespace world
+{
+
 class Creature;
 class Item;
 
@@ -88,5 +91,7 @@ struct Thing
   template<typename T>
   struct AlwaysFalse : std::false_type {};
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_THING_H_

@@ -31,7 +31,6 @@
 #include <vector>
 
 #include "direction.h"
-#include "creature.h"
 #include "position.h"
 #include "game_position.h"
 
@@ -50,7 +49,7 @@ struct Login
 
 struct MoveClick
 {
-  std::deque<Direction> path;
+  std::deque<world::Direction> path;
 };
 
 struct MoveItem  // or MoveThing?

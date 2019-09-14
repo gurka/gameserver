@@ -26,6 +26,9 @@
 
 #include <sstream>
 
+namespace world
+{
+
 const Position Position::INVALID = Position();
 
 Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
@@ -68,3 +71,5 @@ Position Position::addDirection(const Direction& direction) const
 
   return {};
 }
+
+}  // namespace world

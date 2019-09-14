@@ -28,6 +28,9 @@
 
 #include "logger.h"
 
+namespace world
+{
+
 void Tile::addThing(const Thing& thing)
 {
   // Add the new thing before the first thing with the
@@ -138,3 +141,5 @@ void Tile::visitItems(const std::function<void(const Item*)>& func) const
 {
   visitThings({}, func);
 }
+
+}  // namespace world

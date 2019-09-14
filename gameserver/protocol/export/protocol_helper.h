@@ -48,68 +48,71 @@ class IncomingPacket;
 class OutgoingPacket;
 }
 
-class Position;
-class WorldInterface;
+namespace world
+{
 struct Outfit;
+class Position;
 class Tile;
+class WorldInterface;
+}
 
 namespace protocol_helper
 {
-using KnownCreatures = std::array<CreatureId, 64>;
-using KnownContainers = std::array<ItemUniqueId, 64>;
+using KnownCreatures = std::array<world::CreatureId, 64>;
+using KnownContainers = std::array<world::ItemUniqueId, 64>;
 
 // Writing packets
 
 // 0x0A
-void addLogin(CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet);
+void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet);
 
 // 0x14
 void addLoginFailed(const std::string& reason, network::OutgoingPacket* packet);
 
 // 0x64
-void addMapFull(const WorldInterface& world_interface,
-                const Position& position,
+void addMapFull(const world::WorldInterface& world_interface,
+                const world::Position& position,
                 KnownCreatures* known_creatures,
                 network::OutgoingPacket* packet);
 
 // 0x65, 0x66, 0x67, 0x68
-void addMap(const WorldInterface& world_interface,
-            const Position& old_position,
-            const Position& new_position,
+void addMap(const world::WorldInterface& world_interface,
+            const world::Position& old_position,
+            const world::Position& new_position,
             KnownCreatures* known_creatures,
             network::OutgoingPacket* packet);
 
 // 0x69
-void addTileUpdated(const Position& position,
-                    const WorldInterface& world_interface,
+void addTileUpdated(const world::Position& position,
+                    const world::WorldInterface& world_interface,
                     KnownCreatures* known_creatures,
                     network::OutgoingPacket* packet);
 
 // 0x6A
-void addThingAdded(const Position& position,
-                   const Thing& thing,
+void addThingAdded(const world::Position& position,
+                   const world::Thing& thing,
                    KnownCreatures* known_creatures,
                    network::OutgoingPacket* packet);
 
 // 0x6B
-void addThingChanged(const Position& position,
+void addThingChanged(const world::Position& position,
                      std::uint8_t stackpos,
-                     const Thing& thing,
+                     const world::Thing& thing,
                      KnownCreatures* known_creatures,
                      network::OutgoingPacket* packet);
 
 // 0x6C
-void addThingRemoved(const Position& position, std::uint8_t stackpos, network::OutgoingPacket* packet);
+void addThingRemoved(const world::Position& position, std::uint8_t stackpos, network::OutgoingPacket* packet);
 
 // 0x6D
-void addThingMoved(const Position& old_position,
+void addThingMoved(const world::Position& old_position,
                    std::uint8_t old_stackpos,
-                   const Position& new_position,
+                   const world::Position& new_position,
                    network::OutgoingPacket* packet);
 
 // 0x6E
 void addContainerOpen(std::uint8_t container_id,
-                      const Thing& thing,
+                      const world::Thing& thing,
                       const gameengine::Container& container,
                       network::OutgoingPacket* packet);
 
@@ -117,12 +120,12 @@ void addContainerOpen(std::uint8_t container_id,
 void addContainerClose(std::uint8_t container_id, network::OutgoingPacket* packet);
 
 // 0x70
-void addContainerAddItem(std::uint8_t container_id, const Thing& thing, network::OutgoingPacket* packet);
+void addContainerAddItem(std::uint8_t container_id, const world::Thing& thing, network::OutgoingPacket* packet);
 
 // 0x71
 void addContainerUpdateItem(std::uint8_t container_id,
                             std::uint8_t container_slot,
-                            const Thing& thing,
+                            const world::Thing& thing,
                             network::OutgoingPacket* packet);
 
 // 0x72
@@ -135,7 +138,7 @@ void addEquipmentUpdated(const gameengine::Equipment& equipment, std::uint8_t in
 void addWorldLight(std::uint8_t intensity, std::uint8_t color, network::OutgoingPacket* packet);
 
 // 0x83
-void addMagicEffect(const Position& position, std::uint8_t type, network::OutgoingPacket* packet);
+void addMagicEffect(const world::Position& position, std::uint8_t type, network::OutgoingPacket* packet);
 
 // 0xA0
 void addPlayerStats(const gameengine::Player& player, network::OutgoingPacket* packet);
@@ -146,7 +149,7 @@ void addPlayerSkills(const gameengine::Player& player, network::OutgoingPacket* 
 // 0xAA
 void addTalk(const std::string& name,
              std::uint8_t type,
-             const Position& position,
+             const world::Position& position,
              const std::string& message,
              network::OutgoingPacket* packet);
 
@@ -157,22 +160,22 @@ void addTextMessage(std::uint8_t type, const std::string& text, network::Outgoin
 void addCancelMove(network::OutgoingPacket* packet);
 
 // Writing helpers
-void addPosition(const Position& position, network::OutgoingPacket* packet);
-void addThing(const Thing& thing,
+void addPosition(const world::Position& position, network::OutgoingPacket* packet);
+void addThing(const world::Thing& thing,
               KnownCreatures* known_creatures,
               network::OutgoingPacket* packet);
-void addCreature(const Creature* creature,
+void addCreature(const world::Creature* creature,
                  KnownCreatures* known_creatures,
                  network::OutgoingPacket* packet);
-void addItem(const Item* item, network::OutgoingPacket* packet);
-void addMapData(const WorldInterface& world_interface,
-                const Position& position,
+void addItem(const world::Item* item, network::OutgoingPacket* packet);
+void addMapData(const world::WorldInterface& world_interface,
+                const world::Position& position,
                 int width,
                 int height,
                 KnownCreatures* known_creatures,
                 network::OutgoingPacket* packet);
-void addTileData(const Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
-void addOutfitData(const Outfit& outfit, network::OutgoingPacket* packet);
+void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
+void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet);
 
 
 // Reading packets
@@ -186,8 +189,8 @@ protocol_types::LookAt getLookAt(KnownContainers* container_ids, network::Incomi
 protocol_types::Say getSay(network::IncomingPacket* packet);
 
 // Reading helpers
-Position getPosition(network::IncomingPacket* packet);
-Outfit getOutfit(network::IncomingPacket* packet);
+world::Position getPosition(network::IncomingPacket* packet);
+world::Outfit getOutfit(network::IncomingPacket* packet);
 gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 

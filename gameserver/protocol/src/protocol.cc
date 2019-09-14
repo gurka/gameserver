@@ -55,7 +55,7 @@
 
 Protocol::Protocol(std::function<void(void)> close_protocol,
                    std::unique_ptr<network::Connection>&& connection,
-                   const WorldInterface* world_interface,
+                   const world::WorldInterface* world_interface,
                    gameengine::GameEngineQueue* game_engine_queue,
                    account::AccountReader* account_reader)
   : m_close_protocol(std::move(close_protocol)),
@@ -63,10 +63,10 @@ Protocol::Protocol(std::function<void(void)> close_protocol,
     m_world_interface(world_interface),
     m_game_engine_queue(game_engine_queue),
     m_account_reader(account_reader),
-    m_player_id(Creature::INVALID_ID)
+    m_player_id(world::Creature::INVALID_ID)
 {
-  m_known_creatures.fill(Creature::INVALID_ID);
-  m_container_ids.fill(Item::INVALID_UNIQUE_ID);
+  m_known_creatures.fill(world::Creature::INVALID_ID);
+  m_container_ids.fill(world::Item::INVALID_UNIQUE_ID);
 
   network::Connection::Callbacks callbacks
   {
@@ -87,7 +87,7 @@ Protocol::Protocol(std::function<void(void)> close_protocol,
   m_connection->init(callbacks);
 }
 
-void Protocol::onCreatureSpawn(const Creature& creature, const Position& position)
+void Protocol::onCreatureSpawn(const world::Creature& creature, const world::Position& position)
 {
   if (!isConnected())
   {
@@ -124,14 +124,14 @@ void Protocol::onCreatureSpawn(const Creature& creature, const Position& positio
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureDespawn(const Creature& creature, const Position& position, std::uint8_t stackpos)
+void Protocol::onCreatureDespawn(const world::Creature& creature, const world::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
     if (creature.getCreatureId() == m_player_id)
     {
       // We are no longer in game and the connection has been closed, close the protocol
-      m_player_id = Creature::INVALID_ID;
+      m_player_id = world::Creature::INVALID_ID;
       m_close_protocol();  // WARNING: This instance is deleted after this call
     }
     return;
@@ -147,15 +147,15 @@ void Protocol::onCreatureDespawn(const Creature& creature, const Position& posit
     // This player despawned, close the connection gracefully
     // The protocol will be deleted as soon as the connection has been closed
     // (via onConnectionClosed callback)
-    m_player_id = Creature::INVALID_ID;
+    m_player_id = world::Creature::INVALID_ID;
     m_connection->close(false);
   }
 }
 
-void Protocol::onCreatureMove(const Creature& creature,
-                              const Position& old_position,
+void Protocol::onCreatureMove(const world::Creature& creature,
+                              const world::Position& old_position,
                               std::uint8_t old_stackpos,
-                              const Position& new_position)
+                              const world::Position& new_position)
 {
   if (!isConnected())
   {
@@ -210,7 +210,7 @@ void Protocol::onCreatureMove(const Creature& creature,
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureTurn(const Creature& creature, const Position& position, std::uint8_t stackpos)
+void Protocol::onCreatureTurn(const world::Creature& creature, const world::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
@@ -222,7 +222,7 @@ void Protocol::onCreatureTurn(const Creature& creature, const Position& position
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onCreatureSay(const Creature& creature, const Position& position, const std::string& message)
+void Protocol::onCreatureSay(const world::Creature& creature, const world::Position& position, const std::string& message)
 {
   if (!isConnected())
   {
@@ -234,7 +234,7 @@ void Protocol::onCreatureSay(const Creature& creature, const Position& position,
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onItemRemoved(const Position& position, std::uint8_t stackpos)
+void Protocol::onItemRemoved(const world::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
@@ -246,7 +246,7 @@ void Protocol::onItemRemoved(const Position& position, std::uint8_t stackpos)
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onItemAdded(const Item& item, const Position& position)
+void Protocol::onItemAdded(const world::Item& item, const world::Position& position)
 {
   if (!isConnected())
   {
@@ -258,7 +258,7 @@ void Protocol::onItemAdded(const Item& item, const Position& position)
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onTileUpdate(const Position& position)
+void Protocol::onTileUpdate(const world::Position& position)
 {
   if (!isConnected())
   {
@@ -282,7 +282,7 @@ void Protocol::onEquipmentUpdated(const gameengine::Player& player, std::uint8_t
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const Item& item)
+void Protocol::onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const world::Item& item)
 {
   if (!isConnected())
   {
@@ -306,7 +306,7 @@ void Protocol::onOpenContainer(std::uint8_t new_container_id, const gameengine::
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onCloseContainer(ItemUniqueId container_item_unique_id, bool reset_container_id)
+void Protocol::onCloseContainer(world::ItemUniqueId container_item_unique_id, bool reset_container_id)
 {
   if (!isConnected())
   {
@@ -324,7 +324,7 @@ void Protocol::onCloseContainer(ItemUniqueId container_item_unique_id, bool rese
 
   if (reset_container_id)
   {
-    setContainerId(container_id, Item::INVALID_UNIQUE_ID);
+    setContainerId(container_id, world::Item::INVALID_UNIQUE_ID);
   }
 
   LOG_DEBUG("%s: container_item_unique_id: %u -> container_id: %d", __func__, container_item_unique_id, container_id);
@@ -334,7 +334,7 @@ void Protocol::onCloseContainer(ItemUniqueId container_item_unique_id, bool rese
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onContainerAddItem(ItemUniqueId container_item_unique_id, const Item& item)
+void Protocol::onContainerAddItem(world::ItemUniqueId container_item_unique_id, const world::Item& item)
 {
   if (!isConnected())
   {
@@ -360,7 +360,7 @@ void Protocol::onContainerAddItem(ItemUniqueId container_item_unique_id, const I
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onContainerUpdateItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const Item& item)
+void Protocol::onContainerUpdateItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const world::Item& item)
 {
   if (!isConnected())
   {
@@ -387,7 +387,7 @@ void Protocol::onContainerUpdateItem(ItemUniqueId container_item_unique_id, std:
   m_connection->sendPacket(std::move(packet));
 }
 
-void Protocol::onContainerRemoveItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot)
+void Protocol::onContainerRemoveItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot)
 {
   if (!isConnected())
   {
@@ -450,7 +450,7 @@ void Protocol::cancelMove()
   m_connection->sendPacket(std::move(packet));
 }
 
-bool Protocol::hasContainerOpen(ItemUniqueId item_unique_id) const
+bool Protocol::hasContainerOpen(world::ItemUniqueId item_unique_id) const
 {
   return getContainerId(item_unique_id) != INVALID_CONTAINER_ID;
 }
@@ -520,7 +520,7 @@ void Protocol::parsePacket(network::IncomingPacket* packet)
       {
         m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
-          game_engine->move(m_player_id, static_cast<Direction>(packet_id - 0x65));
+          game_engine->move(m_player_id, static_cast<world::Direction>(packet_id - 0x65));
         });
         break;
       }
@@ -541,7 +541,7 @@ void Protocol::parsePacket(network::IncomingPacket* packet)
       {
         m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
-          game_engine->turn(m_player_id, static_cast<Direction>(packet_id - 0x6F));
+          game_engine->turn(m_player_id, static_cast<world::Direction>(packet_id - 0x6F));
         });
         break;
       }
@@ -716,7 +716,7 @@ void Protocol::parseCloseContainer(network::IncomingPacket* packet)
 {
   const auto close = protocol_helper::getCloseContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(close.container_id);
-  if (item_unique_id == Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: container_id: %d does not map to a valid ItemUniqueId", __func__, close.container_id);
     disconnect();
@@ -735,7 +735,7 @@ void Protocol::parseOpenParentContainer(network::IncomingPacket* packet)
 {
   const auto open_parent = protocol_helper::getOpenParentContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(open_parent.container_id);
-  if (item_unique_id == Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: container_id: %d does not map to a valid ItemUniqueId", __func__, open_parent.container_id);
     disconnect();
@@ -773,12 +773,12 @@ void Protocol::parseSay(network::IncomingPacket* packet)
   });
 }
 
-void Protocol::setContainerId(std::uint8_t container_id, ItemUniqueId item_unique_id)
+void Protocol::setContainerId(std::uint8_t container_id, world::ItemUniqueId item_unique_id)
 {
   m_container_ids[container_id] = item_unique_id;
 }
 
-std::uint8_t Protocol::getContainerId(ItemUniqueId item_unique_id) const
+std::uint8_t Protocol::getContainerId(world::ItemUniqueId item_unique_id) const
 {
   const auto it = std::find(m_container_ids.cbegin(),
                             m_container_ids.cend(),
@@ -790,18 +790,18 @@ std::uint8_t Protocol::getContainerId(ItemUniqueId item_unique_id) const
   return INVALID_CONTAINER_ID;
 }
 
-ItemUniqueId Protocol::getContainerItemUniqueId(std::uint8_t container_id) const
+world::ItemUniqueId Protocol::getContainerItemUniqueId(std::uint8_t container_id) const
 {
   if (container_id >= 64)
   {
     LOG_ERROR("%s: invalid container_id: %d", __func__, container_id);
-    return Item::INVALID_UNIQUE_ID;
+    return world::Item::INVALID_UNIQUE_ID;
   }
 
   return m_container_ids.at(container_id);
 }
 
-bool Protocol::canSee(const Position& player_position, const Position& to_position)
+bool Protocol::canSee(const world::Position& player_position, const world::Position& to_position)
 {
   // Note: client displays 15x11 tiles, but it know about 18x14 tiles.
   //

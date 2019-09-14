@@ -32,6 +32,9 @@
 #include "item.h"
 #include "creature.h"
 
+namespace world
+{
+
 class Tile
 {
  public:
@@ -76,5 +79,7 @@ class Tile
   // Then other items
   std::vector<Thing> m_things;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_TILE_H_

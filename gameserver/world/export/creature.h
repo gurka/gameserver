@@ -30,6 +30,9 @@
 
 #include "direction.h"
 
+namespace world
+{
+
 using CreatureId = std::uint32_t;
 
 struct Outfit
@@ -99,5 +102,7 @@ class Creature
 
   static CreatureId next_creature_id;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_CREATURE_H_

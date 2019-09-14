@@ -31,7 +31,10 @@
 
 #include "game_position.h"
 
+namespace world
+{
 class Item;
+}
 
 namespace gameengine
 {
@@ -42,7 +45,7 @@ struct Container
 {
   Container()
     : item(nullptr),
-      parent_item_unique_id(Item::INVALID_UNIQUE_ID)
+      parent_item_unique_id(world::Item::INVALID_UNIQUE_ID)
   {
   }
 
@@ -56,10 +59,10 @@ struct Container
   int weight{0};
 
   // The Item that corresponds to this Container
-  const Item* item{nullptr};
+  const world::Item* item{nullptr};
 
   // Container id of the parent container, or INVALID_ID if no parent
-  ItemUniqueId parent_item_unique_id;
+  world::ItemUniqueId parent_item_unique_id;
 
   // GamePosition of the root item that this Container belongs to
   // Is either a world position or an inventory position
@@ -67,7 +70,7 @@ struct Container
   GamePosition root_game_position;
 
   // Collection of Items in the Container
-  std::vector<const Item*> items;
+  std::vector<const world::Item*> items;
 
   // List of Players that have this Container open
   std::vector<PlayerCtrl*> related_players;

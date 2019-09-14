@@ -30,6 +30,9 @@
 
 #include "direction.h"
 
+namespace world
+{
+
 class Position
 {
  public:
@@ -53,5 +56,7 @@ class Position
   std::uint16_t m_y{0};
   std::uint8_t m_z{0};
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_POSITION_H_

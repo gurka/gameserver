@@ -39,16 +39,16 @@ void ContainerManager::playerDespawn(const PlayerCtrl* player_ctrl)
 {
   for (auto item_unique_id : player_ctrl->getContainerIds())
   {
-    if (item_unique_id != Item::INVALID_UNIQUE_ID)
+    if (item_unique_id != world::Item::INVALID_UNIQUE_ID)
     {
       removeRelatedPlayer(player_ctrl, item_unique_id);
     }
   }
 }
 
-const Container* ContainerManager::getContainer(ItemUniqueId item_unique_id) const
+const Container* ContainerManager::getContainer(world::ItemUniqueId item_unique_id) const
 {
-  if (item_unique_id == Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: invalid item_unique_id: %d", __func__, item_unique_id);
     return nullptr;
@@ -64,14 +64,14 @@ const Container* ContainerManager::getContainer(ItemUniqueId item_unique_id) con
   return &m_containers.at(item_unique_id);
 }
 
-Container* ContainerManager::getContainer(ItemUniqueId item_unique_id)
+Container* ContainerManager::getContainer(world::ItemUniqueId item_unique_id)
 {
   // According to https://stackoverflow.com/a/123995/969365
   const auto* container = static_cast<const ContainerManager*>(this)->getContainer(item_unique_id);
   return const_cast<Container*>(container);
 }
 
-const Item* ContainerManager::getItem(ItemUniqueId item_unique_id, int container_slot) const
+const world::Item* ContainerManager::getItem(world::ItemUniqueId item_unique_id, int container_slot) const
 {
   const auto* container = getContainer(item_unique_id);
   if (!container)
@@ -90,7 +90,7 @@ const Item* ContainerManager::getItem(ItemUniqueId item_unique_id, int container
 }
 
 void ContainerManager::useContainer(PlayerCtrl* player_ctrl,
-                                    const Item& item,
+                                    const world::Item& item,
                                     const GamePosition& game_position,
                                     int new_container_id)
 {
@@ -117,7 +117,7 @@ void ContainerManager::useContainer(PlayerCtrl* player_ctrl,
   }
 }
 
-void ContainerManager::closeContainer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id)
+void ContainerManager::closeContainer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id)
 {
   LOG_DEBUG("%s: playerId: %d, item_unique_id: %d", __func__, player_ctrl->getPlayerId(), item_unique_id);
 
@@ -128,7 +128,7 @@ void ContainerManager::closeContainer(PlayerCtrl* player_ctrl, ItemUniqueId item
   player_ctrl->onCloseContainer(item_unique_id, true);
 }
 
-void ContainerManager::openParentContainer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id, int new_container_id)
+void ContainerManager::openParentContainer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id, int new_container_id)
 {
   auto* current_container = getContainer(item_unique_id);
   if (!current_container)
@@ -144,9 +144,9 @@ void ContainerManager::openParentContainer(PlayerCtrl* player_ctrl, ItemUniqueId
   openContainer(player_ctrl, current_container->parent_item_unique_id, new_container_id);
 }
 
-bool ContainerManager::canAddItem(ItemUniqueId item_unique_id,
+bool ContainerManager::canAddItem(world::ItemUniqueId item_unique_id,
                                   int container_slot,
-                                  const Item& item)
+                                  const world::Item& item)
 {
   LOG_DEBUG("%s: item_unique_id: %d, container_slot: %d, itemTypeId: %d",
             __func__,
@@ -176,7 +176,7 @@ bool ContainerManager::canAddItem(ItemUniqueId item_unique_id,
   return static_cast<int>(container->items.size()) < container_max_items;
 }
 
-void ContainerManager::removeItem(ItemUniqueId item_unique_id, int container_slot)
+void ContainerManager::removeItem(world::ItemUniqueId item_unique_id, int container_slot)
 {
   LOG_DEBUG("%s: item_unique_id: %d, container_slot: %d",
             __func__,
@@ -211,7 +211,7 @@ void ContainerManager::removeItem(ItemUniqueId item_unique_id, int container_slo
     // Update parent_item_unique_id and root_game_position if there is a container created for the item
     if (m_containers.count(item->getItemUniqueId()) == 1)
     {
-      m_containers[item->getItemUniqueId()].parent_item_unique_id = Item::INVALID_UNIQUE_ID;
+      m_containers[item->getItemUniqueId()].parent_item_unique_id = world::Item::INVALID_UNIQUE_ID;
       m_containers[item->getItemUniqueId()].root_game_position = GamePosition();
     }
   }
@@ -223,7 +223,7 @@ void ContainerManager::removeItem(ItemUniqueId item_unique_id, int container_slo
   }
 }
 
-void ContainerManager::addItem(ItemUniqueId item_unique_id, int container_slot, const Item& item)
+void ContainerManager::addItem(world::ItemUniqueId item_unique_id, int container_slot, const world::Item& item)
 {
   LOG_DEBUG("%s: item_unique_id: %d, container_slot: %d, itemTypeId: %d",
             __func__,
@@ -265,7 +265,7 @@ void ContainerManager::addItem(ItemUniqueId item_unique_id, int container_slot, 
   }
 }
 
-void ContainerManager::updateRootPosition(ItemUniqueId item_unique_id, const GamePosition& game_position)
+void ContainerManager::updateRootPosition(world::ItemUniqueId item_unique_id, const GamePosition& game_position)
 {
   // Note: this function should only be used when a container is moved to a non-container
   //       (e.g. inventory or world position)
@@ -327,7 +327,7 @@ Container* ContainerManager::getInnerContainer(Container* container, int contain
   return container;
 }
 
-void ContainerManager::createContainer(const Item* item, const GamePosition& game_position)
+void ContainerManager::createContainer(const world::Item* item, const GamePosition& game_position)
 {
   if (m_containers.count(item->getItemUniqueId()) == 1)
   {
@@ -341,7 +341,7 @@ void ContainerManager::createContainer(const Item* item, const GamePosition& gam
   if (game_position.isPosition() ||
       game_position.isInventory())
   {
-    container.parent_item_unique_id = Item::INVALID_UNIQUE_ID;
+    container.parent_item_unique_id = world::Item::INVALID_UNIQUE_ID;
     container.root_game_position = game_position;
   }
   else  // isContainer
@@ -360,7 +360,7 @@ void ContainerManager::createContainer(const Item* item, const GamePosition& gam
 }
 
 void ContainerManager::openContainer(PlayerCtrl* player_ctrl,
-                                     ItemUniqueId item_unique_id,
+                                     world::ItemUniqueId item_unique_id,
                                      int new_container_id)
 {
   LOG_DEBUG("%s: playerId: %d, item_unique_id: %d, new_container_id: %d",
@@ -370,7 +370,7 @@ void ContainerManager::openContainer(PlayerCtrl* player_ctrl,
             new_container_id);
 
   // Check if player already has a container open with this id
-  if (player_ctrl->getContainerIds()[new_container_id] != Item::INVALID_UNIQUE_ID)
+  if (player_ctrl->getContainerIds()[new_container_id] != world::Item::INVALID_UNIQUE_ID)
   {
     // Then remove player from that container's related_players
     removeRelatedPlayer(player_ctrl, player_ctrl->getContainerIds()[new_container_id]);
@@ -385,7 +385,7 @@ void ContainerManager::openContainer(PlayerCtrl* player_ctrl,
   player_ctrl->onOpenContainer(new_container_id, container, *container.item);
 }
 
-void ContainerManager::addRelatedPlayer(PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id)
+void ContainerManager::addRelatedPlayer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id)
 {
   auto* container = getContainer(item_unique_id);
   if (!container)
@@ -397,7 +397,7 @@ void ContainerManager::addRelatedPlayer(PlayerCtrl* player_ctrl, ItemUniqueId it
   container->related_players.emplace_back(player_ctrl);
 }
 
-void ContainerManager::removeRelatedPlayer(const PlayerCtrl* player_ctrl, ItemUniqueId item_unique_id)
+void ContainerManager::removeRelatedPlayer(const PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id)
 {
   auto* container = getContainer(item_unique_id);
   if (!container)

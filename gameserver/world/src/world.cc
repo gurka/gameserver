@@ -36,6 +36,9 @@
 #include "logger.h"
 #include "tick.h"
 
+namespace world
+{
+
 World::World(int world_size_x,
              int world_size_y,
              std::vector<Tile>&& tiles)
@@ -628,3 +631,5 @@ int World::getCreatureStackpos(const Position& position, CreatureId creature_id)
 
   return tile->getCreatureStackpos(creature_id);
 }
+
+}  // namespace world

@@ -31,6 +31,9 @@
 #include "creature.h"
 #include "item.h"
 
+namespace world
+{
+
 class Tile;
 class Position;
 
@@ -43,5 +46,7 @@ class WorldInterface
   virtual const Creature& getCreature(CreatureId creature_id) const = 0;
   virtual const Position& getCreaturePosition(CreatureId creature_id) const = 0;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_WORLD_INTERFACE_H_

@@ -27,6 +27,9 @@
 
 #include <string>
 
+namespace world
+{
+
 class Creature;
 class Position;
 class Tile;
@@ -74,5 +77,7 @@ class CreatureCtrl
   // Called when a Tile has been updated
   virtual void onTileUpdate(const Position& position) = 0;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_CREATURE_CTRL_H_

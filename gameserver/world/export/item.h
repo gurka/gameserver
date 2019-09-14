@@ -28,6 +28,9 @@
 #include <cstdint>
 #include <string>
 
+namespace world
+{
+
 using ItemUniqueId = std::uint64_t;
 using ItemTypeId = std::uint16_t;
 
@@ -91,5 +94,7 @@ class Item
     return !(*this == other);
   }
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_ITEM_H_

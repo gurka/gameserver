@@ -63,34 +63,34 @@ class GameEngine
             const std::string& data_filename,
             const std::string& items_filename,
             const std::string& world_filename);
-  const WorldInterface* getWorldInterface() const { return m_world.get(); }
+  const world::WorldInterface* getWorldInterface() const { return m_world.get(); }
 
   bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
-  void despawn(CreatureId creature_id);
+  void despawn(world::CreatureId creature_id);
 
-  void move(CreatureId creature_id, Direction direction);
-  void movePath(CreatureId creature_id, std::deque<Direction>&& path);
-  void cancelMove(CreatureId creature_id);
-  void turn(CreatureId creature_id, Direction direction);
+  void move(world::CreatureId creature_id, world::Direction direction);
+  void movePath(world::CreatureId creature_id, std::deque<world::Direction>&& path);
+  void cancelMove(world::CreatureId creature_id);
+  void turn(world::CreatureId creature_id, world::Direction direction);
 
-  void say(CreatureId creature_id,
+  void say(world::CreatureId creature_id,
            int type,
            const std::string& message,
            const std::string& receiver,
            int channel_id);
 
-  void moveItem(CreatureId creature_id, const ItemPosition& from_position, const GamePosition& to_position, int count);
-  void useItem(CreatureId creature_id, const ItemPosition& position, int new_container_id);
-  void lookAt(CreatureId creature_id, const ItemPosition& position);
+  void moveItem(world::CreatureId creature_id, const ItemPosition& from_position, const GamePosition& to_position, int count);
+  void useItem(world::CreatureId creature_id, const ItemPosition& position, int new_container_id);
+  void lookAt(world::CreatureId creature_id, const ItemPosition& position);
 
-  void closeContainer(CreatureId creature_id, ItemUniqueId item_unique_id);
-  void openParentContainer(CreatureId creature_id, ItemUniqueId item_unique_id, int new_container_id);
+  void closeContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id);
+  void openParentContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id, int new_container_id);
 
  private:
-  const Item* getItem(CreatureId creature_id, const ItemPosition& position);
-  bool canAddItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count);
-  void removeItem(CreatureId creature_id, const ItemPosition& position, int count);
-  void addItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count);
+  const world::Item* getItem(world::CreatureId creature_id, const ItemPosition& position);
+  bool canAddItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count);
+  void removeItem(world::CreatureId creature_id, const ItemPosition& position, int count);
+  void addItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count);
 
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
@@ -103,16 +103,16 @@ class GameEngine
 
     Player player;
     PlayerCtrl* player_ctrl;
-    std::deque<Direction> queued_moves;
+    std::deque<world::Direction> queued_moves;
   };
 
   // Use these instead of the unordered_map directly
-  PlayerData& getPlayerData(CreatureId creature_id) { return m_player_data.at(creature_id); }
-  const PlayerData& getPlayerData(CreatureId creature_id) const { return m_player_data.at(creature_id); }
+  PlayerData& getPlayerData(world::CreatureId creature_id) { return m_player_data.at(creature_id); }
+  const PlayerData& getPlayerData(world::CreatureId creature_id) const { return m_player_data.at(creature_id); }
 
-  std::unordered_map<CreatureId, PlayerData> m_player_data;
+  std::unordered_map<world::CreatureId, PlayerData> m_player_data;
   std::unique_ptr<ItemManager> m_item_manager;
-  std::unique_ptr<World> m_world;
+  std::unique_ptr<world::World> m_world;
   GameEngineQueue* m_game_engine_queue{nullptr};
   std::string m_login_message;
   std::unique_ptr<ContainerManager> m_container_manager;

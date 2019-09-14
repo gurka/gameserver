@@ -31,7 +31,7 @@
 namespace gameengine
 {
 
-bool Equipment::canAddItem(const Item& item, int inventory_slot) const
+bool Equipment::canAddItem(const world::Item& item, int inventory_slot) const
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -123,7 +123,7 @@ bool Equipment::canAddItem(const Item& item, int inventory_slot) const
   return false;
 }
 
-bool Equipment::addItem(const Item& item, int inventory_slot)
+bool Equipment::addItem(const world::Item& item, int inventory_slot)
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -140,7 +140,7 @@ bool Equipment::addItem(const Item& item, int inventory_slot)
   return true;
 }
 
-bool Equipment::removeItem(ItemTypeId item_type_id, int inventory_slot)
+bool Equipment::removeItem(world::ItemTypeId item_type_id, int inventory_slot)
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -157,7 +157,7 @@ bool Equipment::removeItem(ItemTypeId item_type_id, int inventory_slot)
   return true;
 }
 
-const Item* Equipment::getItem(int inventory_slot) const
+const world::Item* Equipment::getItem(int inventory_slot) const
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {

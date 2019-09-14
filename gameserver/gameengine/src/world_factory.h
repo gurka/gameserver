@@ -28,7 +28,10 @@
 #include <memory>
 #include <string>
 
+namespace world
+{
 class World;
+}
 
 namespace gameengine
 {
@@ -38,8 +41,8 @@ class ItemManager;
 class WorldFactory
 {
  public:
-  static std::unique_ptr<World> createWorld(const std::string& world_filename,
-                                            ItemManager* item_manager);
+  static std::unique_ptr<world::World> createWorld(const std::string& world_filename,
+                                                   ItemManager* item_manager);
 };
 
 }  // namespace gameengine

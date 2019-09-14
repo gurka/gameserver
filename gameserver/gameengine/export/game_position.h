@@ -42,7 +42,7 @@ class GamePosition
   {
   }
 
-  explicit GamePosition(const Position& position)
+  explicit GamePosition(const world::Position& position)
     : m_type(Type::POSITION),
       position(position)
   {
@@ -54,7 +54,7 @@ class GamePosition
   {
   }
 
-  GamePosition(ItemUniqueId item_unique_id, int container_slot)
+  GamePosition(world::ItemUniqueId item_unique_id, int container_slot)
     : m_type(Type::CONTAINER),
       m_container{item_unique_id, container_slot}
   {
@@ -102,13 +102,13 @@ class GamePosition
   bool isValid() const { return m_type != Type::INVALID; }
 
   bool isPosition() const { return m_type == Type::POSITION; }
-  const Position& getPosition() const { return position; }
+  const world::Position& getPosition() const { return position; }
 
   bool isInventory() const { return m_type == Type::INVENTORY; }
   int getInventorySlot() const { return inventory_slot; }
 
   bool isContainer() const { return m_type == Type::CONTAINER; }
-  ItemUniqueId getItemUniqueId() const { return m_container.item_unique_id; }
+  world::ItemUniqueId getItemUniqueId() const { return m_container.item_unique_id; }
   int getContainerSlot() const { return m_container.slot; }
 
  private:
@@ -122,11 +122,11 @@ class GamePosition
 
   union
   {
-    Position position;
+    world::Position position;
     int inventory_slot;
     struct
     {
-      ItemUniqueId item_unique_id;
+      world::ItemUniqueId item_unique_id;
       int slot;
     } m_container;
   };
@@ -141,13 +141,13 @@ class ItemPosition
   }
 
   // TODO(simon): stackpos is only used for GamePosition Type::POSITION, or??
-  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id)
+  ItemPosition(const GamePosition& game_position, world::ItemTypeId item_type_id)
     : m_game_position(game_position),
       m_item_type_id(item_type_id)
   {
   }
 
-  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id, int stackpos)
+  ItemPosition(const GamePosition& game_position, world::ItemTypeId item_type_id, int stackpos)
     : m_game_position(game_position),
       m_item_type_id(item_type_id),
       m_stackpos(stackpos)
@@ -172,12 +172,12 @@ class ItemPosition
   }
 
   const GamePosition& getGamePosition() const { return m_game_position; }
-  ItemTypeId getItemTypeId() const { return m_item_type_id; }
+  world::ItemTypeId getItemTypeId() const { return m_item_type_id; }
   int getStackPosition() const { return m_stackpos; }
 
  private:
   GamePosition m_game_position;
-  ItemTypeId m_item_type_id{0};
+  world::ItemTypeId m_item_type_id{0};
   int m_stackpos{0};
 };
 

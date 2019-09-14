@@ -37,6 +37,9 @@
 #include "tile.h"
 #include "position.h"
 
+namespace world
+{
+
 class World : public WorldInterface
 {
  public:
@@ -129,5 +132,7 @@ class World : public WorldInterface
   };
   std::unordered_map<CreatureId, CreatureData> m_creature_data;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_WORLD_H_

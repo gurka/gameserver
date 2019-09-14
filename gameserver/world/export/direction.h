@@ -27,6 +27,9 @@
 
 #include <cstdint>
 
+namespace world
+{
+
 enum class Direction
 {
   NORTH = 0,
@@ -34,5 +37,7 @@ enum class Direction
   SOUTH = 2,
   WEST  = 3
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_DIRECTION_H_
