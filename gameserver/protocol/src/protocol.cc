@@ -57,7 +57,7 @@ Protocol::Protocol(std::function<void(void)> close_protocol,
                    std::unique_ptr<Connection>&& connection,
                    const WorldInterface* world_interface,
                    GameEngineQueue* game_engine_queue,
-                   AccountReader* account_reader)
+                   account::AccountReader* account_reader)
   : m_close_protocol(std::move(close_protocol)),
     m_connection(std::move(connection)),
     m_world_interface(world_interface),

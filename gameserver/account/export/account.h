@@ -30,6 +30,9 @@
 #include <string>
 #include <unordered_map>
 
+namespace account
+{
+
 struct Character
 {
   std::string name;
@@ -70,5 +73,7 @@ class AccountReader
   std::unordered_map<int, std::string> m_passwords;
   std::unordered_map<std::string, int> m_char_to_acc_num;
 };
+
+}  // namespace account
 
 #endif  // ACCOUNT_EXPORT_ACCOUNT_H_

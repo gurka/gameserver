@@ -44,7 +44,7 @@
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<AccountReader> account_reader;
+static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<Server> server;
 
 // Due to "Static/global string variables are not permitted."
@@ -216,7 +216,7 @@ int main()
   boost::asio::io_context io_context;
 
   // Create and load AccountReader
-  account_reader = std::make_unique<AccountReader>();
+  account_reader = std::make_unique<account::AccountReader>();
   if (!account_reader->loadFile(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());

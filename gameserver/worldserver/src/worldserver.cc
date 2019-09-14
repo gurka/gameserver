@@ -52,7 +52,7 @@
 // static things (like Logger) gets deallocated
 static std::unique_ptr<GameEngineQueue> game_engine_queue;
 static std::unique_ptr<GameEngine> game_engine;
-static std::unique_ptr<AccountReader> account_reader;
+static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<Server> server;
 
 using ProtocolId = int;
@@ -155,7 +155,7 @@ int main()
   }
 
   // Create and load AccountReader
-  account_reader = std::make_unique<AccountReader>();
+  account_reader = std::make_unique<account::AccountReader>();
   if (!account_reader->loadFile(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());

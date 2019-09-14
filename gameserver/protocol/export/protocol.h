@@ -45,7 +45,10 @@ class Connection;
 class IncomingPacket;
 class OutgoingPacket;
 class GameEngineQueue;
+namespace account
+{
 class AccountReader;
+}
 class WorldInterface;
 
 class Protocol : public PlayerCtrl
@@ -55,7 +58,7 @@ class Protocol : public PlayerCtrl
            std::unique_ptr<Connection>&& connection,
            const WorldInterface* world_interface,
            GameEngineQueue* game_engine_queue,
-           AccountReader* account_reader);
+           account::AccountReader* account_reader);
 
   // Delete copy constructors
   Protocol(const Protocol&) = delete;
@@ -133,7 +136,7 @@ class Protocol : public PlayerCtrl
   std::unique_ptr<Connection> m_connection;
   const WorldInterface* m_world_interface;
   GameEngineQueue* m_game_engine_queue;
-  AccountReader* m_account_reader;
+  account::AccountReader* m_account_reader;
 
   CreatureId m_player_id;
 
