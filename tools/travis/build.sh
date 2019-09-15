@@ -11,6 +11,12 @@ pushd build/debug
 make || STATUS=1
 popd
 
+# Build debug-fast
+tools/cmake.sh debug-fast
+pushd build/debug-fast
+make || STATUS=1
+popd
+
 # Build release
 tools/cmake.sh release
 pushd build/release

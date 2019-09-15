@@ -2,25 +2,25 @@ cmake_minimum_required(VERSION 3.12)
 
 project(gameserver)
 
-# -- Options --
-option(GAMESERVER_USE_LD_GOLD "Pass -fuse-ld=gold to compiler" OFF)
-option(GAMESERVER_USE_ASAN "Compile with ASAN" OFF)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
 
-if(GAMESERVER_USE_LD_GOLD)
+# -- Options --
+option(GAMESERVER_DEBUG_FULL "Compile with ASAN and clang-tidy" OFF)
+
+if(GAMESERVER_DEBUG_FULL)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
+  set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
+endif()
+
+# Use ld.gold if available
+find_program(LD_GOLD "ld.gold")
+if(LD_GOLD)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
 endif()
-
-if(GAMESERVER_USE_ASAN)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
-endif()
-
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
 
 # -- Binaries --
 add_subdirectory("loginserver")

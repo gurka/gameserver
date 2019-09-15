@@ -17,43 +17,33 @@ function release {
 function debug {
   mkdir -p "$BUILD_DIR/debug"
   pushd "$BUILD_DIR/debug"
+  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_DEBUG_FULL=ON
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+function debug-fast {
+  mkdir -p "$BUILD_DIR/debug-fast"
+  pushd "$BUILD_DIR/debug-fast"
   cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug
   ln -sf "$DATA_DIR" data
   popd
 }
 
-# Same as debug, but with ASAN
-function debug_asan {
-  mkdir -p "$BUILD_DIR/debug_asan"
-  pushd "$BUILD_DIR/debug_asan"
-  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON
-  ln -sf "$DATA_DIR" data
-  popd
-}
-
-# Same as debug, but with ld=gold for travis
-function travis_debug {
-  mkdir -p "$BUILD_DIR/travis_debug"
-  pushd "$BUILD_DIR/travis_debug"
-  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_LD_GOLD=ON
-  ln -sf "$DATA_DIR" data
-  popd
-}
-
-# Same as debug_asan, but with ld=gold for travis
-function travis_debug_asan {
-  mkdir -p "$BUILD_DIR/travis_debug_asan"
-  pushd "$BUILD_DIR/travis_debug_asan"
-  cmake "$GAMESERVER_DIR" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DGAMESERVER_USE_LD_GOLD=ON
-  ln -sf "$DATA_DIR" data
-  popd
-}
-
-# Same as debug_asan, but for Eclipse CDT
+# Same as debug, but for Eclipse CDT
 function eclipse {
   mkdir -p "$BUILD_DIR/eclipse"
   pushd "$BUILD_DIR/eclipse"
-  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_USE_ASAN=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_DEBUG_FULL=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
+  ln -sf "$DATA_DIR" data
+  popd
+}
+
+# Same as debug-fast, but for Eclipse CDT
+function eclipse-fast {
+  mkdir -p "$BUILD_DIR/eclipse-fast"
+  pushd "$BUILD_DIR/eclipse-fast"
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
   ln -sf "$DATA_DIR" data
   popd
 }
@@ -62,9 +52,7 @@ case $1 in
   'all')
     release
     debug
-    debug_asan
-    travis_debug
-    travis_debug_asan
+    debug-fast
     eclipse
     ;;
 
@@ -76,23 +64,19 @@ case $1 in
     debug
     ;;
 
-  'debug_asan')
-    debug_asan
-    ;;
-
-  'travis_debug')
-    travis_debug
-    ;;
-
-  'travis_debug_asan')
-    travis_debug_asan
+  'debug-fast')
+    debug-fast
     ;;
 
   'eclipse')
     eclipse
     ;;
 
+  'eclipse-fast')
+    eclipse-fast
+    ;;
+
   *)
-    echo "Usage: $0 [all | release | debug | debug_asan | travis_debug | travis_debug_asan | eclipse]"
+    echo "Usage: $0 [all | release | debug | debug-fast | eclipse | eclipse-fast]"
     ;;
 esac
