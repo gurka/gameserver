@@ -45,7 +45,7 @@
 #include "game_engine_queue.h"
 
 // worldserver
-#include "protocol.h"
+#include "connection_ctrl.h"
 
 
 // We need to use unique_ptr, so that we can deallocate everything before
@@ -55,32 +55,33 @@ static std::unique_ptr<gameengine::GameEngine> game_engine;
 static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<network::Server> server;
 
-using ProtocolId = int;
-static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
+using ConnectionId = int;
+static std::unordered_map<ConnectionId, std::unique_ptr<ConnectionCtrl>> connections;
 
 void onClientConnected(std::unique_ptr<network::Connection>&& connection)
 {
-  static ProtocolId next_protocol_id = 0;
+  static ConnectionId next_connection_id = 0;
 
-  const auto protocol_id = next_protocol_id;
-  next_protocol_id += 1;
+  const auto connection_id = next_connection_id;
+  next_connection_id += 1;
 
-  LOG_DEBUG("%s: protocol_id: %d", __func__, protocol_id);
+  LOG_DEBUG("%s: connection_id: %d", __func__, connection_id);
 
   // Create and store Protocol for this Connection
-  auto protocol = std::make_unique<Protocol>([protocol_id]()
-                                             {
-                                               LOG_DEBUG("onCloseProtocol: protocol_id: %d", protocol_id);
-                                               protocols.erase(protocol_id);
-                                             },
-                                             std::move(connection),
-                                             game_engine->getWorld(),
-                                             game_engine_queue.get(),
-                                             account_reader.get());
+  const auto on_close = [connection_id]()
+  {
+    LOG_DEBUG("onCloseProtocol: protocol_id: %d", connection_id);
+    connections.erase(connection_id);
+  };
+  auto connection_ctrl = std::make_unique<ConnectionCtrl>(on_close,
+                                                          std::move(connection),
+                                                          game_engine->getWorld(),
+                                                          game_engine_queue.get(),
+                                                          account_reader.get());
 
-  protocols.emplace(std::piecewise_construct,
-                    std::forward_as_tuple(protocol_id),
-                    std::forward_as_tuple(std::move(protocol)));
+  connections.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(connection_id),
+                      std::forward_as_tuple(std::move(connection_ctrl)));
 }
 
 int main()
@@ -182,7 +183,7 @@ int main()
   LOG_INFO("Stopping WorldServer!");
 
   // Deallocate things (in reverse order of construction)
-  protocols.clear();
+  connections.clear();
   server.reset();
   account_reader.reset();
   game_engine.reset();

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef PROTOCOL_EXPORT_PROTOCOL_H_
-#define PROTOCOL_EXPORT_PROTOCOL_H_
+#ifndef WORLDSERVER_SRC_CONNECTION_CTRL_H_
+#define WORLDSERVER_SRC_CONNECTION_CTRL_H_
 
 #include <array>
 #include <functional>
@@ -62,18 +62,18 @@ namespace world
 class World;
 }
 
-class Protocol : public gameengine::PlayerCtrl
+class ConnectionCtrl : public gameengine::PlayerCtrl
 {
  public:
-  Protocol(std::function<void(void)> close_protocol,
-           std::unique_ptr<network::Connection>&& connection,
-           const world::World* world,
-           gameengine::GameEngineQueue* game_engine_queue,
-           account::AccountReader* account_reader);
+  ConnectionCtrl(std::function<void(void)> close_protocol,
+                 std::unique_ptr<network::Connection>&& connection,
+                 const world::World* world,
+                 gameengine::GameEngineQueue* game_engine_queue,
+                 account::AccountReader* account_reader);
 
   // Delete copy constructors
-  Protocol(const Protocol&) = delete;
-  Protocol& operator=(const Protocol&) = delete;
+  ConnectionCtrl(const ConnectionCtrl&) = delete;
+  ConnectionCtrl& operator=(const ConnectionCtrl&) = delete;
 
   // Called by World (from CreatureCtrl)
   void onCreatureSpawn(const world::Creature& creature,
@@ -159,4 +159,4 @@ class Protocol : public gameengine::PlayerCtrl
   std::array<world::ItemUniqueId, 64> m_container_ids;
 };
 
-#endif  // PROTOCOL_EXPORT_PROTOCOL_H_
+#endif  // WORLDSERVER_SRC_CONNECTION_CTRL_H_
