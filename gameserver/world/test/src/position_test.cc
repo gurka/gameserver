@@ -33,9 +33,7 @@ namespace world
 
 TEST(PositionTest, Constructor)
 {
-  Position position;
-
-  position = Position(0, 0, 0);
+  auto position = Position(0, 0, 0);
   ASSERT_EQ(position.getX(), 0);
   ASSERT_EQ(position.getY(), 0);
   ASSERT_EQ(position.getZ(), 0);
@@ -44,11 +42,6 @@ TEST(PositionTest, Constructor)
   ASSERT_EQ(position.getX(), 1);
   ASSERT_EQ(position.getY(), 2);
   ASSERT_EQ(position.getZ(), 3);
-
-  position = Position();
-  ASSERT_EQ(position.getX(), Position::INVALID.getX());
-  ASSERT_EQ(position.getY(), Position::INVALID.getY());
-  ASSERT_EQ(position.getZ(), Position::INVALID.getZ());
 }
 
 TEST(PositionTest, Equals)

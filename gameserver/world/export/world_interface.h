@@ -42,9 +42,9 @@ class WorldInterface
  public:
   virtual ~WorldInterface() = default;
 
+  // TODO(simon): can we get rid of these and then get rid of WorldInterface?
   virtual const Tile* getTile(const Position& position) const = 0;
-  virtual const Creature& getCreature(CreatureId creature_id) const = 0;
-  virtual const Position& getCreaturePosition(CreatureId creature_id) const = 0;
+  virtual const Position* getCreaturePosition(CreatureId creature_id) const = 0;
 };
 
 }  // namespace world

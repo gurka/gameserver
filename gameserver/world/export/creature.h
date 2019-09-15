@@ -48,9 +48,8 @@ struct Outfit
 class Creature
 {
  public:
-  static const Creature INVALID;
+  static constexpr CreatureId INVALID_ID = 0U;
 
-  Creature();
   explicit Creature(std::string name);
   virtual ~Creature() = default;
 
@@ -84,7 +83,6 @@ class Creature
   std::int64_t getNextWalkTick() const { return m_next_walk_tick; }
   void setNextWalkTick(std::int64_t tick) { m_next_walk_tick = tick; }
 
-  static const CreatureId INVALID_ID;
   static int getFreeCreatureId() { return Creature::next_creature_id++; }
 
  private:

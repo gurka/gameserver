@@ -40,24 +40,24 @@
 namespace world
 {
 
+static constexpr int POSITION_OFFSET = 192;
+
+enum class ReturnCode
+{
+  OK,
+  INVALID_CREATURE,
+  INVALID_POSITION,
+  ITEM_NOT_FOUND,
+  CANNOT_MOVE_THAT_OBJECT,
+  CANNOT_REACH_THAT_OBJECT,
+  THERE_IS_NO_ROOM,
+  MAY_NOT_MOVE_YET,
+  OTHER_ERROR,
+};
+
 class World : public WorldInterface
 {
  public:
-  static constexpr int POSITION_OFFSET = 192;
-
-  enum class ReturnCode
-  {
-    OK,
-    INVALID_CREATURE,
-    INVALID_POSITION,
-    ITEM_NOT_FOUND,
-    CANNOT_MOVE_THAT_OBJECT,
-    CANNOT_REACH_THAT_OBJECT,
-    THERE_IS_NO_ROOM,
-    MAY_NOT_MOVE_YET,
-    OTHER_ERROR,
-  };
-
   World(int world_size_x,
         int world_size_y,
         std::vector<Tile>&& tiles);
@@ -93,13 +93,12 @@ class World : public WorldInterface
 
   // WorldInterface
   const Tile* getTile(const Position& position) const override;
-  const Creature& getCreature(CreatureId creature_id) const override;
-  const Position& getCreaturePosition(CreatureId creature_id) const override;
+  const Position* getCreaturePosition(CreatureId creature_id) const override;
 
  private:
   // Functions to use instead of accessing the containers directly
   Tile* getTile(const Position& position);
-  Creature& getCreature(CreatureId creature_id);
+  Creature* getCreature(CreatureId creature_id);
   CreatureCtrl& getCreatureCtrl(CreatureId creature_id);
 
   // Helper functions

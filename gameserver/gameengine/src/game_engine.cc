@@ -127,7 +127,7 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 
   // Spawn the player
   auto rc = m_world->addCreature(&player, player_ctrl, world::Position(208, 208, 7));
-  if (rc != world::World::ReturnCode::OK)
+  if (rc != world::ReturnCode::OK)
   {
     LOG_DEBUG("%s: could not spawn player", __func__);
     m_container_manager->playerDespawn(player_ctrl);
@@ -165,19 +165,19 @@ void GameEngine::move(world::CreatureId creature_id, world::Direction direction)
   auto* player_ctrl = getPlayerData(creature_id).player_ctrl;
 
   auto rc = m_world->creatureMove(creature_id, direction);
-  if (rc == world::World::ReturnCode::MAY_NOT_MOVE_YET)
+  if (rc == world::ReturnCode::MAY_NOT_MOVE_YET)
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creature_id);
-    const auto& creature = static_cast<const world::World*>(m_world.get())->getCreature(creature_id);
+    const auto tick = getPlayerData(creature_id).player.getNextWalkTick() - utils::Tick::now();
     m_game_engine_queue->addTask(creature_id,
-                              creature.getNextWalkTick() - utils::Tick::now(),
-                              [this, creature_id, direction](GameEngine* game_engine)
+                                 tick,
+                                 [this, creature_id, direction](GameEngine* game_engine)
     {
       (void)game_engine;
       move(creature_id, direction);
     });
   }
-  else if (rc == world::World::ReturnCode::THERE_IS_NO_ROOM)
+  else if (rc == world::ReturnCode::THERE_IS_NO_ROOM)
   {
     player_ctrl->sendCancel("There is no room.");
   }
@@ -198,12 +198,12 @@ void GameEngine::movePath(world::CreatureId creature_id, std::deque<world::Direc
     {
       const auto rc = m_world->creatureMove(creature_id, player_data.queued_moves.front());
 
-      if (rc == world::World::ReturnCode::OK)
+      if (rc == world::ReturnCode::OK)
       {
         // Player moved, pop the move from the queue
         player_data.queued_moves.pop_front();
       }
-      else if (rc != world::World::ReturnCode::MAY_NOT_MOVE_YET)
+      else if (rc != world::ReturnCode::MAY_NOT_MOVE_YET)
       {
         // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
         cancelMove(creature_id);
@@ -280,20 +280,23 @@ void GameEngine::say(world::CreatureId creature_id,
     // Check commands
     if (command == "debug" || command == "debugf")
     {
-      // Different position for debug / debugf
-      world::Position position;
+      const auto* tmp_position = m_world->getCreaturePosition(creature_id);
+      if (!tmp_position)
+      {
+        player_data.player_ctrl->sendTextMessage(0x13, "Invalid position");
+        return;
+      }
 
-      // Show debug info for a tile
-      if (command == "debug")
+      const auto position = [&player_data, &command, &tmp_position]()
       {
-        // Show debug information on player tile
-        position = m_world->getCreaturePosition(creature_id);
-      }
-      else if (command == "debugf")
-      {
-        // Show debug information on tile in front of player
-        position = m_world->getCreaturePosition(creature_id).addDirection(player_data.player.getDirection());
-      }
+        if (command == "debug")
+        {
+          return *tmp_position;
+        }
+
+        // if (command == "debugf")
+        return tmp_position->addDirection(player_data.player.getDirection());
+      }();
 
       const auto* tile = static_cast<const world::World*>(m_world.get())->getTile(position);
 

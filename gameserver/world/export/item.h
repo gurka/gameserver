@@ -39,16 +39,16 @@ struct ItemType
   ItemTypeId id     = 0;
 
   // Loaded from data file
-  bool ground       = false;
-  int  speed        = 0;
-  bool is_blocking   = false;
+  bool ground         = false;
+  int  speed          = 0;
+  bool is_blocking    = false;
   bool always_on_top  = false;
-  bool is_container  = false;
-  bool is_stackable  = false;
-  bool is_usable     = false;
-  bool is_multitype  = false;
+  bool is_container   = false;
+  bool is_stackable   = false;
+  bool is_usable      = false;
+  bool is_multitype   = false;
   bool is_not_movable = false;
-  bool is_equipable  = false;
+  bool is_equipable   = false;
 
   // Loaded from xml file
   std::string name      = "";
@@ -74,7 +74,7 @@ class Item
  public:
   static constexpr ItemUniqueId INVALID_UNIQUE_ID = 0U;
 
-  ~Item() = default;
+  virtual ~Item() = default;
 
   virtual ItemUniqueId getItemUniqueId() const = 0;
   virtual ItemTypeId getItemTypeId() const = 0;

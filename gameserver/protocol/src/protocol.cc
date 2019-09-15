@@ -165,9 +165,15 @@ void Protocol::onCreatureMove(const world::Creature& creature,
   // Build outgoing packet
   network::OutgoingPacket packet;
 
-  const auto& player_position = m_world_interface->getCreaturePosition(m_player_id);
-  bool can_see_old_pos = canSee(player_position, old_position);
-  bool can_see_new_pos = canSee(player_position, new_position);
+  const auto* player_position = m_world_interface->getCreaturePosition(m_player_id);
+  if (!player_position)
+  {
+    LOG_ERROR("%s: invalid player_position", __func__);
+    return;
+  }
+
+  bool can_see_old_pos = canSee(*player_position, old_position);
+  bool can_see_new_pos = canSee(*player_position, new_position);
 
   if (can_see_old_pos && can_see_new_pos)
   {
@@ -186,7 +192,7 @@ void Protocol::onCreatureMove(const world::Creature& creature,
     LOG_ERROR("%s: called, but this player cannot see neither old_position nor new_position: "
               "player_position: %s, old_position: %s, new_position: %s",
               __func__,
-              player_position.toString().c_str(),
+              player_position->toString().c_str(),
               old_position.toString().c_str(),
               new_position.toString().c_str());
     disconnect();

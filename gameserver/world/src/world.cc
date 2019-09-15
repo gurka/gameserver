@@ -50,7 +50,7 @@ World::World(int world_size_x,
 
 World::~World() = default;
 
-World::ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position)
+ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position)
 {
   auto creature_id = creature->getCreatureId();
 
@@ -141,17 +141,32 @@ void World::removeCreature(CreatureId creature_id)
     return;
   }
 
-  const auto& creature = getCreature(creature_id);
-  const auto& position = getCreaturePosition(creature_id);
-  auto* tile = getTile(position);
-  const auto stackpos = getCreatureStackpos(position, creature_id);
+  const auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: invalid creature id: %u", __func__, creature_id);
+    return;
+  }
+  const auto* position = getCreaturePosition(creature_id);
+  if (!position)
+  {
+    LOG_ERROR("%s: invalid creature position", __func__);
+    return;
+  }
+  auto* tile = getTile(*position);
+  if (!tile)
+  {
+    LOG_ERROR("%s: invalid tile", __func__);
+    return;
+  }
+  const auto stackpos = getCreatureStackpos(*position, creature_id);
 
   // Tell near creatures that a creature has despawned
   // Including the despawning creature!
-  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(*position);
   for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(near_creature_id).onCreatureDespawn(creature, position, stackpos);
+    getCreatureCtrl(near_creature_id).onCreatureDespawn(*creature, *position, stackpos);
   }
 
   m_creature_data.erase(creature_id);
@@ -163,12 +178,18 @@ bool World::creatureExists(CreatureId creature_id) const
   return creature_id != Creature::INVALID_ID && m_creature_data.count(creature_id) == 1;
 }
 
-World::ReturnCode World::creatureMove(CreatureId creature_id, Direction direction)
+ReturnCode World::creatureMove(CreatureId creature_id, Direction direction)
 {
-  return creatureMove(creature_id, getCreaturePosition(creature_id).addDirection(direction));
+  const auto* position = getCreaturePosition(creature_id);
+  if (!position)
+  {
+    LOG_ERROR("%s: invalid position", __func__);
+    return ReturnCode::INVALID_POSITION;
+  }
+  return creatureMove(creature_id, position->addDirection(direction));
 }
 
-World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_position)
+ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_position)
 {
   if (!creatureExists(creature_id))
   {
@@ -184,16 +205,21 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
   }
 
   // Get Creature
-  auto& creature = getCreature(creature_id);
+  auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: invalid creature id: %u", __func__, creature_id);
+    return ReturnCode::INVALID_CREATURE;
+  }
 
   // Check if Creature may move at this time
   auto current_tick = utils::Tick::now();
-  if (creature.getNextWalkTick() > current_tick)
+  if (creature->getNextWalkTick() > current_tick)
   {
     LOG_DEBUG("%s: current_tick = %d nextWalkTick = %d => MAY_NOT_MOVE_YET",
               __func__,
               current_tick,
-              creature.getNextWalkTick());
+              creature->getNextWalkTick());
     return ReturnCode::MAY_NOT_MOVE_YET;
   }
 
@@ -205,17 +231,24 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
   }
 
   // Move the actual creature
-  auto from_position = getCreaturePosition(creature_id);  // Need to create a new Position here (i.e. not auto&)
+  const auto* tmp_position = getCreaturePosition(creature_id);
+  if (!tmp_position)
+  {
+    LOG_ERROR("%s: invalid position", __func__);
+    return ReturnCode::INVALID_POSITION;
+  }
+  // Copy the old position
+  const auto from_position = *tmp_position;
   auto* from_tile = getTile(from_position);
   auto from_stackpos = getCreatureStackpos(from_position, creature_id);
   from_tile->removeThing(from_stackpos);
 
-  to_tile->addThing(&creature);
+  to_tile->addThing(creature);
   m_creature_data.at(creature_id).position = to_position;
 
   // Set new nextWalkTime for this Creature
   auto ground_speed = from_tile->getItem(0)->getItemType().speed;
-  auto creature_speed = creature.getSpeed();
+  auto creature_speed = creature->getSpeed();
   auto duration = (1000 * ground_speed) / creature_speed;
 
   // Walking diagonally?
@@ -226,24 +259,24 @@ World::ReturnCode World::creatureMove(CreatureId creature_id, const Position& to
     duration *= 2;
   }
 
-  creature.setNextWalkTick(current_tick + duration);
+  creature->setNextWalkTick(current_tick + duration);
 
   // Update direction
   if (from_position.getY() > to_position.getY())
   {
-    creature.setDirection(Direction::NORTH);
+    creature->setDirection(Direction::NORTH);
   }
   else if (from_position.getY() < to_position.getY())
   {
-    creature.setDirection(Direction::SOUTH);
+    creature->setDirection(Direction::SOUTH);
   }
   if (from_position.getX() > to_position.getX())
   {
-    creature.setDirection(Direction::WEST);
+    creature->setDirection(Direction::WEST);
   }
   else if (from_position.getX() < to_position.getX())
   {
-    creature.setDirection(Direction::EAST);
+    creature->setDirection(Direction::EAST);
   }
 
   // Call onCreatureMove on all creatures that can see the movement
@@ -301,17 +334,27 @@ void World::creatureTurn(CreatureId creature_id, Direction direction)
     return;
   }
 
-  auto& creature = getCreature(creature_id);
-  creature.setDirection(direction);
+  auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: invalid creature id: %u", __func__, creature_id);
+    return;
+  }
+  creature->setDirection(direction);
 
   // Call onCreatureTurn on all creatures that can see the turn
   // including the turning creature itself
-  const auto& position = getCreaturePosition(creature_id);
-  const auto stackpos = getCreatureStackpos(position, creature_id);
-  const auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  const auto* position = getCreaturePosition(creature_id);
+  if (!position)
+  {
+    LOG_ERROR("%s: invalid position", __func__);
+    return;
+  }
+  const auto stackpos = getCreatureStackpos(*position, creature_id);
+  const auto near_creature_ids = getCreatureIdsThatCanSeePosition(*position);
   for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(near_creature_id).onCreatureTurn(creature, position, stackpos);
+    getCreatureCtrl(near_creature_id).onCreatureTurn(*creature, *position, stackpos);
   }
 }
 
@@ -323,12 +366,22 @@ void World::creatureSay(CreatureId creature_id, const std::string& message)
     return;
   }
 
-  const auto& creature = getCreature(creature_id);
-  const auto& position = getCreaturePosition(creature_id);
-  auto near_creature_ids = getCreatureIdsThatCanSeePosition(position);
+  const auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: invalid creature id: %u", __func__, creature_id);
+    return;
+  }
+  const auto* position = getCreaturePosition(creature_id);
+  if (!position)
+  {
+    LOG_ERROR("%s: invalid position", __func__);
+    return;
+  }
+  auto near_creature_ids = getCreatureIdsThatCanSeePosition(*position);
   for (const auto& near_creature_id : near_creature_ids)
   {
-    getCreatureCtrl(near_creature_id).onCreatureSay(creature, position, message);
+    getCreatureCtrl(near_creature_id).onCreatureSay(*creature, *position, message);
   }
 }
 
@@ -347,7 +400,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
   return !tile->isBlocking();
 }
 
-World::ReturnCode World::addItem(const Item& item, const Position& position)
+ReturnCode World::addItem(const Item& item, const Position& position)
 {
   auto* tile = getTile(position);
   if (!tile)
@@ -369,7 +422,7 @@ World::ReturnCode World::addItem(const Item& item, const Position& position)
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos)
+ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos)
 {
   // TODO(simon): implement count
   (void)count;
@@ -419,7 +472,7 @@ World::ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Po
   return ReturnCode::OK;
 }
 
-World::ReturnCode World::moveItem(CreatureId creature_id,
+ReturnCode World::moveItem(CreatureId creature_id,
                                   const Position& from_position,
                                   int from_stackpos,
                                   ItemTypeId item_type_id,
@@ -457,10 +510,15 @@ World::ReturnCode World::moveItem(CreatureId creature_id,
   }
 
   // Only allow move if the player is standing at or 1 sqm near the item
-  const auto& position = getCreaturePosition(creature_id);
-  if (std::abs(position.getX() - from_position.getX()) > 1 ||
-      std::abs(position.getY() - from_position.getY()) > 1 ||
-      position.getZ() != from_position.getZ())
+  const auto* position = getCreaturePosition(creature_id);
+  if (!position)
+  {
+    LOG_ERROR("%s: invalid position", __func__);
+    return ReturnCode::INVALID_POSITION;
+  }
+  if (std::abs(position->getX() - from_position.getX()) > 1 ||
+      std::abs(position->getY() - from_position.getY()) > 1 ||
+      position->getZ() != from_position.getZ())
   {
     LOG_DEBUG("%s: player is too far away", __func__);
     return ReturnCode::CANNOT_REACH_THAT_OBJECT;
@@ -531,10 +589,11 @@ bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position)
 
 bool World::creatureCanReach(CreatureId creature_id, const Position& position) const
 {
-  const auto& creature_position = getCreaturePosition(creature_id);
-  return !(std::abs(creature_position.getX() - position.getX()) > 1 ||
-           std::abs(creature_position.getY() - position.getY()) > 1 ||
-           creature_position.getZ() != position.getZ());
+  const auto* creature_position = getCreaturePosition(creature_id);
+  return creature_position &&  // NOLINT readability-implicit-bool-conversion
+         !(std::abs(creature_position->getX() - position.getX()) > 1 ||
+           std::abs(creature_position->getY() - position.getY()) > 1 ||
+           creature_position->getZ() != position.getZ());
 }
 
 const Tile* World::getTile(const Position& position) const
@@ -553,24 +612,14 @@ const Tile* World::getTile(const Position& position) const
   return &m_tiles[index];
 }
 
-const Creature& World::getCreature(CreatureId creature_id) const
-{
-  if (!creatureExists(creature_id))
-  {
-    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creature_id);
-    return Creature::INVALID;
-  }
-  return *(m_creature_data.at(creature_id).creature);
-}
-
-const Position& World::getCreaturePosition(CreatureId creature_id) const
+const Position* World::getCreaturePosition(CreatureId creature_id) const
 {
   if (!creatureExists(creature_id))
   {
     LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
-    return Position::INVALID;
+    return nullptr;
   }
-  return m_creature_data.at(creature_id).position;
+  return &(m_creature_data.at(creature_id).position);
 }
 
 Tile* World::getTile(const Position& position)
@@ -580,11 +629,14 @@ Tile* World::getTile(const Position& position)
   return const_cast<Tile*>(tile);
 }
 
-Creature& World::getCreature(CreatureId creature_id)
+Creature* World::getCreature(CreatureId creature_id)
 {
-  // According to https://stackoverflow.com/a/123995/969365
-  const auto& creature = static_cast<const World*>(this)->getCreature(creature_id);
-  return const_cast<Creature&>(creature);
+  if (!creatureExists(creature_id))
+  {
+    LOG_ERROR("%s: called with non-existent CreatureId: %d", __func__, creature_id);
+    return nullptr;
+  }
+  return m_creature_data.at(creature_id).creature;
 }
 
 CreatureCtrl& World::getCreatureCtrl(CreatureId creature_id)

@@ -88,9 +88,9 @@ std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world
   std::vector<world::Tile> tiles;
   tiles.reserve(world_size_x * world_size_y);
   const auto* tile_node = map_node->first_node();
-  for (int y = world::World::POSITION_OFFSET; y < world::World::POSITION_OFFSET + world_size_y; y++)
+  for (int y = world::POSITION_OFFSET; y < world::POSITION_OFFSET + world_size_y; y++)
   {
-    for (int x = world::World::POSITION_OFFSET; x < world::World::POSITION_OFFSET + world_size_x; x++)
+    for (int x = world::POSITION_OFFSET; x < world::POSITION_OFFSET + world_size_x; x++)
     {
       if (tile_node == nullptr)
       {

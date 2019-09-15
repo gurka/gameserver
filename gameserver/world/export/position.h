@@ -36,9 +36,6 @@ namespace world
 class Position
 {
  public:
-  static const Position INVALID;
-
-  Position() = default;
   Position(std::uint16_t x, std::uint16_t y, std::uint8_t z);
 
   bool operator==(const Position& other) const;
