@@ -516,7 +516,6 @@ void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet)
   packet->add(outfit.feet);
 }
 
-
 protocol::Login getLogin(network::IncomingPacket* packet)
 {
   protocol::Login login;

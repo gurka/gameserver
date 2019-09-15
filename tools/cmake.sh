@@ -34,7 +34,7 @@ function debug-fast {
 function eclipse {
   mkdir -p "$BUILD_DIR/eclipse"
   pushd "$BUILD_DIR/eclipse"
-  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_DEBUG_FULL=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_DEBUG_FULL=ON -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++17 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
   ln -sf "$DATA_DIR" data
   popd
 }
@@ -43,7 +43,7 @@ function eclipse {
 function eclipse-fast {
   mkdir -p "$BUILD_DIR/eclipse-fast"
   pushd "$BUILD_DIR/eclipse-fast"
-  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++14 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
+  cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++17 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
   ln -sf "$DATA_DIR" data
   popd
 }
