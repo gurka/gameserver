@@ -9,7 +9,6 @@ add_library(world
   "export/position.h"
   "export/thing.h"
   "export/tile.h"
-  "export/world_interface.h"
   "export/world.h"
   "src/creature.cc"
   "src/position.cc"

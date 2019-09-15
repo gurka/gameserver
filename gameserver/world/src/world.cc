@@ -42,9 +42,9 @@ namespace world
 World::World(int world_size_x,
              int world_size_y,
              std::vector<Tile>&& tiles)
-  : m_world_size_x(world_size_x),
-    m_world_size_y(world_size_y),
-    m_tiles(std::move(tiles))
+    : m_world_size_x(world_size_x),
+      m_world_size_y(world_size_y),
+      m_tiles(std::move(tiles))
 {
 }
 
@@ -89,8 +89,8 @@ ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, c
   for (const auto& offsets : position_offsets)
   {
     adjusted_position = Position(position.getX() + std::get<0>(offsets),
-                                position.getY() + std::get<1>(offsets),
-                                position.getZ());
+                                 position.getY() + std::get<1>(offsets),
+                                 position.getZ());
 
     tile = getTile(adjusted_position);
     if (!tile)
