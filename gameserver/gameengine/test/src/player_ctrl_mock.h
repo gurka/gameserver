@@ -29,6 +29,11 @@
 
 #include "player_ctrl.h"
 
+namespace gameengine
+{
+
+using namespace world;
+
 class PlayerCtrlMock : public PlayerCtrl
 {
  public:
@@ -80,5 +85,7 @@ class PlayerCtrlMock : public PlayerCtrl
   MOCK_CONST_METHOD0(getContainerIds, const std::array<ItemUniqueId, 64>&());
   MOCK_CONST_METHOD1(hasContainerOpen, bool(ItemUniqueId itemUniqueId));
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_

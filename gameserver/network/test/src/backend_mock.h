@@ -29,6 +29,9 @@
 
 #include "gmock/gmock.h"
 
+namespace network
+{
+
 struct Backend
 {
   enum shutdown_type { shutdown_both = 1 };
@@ -120,5 +123,7 @@ struct Backend
     socket.service_.async_read(socket, buffer, length, handler);
   }
 };
+
+}  // namespace network
 
 #endif  // TEST_BACKENDMOCK_H_

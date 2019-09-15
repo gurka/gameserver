@@ -28,6 +28,9 @@
 
 #include "gtest/gtest.h"
 
+namespace world
+{
+
 using ::testing::Return;
 using ::testing::ReturnRef;
 
@@ -130,3 +133,5 @@ TEST_F(TileTest, AddRemoveItems)
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 }
+
+}  // namespace world

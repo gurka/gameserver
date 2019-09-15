@@ -29,6 +29,9 @@
 
 #include "creature_ctrl.h"
 
+namespace world
+{
+
 class MockCreatureCtrl : public CreatureCtrl
 {
  public:
@@ -60,5 +63,7 @@ class MockCreatureCtrl : public CreatureCtrl
 
   MOCK_METHOD1(onTileUpdate, void(const Position& position));
 };
+
+}  // namespace world
 
 #endif  // COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_

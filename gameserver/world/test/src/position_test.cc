@@ -28,6 +28,9 @@
 
 #include "gtest/gtest.h"
 
+namespace world
+{
+
 TEST(PositionTest, Constructor)
 {
   Position position;
@@ -97,3 +100,5 @@ TEST(PositionTest, AddDirection)
   position = position.addDirection(Direction::NORTH);
   ASSERT_EQ(position, Position(5, 0, 5));
 }
+
+}  // namespace world

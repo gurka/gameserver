@@ -30,6 +30,9 @@
 #include "player_ctrl_mock.h"
 #include "world_interface.h"
 
+namespace gameengine
+{
+
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::Ref;
@@ -37,6 +40,8 @@ using ::testing::_;
 using ::testing::SaveArg;
 using ::testing::WithArg;
 using ::testing::Invoke;
+
+using namespace world;
 
 struct ItemStub : public Item
 {
@@ -369,3 +374,5 @@ TEST_F(ContainerManagerTest, moveContainer)
   std::cout << containerA->toString() << '\n';
   std::cout << containerB->toString() << '\n';
 }
+
+}  // namespace gameengine

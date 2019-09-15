@@ -36,6 +36,9 @@
 #include "position.h"
 #include "item.h"
 
+namespace world
+{
+
 using ::testing::ReturnRef;
 using ::testing::AtLeast;
 using ::testing::_;
@@ -220,3 +223,5 @@ TEST_F(WorldTest, CreatureMoveSingleCreature)
   world->creatureMove(creatureOne.getCreatureId(), position);
   EXPECT_EQ(position, cworld->getCreaturePosition(creatureOne.getCreatureId()));
 }
+
+}  // namespace world

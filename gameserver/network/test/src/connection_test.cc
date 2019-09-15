@@ -30,6 +30,9 @@
 #include "connection_impl.h"
 #include "backend_mock.h"
 
+namespace network
+{
+
 using ::testing::_;
 using ::testing::SaveArg;
 using ::testing::Pointee;
@@ -364,6 +367,8 @@ TEST_F(ConnectionTest, ReadsPacketLengthZero)
 
   connection_.reset();
 }
+
+}  // namespace network
 
 // TODO(simon): tests to do:
 //
