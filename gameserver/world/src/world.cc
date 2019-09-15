@@ -385,6 +385,33 @@ void World::creatureSay(CreatureId creature_id, const std::string& message)
   }
 }
 
+const Position* World::getCreaturePosition(CreatureId creature_id) const
+{
+  if (!creatureExists(creature_id))
+  {
+    LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
+    return nullptr;
+  }
+  return &(m_creature_data.at(creature_id).position);
+}
+
+bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position) const
+{
+  // TODO(simon): Fix
+  (void)creature_id;
+  (void)position;
+  return true;
+}
+
+bool World::creatureCanReach(CreatureId creature_id, const Position& position) const
+{
+  const auto* creature_position = getCreaturePosition(creature_id);
+  return creature_position &&  // NOLINT readability-implicit-bool-conversion
+         !(std::abs(creature_position->getX() - position.getX()) > 1 ||
+           std::abs(creature_position->getY() - position.getY()) > 1 ||
+           creature_position->getZ() != position.getZ());
+}
+
 bool World::canAddItem(const Item& item, const Position& position) const
 {
   // TODO(simon): are there cases where only specific items can be added to certain tiles?
@@ -579,23 +606,6 @@ ReturnCode World::moveItem(CreatureId creature_id,
   return ReturnCode::OK;
 }
 
-bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position) const
-{
-  // TODO(simon): Fix
-  (void)creature_id;
-  (void)position;
-  return true;
-}
-
-bool World::creatureCanReach(CreatureId creature_id, const Position& position) const
-{
-  const auto* creature_position = getCreaturePosition(creature_id);
-  return creature_position &&  // NOLINT readability-implicit-bool-conversion
-         !(std::abs(creature_position->getX() - position.getX()) > 1 ||
-           std::abs(creature_position->getY() - position.getY()) > 1 ||
-           creature_position->getZ() != position.getZ());
-}
-
 const Tile* World::getTile(const Position& position) const
 {
   if (position.getX() < POSITION_OFFSET ||
@@ -610,16 +620,6 @@ const Tile* World::getTile(const Position& position) const
   const auto index = ((position.getX() - POSITION_OFFSET) * m_world_size_y) +
                       (position.getY() - POSITION_OFFSET);
   return &m_tiles[index];
-}
-
-const Position* World::getCreaturePosition(CreatureId creature_id) const
-{
-  if (!creatureExists(creature_id))
-  {
-    LOG_ERROR("getCreaturePosition called with non-existent CreatureId");
-    return nullptr;
-  }
-  return &(m_creature_data.at(creature_id).position);
 }
 
 Tile* World::getTile(const Position& position)

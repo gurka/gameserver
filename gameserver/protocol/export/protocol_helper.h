@@ -53,7 +53,7 @@ namespace world
 struct Outfit;
 class Position;
 class Tile;
-class WorldInterface;
+class World;
 }
 
 namespace protocol_helper
@@ -70,13 +70,13 @@ void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::O
 void addLoginFailed(const std::string& reason, network::OutgoingPacket* packet);
 
 // 0x64
-void addMapFull(const world::WorldInterface& world_interface,
+void addMapFull(const world::World& world_interface,
                 const world::Position& position,
                 KnownCreatures* known_creatures,
                 network::OutgoingPacket* packet);
 
 // 0x65, 0x66, 0x67, 0x68
-void addMap(const world::WorldInterface& world_interface,
+void addMap(const world::World& world_interface,
             const world::Position& old_position,
             const world::Position& new_position,
             KnownCreatures* known_creatures,
@@ -84,7 +84,7 @@ void addMap(const world::WorldInterface& world_interface,
 
 // 0x69
 void addTileUpdated(const world::Position& position,
-                    const world::WorldInterface& world_interface,
+                    const world::World& world_interface,
                     KnownCreatures* known_creatures,
                     network::OutgoingPacket* packet);
 
@@ -168,7 +168,7 @@ void addCreature(const world::Creature* creature,
                  KnownCreatures* known_creatures,
                  network::OutgoingPacket* packet);
 void addItem(const world::Item* item, network::OutgoingPacket* packet);
-void addMapData(const world::WorldInterface& world_interface,
+void addMapData(const world::World& world_interface,
                 const world::Position& position,
                 int width,
                 int height,

@@ -30,7 +30,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "world_interface.h"
 #include "creature.h"
 #include "creature_ctrl.h"
 #include "item.h"
@@ -55,13 +54,13 @@ enum class ReturnCode
   OTHER_ERROR,
 };
 
-class World : public WorldInterface
+class World
 {
  public:
   World(int world_size_x,
         int world_size_y,
         std::vector<Tile>&& tiles);
-  ~World() override;
+  virtual ~World();
 
   // Delete copy constructors
   World(const World&) = delete;
@@ -75,6 +74,9 @@ class World : public WorldInterface
   ReturnCode creatureMove(CreatureId creature_id, const Position& to_position);
   void creatureTurn(CreatureId creature_id, Direction direction);
   void creatureSay(CreatureId creature_id, const std::string& message);
+  const Position* getCreaturePosition(CreatureId creature_id) const;
+  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
+  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
@@ -87,13 +89,8 @@ class World : public WorldInterface
                       int count,
                       const Position& to_position);
 
-  // Creature checks
-  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
-  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
-
-  // WorldInterface
-  const Tile* getTile(const Position& position) const override;
-  const Position* getCreaturePosition(CreatureId creature_id) const override;
+  // Tile management
+  const Tile* getTile(const Position& position) const;
 
  private:
   // Functions to use instead of accessing the containers directly

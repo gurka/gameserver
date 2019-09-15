@@ -28,7 +28,7 @@
 #include "logger.h"
 #include "position.h"
 #include "outgoing_packet.h"
-#include "world_interface.h"
+#include "world.h"
 #include "creature.h"
 #include "item.h"
 #include "player.h"
@@ -51,14 +51,14 @@ void addLoginFailed(const std::string& reason, network::OutgoingPacket* packet)
   packet->addU8(0x14);
   packet->add(reason);
 }
-void addMapFull(const world::WorldInterface& world_interface,
+void addMapFull(const world::World& world,
                 const world::Position& position,
                 KnownCreatures* known_creatures,
                 network::OutgoingPacket* packet)
 {
   packet->addU8(0x64);
   addPosition(position, packet);
-  addMapData(world_interface,
+  addMapData(world,
              world::Position(position.getX() - 8, position.getY() - 6, position.getZ()),
              18,
              14,
@@ -66,7 +66,7 @@ void addMapFull(const world::WorldInterface& world_interface,
              packet);
 }
 
-void addMap(const world::WorldInterface& world_interface,
+void addMap(const world::World& world,
             const world::Position& old_position,
             const world::Position& new_position,
             KnownCreatures* known_creatures,
@@ -76,7 +76,7 @@ void addMap(const world::WorldInterface& world_interface,
   {
     // North
     packet->addU8(0x65);
-    addMapData(world_interface,
+    addMapData(world,
                world::Position(old_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
                18,
                1,
@@ -87,7 +87,7 @@ void addMap(const world::WorldInterface& world_interface,
   {
     // South
     packet->addU8(0x67);
-    addMapData(world_interface,
+    addMapData(world,
                world::Position(old_position.getX() - 8, new_position.getY() + 7, old_position.getZ()),
                18,
                1,
@@ -99,7 +99,7 @@ void addMap(const world::WorldInterface& world_interface,
   {
     // West
     packet->addU8(0x68);
-    addMapData(world_interface,
+    addMapData(world,
                world::Position(new_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
                1,
                14,
@@ -110,7 +110,7 @@ void addMap(const world::WorldInterface& world_interface,
   {
     // East
     packet->addU8(0x66);
-    addMapData(world_interface,
+    addMapData(world,
                world::Position(new_position.getX() + 9, new_position.getY() - 6, old_position.getZ()),
                1,
                14,
@@ -120,13 +120,13 @@ void addMap(const world::WorldInterface& world_interface,
 }
 
 void addTileUpdated(const world::Position& position,
-                    const world::WorldInterface& world_interface,
+                    const world::World& world,
                     KnownCreatures* known_creatures,
                     network::OutgoingPacket* packet)
 {
   packet->addU8(0x69);
   addPosition(position, packet);
-  const auto* tile = world_interface.getTile(position);
+  const auto* tile = world.getTile(position);
   if (tile)
   {
     addTileData(*tile, known_creatures, packet);
@@ -402,7 +402,7 @@ void addItem(const world::Item* item, network::OutgoingPacket* packet)
   }
 }
 
-void addMapData(const world::WorldInterface& world_interface,
+void addMapData(const world::World& world,
                 const world::Position& position,
                 int width,
                 int height,
@@ -450,7 +450,7 @@ void addMapData(const world::WorldInterface& world_interface,
     {
       for (auto y = position.getY(); y < position.getY() + height; y++)
       {
-        const auto* tile = world_interface.getTile(world::Position(x, y, position.getZ()));
+        const auto* tile = world.getTile(world::Position(x, y, position.getZ()));
         if (!tile)
         {
           skip += 1;

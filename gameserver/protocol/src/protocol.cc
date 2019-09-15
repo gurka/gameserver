@@ -43,7 +43,7 @@
 #include "game_position.h"
 
 // world
-#include "world_interface.h"
+#include "world.h"
 #include "tile.h"
 #include "item.h"
 
@@ -55,12 +55,12 @@
 
 Protocol::Protocol(std::function<void(void)> close_protocol,
                    std::unique_ptr<network::Connection>&& connection,
-                   const world::WorldInterface* world_interface,
+                   const world::World* world,
                    gameengine::GameEngineQueue* game_engine_queue,
                    account::AccountReader* account_reader)
   : m_close_protocol(std::move(close_protocol)),
     m_connection(std::move(connection)),
-    m_world_interface(world_interface),
+    m_world(world),
     m_game_engine_queue(game_engine_queue),
     m_account_reader(account_reader),
     m_player_id(world::Creature::INVALID_ID)
@@ -104,7 +104,7 @@ void Protocol::onCreatureSpawn(const world::Creature& creature, const world::Pos
 
     // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
     protocol_helper::addLogin(m_player_id, server_beat, &packet);
-    protocol_helper::addMapFull(*m_world_interface, position, &m_known_creatures, &packet);
+    protocol_helper::addMapFull(*m_world, position, &m_known_creatures, &packet);
     protocol_helper::addMagicEffect(position, 0x0A, &packet);
     protocol_helper::addPlayerStats(player, &packet);
     protocol_helper::addWorldLight(0x64, 0xD7, &packet);
@@ -165,7 +165,7 @@ void Protocol::onCreatureMove(const world::Creature& creature,
   // Build outgoing packet
   network::OutgoingPacket packet;
 
-  const auto* player_position = m_world_interface->getCreaturePosition(m_player_id);
+  const auto* player_position = m_world->getCreaturePosition(m_player_id);
   if (!player_position)
   {
     LOG_ERROR("%s: invalid player_position", __func__);
@@ -210,7 +210,7 @@ void Protocol::onCreatureMove(const world::Creature& creature,
     }
 
     // This player moved, send new map data
-    protocol_helper::addMap(*m_world_interface, old_position, new_position, &m_known_creatures, &packet);
+    protocol_helper::addMap(*m_world, old_position, new_position, &m_known_creatures, &packet);
   }
 
   m_connection->sendPacket(std::move(packet));
@@ -272,7 +272,7 @@ void Protocol::onTileUpdate(const world::Position& position)
   }
 
   network::OutgoingPacket packet;
-  protocol_helper::addTileUpdated(position, *m_world_interface, &m_known_creatures, &packet);
+  protocol_helper::addTileUpdated(position, *m_world, &m_known_creatures, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 

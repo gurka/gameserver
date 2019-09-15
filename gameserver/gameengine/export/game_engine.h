@@ -63,7 +63,7 @@ class GameEngine
             const std::string& data_filename,
             const std::string& items_filename,
             const std::string& world_filename);
-  const world::WorldInterface* getWorldInterface() const { return m_world.get(); }
+  const world::World* getWorld() const { return m_world.get(); }
 
   bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
   void despawn(world::CreatureId creature_id);

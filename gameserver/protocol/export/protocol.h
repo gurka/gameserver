@@ -59,7 +59,7 @@ class IncomingPacket;
 
 namespace world
 {
-class WorldInterface;
+class World;
 }
 
 class Protocol : public gameengine::PlayerCtrl
@@ -67,7 +67,7 @@ class Protocol : public gameengine::PlayerCtrl
  public:
   Protocol(std::function<void(void)> close_protocol,
            std::unique_ptr<network::Connection>&& connection,
-           const world::WorldInterface* world_interface,
+           const world::World* world,
            gameengine::GameEngineQueue* game_engine_queue,
            account::AccountReader* account_reader);
 
@@ -145,7 +145,7 @@ class Protocol : public gameengine::PlayerCtrl
 
   std::function<void(void)> m_close_protocol;
   std::unique_ptr<network::Connection> m_connection;
-  const world::WorldInterface* m_world_interface;
+  const world::World* m_world;
   gameengine::GameEngineQueue* m_game_engine_queue;
   account::AccountReader* m_account_reader;
 
