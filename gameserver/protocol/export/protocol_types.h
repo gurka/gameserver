@@ -34,7 +34,7 @@
 #include "position.h"
 #include "game_position.h"
 
-namespace protocol_types
+namespace protocol
 {
 
 struct Login
@@ -88,6 +88,6 @@ struct Say
   std::string message;
 };
 
-}  // namespace protocol_types
+}  // namespace protocol
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

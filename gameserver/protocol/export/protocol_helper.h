@@ -29,12 +29,12 @@
 #include <array>
 #include <string>
 
-#include "protocol_types.h"
 #include "game_position.h"
 #include "thing.h"
 #include "creature.h"
 #include "item.h"
 #include "container.h"
+#include "protocol_types.h"
 
 namespace gameengine
 {
@@ -56,8 +56,9 @@ class Tile;
 class World;
 }
 
-namespace protocol_helper
+namespace protocol
 {
+
 using KnownCreatures = std::array<world::CreatureId, 64>;
 using KnownContainers = std::array<world::ItemUniqueId, 64>;
 
@@ -179,14 +180,14 @@ void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet)
 
 
 // Reading packets
-protocol_types::Login getLogin(network::IncomingPacket* packet);
-protocol_types::MoveClick getMoveClick(network::IncomingPacket* packet);
-protocol_types::MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet);
-protocol_types::UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet);
-protocol_types::CloseContainer getCloseContainer(network::IncomingPacket* packet);
-protocol_types::OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet);
-protocol_types::LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet);
-protocol_types::Say getSay(network::IncomingPacket* packet);
+Login getLogin(network::IncomingPacket* packet);
+MoveClick getMoveClick(network::IncomingPacket* packet);
+MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+CloseContainer getCloseContainer(network::IncomingPacket* packet);
+OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet);
+LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet);
+Say getSay(network::IncomingPacket* packet);
 
 // Reading helpers
 world::Position getPosition(network::IncomingPacket* packet);
@@ -194,6 +195,6 @@ world::Outfit getOutfit(network::IncomingPacket* packet);
 gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 
-}  // namespace protocol_helper
+}  // namespace protocol
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_HELPER_H_

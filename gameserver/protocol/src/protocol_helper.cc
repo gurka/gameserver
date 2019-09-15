@@ -34,9 +34,8 @@
 #include "player.h"
 #include "incoming_packet.h"
 #include "tile.h"
-#include "protocol_types.h"
 
-namespace protocol_helper
+namespace protocol
 {
 
 void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet)
@@ -518,9 +517,9 @@ void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet)
 }
 
 
-protocol_types::Login getLogin(network::IncomingPacket* packet)
+protocol::Login getLogin(network::IncomingPacket* packet)
 {
-  protocol_types::Login login;
+  protocol::Login login;
   packet->get(&login.unknown1);
   packet->get(&login.client_os);
   packet->get(&login.client_version);
@@ -530,9 +529,9 @@ protocol_types::Login getLogin(network::IncomingPacket* packet)
   return login;
 }
 
-protocol_types::MoveClick getMoveClick(network::IncomingPacket* packet)
+protocol::MoveClick getMoveClick(network::IncomingPacket* packet)
 {
-  protocol_types::MoveClick move;
+  protocol::MoveClick move;
   const auto length = packet->getU8();
   for (auto i = 0U; i < length; i++)
   {
@@ -541,47 +540,47 @@ protocol_types::MoveClick getMoveClick(network::IncomingPacket* packet)
   return move;
 }
 
-protocol_types::MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet)
+protocol::MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol_types::MoveItem move;
+  protocol::MoveItem move;
   move.from_item_position = getItemPosition(container_ids, packet);
   move.to_game_position = getGamePosition(container_ids, packet);
   packet->get(&move.count);
   return move;
 }
 
-protocol_types::UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet)
+protocol::UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol_types::UseItem use;
+  protocol::UseItem use;
   use.item_position = getItemPosition(container_ids, packet);
   packet->get(&use.new_container_id);
   return use;
 }
 
-protocol_types::CloseContainer getCloseContainer(network::IncomingPacket* packet)
+protocol::CloseContainer getCloseContainer(network::IncomingPacket* packet)
 {
-  protocol_types::CloseContainer close;
+  protocol::CloseContainer close;
   packet->get(&close.container_id);
   return close;
 }
 
-protocol_types::OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet)
+protocol::OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet)
 {
-  protocol_types::OpenParentContainer open;
+  protocol::OpenParentContainer open;
   packet->get(&open.container_id);
   return open;
 }
 
-protocol_types::LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet)
+protocol::LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol_types::LookAt look;
+  protocol::LookAt look;
   look.item_position = getItemPosition(container_ids, packet);
   return look;
 }
 
-protocol_types::Say getSay(network::IncomingPacket* packet)
+protocol::Say getSay(network::IncomingPacket* packet)
 {
-  protocol_types::Say say;
+  protocol::Say say;
   packet->get(&say.type);
   switch (say.type)
   {
@@ -650,4 +649,4 @@ gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network
   return { game_position, item_id, stackpos };
 }
 
-}  // namespace protocol_helper
+}  // namespace protocol
