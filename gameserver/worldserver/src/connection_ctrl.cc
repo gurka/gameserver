@@ -52,7 +52,7 @@
 #include "account.h"
 
 // protocol
-#include "protocol_helper.h"
+#include "protocol.h"
 #include "protocol_types.h"
 
 ConnectionCtrl::ConnectionCtrl(std::function<void(void)> close_protocol,

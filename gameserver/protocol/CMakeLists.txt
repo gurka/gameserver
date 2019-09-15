@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.12)
 
 project(protocol)
 add_library(protocol
-  "export/protocol_helper.h"
+  "export/protocol.h"
   "export/protocol_types.h"
-  "src/protocol_helper.cc"
+  "src/protocol.cc"
 )
 target_link_libraries(protocol
   gameengine
