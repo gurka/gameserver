@@ -55,6 +55,8 @@
 #include "protocol.h"
 #include "protocol_types.h"
 
+using namespace protocol::server;  // NOLINT yes we want it all
+
 ConnectionCtrl::ConnectionCtrl(std::function<void(void)> close_protocol,
                                std::unique_ptr<network::Connection>&& connection,
                                const world::World* world,
@@ -105,22 +107,22 @@ void ConnectionCtrl::onCreatureSpawn(const world::Creature& creature, const worl
     const auto server_beat = 50;  // TODO(simon): customizable?
 
     // TODO(simon): Check if any of these can be reordered, e.g. move addWorldLight down
-    protocol::addLogin(m_player_id, server_beat, &packet);
-    protocol::addMapFull(*m_world, position, &m_known_creatures, &packet);
-    protocol::addMagicEffect(position, 0x0A, &packet);
-    protocol::addPlayerStats(player, &packet);
-    protocol::addWorldLight(0x64, 0xD7, &packet);
-    protocol::addPlayerSkills(player, &packet);
+    addLogin(m_player_id, server_beat, &packet);
+    addMapFull(*m_world, position, &m_known_creatures, &packet);
+    addMagicEffect(position, 0x0A, &packet);
+    addPlayerStats(player, &packet);
+    addWorldLight(0x64, 0xD7, &packet);
+    addPlayerSkills(player, &packet);
     for (auto i = 1; i <= 10; i++)
     {
-      protocol::addEquipmentUpdated(player.getEquipment(), i, &packet);
+      addEquipmentUpdated(player.getEquipment(), i, &packet);
     }
   }
   else
   {
     // Someone else spawned
-    protocol::addThingAdded(position, &creature, &m_known_creatures, &packet);
-    protocol::addMagicEffect(position, 0x0A, &packet);
+    addThingAdded(position, &creature, &m_known_creatures, &packet);
+    addMagicEffect(position, 0x0A, &packet);
   }
 
   m_connection->sendPacket(std::move(packet));
@@ -140,8 +142,8 @@ void ConnectionCtrl::onCreatureDespawn(const world::Creature& creature, const wo
   }
 
   network::OutgoingPacket packet;
-  protocol::addMagicEffect(position, 0x02, &packet);
-  protocol::addThingRemoved(position, stackpos, &packet);
+  addMagicEffect(position, 0x02, &packet);
+  addThingRemoved(position, stackpos, &packet);
   m_connection->sendPacket(std::move(packet));
 
   if (creature.getCreatureId() == m_player_id)
@@ -179,15 +181,15 @@ void ConnectionCtrl::onCreatureMove(const world::Creature& creature,
 
   if (can_see_old_pos && can_see_new_pos)
   {
-    protocol::addThingMoved(old_position, old_stackpos, new_position, &packet);
+    addThingMoved(old_position, old_stackpos, new_position, &packet);
   }
   else if (can_see_old_pos)
   {
-    protocol::addThingRemoved(old_position, old_stackpos, &packet);
+    addThingRemoved(old_position, old_stackpos, &packet);
   }
   else if (can_see_new_pos)
   {
-    protocol::addThingAdded(new_position, &creature, &m_known_creatures, &packet);
+    addThingAdded(new_position, &creature, &m_known_creatures, &packet);
   }
   else
   {
@@ -212,7 +214,7 @@ void ConnectionCtrl::onCreatureMove(const world::Creature& creature,
     }
 
     // This player moved, send new map data
-    protocol::addMap(*m_world, old_position, new_position, &m_known_creatures, &packet);
+    addMap(*m_world, old_position, new_position, &m_known_creatures, &packet);
   }
 
   m_connection->sendPacket(std::move(packet));
@@ -226,7 +228,7 @@ void ConnectionCtrl::onCreatureTurn(const world::Creature& creature, const world
   }
 
   network::OutgoingPacket packet;
-  protocol::addThingChanged(position, stackpos, &creature, &m_known_creatures, &packet);
+  addThingChanged(position, stackpos, &creature, &m_known_creatures, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -238,7 +240,7 @@ void ConnectionCtrl::onCreatureSay(const world::Creature& creature, const world:
   }
 
   network::OutgoingPacket packet;
-  protocol::addTalk(creature.getName(), 0x01, position, message, &packet);
+  addTalk(creature.getName(), 0x01, position, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -250,7 +252,7 @@ void ConnectionCtrl::onItemRemoved(const world::Position& position, std::uint8_t
   }
 
   network::OutgoingPacket packet;
-  protocol::addThingRemoved(position, stackpos, &packet);
+  addThingRemoved(position, stackpos, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -262,7 +264,7 @@ void ConnectionCtrl::onItemAdded(const world::Item& item, const world::Position&
   }
 
   network::OutgoingPacket packet;
-  protocol::addThingAdded(position, &item, nullptr, &packet);
+  addThingAdded(position, &item, nullptr, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -274,7 +276,7 @@ void ConnectionCtrl::onTileUpdate(const world::Position& position)
   }
 
   network::OutgoingPacket packet;
-  protocol::addTileUpdated(position, *m_world, &m_known_creatures, &packet);
+  addTileUpdated(position, *m_world, &m_known_creatures, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -286,7 +288,7 @@ void ConnectionCtrl::onEquipmentUpdated(const gameengine::Player& player, std::u
   }
 
   network::OutgoingPacket packet;
-  protocol::addEquipmentUpdated(player.getEquipment(), inventory_index, &packet);
+  addEquipmentUpdated(player.getEquipment(), inventory_index, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -310,7 +312,7 @@ void ConnectionCtrl::onOpenContainer(std::uint8_t new_container_id, const gameen
   LOG_DEBUG("%s: new_container_id: %u", __func__, new_container_id);
 
   network::OutgoingPacket packet;
-  protocol::addContainerOpen(new_container_id, &item, container, &packet);
+  addContainerOpen(new_container_id, &item, container, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -338,7 +340,7 @@ void ConnectionCtrl::onCloseContainer(world::ItemUniqueId container_item_unique_
   LOG_DEBUG("%s: container_item_unique_id: %u -> container_id: %d", __func__, container_item_unique_id, container_id);
 
   network::OutgoingPacket packet;
-  protocol::addContainerClose(container_id, &packet);
+  addContainerClose(container_id, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -364,7 +366,7 @@ void ConnectionCtrl::onContainerAddItem(world::ItemUniqueId container_item_uniqu
             item.getItemTypeId());
 
   network::OutgoingPacket packet;
-  protocol::addContainerAddItem(container_id, &item, &packet);
+  addContainerAddItem(container_id, &item, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -391,7 +393,7 @@ void ConnectionCtrl::onContainerUpdateItem(world::ItemUniqueId container_item_un
             item.getItemTypeId());
 
   network::OutgoingPacket packet;
-  protocol::addContainerUpdateItem(container_id, container_slot, &item, &packet);
+  addContainerUpdateItem(container_id, container_slot, &item, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -417,7 +419,7 @@ void ConnectionCtrl::onContainerRemoveItem(world::ItemUniqueId container_item_un
             container_slot);
 
   network::OutgoingPacket packet;
-  protocol::addContainerRemoveItem(container_id, container_slot, &packet);
+  addContainerRemoveItem(container_id, container_slot, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -430,7 +432,7 @@ void ConnectionCtrl::sendTextMessage(std::uint8_t message_type, const std::strin
   }
 
   network::OutgoingPacket packet;
-  protocol::addTextMessage(message_type, message, &packet);
+  addTextMessage(message_type, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -442,7 +444,7 @@ void ConnectionCtrl::sendCancel(const std::string& message)
   }
 
   network::OutgoingPacket packet;
-  protocol::addTextMessage(0x14, message, &packet);
+  addTextMessage(0x14, message, &packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -454,7 +456,7 @@ void ConnectionCtrl::cancelMove()
   }
 
   network::OutgoingPacket packet;
-  protocol::addCancelMove(&packet);
+  addCancelMove(&packet);
   m_connection->sendPacket(std::move(packet));
 }
 
@@ -632,7 +634,7 @@ void ConnectionCtrl::onDisconnected()
 
 void ConnectionCtrl::parseLogin(network::IncomingPacket* packet)
 {
-  const auto login = protocol::getLogin(packet);
+  const auto login = getLogin(packet);
 
   LOG_DEBUG("Client OS: %d Client version: %d Character: %s Password: %s",
             login.client_os,
@@ -644,7 +646,7 @@ void ConnectionCtrl::parseLogin(network::IncomingPacket* packet)
   if (!m_account_reader->characterExists(login.character_name))
   {
     network::OutgoingPacket packet;
-    protocol::addLoginFailed("Invalid character.", &packet);
+    addLoginFailed("Invalid character.", &packet);
     m_connection->sendPacket(std::move(packet));
     m_connection->close(false);
     return;
@@ -654,7 +656,7 @@ void ConnectionCtrl::parseLogin(network::IncomingPacket* packet)
   if (!m_account_reader->verifyPassword(login.character_name, login.password))
   {
     network::OutgoingPacket packet;
-    protocol::addLoginFailed("Invalid password.", &packet);
+    addLoginFailed("Invalid password.", &packet);
     m_connection->sendPacket(std::move(packet));
     m_connection->close(false);
     return;
@@ -666,7 +668,7 @@ void ConnectionCtrl::parseLogin(network::IncomingPacket* packet)
     if (!game_engine->spawn(character_name, this))
     {
       network::OutgoingPacket packet;
-      protocol::addLoginFailed("Could not spawn player.", &packet);
+      addLoginFailed("Could not spawn player.", &packet);
       m_connection->sendPacket(std::move(packet));
       m_connection->close(false);
     }
@@ -675,7 +677,7 @@ void ConnectionCtrl::parseLogin(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseMoveClick(network::IncomingPacket* packet)
 {
-  auto move = protocol::getMoveClick(packet);
+  auto move = getMoveClick(packet);
   if (move.path.empty())
   {
     LOG_ERROR("%s: Path length is zero!", __func__);
@@ -691,7 +693,7 @@ void ConnectionCtrl::parseMoveClick(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseMoveItem(network::IncomingPacket* packet)
 {
-  const auto move = protocol::getMoveItem(&m_container_ids, packet);
+  const auto move = getMoveItem(&m_container_ids, packet);
 
   LOG_DEBUG("%s: from: %s, to: %s, count: %u",
             __func__,
@@ -707,7 +709,7 @@ void ConnectionCtrl::parseMoveItem(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseUseItem(network::IncomingPacket* packet)
 {
-  const auto use_item = protocol::getUseItem(&m_container_ids, packet);
+  const auto use_item = getUseItem(&m_container_ids, packet);
 
   LOG_DEBUG("%s: item_position: %s, new_container_id: %u",
             __func__,
@@ -722,7 +724,7 @@ void ConnectionCtrl::parseUseItem(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseCloseContainer(network::IncomingPacket* packet)
 {
-  const auto close = protocol::getCloseContainer(packet);
+  const auto close = getCloseContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(close.container_id);
   if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
   {
@@ -741,7 +743,7 @@ void ConnectionCtrl::parseCloseContainer(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseOpenParentContainer(network::IncomingPacket* packet)
 {
-  const auto open_parent = protocol::getOpenParentContainer(packet);
+  const auto open_parent = getOpenParentContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(open_parent.container_id);
   if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
   {
@@ -760,7 +762,7 @@ void ConnectionCtrl::parseOpenParentContainer(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseLookAt(network::IncomingPacket* packet)
 {
-  const auto look_at = protocol::getLookAt(&m_container_ids, packet);
+  const auto look_at = getLookAt(&m_container_ids, packet);
 
   LOG_DEBUG("%s: item_position: %s", __func__, look_at.item_position.toString().c_str());
 
@@ -772,7 +774,7 @@ void ConnectionCtrl::parseLookAt(network::IncomingPacket* packet)
 
 void ConnectionCtrl::parseSay(network::IncomingPacket* packet)
 {
-  const auto say = protocol::getSay(packet);
+  const auto say = getSay(packet);
 
   m_game_engine_queue->addTask(m_player_id, [this, say](gameengine::GameEngine* game_engine)
   {

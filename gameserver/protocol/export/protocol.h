@@ -59,6 +59,9 @@ class World;
 namespace protocol
 {
 
+namespace server
+{
+
 using KnownCreatures = std::array<world::CreatureId, 64>;
 using KnownContainers = std::array<world::ItemUniqueId, 64>;
 
@@ -190,10 +193,10 @@ LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet
 Say getSay(network::IncomingPacket* packet);
 
 // Reading helpers
-world::Position getPosition(network::IncomingPacket* packet);
-world::Outfit getOutfit(network::IncomingPacket* packet);
 gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+}  // namespace server
 
 }  // namespace protocol
 

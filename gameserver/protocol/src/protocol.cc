@@ -35,7 +35,7 @@
 #include "incoming_packet.h"
 #include "tile.h"
 
-namespace protocol
+namespace protocol::server
 {
 
 void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet)
@@ -516,9 +516,9 @@ void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet)
   packet->add(outfit.feet);
 }
 
-protocol::Login getLogin(network::IncomingPacket* packet)
+Login getLogin(network::IncomingPacket* packet)
 {
-  protocol::Login login;
+  Login login;
   packet->get(&login.unknown1);
   packet->get(&login.client_os);
   packet->get(&login.client_version);
@@ -528,9 +528,9 @@ protocol::Login getLogin(network::IncomingPacket* packet)
   return login;
 }
 
-protocol::MoveClick getMoveClick(network::IncomingPacket* packet)
+MoveClick getMoveClick(network::IncomingPacket* packet)
 {
-  protocol::MoveClick move;
+  MoveClick move;
   const auto length = packet->getU8();
   for (auto i = 0U; i < length; i++)
   {
@@ -539,47 +539,47 @@ protocol::MoveClick getMoveClick(network::IncomingPacket* packet)
   return move;
 }
 
-protocol::MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet)
+MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol::MoveItem move;
+  MoveItem move;
   move.from_item_position = getItemPosition(container_ids, packet);
   move.to_game_position = getGamePosition(container_ids, packet);
   packet->get(&move.count);
   return move;
 }
 
-protocol::UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet)
+UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol::UseItem use;
+  UseItem use;
   use.item_position = getItemPosition(container_ids, packet);
   packet->get(&use.new_container_id);
   return use;
 }
 
-protocol::CloseContainer getCloseContainer(network::IncomingPacket* packet)
+CloseContainer getCloseContainer(network::IncomingPacket* packet)
 {
-  protocol::CloseContainer close;
+  CloseContainer close;
   packet->get(&close.container_id);
   return close;
 }
 
-protocol::OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet)
+OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet)
 {
-  protocol::OpenParentContainer open;
+  OpenParentContainer open;
   packet->get(&open.container_id);
   return open;
 }
 
-protocol::LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet)
+LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
-  protocol::LookAt look;
+  LookAt look;
   look.item_position = getItemPosition(container_ids, packet);
   return look;
 }
 
-protocol::Say getSay(network::IncomingPacket* packet)
+Say getSay(network::IncomingPacket* packet)
 {
-  protocol::Say say;
+  Say say;
   packet->get(&say.type);
   switch (say.type)
   {
@@ -648,4 +648,4 @@ gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network
   return { game_position, item_id, stackpos };
 }
 
-}  // namespace protocol
+}  // namespace protocol::server
