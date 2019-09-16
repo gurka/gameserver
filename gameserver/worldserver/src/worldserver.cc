@@ -54,6 +54,7 @@ static std::unique_ptr<gameengine::GameEngineQueue> game_engine_queue;
 static std::unique_ptr<gameengine::GameEngine> game_engine;
 static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<network::Server> server;
+static std::unique_ptr<network::Server> websocket_server;
 
 using ConnectionId = int;
 static std::unordered_map<ConnectionId, std::unique_ptr<ConnectionCtrl>> connections;
@@ -96,6 +97,7 @@ int main()
 
   // Read [server] settings
   const auto server_port = config.getInteger("server", "port", 7172);
+  const auto ws_server_port = server_port + 1000;
 
   // Read [world] settings
   const auto login_message     = config.getString("world", "login_message", "Welcome to LoginServer!");
@@ -125,6 +127,7 @@ int main()
   printf("WorldServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
   printf("Server port:               %d\n", server_port);
+  printf("Websocket server port:     %d\n", ws_server_port);
   printf("\n");
   printf("Login message:             %s\n", login_message.c_str());
   printf("Accounts filename:         %s\n", accounts_filename.c_str());
@@ -166,6 +169,9 @@ int main()
   // Create Server
   server = network::ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
+  // Create websocket server
+  websocket_server = network::ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
+
   LOG_INFO("WorldServer started!");
 
   // run() will continue to run until ^C from user is catched
@@ -184,6 +190,7 @@ int main()
 
   // Deallocate things (in reverse order of construction)
   connections.clear();
+  websocket_server.reset();
   server.reset();
   account_reader.reset();
   game_engine.reset();

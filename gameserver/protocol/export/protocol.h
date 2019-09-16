@@ -59,6 +59,10 @@ class World;
 namespace protocol
 {
 
+// Common stuff
+world::Position getPosition(network::IncomingPacket* packet);
+world::Outfit getOutfit(network::IncomingPacket* packet);
+
 namespace server
 {
 
@@ -197,6 +201,26 @@ gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network
 gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 
 }  // namespace server
+
+namespace client
+{
+
+client::Login getLogin(network::IncomingPacket* packet);
+client::LoginFailed getLoginFailed(network::IncomingPacket* packet);
+client::Creature getCreature(bool known, network::IncomingPacket* packet);
+client::Item getItem(network::IncomingPacket* packet);
+client::Equipment getEquipment(bool empty, network::IncomingPacket* packet);
+client::MagicEffect getMagicEffect(network::IncomingPacket* packet);
+client::PlayerStats getPlayerStats(network::IncomingPacket* packet);
+client::WorldLight getWorldLight(network::IncomingPacket* packet);
+client::PlayerSkills getPlayerSkills(network::IncomingPacket* packet);
+client::TextMessage getTextMessage(network::IncomingPacket* packet);
+client::MapData getMapData(int width, int height, network::IncomingPacket* packet);
+client::CreatureMove getCreatureMove(bool can_see_old_pos,
+                                     bool can_see_new_pos,
+                                     network::IncomingPacket* packet);
+
+}  // namespace client
 
 }  // namespace protocol
 

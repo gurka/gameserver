@@ -21,41 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef WSCLIENT_SRC_GRAPHICS_H_
+#define WSCLIENT_SRC_GRAPHICS_H_
 
-#ifndef NETWORK_EXPORT_SERVER_FACTORY_H_
-#define NETWORK_EXPORT_SERVER_FACTORY_H_
+#include <cstdint>
 
-#include <functional>
-#include <memory>
+#include "position.h"
+#include "map.h"
 
-namespace boost
-{
-namespace asio
-{
-class io_context;
-}
-}
-
-namespace network
+namespace wsclient::graphics
 {
 
-class Server;
-class Connection;
+void init();
+void draw(const world::Map& map,
+          const world::Position& position,
+          std::uint32_t player_id);
 
-class ServerFactory
-{
- public:
-  using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
+}  // namespace wsclient::graphics
 
-  static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
-                                              int port,
-                                              const OnClientConnectedCallback& on_client_connected);
-
-  static std::unique_ptr<Server> createWebsocketServer(boost::asio::io_context* io_context,
-                                                       int port,
-                                                       const OnClientConnectedCallback& on_client_connected);
-};
-
-}  // namespace network
-
-#endif  // NETWORK_EXPORT_SERVER_FACTORY_H_
+#endif  // WSCLIENT_SRC_GRAPHICS_H_

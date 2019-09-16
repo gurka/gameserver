@@ -46,6 +46,7 @@
 // static things (like Logger) gets deallocated
 static std::unique_ptr<account::AccountReader> account_reader;
 static std::unique_ptr<network::Server> server;
+static std::unique_ptr<network::Server> websocket_server;
 
 // Due to "Static/global string variables are not permitted."
 static struct
@@ -179,7 +180,8 @@ int main()
   }
 
   // Read [server] settings
-  auto server_port = config.getInteger("server", "port", 7171);
+  const auto server_port = config.getInteger("server", "port", 7171);
+  const auto ws_server_port = server_port + 1000;
 
   // Read [login] settings
   motd.motd = config.getString("login", "motd", "Welcome to LoginServer!");
@@ -202,6 +204,7 @@ int main()
   printf("LoginServer configuration\n");
   printf("--------------------------------------------------------------------------------\n");
   printf("Server port:               %d\n", server_port);
+  printf("Websocket server port:     %d\n", ws_server_port);
   printf("\n");
   printf("Accounts filename:         %s\n", accounts_filename.c_str());
   printf("Message of the day:        %s\n", motd.motd.c_str());
@@ -226,6 +229,9 @@ int main()
   // Create Server
   server = network::ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
+  // Create websocket server
+  websocket_server = network::ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
+
   LOG_INFO("LoginServer started!");
 
   // run() will continue to run until ^C from user is catched
@@ -243,6 +249,7 @@ int main()
   LOG_INFO("Stopping LoginServer!");
 
   // Deallocate things
+  websocket_server.reset();
   server.reset();
   account_reader.reset();
 

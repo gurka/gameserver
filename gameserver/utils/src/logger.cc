@@ -36,43 +36,51 @@ namespace utils
 const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 {
   // utils
-  { "config_parser.h",      Module::UTILS       },
+  { "config_parser.h",          Module::UTILS       },
 
   // account
-  { "account.cc",           Module::ACCOUNT     },
+  { "account.cc",               Module::ACCOUNT     },
 
   // network
-  { "connection_impl.h",    Module::NETWORK     },
-  { "server_impl.h",        Module::NETWORK     },
-  { "incoming_packet.cc",   Module::NETWORK     },
-  { "outgoing_packet.cc",   Module::NETWORK     },
-  { "acceptor.h",           Module::NETWORK     },
+  { "connection_impl.h",        Module::NETWORK     },
+  { "server_impl.h",            Module::NETWORK     },
+  { "incoming_packet.cc",       Module::NETWORK     },
+  { "outgoing_packet.cc",       Module::NETWORK     },
+  { "acceptor.h",               Module::NETWORK     },
+  { "websocket_server_impl.h",  Module::NETWORK     },
+  { "websocket_server_impl.cc", Module::NETWORK     },
 
   // world
-  { "item.cc",              Module::WORLD       },
-  { "tile.cc",              Module::WORLD       },
-  { "world.cc",             Module::WORLD       },
-  { "creature.cc",          Module::WORLD       },
-  { "position.cc",          Module::WORLD       },
-  { "item_factory.cc",      Module::WORLD       },
-  { "world_factory.cc",     Module::WORLD       },
+  { "item.cc",                  Module::WORLD       },
+  { "tile.cc",                  Module::WORLD       },
+  { "world.cc",                 Module::WORLD       },
+  { "creature.cc",              Module::WORLD       },
+  { "position.cc",              Module::WORLD       },
+  { "item_factory.cc",          Module::WORLD       },
+  { "world_factory.cc",         Module::WORLD       },
 
   // loginserver
-  { "loginserver.cc",       Module::LOGINSERVER },
+  { "loginserver.cc",           Module::LOGINSERVER },
 
   // gameengine
-  { "container_manager.cc", Module::GAMEENGINE  },
-  { "game_engine.cc",       Module::GAMEENGINE  },
-  { "game_engine_queue.cc", Module::GAMEENGINE  },
-  { "player.cc",            Module::GAMEENGINE  },
-  { "item_manager.cc",      Module::GAMEENGINE  },
+  { "container_manager.cc",     Module::GAMEENGINE  },
+  { "game_engine.cc",           Module::GAMEENGINE  },
+  { "game_engine_queue.cc",     Module::GAMEENGINE  },
+  { "player.cc",                Module::GAMEENGINE  },
+  { "item_manager.cc",          Module::GAMEENGINE  },
 
   // worldserver
-  { "worldserver.cc",       Module::WORLDSERVER },
+  { "worldserver.cc",           Module::WORLDSERVER },
 
   // protocol
-  { "protocol.cc",          Module::PROTOCOL    },
-  { "protocol_helper.cc",   Module::PROTOCOL    },
+  { "protocol.cc",              Module::PROTOCOL    },
+  { "protocol_helper.cc",       Module::PROTOCOL    },
+
+  // wsclient
+  { "wsclient.cc",              Module::WSCLIENT    },
+  { "network.cc",               Module::WSCLIENT    },
+  { "graphics.cc",              Module::WSCLIENT    },
+  { "map.cc",                   Module::WSCLIENT    },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =
@@ -86,6 +94,7 @@ std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::mo
   { Module::UTILS,       Level::DEBUG },
   { Module::WORLD,       Level::DEBUG },
   { Module::WORLDSERVER, Level::DEBUG },
+  { Module::WSCLIENT,    Level::DEBUG },
 };
 
 void Logger::log(const char* file_full_path, int line, Level level, ...)

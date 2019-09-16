@@ -35,7 +35,29 @@
 #include "incoming_packet.h"
 #include "tile.h"
 
-namespace protocol::server
+namespace protocol
+{
+
+world::Position getPosition(network::IncomingPacket* packet)
+{
+  const auto x  = packet->getU16();
+  const auto y  = packet->getU16();
+  const auto z  = packet->getU8();
+  return { x, y, z };
+}
+
+world::Outfit getOutfit(network::IncomingPacket* packet)
+{
+  world::Outfit outfit;
+  packet->get(&outfit.type);
+  packet->get(&outfit.head);
+  packet->get(&outfit.body);
+  packet->get(&outfit.legs);
+  packet->get(&outfit.feet);
+  return outfit;
+}
+
+namespace server
 {
 
 void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet)
@@ -334,11 +356,11 @@ void addPosition(const world::Position& position, network::OutgoingPacket* packe
 void addThing(const world::Thing& thing, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
 {
   thing.visit(
-    [&thing, &known_creatures, &packet](const world::Creature* creature)
+    [&known_creatures, &packet](const world::Creature* creature)
     {
       addCreature(creature, known_creatures, packet);
     },
-    [&thing, &packet](const world::Item* item)
+    [&packet](const world::Item* item)
     {
       addItem(item, packet);
     }
@@ -648,4 +670,207 @@ gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network
   return { game_position, item_id, stackpos };
 }
 
-}  // namespace protocol::server
+}  // namespace server
+
+namespace client
+{
+
+Login getLogin(network::IncomingPacket* packet)
+{
+  Login login;
+  packet->get(&login.player_id);
+  packet->get(&login.server_beat);
+  return login;
+}
+
+LoginFailed getLoginFailed(network::IncomingPacket* packet)
+{
+  LoginFailed failed;
+  packet->get(&failed.reason);
+  return failed;
+}
+
+Creature getCreature(bool known, network::IncomingPacket* packet)
+{
+  Creature creature;
+  creature.known = known;
+  if (creature.known)
+  {
+    packet->get(&creature.id);
+  }
+  else
+  {
+    packet->get(&creature.id_to_remove);
+    packet->get(&creature.id);
+    packet->get(&creature.name);
+  }
+  packet->get(&creature.health_percent);
+  creature.direction = static_cast<world::Direction>(packet->getU8());
+  creature.outfit = getOutfit(packet);
+  packet->getU16();  // unknown 0xDC00
+  packet->get(&creature.speed);
+  return creature;
+}
+
+Item getItem(network::IncomingPacket* packet)
+{
+  Item item;
+  packet->get(&item.item_type_id);
+  // Need to make ItemType available to be able to check if we should
+  // read extra or not. For now assume not to read it
+  return item;
+}
+
+Equipment getEquipment(bool empty, network::IncomingPacket* packet)
+{
+  Equipment equipment;
+  equipment.empty = empty;
+  packet->get(&equipment.inventory_index);
+  if (equipment.empty)
+  {
+    equipment.item = getItem(packet);
+  }
+  return equipment;
+}
+
+MagicEffect getMagicEffect(network::IncomingPacket* packet)
+{
+  MagicEffect effect;
+  effect.position = getPosition(packet);
+  packet->get(&effect.type);
+  return effect;
+}
+
+PlayerStats getPlayerStats(network::IncomingPacket* packet)
+{
+  PlayerStats stats;
+  packet->get(&stats.health);
+  packet->get(&stats.max_health);
+  packet->get(&stats.capacity);
+  packet->get(&stats.exp);
+  packet->get(&stats.level);
+  packet->get(&stats.mana);
+  packet->get(&stats.max_mana);
+  packet->get(&stats.magic_level);
+  return stats;
+}
+
+WorldLight getWorldLight(network::IncomingPacket* packet)
+{
+  WorldLight light;
+  packet->get(&light.intensity);
+  packet->get(&light.color);
+  return light;
+}
+
+PlayerSkills getPlayerSkills(network::IncomingPacket* packet)
+{
+  PlayerSkills skills;
+  packet->get(&skills.fist);
+  packet->get(&skills.club);
+  packet->get(&skills.sword);
+  packet->get(&skills.axe);
+  packet->get(&skills.dist);
+  packet->get(&skills.shield);
+  packet->get(&skills.fish);
+  return skills;
+}
+
+TextMessage getTextMessage(network::IncomingPacket* packet)
+{
+  TextMessage message;
+  packet->get(&message.type);
+  packet->get(&message.message);
+  return message;
+}
+
+MapData getMapData(int width, int height, network::IncomingPacket* packet)
+{
+  MapData map;
+
+  map.position = getPosition(packet);
+
+  // Assume that we always are on z=7
+  auto skip = 0;
+  for (auto z = 7; z >= 0; z--)
+  {
+    for (auto x = 0; x < width; x++)
+    {
+      for (auto y = 0; y < height; y++)
+      {
+        MapData::TileData tile;
+        if (skip > 0)
+        {
+          skip -= 1;
+          tile.skip = true;
+          map.tiles.push_back(std::move(tile));
+          continue;
+        }
+
+        // Parse tile
+        tile.skip = false;
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+          }
+
+          if (packet->peekU16() == 0x0061 ||
+              packet->peekU16() == 0x0062)
+          {
+            MapData::CreatureData creature;
+            creature.stackpos = stackpos;
+            creature.creature = getCreature(packet->getU16() == 0x0062, packet);
+            tile.creatures.push_back(std::move(creature));
+          }
+          else
+          {
+            MapData::ItemData item;
+            item.stackpos = stackpos;
+            item.item = getItem(packet);
+            tile.items.push_back(item);
+          }
+        }
+
+        map.tiles.push_back(std::move(tile));
+      }
+    }
+  }
+
+  return map;
+}
+
+CreatureMove getCreatureMove(bool can_see_old_pos, bool can_see_new_pos, network::IncomingPacket* packet)
+{
+  CreatureMove move;
+  move.can_see_old_pos = can_see_old_pos;
+  move.can_see_new_pos = can_see_new_pos;
+  if (move.can_see_old_pos && move.can_see_new_pos)
+  {
+    move.old_position = getPosition(packet);
+    packet->get(&move.old_stackpos);
+    move.new_position = getPosition(packet);
+  }
+  else if (move.can_see_old_pos)
+  {
+    move.old_position = getPosition(packet);
+    packet->get(&move.old_stackpos);
+  }
+  else  // if (move.can_see_new_pos)
+  {
+    move.new_position = getPosition(packet);
+    move.creature = getCreature(packet->getU16() == 0x0062, packet);
+  }
+  return move;
+}
+
+}  // namespace client
+
+}  // namespace protocol

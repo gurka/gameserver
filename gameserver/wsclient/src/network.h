@@ -21,41 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#ifndef NETWORK_EXPORT_SERVER_FACTORY_H_
-#define NETWORK_EXPORT_SERVER_FACTORY_H_
+#ifndef NETWORK_H_
+#define NETWORK_H_
 
 #include <functional>
-#include <memory>
-
-namespace boost
-{
-namespace asio
-{
-class io_context;
-}
-}
 
 namespace network
 {
+class IncomingPacket;
+class OutgoingPacket;
+}
 
-class Server;
-class Connection;
-
-class ServerFactory
+namespace wsclient::network
 {
- public:
-  using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
 
-  static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
-                                              int port,
-                                              const OnClientConnectedCallback& on_client_connected);
+using ::network::IncomingPacket;
+using ::network::OutgoingPacket;
 
-  static std::unique_ptr<Server> createWebsocketServer(boost::asio::io_context* io_context,
-                                                       int port,
-                                                       const OnClientConnectedCallback& on_client_connected);
-};
+void start(const std::function<void(IncomingPacket*)> callback);
 
-}  // namespace network
+}  // namespace wsclient::network
 
-#endif  // NETWORK_EXPORT_SERVER_FACTORY_H_
+#endif  // NETWORK_H_

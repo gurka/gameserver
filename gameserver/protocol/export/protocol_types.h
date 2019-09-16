@@ -34,7 +34,10 @@
 #include "position.h"
 #include "game_position.h"
 
-namespace protocol::server
+namespace protocol
+{
+
+namespace server
 {
 
 struct Login
@@ -88,6 +91,126 @@ struct Say
   std::string message;
 };
 
-}  // namespace protocol::server
+}  // namespace server
+
+namespace client
+{
+
+struct Login
+{
+  std::uint32_t player_id;
+  std::uint16_t server_beat;
+};
+
+struct LoginFailed
+{
+  std::string reason;
+};
+
+struct Creature
+{
+  bool known;
+  std::uint32_t id_to_remove;  // only if known = false
+  std::uint32_t id;
+  std::string name;  // only if known = false
+  std::uint8_t health_percent;
+  world::Direction direction;
+  world::Outfit outfit;
+  std::uint16_t speed;
+};
+
+struct Item
+{
+  std::uint16_t item_type_id;
+  std::uint8_t extra;  // only if type is stackable or multitype
+};
+
+struct Equipment
+{
+  bool empty;
+  std::uint8_t inventory_index;
+  Item item;  // only if empty = false
+};
+
+struct MagicEffect
+{
+  world::Position position = { 0, 0, 0 };
+  std::uint8_t type;
+};
+
+struct PlayerStats
+{
+  std::uint16_t health;
+  std::uint16_t max_health;
+  std::uint16_t capacity;
+  std::uint32_t exp;
+  std::uint8_t level;
+  std::uint16_t mana;
+  std::uint16_t max_mana;
+  std::uint8_t magic_level;
+};
+
+struct WorldLight
+{
+  std::uint8_t intensity;
+  std::uint8_t color;
+};
+
+struct PlayerSkills
+{
+  std::uint8_t fist;
+  std::uint8_t club;
+  std::uint8_t sword;
+  std::uint8_t axe;
+  std::uint8_t dist;
+  std::uint8_t shield;
+  std::uint8_t fish;
+};
+
+struct TextMessage
+{
+  std::uint8_t type;
+  std::string message;
+};
+
+struct MapData
+{
+  struct CreatureData
+  {
+    Creature creature;
+    std::uint8_t stackpos;
+  };
+
+  struct ItemData
+  {
+    Item item;
+    std::uint8_t stackpos;
+  };
+
+  struct TileData
+  {
+    bool skip;
+    std::vector<CreatureData> creatures;
+    std::vector<ItemData> items;
+  };
+
+  world::Position position = { 0, 0, 0 };
+  std::vector<TileData> tiles;
+};
+
+struct CreatureMove
+{
+  bool can_see_old_pos;
+  bool can_see_new_pos;
+
+  world::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
+  std::uint8_t old_stackpos;                   // only if canSeeOldPos = true
+  world::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
+  Creature creature;                           // only if canSeeOldPos = false and canSeeNewPos = true
+};
+
+}  // namespace client
+
+}  // namespace protocol
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

@@ -48,12 +48,20 @@ function eclipse-fast {
   popd
 }
 
+function wsclient {
+  mkdir -p "$BUILD_DIR/wsclient"
+  pushd "$BUILD_DIR/wsclient"
+  CC=emcc CXX=em++ cmake "$GAMESERVER_DIR/wsclient" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_BUILD_TYPE=debug -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++17 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE
+  popd
+}
+
 case $1 in
   'all')
     release
     debug
     debug-fast
     eclipse
+    wsclient
     ;;
 
   'release')
@@ -76,7 +84,11 @@ case $1 in
     eclipse-fast
     ;;
 
+  'wsclient')
+    wsclient
+    ;;
+
   *)
-    echo "Usage: $0 [all | release | debug | debug-fast | eclipse | eclipse-fast]"
+    echo "Usage: $0 [all | release | debug | debug-fast | eclipse | eclipse-fast | wsclient]"
     ;;
 esac

@@ -6,10 +6,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
-
 # -- Options --
 option(GAMESERVER_DEBUG_FULL "Compile with ASAN and clang-tidy" OFF)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
 
 if(GAMESERVER_DEBUG_FULL)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
@@ -37,6 +37,8 @@ add_subdirectory("account")
 set(CMAKE_CXX_CLANG_TIDY "")
 
 # -- External --
+add_library(websocketpp INTERFACE)
+target_include_directories(websocketpp SYSTEM INTERFACE "../external/websocketpp")
 add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 
