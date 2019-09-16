@@ -60,6 +60,7 @@ class Logger
     UTILS,
     WORLD,
     WORLDSERVER,
+    WSCLIENT,
   };
 
   static void log(const char* file_full_path, int line, Level level, ...);
