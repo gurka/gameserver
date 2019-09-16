@@ -5,9 +5,9 @@ cd "$(git rev-parse --show-toplevel)"
 
 STATUS=0
 
-# Build 'debug' and run tests
-tools/cmake.sh debug
-pushd build/debug
+# Build 'debug-full' and run tests
+tools/cmake.sh debug-full
+pushd build/debug-full
 make unittest || STATUS=1
 for test_bin in bin/*_test
 do
@@ -15,9 +15,9 @@ do
 done
 popd
 
-# Build 'debug-fast' and run tests with valgrind
-tools/cmake.sh debug-fast
-pushd build/debug-fast
+# Build 'debug' and run tests with valgrind
+tools/cmake.sh debug
+pushd build/debug
 make unittest || STATUS=1
 for test_bin in bin/*_test
 do
