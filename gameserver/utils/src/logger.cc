@@ -71,6 +71,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 
   // worldserver
   { "worldserver.cc",           Module::WORLDSERVER },
+  { "connection_ctrl.cc",       Module::WORLDSERVER },
 
   // protocol
   { "protocol.cc",              Module::PROTOCOL    },
