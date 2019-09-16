@@ -7,14 +7,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # -- Options --
-option(GAMESERVER_WSCLIENT "Build wsclient" OFF)
 option(GAMESERVER_DEBUG_FULL "Compile with ASAN and clang-tidy" OFF)
 
-if(NOT GAMESERVER_WSCLIENT)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
 
 if(GAMESERVER_DEBUG_FULL)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
@@ -22,21 +17,14 @@ if(GAMESERVER_DEBUG_FULL)
 endif()
 
 # Use ld.gold if available
-if(NOT GAMESERVER_WSCLIENT)
-  find_program(LD_GOLD "ld.gold")
-  if(LD_GOLD)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
-  endif()
+find_program(LD_GOLD "ld.gold")
+if(LD_GOLD)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
 endif()
 
 # -- Binaries --
-if(NOT GAMESERVER_WSCLIENT)
-  add_subdirectory("loginserver")
-  add_subdirectory("worldserver")
-else()
-  add_subdirectory("wsclient")
-  set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
-endif()
+add_subdirectory("loginserver")
+add_subdirectory("worldserver")
 
 # -- Modules --
 add_subdirectory("protocol")
@@ -44,33 +32,27 @@ add_subdirectory("utils")
 add_subdirectory("world")
 add_subdirectory("gameengine")
 add_subdirectory("network")
-if(NOT GAMESERVER_WSCLIENT)
-  add_subdirectory("account")
-endif()
+add_subdirectory("account")
 
 set(CMAKE_CXX_CLANG_TIDY "")
 
 # -- External --
-if(NOT GAMESERVER_WSCLIENT)
-  add_library(websocketpp INTERFACE)
-  target_include_directories(websocketpp SYSTEM INTERFACE "../external/websocketpp")
-  add_library(rapidxml INTERFACE)
-  target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
-endif()
+add_library(websocketpp INTERFACE)
+target_include_directories(websocketpp SYSTEM INTERFACE "../external/websocketpp")
+add_library(rapidxml INTERFACE)
+target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 
 # -- Unit tests --
-if(NOT GAMESERVER_WSCLIENT)
-  add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)
-  add_subdirectory("account/test" EXCLUDE_FROM_ALL)
-  add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)
-  add_subdirectory("network/test" EXCLUDE_FROM_ALL)
-  add_subdirectory("utils/test" EXCLUDE_FROM_ALL)
-  add_subdirectory("world/test" EXCLUDE_FROM_ALL)
-  add_custom_target(unittest DEPENDS
-    account_test
-    gameengine_test
-    network_test
-    utils_test
-    world_test
-  )
-endif()
+add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)
+add_subdirectory("account/test" EXCLUDE_FROM_ALL)
+add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)
+add_subdirectory("network/test" EXCLUDE_FROM_ALL)
+add_subdirectory("utils/test" EXCLUDE_FROM_ALL)
+add_subdirectory("world/test" EXCLUDE_FROM_ALL)
+add_custom_target(unittest DEPENDS
+  account_test
+  gameengine_test
+  network_test
+  utils_test
+  world_test
+)
