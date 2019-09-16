@@ -21,6 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "network.h"
+
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -115,12 +117,13 @@ namespace
 
 }
 
-namespace Network
+namespace wsclient::network
 {
-  void start(const std::function<void(network::IncomingPacket*)> callback)
-  {
-    handle_packet = callback;
-    connect();
-  }
 
+void start(const std::function<void(IncomingPacket*)> callback)
+{
+  handle_packet = callback;
+  connect();
 }
+
+}  // namespace wsclient::network

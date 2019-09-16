@@ -24,7 +24,7 @@
 #ifndef WSCLIENT_SRC_TYPES_H_
 #define WSCLIENT_SRC_TYPES_H_
 
-namespace types
+namespace wsclient::consts
 {
 
 constexpr auto draw_tiles_x = 15;
@@ -32,6 +32,6 @@ constexpr auto draw_tiles_y = 11;
 constexpr auto known_tiles_x = 18;
 constexpr auto known_tiles_y = 14;
 
-}
+}  // namespace wsclient::consts
 
 #endif  // WSCLIENT_SRC_TYPES_H_

@@ -29,14 +29,14 @@
 #include "position.h"
 #include "map.h"
 
-namespace Graphics
+namespace wsclient::graphics
 {
 
-  void init();
-  void draw(const Map& map,
-            const world::Position& position,
-            std::uint32_t player_id);
+void init();
+void draw(const world::Map& map,
+          const world::Position& position,
+          std::uint32_t player_id);
 
-}
+}  // namespace wsclient::graphics
 
 #endif  // WSCLIENT_SRC_GRAPHICS_H_

@@ -34,6 +34,13 @@
 
 #include "types.h"
 
+namespace wsclient::world
+{
+
+using ::world::Position;
+using ::world::CreatureId;
+using ::world::ItemTypeId;
+
 class Map
 {
  public:
@@ -44,10 +51,10 @@ class Map
       bool is_item;
       union
       {
-        world::CreatureId creature_id;
+        CreatureId creature_id;
         struct
         {
-          world::ItemTypeId item_type_id;
+          ItemTypeId item_type_id;
           std::uint8_t extra;
           bool onTop;
         } item;
@@ -57,18 +64,20 @@ class Map
     std::vector<Thing> things;
   };
 
-  void setMapData(const protocol::client::MapData& mapData);
-  void setPlayerPosition(const world::Position& position) { m_player_position = position; }
+  void setMapData(const protocol::client::MapData& map_data);
+  void setPlayerPosition(const Position& position) { m_player_position = position; }
 
-  void addCreature(const world::Position& position, world::CreatureId creatureId);
-  void addItem(const world::Position& position, world::ItemTypeId itemTypeId, std::uint8_t extra, bool onTop);
-  void removeThing(const world::Position& position, std::uint8_t stackpos);
+  void addCreature(const Position& position, CreatureId creature_id);
+  void addItem(const Position& position, ItemTypeId item_type_id, std::uint8_t extra, bool onTop);
+  void removeThing(const Position& position, std::uint8_t stackpos);
 
-  const Tile& getTile(const world::Position& position) const;
+  const Tile& getTile(const Position& position) const;
 
  private:
-  world::Position m_player_position = { 0, 0, 0 };
-  std::array<std::array<Tile, types::known_tiles_x>, types::known_tiles_y> m_tiles;
+  Position m_player_position = { 0, 0, 0 };
+  std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
 };
+
+}  // namespace wsclient::world
 
 #endif  // WSCLIENT_SRC_MAP_H_

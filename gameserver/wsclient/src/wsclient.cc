@@ -37,11 +37,14 @@
 #include "graphics.h"
 #include "map.h"
 
+namespace wsclient
+{
+
 using namespace protocol::client;
 
 std::uint32_t player_id;
 world::Position player_position = { 0, 0, 0 };
-Map map;
+world::Map map;
 std::vector<Creature> creatures;
 
 void handleLoginPacket(const Login& login)
@@ -58,7 +61,7 @@ void handleFullMapPacket(const MapData& mapData)
 {
   player_position = mapData.position;
   map.setMapData(mapData);
-  Graphics::draw(map, player_position, player_id);
+  graphics::draw(map, player_position, player_id);
 }
 
 void handleMagicEffect(const MagicEffect& effect)
@@ -114,7 +117,7 @@ void handleCreatureMove(const CreatureMove& move)
   // If this played moved then we need to update map's player_position
   // BEFORE OR AFTER MOVING PLAYER???
 
-  Graphics::draw(map, player_position, player_id);
+  graphics::draw(map, player_position, player_id);
 }
 
 void handle_packet(network::IncomingPacket* packet)
@@ -176,8 +179,10 @@ void handle_packet(network::IncomingPacket* packet)
   }
 }
 
+}  // namespace wsclient
+
 int main()
 {
-  Graphics::init();
-  Network::start(&handle_packet);
+  wsclient::graphics::init();
+  wsclient::network::start(&wsclient::handle_packet);
 }

@@ -25,13 +25,16 @@
 
 #include "logger.h"
 
-void Map::setMapData(const protocol::client::MapData& mapData)
+namespace wsclient::world
 {
-  m_player_position = mapData.position;
-  auto it = mapData.tiles.begin();
-  for (auto x = 0; x < types::known_tiles_x; x++)
+
+void Map::setMapData(const protocol::client::MapData& map_data)
+{
+  m_player_position = map_data.position;
+  auto it = map_data.tiles.begin();
+  for (auto x = 0; x < consts::known_tiles_x; x++)
   {
-    for (auto y = 0; y < types::known_tiles_y; y++)
+    for (auto y = 0; y < consts::known_tiles_y; y++)
     {
       m_tiles[y][x].things.clear();
 
@@ -67,7 +70,7 @@ void Map::setMapData(const protocol::client::MapData& mapData)
   }
 }
 
-void Map::addCreature(const world::Position& position, world::CreatureId creature_id)
+void Map::addCreature(const Position& position, CreatureId creature_id)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -96,7 +99,7 @@ void Map::addCreature(const world::Position& position, world::CreatureId creatur
            std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::addItem(const world::Position& position, world::ItemTypeId item_type_id, std::uint8_t extra, bool onTop)
+void Map::addItem(const Position& position, ItemTypeId item_type_id, std::uint8_t extra, bool onTop)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -136,7 +139,7 @@ void Map::addItem(const world::Position& position, world::ItemTypeId item_type_i
            std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::removeThing(const world::Position& position, std::uint8_t stackpos)
+void Map::removeThing(const Position& position, std::uint8_t stackpos)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -149,10 +152,12 @@ void Map::removeThing(const world::Position& position, std::uint8_t stackpos)
            stackpos);
 }
 
-const Map::Tile& Map::getTile(const world::Position& position) const
+const Map::Tile& Map::getTile(const Position& position) const
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
 
   return m_tiles[y][x];
 }
+
+}  // namespace wsclient::world

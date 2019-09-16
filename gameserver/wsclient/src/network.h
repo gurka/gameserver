@@ -29,11 +29,17 @@
 namespace network
 {
 class IncomingPacket;
+class OutgoingPacket;
 }
 
-namespace Network
+namespace wsclient::network
 {
-  void start(const std::function<void(network::IncomingPacket*)> callback);
-}
+
+using ::network::IncomingPacket;
+using ::network::OutgoingPacket;
+
+void start(const std::function<void(IncomingPacket*)> callback);
+
+}  // namespace wsclient::network
 
 #endif  // NETWORK_H_
