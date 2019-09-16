@@ -24,8 +24,8 @@ function debug {
 }
 
 function debug-full {
-  mkdir -p "$BUILD_DIR/debug-fast"
-  pushd "$BUILD_DIR/debug-fast"
+  mkdir -p "$BUILD_DIR/debug-full"
+  pushd "$BUILD_DIR/debug-full"
   cmake "$GAMESERVER_DIR" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++17 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE -DCMAKE_BUILD_TYPE=debug -DGAMESERVER_DEBUG_FULL=ON
   ln -sf "$DATA_DIR" data
   popd
