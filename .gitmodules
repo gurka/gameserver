@@ -4,3 +4,6 @@
 [submodule "lib/googletest"]
 	path = external/googletest
 	url = https://github.com/google/googletest.git
+[submodule "external/websocketpp"]
+	path = external/websocketpp
+	url = https://github.com/gurka/websocketpp.git

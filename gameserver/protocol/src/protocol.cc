@@ -873,4 +873,4 @@ CreatureMove getCreatureMove(bool can_see_old_pos, bool can_see_new_pos, network
 
 }  // namespace client
 
-}  // namespace protoco
+}  // namespace protocol
