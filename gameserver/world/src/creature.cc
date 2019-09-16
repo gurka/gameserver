@@ -24,15 +24,10 @@
 
 #include "creature.h"
 
-const Creature Creature::INVALID = Creature();
-const CreatureId Creature::INVALID_ID = 0;
-CreatureId Creature::next_creature_id = 0x4713;
-
-Creature::Creature()
-  : m_creature_id(Creature::INVALID_ID),
-    m_outfit({0, 0, 0, 0, 0, 0})
+namespace world
 {
-}
+
+CreatureId Creature::next_creature_id = 0x4713;
 
 Creature::Creature(std::string name)
   : m_creature_id(Creature::getFreeCreatureId()),
@@ -54,3 +49,5 @@ bool Creature::operator!=(const Creature& other) const
 {
   return !(*this == other);
 }
+
+}  // namespace world

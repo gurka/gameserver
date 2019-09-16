@@ -30,35 +30,37 @@
 #include <unordered_map>
 #include <vector>
 
-#include "world_interface.h"
 #include "creature.h"
 #include "creature_ctrl.h"
 #include "item.h"
 #include "tile.h"
 #include "position.h"
 
-class World : public WorldInterface
+namespace world
+{
+
+static constexpr int POSITION_OFFSET = 192;
+
+enum class ReturnCode
+{
+  OK,
+  INVALID_CREATURE,
+  INVALID_POSITION,
+  ITEM_NOT_FOUND,
+  CANNOT_MOVE_THAT_OBJECT,
+  CANNOT_REACH_THAT_OBJECT,
+  THERE_IS_NO_ROOM,
+  MAY_NOT_MOVE_YET,
+  OTHER_ERROR,
+};
+
+class World
 {
  public:
-  static constexpr int POSITION_OFFSET = 192;
-
-  enum class ReturnCode
-  {
-    OK,
-    INVALID_CREATURE,
-    INVALID_POSITION,
-    ITEM_NOT_FOUND,
-    CANNOT_MOVE_THAT_OBJECT,
-    CANNOT_REACH_THAT_OBJECT,
-    THERE_IS_NO_ROOM,
-    MAY_NOT_MOVE_YET,
-    OTHER_ERROR,
-  };
-
   World(int world_size_x,
         int world_size_y,
         std::vector<Tile>&& tiles);
-  ~World() override;
+  virtual ~World();
 
   // Delete copy constructors
   World(const World&) = delete;
@@ -72,6 +74,9 @@ class World : public WorldInterface
   ReturnCode creatureMove(CreatureId creature_id, const Position& to_position);
   void creatureTurn(CreatureId creature_id, Direction direction);
   void creatureSay(CreatureId creature_id, const std::string& message);
+  const Position* getCreaturePosition(CreatureId creature_id) const;
+  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
+  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
 
   // Item management
   bool canAddItem(const Item& item, const Position& position) const;
@@ -84,19 +89,13 @@ class World : public WorldInterface
                       int count,
                       const Position& to_position);
 
-  // Creature checks
-  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
-  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
-
-  // WorldInterface
-  const Tile* getTile(const Position& position) const override;
-  const Creature& getCreature(CreatureId creature_id) const override;
-  const Position& getCreaturePosition(CreatureId creature_id) const override;
+  // Tile management
+  const Tile* getTile(const Position& position) const;
 
  private:
   // Functions to use instead of accessing the containers directly
   Tile* getTile(const Position& position);
-  Creature& getCreature(CreatureId creature_id);
+  Creature* getCreature(CreatureId creature_id);
   CreatureCtrl& getCreatureCtrl(CreatureId creature_id);
 
   // Helper functions
@@ -129,5 +128,7 @@ class World : public WorldInterface
   };
   std::unordered_map<CreatureId, CreatureData> m_creature_data;
 };
+
+}  // namespace world
 
 #endif  // WORLD_EXPORT_WORLD_H_

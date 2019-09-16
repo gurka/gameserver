@@ -30,6 +30,9 @@
 #include <cstring>
 #include <array>
 
+namespace utils
+{
+
 const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 {
   // utils
@@ -207,3 +210,5 @@ const std::string& Logger::levelToString(const Level& level)
       return invalid;
   }
 }
+
+}  // namespace utils

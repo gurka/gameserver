@@ -29,6 +29,9 @@
 #include "creature.h"
 #include "gmock/gmock.h"
 
+namespace world
+{
+
 class CreatureMock : public Creature
 {
  public:
@@ -37,5 +40,7 @@ class CreatureMock : public Creature
   {
   }
 };
+
+}  // namespace world
 
 #endif  // WORLD_TEST_SRC_CREATURE_MOCK_H_

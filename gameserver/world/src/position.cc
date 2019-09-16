@@ -26,7 +26,8 @@
 
 #include <sstream>
 
-const Position Position::INVALID = Position();
+namespace world
+{
 
 Position::Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
   : m_x(x),
@@ -66,5 +67,7 @@ Position Position::addDirection(const Direction& direction) const
     return { std::uint16_t(m_x - 1),                    m_y, m_z };
   }
 
-  return {};
+  return *this;
 }
+
+}  // namespace world

@@ -64,6 +64,9 @@ std::uint32_t ipAddressToUint32(const std::string& ip_address)
 
 }  // namespace
 
+namespace account
+{
+
 bool AccountReader::loadFile(const std::string& accounts_filename)
 {
   // Open XML and read into string
@@ -273,3 +276,5 @@ const Account* AccountReader::getAccount(const std::string& character_name) cons
   }
   return nullptr;
 }
+
+}  // namespace account

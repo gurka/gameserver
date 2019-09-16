@@ -31,6 +31,9 @@
 #include <string>
 #include <vector>
 
+namespace network
+{
+
 class IncomingPacket
 {
  public:
@@ -69,5 +72,7 @@ class IncomingPacket
   std::size_t m_length;
   std::size_t m_position;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_EXPORT_INCOMING_PACKET_H_

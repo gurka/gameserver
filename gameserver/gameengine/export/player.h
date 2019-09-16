@@ -35,6 +35,9 @@
 #include "direction.h"
 #include "item.h"
 
+namespace gameengine
+{
+
 class Equipment
 {
  public:
@@ -43,13 +46,13 @@ class Equipment
   {
   }
 
-  bool canAddItem(const Item& item, int inventory_slot) const;
-  bool addItem(const Item& item, int inventory_slot);
-  bool removeItem(ItemTypeId item_type_id, int inventory_slot);
-  const Item* getItem(int inventory_slot) const;
+  bool canAddItem(const world::Item& item, int inventory_slot) const;
+  bool addItem(const world::Item& item, int inventory_slot);
+  bool removeItem(world::ItemTypeId item_type_id, int inventory_slot);
+  const world::Item* getItem(int inventory_slot) const;
 
  private:
-  std::array<const Item*, 11> m_items;  // index 0 is invalid
+  std::array<const world::Item*, 11> m_items;  // index 0 is invalid
   enum InventorySlotInfo
   {
     HELMET     = 1,
@@ -65,7 +68,7 @@ class Equipment
   };
 };
 
-class Player : public Creature
+class Player : public world::Creature
 {
  public:
   explicit Player(const std::string& name);
@@ -112,5 +115,7 @@ class Player : public Creature
   int m_party_shield;
   Equipment m_equipment;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_H_

@@ -28,6 +28,9 @@
 
 #include "gtest/gtest.h"
 
+namespace world
+{
+
 using ::testing::Return;
 using ::testing::ReturnRef;
 
@@ -42,7 +45,7 @@ TEST_F(TileTest, Constructor)
   const auto tile = Tile(&groundItem);
 
   EXPECT_CALL(groundItem, getItemTypeId()).WillOnce(Return(123));
-  ASSERT_EQ(123, tile.getThing(0)->item->getItemTypeId());
+  ASSERT_EQ(123, tile.getItem(0)->getItemTypeId());
   ASSERT_EQ(1u, tile.getNumberOfThings());  // Only ground item
 }
 
@@ -130,3 +133,5 @@ TEST_F(TileTest, AddRemoveItems)
   ASSERT_TRUE(result);
   ASSERT_EQ(tile.getNumberOfThings(), 1u + 0u);
 }
+
+}  // namespace world

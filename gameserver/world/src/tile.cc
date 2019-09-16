@@ -24,46 +24,32 @@
 
 #include "tile.h"
 
+#include <type_traits>
+
 #include "logger.h"
+
+namespace world
+{
 
 void Tile::addThing(const Thing& thing)
 {
-  if (thing.creature)
+  // Add the new thing before the first thing with the
+  // same or greater prio than the new thing
+  // 0 = item top
+  // 1 = creature
+  // 2 = item bottom
+  const auto thing_prio = thing.item() ? (thing.item()->getItemType().always_on_top ? 1 : 3) : 2;
+  auto it = m_things.cbegin() + 1;
+  while (it != m_things.cend())
   {
-    auto it = m_things.cbegin() + 1;
-    while (it != m_things.cend())
+    const auto it_prio = it->item() ? (it->item()->getItemType().always_on_top ? 1 : 3) : 2;
+    if (it_prio >= thing_prio)
     {
-      // Iterate until we have passed all items with onTop = true
-      // e.g. found a creature, an item with onTop = false, or end
-      if (!it->item || !it->item->getItemType().always_on_top)
-      {
-        break;
-      }
-      ++it;
+      break;
     }
-    m_things.insert(it, thing);
+    ++it;
   }
-  else  // thing.item
-  {
-    if (thing.item->getItemType().always_on_top)
-    {
-      m_things.insert(m_things.cbegin() + 1, thing);
-    }
-    else
-    {
-      auto it = m_things.cbegin() + 1;
-      while (it != m_things.cend())
-      {
-        // Iterate until we have reached first item with onTop = false or end
-        if (it->item && !it->item->getItemType().always_on_top)
-        {
-          break;
-        }
-        ++it;
-      }
-      m_things.insert(it, thing);
-    }
-  }
+  m_things.insert(it, thing);
 }
 
 bool Tile::removeThing(int stackpos)
@@ -81,7 +67,7 @@ bool Tile::removeThing(int stackpos)
   return true;
 }
 
-const Thing* Tile::getThing(int stackpos) const
+const Creature* Tile::getCreature(int stackpos) const
 {
   if (static_cast<int>(m_things.size()) < stackpos)
   {
@@ -92,5 +78,68 @@ const Thing* Tile::getThing(int stackpos) const
     return nullptr;
   }
 
-  return &m_things[stackpos];
+  return m_things[stackpos].creature();
 }
+
+const Item* Tile::getItem(int stackpos) const
+{
+  if (static_cast<int>(m_things.size()) < stackpos)
+  {
+    LOG_ERROR("%s: invalid stackpos: %d with m_things.size(): %d",
+              __func__,
+              stackpos,
+              m_things.size());
+    return nullptr;
+  }
+
+  return m_things[stackpos].item();
+}
+
+bool Tile::isBlocking() const
+{
+  auto blocking = false;
+  visitThings([&blocking](const Creature* /*unused*/) { blocking = true; },
+              [&blocking](const Item* item) { blocking |= item->getItemType().is_blocking; });
+  return blocking;
+}
+
+int Tile::getCreatureStackpos(CreatureId creature_id) const
+{
+  auto it = m_things.cbegin() + 1;
+  while (it != m_things.cend())
+  {
+    if (it->creature() && it->creature()->getCreatureId() == creature_id)
+    {
+      break;
+    }
+    ++it;
+  }
+
+  if (it == m_things.cend())
+  {
+    return 255;  // TODO(simon): invalid stackpos?
+  }
+
+  return std::distance(m_things.cbegin(), it);
+}
+
+void Tile::visitThings(const std::function<void(const Creature*)>& creature_func,
+                       const std::function<void(const Item*)>& item_func) const
+{
+  for (const auto& thing : m_things)
+  {
+    thing.visit(creature_func, item_func);
+  }
+}
+
+void Tile::visitCreatures(const std::function<void(const Creature*)>& func) const
+{
+  visitThings(func, {});
+}
+
+void Tile::visitItems(const std::function<void(const Item*)>& func) const
+{
+  visitThings({}, func);
+}
+
+}  // namespace world

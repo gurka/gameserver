@@ -31,6 +31,9 @@
 
 #include "logger.h"
 
+namespace network
+{
+
 template <typename Backend>
 class Acceptor
 {
@@ -84,5 +87,7 @@ class Acceptor
   typename Backend::Socket m_socket;
   std::function<void(typename Backend::Socket&&)> m_on_accept;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_SRC_ACCEPTOR_H_

@@ -26,6 +26,9 @@
 
 #include "logger.h"
 
+namespace network
+{
+
 bool WebsocketBackend::Socket::is_open() const  // NOLINT
 {
   return server->isOpen(hdl);
@@ -245,3 +248,5 @@ void WebsocketServerImpl::fix(websocketpp::lib::shared_ptr<void> hdl_lock)
     callback(WebsocketBackend::ErrorCode(), length);
   }
 }
+
+}  // namespace network

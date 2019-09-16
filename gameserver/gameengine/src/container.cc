@@ -30,6 +30,9 @@
 #include "item.h"
 #include "creature.h"
 
+namespace gameengine
+{
+
 std::string Container::toString(int indent) const
 {
   const auto indents = std::string(indent, ' ');
@@ -52,3 +55,5 @@ std::string Container::toString(int indent) const
   }
   return ss.str();
 }
+
+}  // namespace gameengine

@@ -26,6 +26,9 @@
 
 #include "gtest/gtest.h"
 
+namespace world
+{
+
 TEST(CreatureTest, Constructor)
 {
   std::string TestCreatureName("TestCreature");
@@ -94,3 +97,5 @@ TEST(CreatureTest, GettersSetters)
   ASSERT_EQ(outfitGet.legs, 55);
   ASSERT_EQ(outfitGet.feet, 66);
 }
+
+}  // namespace world

@@ -28,9 +28,6 @@
 #include <functional>
 #include <memory>
 
-class Server;
-class Connection;
-
 namespace boost
 {
 namespace asio
@@ -38,6 +35,12 @@ namespace asio
 class io_context;
 }
 }
+
+namespace network
+{
+
+class Server;
+class Connection;
 
 class ServerFactory
 {
@@ -52,5 +55,7 @@ class ServerFactory
                                                        int port,
                                                        const OnClientConnectedCallback& on_client_connected);
 };
+
+}  // namespace network
 
 #endif  // NETWORK_EXPORT_SERVER_FACTORY_H_

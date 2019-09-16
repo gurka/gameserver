@@ -28,6 +28,9 @@
 #include "item.h"
 #include "gmock/gmock.h"
 
+namespace world
+{
+
 class ItemMock : public Item
 {
  public:
@@ -39,5 +42,7 @@ class ItemMock : public Item
   MOCK_CONST_METHOD0(getCount, std::uint8_t());
   MOCK_METHOD1(setCount, void(std::uint8_t count));
 };
+
+}  // namespace world
 
 #endif  // WORLD_TEST_SRC_ITEM_MOCK_H_

@@ -29,6 +29,9 @@
 #include "server_impl.h"
 #include "websocket_server_impl.h"
 
+namespace network
+{
+
 struct Backend
 {
   using Service = boost::asio::io_context;
@@ -77,3 +80,5 @@ std::unique_ptr<Server> ServerFactory::createWebsocketServer(boost::asio::io_con
 {
   return std::make_unique<WebsocketServerImpl>(io_context, port, on_client_connected);
 }
+
+}  // namespace network

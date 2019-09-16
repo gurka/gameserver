@@ -30,6 +30,8 @@
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
+namespace network
+{
 
 class PacketTest : public ::testing::Test
 {
@@ -159,3 +161,5 @@ TEST_F(PacketTest, OutgoingPacket)
   // 0x55
   EXPECT_EQ(0x55, packetBuffer[15]);
 }
+
+}  // namespace network

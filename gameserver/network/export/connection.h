@@ -28,6 +28,9 @@
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
+namespace network
+{
+
 class Connection
 {
  public:
@@ -43,5 +46,7 @@ class Connection
   virtual void close(bool force) = 0;
   virtual void sendPacket(OutgoingPacket&& packet) = 0;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_EXPORT_CONNECTION_H_

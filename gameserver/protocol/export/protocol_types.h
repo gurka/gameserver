@@ -31,11 +31,13 @@
 #include <vector>
 
 #include "direction.h"
-#include "creature.h"
 #include "position.h"
 #include "game_position.h"
 
-namespace protocol_types
+namespace protocol
+{
+
+namespace server
 {
 
 struct Login
@@ -50,19 +52,19 @@ struct Login
 
 struct MoveClick
 {
-  std::deque<Direction> path;
+  std::deque<world::Direction> path;
 };
 
 struct MoveItem  // or MoveThing?
 {
-  ItemPosition from_item_position;
-  GamePosition to_game_position;
+  gameengine::ItemPosition from_item_position;
+  gameengine::GamePosition to_game_position;
   std::uint8_t count;
 };
 
 struct UseItem
 {
-  ItemPosition item_position;
+  gameengine::ItemPosition item_position;
   std::uint8_t new_container_id;
 };
 
@@ -78,7 +80,7 @@ struct OpenParentContainer
 
 struct LookAt
 {
-  ItemPosition item_position;
+  gameengine::ItemPosition item_position;
 };
 
 struct Say
@@ -88,6 +90,8 @@ struct Say
   std::uint16_t channel_id;
   std::string message;
 };
+
+}  // namespace server
 
 namespace client
 {
@@ -110,8 +114,8 @@ struct Creature
   std::uint32_t id;
   std::string name;  // only if known = false
   std::uint8_t health_percent;
-  Direction direction;
-  Outfit outfit;
+  world::Direction direction;
+  world::Outfit outfit;
   std::uint16_t speed;
 };
 
@@ -130,7 +134,7 @@ struct Equipment
 
 struct MagicEffect
 {
-  Position position;
+  world::Position position = { 0, 0, 0 };
   std::uint8_t type;
 };
 
@@ -190,7 +194,7 @@ struct MapData
     std::vector<ItemData> items;
   };
 
-  Position position;
+  world::Position position = { 0, 0, 0 };
   std::vector<TileData> tiles;
 };
 
@@ -199,14 +203,14 @@ struct CreatureMove
   bool can_see_old_pos;
   bool can_see_new_pos;
 
-  Position old_position;      // only if canSeeOldPos = true
-  std::uint8_t old_stackpos;  // only if canSeeOldPos = true
-  Position new_position;      // only if canSeeNewPos = true
-  Creature creature;          // only if canSeeOldPos = false and canSeeNewPos = true
+  world::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
+  std::uint8_t old_stackpos;                   // only if canSeeOldPos = true
+  world::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
+  Creature creature;                           // only if canSeeOldPos = false and canSeeNewPos = true
 };
 
 }  // namespace client
 
-}  // namespace protocol_types
+}  // namespace protocol
 
 #endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_

@@ -33,29 +33,36 @@
 #include "creature.h"
 #include "item.h"
 
-struct Container;
+namespace world
+{
 class Item;
+}
+
+namespace gameengine
+{
+
+struct Container;
 class Player;
 
-class PlayerCtrl : public CreatureCtrl
+class PlayerCtrl : public world::CreatureCtrl
 {
  public:
   ~PlayerCtrl() override = default;
 
   // Called by GameEngine
-  virtual CreatureId getPlayerId() const = 0;
-  virtual void setPlayerId(CreatureId player_id) = 0;
+  virtual world::CreatureId getPlayerId() const = 0;
+  virtual void setPlayerId(world::CreatureId player_id) = 0;
 
   virtual void onEquipmentUpdated(const Player& player, std::uint8_t inventory_index) = 0;
 
-  virtual void onOpenContainer(std::uint8_t new_container_id, const Container& container, const Item& item) = 0;
-  virtual void onCloseContainer(ItemUniqueId container_item_unique_id, bool reset_container_id) = 0;
+  virtual void onOpenContainer(std::uint8_t new_container_id, const Container& container, const world::Item& item) = 0;
+  virtual void onCloseContainer(world::ItemUniqueId container_item_unique_id, bool reset_container_id) = 0;
 
-  virtual void onContainerAddItem(ItemUniqueId container_item_unique_id, const Item& item) = 0;
-  virtual void onContainerUpdateItem(ItemUniqueId container_item_unique_id,
+  virtual void onContainerAddItem(world::ItemUniqueId container_item_unique_id, const world::Item& item) = 0;
+  virtual void onContainerUpdateItem(world::ItemUniqueId container_item_unique_id,
                                      std::uint8_t container_slot,
-                                     const Item& item) = 0;
-  virtual void onContainerRemoveItem(ItemUniqueId container_item_unique_id, std::uint8_t container_slot) = 0;
+                                     const world::Item& item) = 0;
+  virtual void onContainerRemoveItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot) = 0;
 
   virtual void sendTextMessage(std::uint8_t message_type, const std::string& message) = 0;
 
@@ -63,8 +70,10 @@ class PlayerCtrl : public CreatureCtrl
   virtual void cancelMove() = 0;
 
   // Called by ContainerManager
-  virtual const std::array<ItemUniqueId, 64>& getContainerIds() const = 0;
-  virtual bool hasContainerOpen(ItemUniqueId item_unique_id) const = 0;
+  virtual const std::array<world::ItemUniqueId, 64>& getContainerIds() const = 0;
+  virtual bool hasContainerOpen(world::ItemUniqueId item_unique_id) const = 0;
 };
+
+}  // namespace gameengine
 
 #endif  // GAMEENGINE_EXPORT_PLAYER_CTRL_H_

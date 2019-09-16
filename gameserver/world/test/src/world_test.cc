@@ -36,6 +36,9 @@
 #include "position.h"
 #include "item.h"
 
+namespace world
+{
+
 using ::testing::ReturnRef;
 using ::testing::AtLeast;
 using ::testing::_;
@@ -85,8 +88,8 @@ TEST_F(WorldTest, AddCreature)
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
 
   EXPECT_TRUE(world->creatureExists(creatureOne.getCreatureId()));
-  EXPECT_EQ(creatureOne, cworld->getCreature(creatureOne.getCreatureId()));
-  EXPECT_EQ(creaturePositionOne, cworld->getCreaturePosition(creatureOne.getCreatureId()));
+  //EXPECT_EQ(&creatureOne, world->getCreature(creatureOne.getCreatureId()));
+  EXPECT_EQ(creaturePositionOne, *(cworld->getCreaturePosition(creatureOne.getCreatureId())));
 
 
   // Add second Creature at (193, 193, 7)
@@ -100,8 +103,8 @@ TEST_F(WorldTest, AddCreature)
   world->addCreature(&creatureTwo, &creatureCtrlTwo, creaturePositionTwo);
 
   EXPECT_TRUE(world->creatureExists(creatureTwo.getCreatureId()));
-  EXPECT_EQ(creatureTwo, cworld->getCreature(creatureTwo.getCreatureId()));
-  EXPECT_EQ(creaturePositionTwo, cworld->getCreaturePosition(creatureTwo.getCreatureId()));
+  //EXPECT_EQ(creatureTwo, cworld->getCreature(creatureTwo.getCreatureId()));
+  EXPECT_EQ(creaturePositionTwo, *(cworld->getCreaturePosition(creatureTwo.getCreatureId())));
 
 
   // Add third Creature at (202, 193, 7)
@@ -117,8 +120,8 @@ TEST_F(WorldTest, AddCreature)
   world->addCreature(&creatureThree, &creatureCtrlThree, creaturePositionThree);
 
   EXPECT_TRUE(world->creatureExists(creatureThree.getCreatureId()));
-  EXPECT_EQ(creatureThree, cworld->getCreature(creatureThree.getCreatureId()));
-  EXPECT_EQ(creaturePositionThree, cworld->getCreaturePosition(creatureThree.getCreatureId()));
+  //EXPECT_EQ(creatureThree, cworld->getCreature(creatureThree.getCreatureId()));
+  EXPECT_EQ(creaturePositionThree, *(cworld->getCreaturePosition(creatureThree.getCreatureId())));
 
 
   // Add fourth Creature at (195, 200, 7)
@@ -135,8 +138,8 @@ TEST_F(WorldTest, AddCreature)
   world->addCreature(&creatureFour, &creatureCtrlFour, creaturePositionFour);
 
   EXPECT_TRUE(world->creatureExists(creatureFour.getCreatureId()));
-  EXPECT_EQ(creatureFour, cworld->getCreature(creatureFour.getCreatureId()));
-  EXPECT_EQ(creaturePositionFour, cworld->getCreaturePosition(creatureFour.getCreatureId()));
+  //EXPECT_EQ(creatureFour, cworld->getCreature(creatureFour.getCreatureId()));
+  EXPECT_EQ(creaturePositionFour, *(cworld->getCreaturePosition(creatureFour.getCreatureId())));
 }
 
 TEST_F(WorldTest, RemoveCreature)
@@ -212,11 +215,14 @@ TEST_F(WorldTest, CreatureMoveSingleCreature)
   EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _));
   Direction direction(Direction::EAST);
   world->creatureMove(creatureOne.getCreatureId(), direction);
-  EXPECT_EQ(creaturePositionOne.addDirection(direction), cworld->getCreaturePosition(creatureOne.getCreatureId()));
+  EXPECT_EQ(creaturePositionOne.addDirection(direction),
+            *(cworld->getCreaturePosition(creatureOne.getCreatureId())));
 
   // Test with Position, from (193, 192, 7) to (193, 193, 7)
   EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _));
   Position position(193, 193, 7);
   world->creatureMove(creatureOne.getCreatureId(), position);
-  EXPECT_EQ(position, cworld->getCreaturePosition(creatureOne.getCreatureId()));
+  EXPECT_EQ(position, *(cworld->getCreaturePosition(creatureOne.getCreatureId())));
 }
+
+}  // namespace world

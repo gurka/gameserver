@@ -30,6 +30,9 @@
 #include "backend_mock.h"
 #include "server_impl.h"
 
+namespace network
+{
+
 using ::testing::_;
 using ::testing::SaveArg;
 
@@ -80,3 +83,5 @@ TEST_F(ServerTest, AcceptConnection)
   EXPECT_CALL(service_, acceptor_cancel());
   server_.reset();
 }
+
+}  // namespace network

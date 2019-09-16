@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <vector>
 
+namespace network
+{
+
 IncomingPacket::IncomingPacket(const std::uint8_t* buffer, std::size_t length)
   : m_buffer(buffer),
     m_length(length),
@@ -96,3 +99,5 @@ std::vector<std::uint8_t> IncomingPacket::getBytes(int num_bytes)
   m_position += num_bytes;
   return bytes;
 }
+
+}  // namespace network

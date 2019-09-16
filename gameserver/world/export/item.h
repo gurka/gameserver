@@ -28,10 +28,46 @@
 #include <cstdint>
 #include <string>
 
+namespace world
+{
+
 using ItemUniqueId = std::uint64_t;
 using ItemTypeId = std::uint16_t;
 
-struct ItemType;
+struct ItemType
+{
+  ItemTypeId id     = 0;
+
+  // Loaded from data file
+  bool ground         = false;
+  int  speed          = 0;
+  bool is_blocking    = false;
+  bool always_on_top  = false;
+  bool is_container   = false;
+  bool is_stackable   = false;
+  bool is_usable      = false;
+  bool is_multitype   = false;
+  bool is_not_movable = false;
+  bool is_equipable   = false;
+
+  // Loaded from xml file
+  std::string name      = "";
+  int weight            = 0;
+  int decayto           = 0;
+  int decaytime         = 0;
+  int damage            = 0;
+  std::uint8_t maxitems = 0;
+  std::string type      = "";
+  std::string position  = "";
+  int attack            = 0;
+  int defence           = 0;
+  int arm               = 0;
+  std::string skill     = "";
+  std::string descr     = "";
+  int handed            = 0;
+  int shottype          = 0;
+  std::string amutype   = "";
+};
 
 class Item
 {
@@ -59,39 +95,6 @@ class Item
   }
 };
 
-struct ItemType
-{
-  ItemTypeId id     = 0;
-
-  // Loaded from data file
-  bool ground       = false;
-  int  speed        = 0;
-  bool is_blocking   = false;
-  bool always_on_top  = false;
-  bool is_container  = false;
-  bool is_stackable  = false;
-  bool is_usable     = false;
-  bool is_multitype  = false;
-  bool is_not_movable = false;
-  bool is_equipable  = false;
-
-  // Loaded from xml file
-  std::string name      = "";
-  int weight            = 0;
-  int decayto           = 0;
-  int decaytime         = 0;
-  int damage            = 0;
-  std::uint8_t maxitems = 0;
-  std::string type      = "";
-  std::string position  = "";
-  int attack            = 0;
-  int defence           = 0;
-  int arm               = 0;
-  std::string skill     = "";
-  std::string descr     = "";
-  int handed            = 0;
-  int shottype          = 0;
-  std::string amutype   = "";
-};
+}  // namespace world
 
 #endif  // WORLD_EXPORT_ITEM_H_

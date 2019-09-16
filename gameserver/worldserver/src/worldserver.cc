@@ -26,7 +26,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
-#include <boost/asio.hpp>  //NOLINT
+#include <boost/asio.hpp>
 
 // utils
 #include "config_parser.h"
@@ -45,49 +45,50 @@
 #include "game_engine_queue.h"
 
 // worldserver
-#include "protocol.h"
+#include "connection_ctrl.h"
 
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated
-static std::unique_ptr<GameEngineQueue> game_engine_queue;
-static std::unique_ptr<GameEngine> game_engine;
-static std::unique_ptr<AccountReader> account_reader;
-static std::unique_ptr<Server> server;
-static std::unique_ptr<Server> websocket_server;
+static std::unique_ptr<gameengine::GameEngineQueue> game_engine_queue;
+static std::unique_ptr<gameengine::GameEngine> game_engine;
+static std::unique_ptr<account::AccountReader> account_reader;
+static std::unique_ptr<network::Server> server;
+static std::unique_ptr<network::Server> websocket_server;
 
-using ProtocolId = int;
-static std::unordered_map<ProtocolId, std::unique_ptr<Protocol>> protocols;
+using ConnectionId = int;
+static std::unordered_map<ConnectionId, std::unique_ptr<ConnectionCtrl>> connections;
 
-void onClientConnected(std::unique_ptr<Connection>&& connection)
+void onClientConnected(std::unique_ptr<network::Connection>&& connection)
 {
-  static ProtocolId next_protocol_id = 0;
+  static ConnectionId next_connection_id = 0;
 
-  const auto protocol_id = next_protocol_id;
-  next_protocol_id += 1;
+  const auto connection_id = next_connection_id;
+  next_connection_id += 1;
 
-  LOG_DEBUG("%s: protocol_id: %d", __func__, protocol_id);
+  LOG_DEBUG("%s: connection_id: %d", __func__, connection_id);
 
   // Create and store Protocol for this Connection
-  auto protocol = std::make_unique<Protocol>([protocol_id]()
-                                             {
-                                               LOG_DEBUG("onCloseProtocol: protocol_id: %d", protocol_id);
-                                               protocols.erase(protocol_id);
-                                             },
-                                             std::move(connection),
-                                             game_engine->getWorldInterface(),
-                                             game_engine_queue.get(),
-                                             account_reader.get());
+  const auto on_close = [connection_id]()
+  {
+    LOG_DEBUG("onCloseProtocol: protocol_id: %d", connection_id);
+    connections.erase(connection_id);
+  };
+  auto connection_ctrl = std::make_unique<ConnectionCtrl>(on_close,
+                                                          std::move(connection),
+                                                          game_engine->getWorld(),
+                                                          game_engine_queue.get(),
+                                                          account_reader.get());
 
-  protocols.emplace(std::piecewise_construct,
-                    std::forward_as_tuple(protocol_id),
-                    std::forward_as_tuple(std::move(protocol)));
+  connections.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(connection_id),
+                      std::forward_as_tuple(std::move(connection_ctrl)));
 }
 
 int main()
 {
   // Read configuration
-  const auto config = ConfigParser::parseFile("data/worldserver.cfg");
+  const auto config = utils::ConfigParser::parseFile("data/worldserver.cfg");
   if (!config.parsedOk())
   {
     printf("Could not parse config file: %s\n", config.getErrorMessage().c_str());
@@ -114,12 +115,12 @@ int main()
   const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
   // Set logger settings
-  Logger::setLevel(Logger::Module::ACCOUNT,     logger_account);
-  Logger::setLevel(Logger::Module::NETWORK,     logger_network);
-  Logger::setLevel(Logger::Module::PROTOCOL,    logger_protocol);
-  Logger::setLevel(Logger::Module::UTILS,       logger_utils);
-  Logger::setLevel(Logger::Module::WORLD,       logger_world);
-  Logger::setLevel(Logger::Module::WORLDSERVER, logger_worldserver);
+  utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
+  utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
+  utils::Logger::setLevel(utils::Logger::Module::PROTOCOL,    logger_protocol);
+  utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
+  utils::Logger::setLevel(utils::Logger::Module::WORLD,       logger_world);
+  utils::Logger::setLevel(utils::Logger::Module::WORLDSERVER, logger_worldserver);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");
@@ -147,8 +148,8 @@ int main()
   boost::asio::io_context io_context;
 
   // Create GameEngine and GameEngineQueue
-  game_engine = std::make_unique<GameEngine>();
-  game_engine_queue = std::make_unique<GameEngineQueue>(game_engine.get(), &io_context);
+  game_engine = std::make_unique<gameengine::GameEngine>();
+  game_engine_queue = std::make_unique<gameengine::GameEngineQueue>(game_engine.get(), &io_context);
 
   // Initialize GameEngine
   if (!game_engine->init(game_engine_queue.get(), login_message, data_filename, items_filename, world_filename))
@@ -158,7 +159,7 @@ int main()
   }
 
   // Create and load AccountReader
-  account_reader = std::make_unique<AccountReader>();
+  account_reader = std::make_unique<account::AccountReader>();
   if (!account_reader->loadFile(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
@@ -166,10 +167,10 @@ int main()
   }
 
   // Create Server
-  server = ServerFactory::createServer(&io_context, server_port, &onClientConnected);
+  server = network::ServerFactory::createServer(&io_context, server_port, &onClientConnected);
 
   // Create websocket server
-  websocket_server = ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
+  websocket_server = network::ServerFactory::createWebsocketServer(&io_context, ws_server_port, &onClientConnected);
 
   LOG_INFO("WorldServer started!");
 
@@ -188,7 +189,7 @@ int main()
   LOG_INFO("Stopping WorldServer!");
 
   // Deallocate things (in reverse order of construction)
-  protocols.clear();
+  connections.clear();
   websocket_server.reset();
   server.reset();
   account_reader.reset();

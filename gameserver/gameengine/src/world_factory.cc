@@ -39,8 +39,11 @@
 
 #include "rapidxml.hpp"
 
-std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filename,
-                                                 ItemManager* item_manager)
+namespace gameengine
+{
+
+std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world_filename,
+                                                        ItemManager* item_manager)
 {
   // Open world.xml and read it into a string
   LOG_INFO("Loading world file: \"%s\"", world_filename.c_str());
@@ -48,7 +51,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
   if (!xml_file.is_open())
   {
     LOG_ERROR("%s: Could not open file: \"%s\"", __func__, world_filename.c_str());
-    return std::unique_ptr<World>();
+    return std::unique_ptr<world::World>();
   }
 
   std::string tmp_string;
@@ -75,25 +78,25 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
   {
     LOG_ERROR("%s: Invalid file, missing attributes width or height in <map>-node", __func__);
     free(xml_string);
-    return std::unique_ptr<World>();
+    return std::unique_ptr<world::World>();
   }
 
   const auto world_size_x = std::stoi(width_attr->value());
   const auto world_size_y = std::stoi(height_attr->value());
 
   // Read tiles
-  std::vector<Tile> tiles;
+  std::vector<world::Tile> tiles;
   tiles.reserve(world_size_x * world_size_y);
   const auto* tile_node = map_node->first_node();
-  for (int y = World::POSITION_OFFSET; y < World::POSITION_OFFSET + world_size_y; y++)
+  for (int y = world::POSITION_OFFSET; y < world::POSITION_OFFSET + world_size_y; y++)
   {
-    for (int x = World::POSITION_OFFSET; x < World::POSITION_OFFSET + world_size_x; x++)
+    for (int x = world::POSITION_OFFSET; x < world::POSITION_OFFSET + world_size_x; x++)
     {
       if (tile_node == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing <tile>-node", __func__);
         free(xml_string);
-        return std::unique_ptr<World>();
+        return std::unique_ptr<world::World>();
       }
 
       // Read the first <item> (there must be at least one, the ground item)
@@ -103,23 +106,23 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
       {
         LOG_ERROR("%s: Invalid file, <tile>-node is missing <item>-node", __func__);
         free(xml_string);
-        return std::unique_ptr<World>();
+        return std::unique_ptr<world::World>();
       }
       const auto* ground_item_attr = ground_item_node->first_attribute("id");
       if (ground_item_attr == nullptr)
       {
         LOG_ERROR("%s: Invalid file, missing attribute id in <item>-node", __func__);
         free(xml_string);
-        return std::unique_ptr<World>();
+        return std::unique_ptr<world::World>();
       }
 
       const auto ground_item_type_id = std::stoi(ground_item_attr->value());
       const auto ground_item_id = item_manager->createItem(ground_item_type_id);
-      if (ground_item_id == Item::INVALID_UNIQUE_ID)
+      if (ground_item_id == world::Item::INVALID_UNIQUE_ID)
       {
         LOG_ERROR("%s: ground_item_type_id: %d is invalid", __func__, ground_item_type_id);
         free(xml_string);
-        return std::unique_ptr<World>();
+        return std::unique_ptr<world::World>();
       }
 
       tiles.emplace_back(item_manager->getItem(ground_item_id));
@@ -139,11 +142,11 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
 
         const auto item_type_id = std::stoi(item_id_attr->value());
         const auto item_id = item_manager->createItem(item_type_id);
-        if (item_id == Item::INVALID_UNIQUE_ID)
+        if (item_id == world::Item::INVALID_UNIQUE_ID)
         {
           LOG_ERROR("%s: item_type_id: %d is invalid", __func__, item_type_id);
           free(xml_string);
-          return std::unique_ptr<World>();
+          return std::unique_ptr<world::World>();
         }
 
         tiles.back().addThing(item_manager->getItem(item_id));
@@ -157,5 +160,7 @@ std::unique_ptr<World> WorldFactory::createWorld(const std::string& world_filena
   LOG_INFO("World loaded, size: %d x %d", world_size_x, world_size_y);
   free(xml_string);
 
-  return std::make_unique<World>(world_size_x, world_size_y, std::move(tiles));
+  return std::make_unique<world::World>(world_size_x, world_size_y, std::move(tiles));  // NOLINT bug in clang-tidy used in Travis (?)
 }
+
+}  // namespace gameengine

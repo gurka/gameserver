@@ -48,20 +48,23 @@ namespace
 
 struct RecursiveTask
 {
-  explicit RecursiveTask(std::function<void(const RecursiveTask&, GameEngine* game_engine)> func)
+  explicit RecursiveTask(std::function<void(const RecursiveTask&, gameengine::GameEngine* game_engine)> func)
     : func(std::move(func))
   {
   }
 
-  void operator()(GameEngine* game_engine) const
+  void operator()(gameengine::GameEngine* game_engine) const
   {
     func(*this, game_engine);
   }
 
-  std::function<void(const RecursiveTask&, GameEngine* game_engine)> func;
+  std::function<void(const RecursiveTask&, gameengine::GameEngine* game_engine)> func;
 };
 
 }  // namespace
+
+namespace gameengine
+{
 
 GameEngine::GameEngine()
     : m_item_manager(),
@@ -123,12 +126,12 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   player_ctrl->setPlayerId(player.getCreatureId());
 
   // Spawn the player
-  auto rc = m_world->addCreature(&player, player_ctrl, Position(208, 208, 7));
-  if (rc != World::ReturnCode::OK)
+  auto rc = m_world->addCreature(&player, player_ctrl, world::Position(208, 208, 7));
+  if (rc != world::ReturnCode::OK)
   {
     LOG_DEBUG("%s: could not spawn player", __func__);
     m_container_manager->playerDespawn(player_ctrl);
-    player_ctrl->setPlayerId(Creature::INVALID_ID);
+    player_ctrl->setPlayerId(world::Creature::INVALID_ID);
     m_player_data.erase(creature_id);
     return false;
   }
@@ -137,7 +140,7 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   return true;
 }
 
-void GameEngine::despawn(CreatureId creature_id)
+void GameEngine::despawn(world::CreatureId creature_id)
 {
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creature_id);
 
@@ -155,32 +158,32 @@ void GameEngine::despawn(CreatureId creature_id)
   m_player_data.erase(creature_id);
 }
 
-void GameEngine::move(CreatureId creature_id, Direction direction)
+void GameEngine::move(world::CreatureId creature_id, world::Direction direction)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creature_id);
 
   auto* player_ctrl = getPlayerData(creature_id).player_ctrl;
 
   auto rc = m_world->creatureMove(creature_id, direction);
-  if (rc == World::ReturnCode::MAY_NOT_MOVE_YET)
+  if (rc == world::ReturnCode::MAY_NOT_MOVE_YET)
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creature_id);
-    const auto& creature = static_cast<const World*>(m_world.get())->getCreature(creature_id);
+    const auto tick = getPlayerData(creature_id).player.getNextWalkTick() - utils::Tick::now();
     m_game_engine_queue->addTask(creature_id,
-                              creature.getNextWalkTick() - Tick::now(),
-                              [this, creature_id, direction](GameEngine* game_engine)
+                                 tick,
+                                 [this, creature_id, direction](GameEngine* game_engine)
     {
       (void)game_engine;
       move(creature_id, direction);
     });
   }
-  else if (rc == World::ReturnCode::THERE_IS_NO_ROOM)
+  else if (rc == world::ReturnCode::THERE_IS_NO_ROOM)
   {
     player_ctrl->sendCancel("There is no room.");
   }
 }
 
-void GameEngine::movePath(CreatureId creature_id, std::deque<Direction>&& path)
+void GameEngine::movePath(world::CreatureId creature_id, std::deque<world::Direction>&& path)
 {
   getPlayerData(creature_id).queued_moves = std::move(path);
 
@@ -195,12 +198,12 @@ void GameEngine::movePath(CreatureId creature_id, std::deque<Direction>&& path)
     {
       const auto rc = m_world->creatureMove(creature_id, player_data.queued_moves.front());
 
-      if (rc == World::ReturnCode::OK)
+      if (rc == world::ReturnCode::OK)
       {
         // Player moved, pop the move from the queue
         player_data.queued_moves.pop_front();
       }
-      else if (rc != World::ReturnCode::MAY_NOT_MOVE_YET)
+      else if (rc != world::ReturnCode::MAY_NOT_MOVE_YET)
       {
         // If we neither got OK nor MAY_NOT_MOVE_YET: stop here and cancel all queued moves
         cancelMove(creature_id);
@@ -210,7 +213,7 @@ void GameEngine::movePath(CreatureId creature_id, std::deque<Direction>&& path)
       {
         // If there are more queued moves, e.g. we moved but there are more moves or we were not allowed
         // to move yet, add a new task
-        m_game_engine_queue->addTask(creature_id, player_data.player.getNextWalkTick() - Tick::now(), task);
+        m_game_engine_queue->addTask(creature_id, player_data.player.getNextWalkTick() - utils::Tick::now(), task);
       }
     }
   });
@@ -218,7 +221,7 @@ void GameEngine::movePath(CreatureId creature_id, std::deque<Direction>&& path)
   task(this);
 }
 
-void GameEngine::cancelMove(CreatureId creature_id)
+void GameEngine::cancelMove(world::CreatureId creature_id)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creature_id);
 
@@ -232,13 +235,13 @@ void GameEngine::cancelMove(CreatureId creature_id)
   // Don't cancel the task, just let it expire and do nothing
 }
 
-void GameEngine::turn(CreatureId creature_id, Direction direction)
+void GameEngine::turn(world::CreatureId creature_id, world::Direction direction)
 {
   LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creature_id);
   m_world->creatureTurn(creature_id, direction);
 }
 
-void GameEngine::say(CreatureId creature_id,
+void GameEngine::say(world::CreatureId creature_id,
                      int type,
                      const std::string& message,
                      const std::string& receiver,
@@ -277,37 +280,39 @@ void GameEngine::say(CreatureId creature_id,
     // Check commands
     if (command == "debug" || command == "debugf")
     {
-      // Different position for debug / debugf
-      Position position;
-
-      // Show debug info for a tile
-      if (command == "debug")
+      const auto* tmp_position = m_world->getCreaturePosition(creature_id);
+      if (!tmp_position)
       {
-        // Show debug information on player tile
-        position = m_world->getCreaturePosition(creature_id);
-      }
-      else if (command == "debugf")
-      {
-        // Show debug information on tile in front of player
-        position = m_world->getCreaturePosition(creature_id).addDirection(player_data.player.getDirection());
+        player_data.player_ctrl->sendTextMessage(0x13, "Invalid position");
+        return;
       }
 
-      const auto* tile = static_cast<const World*>(m_world.get())->getTile(position);
+      const auto position = [&player_data, &command, &tmp_position]()
+      {
+        if (command == "debug")
+        {
+          return *tmp_position;
+        }
+
+        // if (command == "debugf")
+        return tmp_position->addDirection(player_data.player.getDirection());
+      }();
+
+      const auto* tile = static_cast<const world::World*>(m_world.get())->getTile(position);
 
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      for (const auto& thing : tile->getThings())
-      {
-        if (thing.item)
+      tile->visitThings(
+        [&oss](const world::Creature* creature)
         {
-          oss << "Item: " << thing.item->getItemUniqueId() << "\n";
-        }
-        else
+          oss << "Creature: " << creature->getCreatureId() << "\n";
+        },
+        [&oss](const world::Item* item)
         {
-          oss << "Creature: " << thing.creature->getCreatureId() << "\n";
+          oss << "Item: " << item->getItemUniqueId() << "\n";
         }
-      }
+      );
 
       player_data.player_ctrl->sendTextMessage(0x13, oss.str());
     }
@@ -343,7 +348,7 @@ void GameEngine::say(CreatureId creature_id,
   }
 }
 
-void GameEngine::moveItem(CreatureId creature_id,
+void GameEngine::moveItem(world::CreatureId creature_id,
                           const ItemPosition& from_position,
                           const GamePosition& to_position,
                           int count)
@@ -392,7 +397,7 @@ void GameEngine::moveItem(CreatureId creature_id,
   addItem(creature_id, to_position, *item, count);
 }
 
-void GameEngine::useItem(CreatureId creature_id, const ItemPosition& position, int new_container_id)
+void GameEngine::useItem(world::CreatureId creature_id, const ItemPosition& position, int new_container_id)
 {
   LOG_DEBUG("%s: creature_id: %d position: %s new_container_id: %d",
             __func__,
@@ -417,7 +422,7 @@ void GameEngine::useItem(CreatureId creature_id, const ItemPosition& position, i
   }
 }
 
-void GameEngine::lookAt(CreatureId creature_id, const ItemPosition& position)
+void GameEngine::lookAt(world::CreatureId creature_id, const ItemPosition& position)
 {
   LOG_DEBUG("%s: creature_id: %d position: %s",
             __func__,
@@ -469,13 +474,13 @@ void GameEngine::lookAt(CreatureId creature_id, const ItemPosition& position)
   player_data.player_ctrl->sendTextMessage(0x13, ss.str());
 }
 
-void GameEngine::closeContainer(CreatureId creature_id, ItemUniqueId item_unique_id)
+void GameEngine::closeContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id)
 {
   LOG_DEBUG("%s: creature_id: %d item_unique_id: %d", __func__, creature_id, item_unique_id);
   m_container_manager->closeContainer(getPlayerData(creature_id).player_ctrl, item_unique_id);
 }
 
-void GameEngine::openParentContainer(CreatureId creature_id, ItemUniqueId item_unique_id, int new_container_id)
+void GameEngine::openParentContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id, int new_container_id)
 {
   LOG_DEBUG("%s: creature_id: %d item_unique_id: %d", __func__, creature_id, item_unique_id);
   m_container_manager->openParentContainer(getPlayerData(creature_id).player_ctrl,
@@ -483,7 +488,7 @@ void GameEngine::openParentContainer(CreatureId creature_id, ItemUniqueId item_u
                                            new_container_id);
 }
 
-const Item* GameEngine::getItem(CreatureId creature_id, const ItemPosition& position)
+const world::Item* GameEngine::getItem(world::CreatureId creature_id, const ItemPosition& position)
 {
   // TODO(simon): verify ItemId
   auto& player_data = getPlayerData(creature_id);
@@ -491,10 +496,10 @@ const Item* GameEngine::getItem(CreatureId creature_id, const ItemPosition& posi
   const auto& game_position = position.getGamePosition();
   if (game_position.isPosition())
   {
-    const auto* tile = static_cast<const World*>(m_world.get())->getTile(game_position.getPosition());
+    const auto* tile = static_cast<const world::World*>(m_world.get())->getTile(game_position.getPosition());
     if (tile)
     {
-      return tile->getThing(position.getStackPosition())->item;
+      return tile->getItem(position.getStackPosition());
     }
   }
   else if (game_position.isInventory())
@@ -511,7 +516,7 @@ const Item* GameEngine::getItem(CreatureId creature_id, const ItemPosition& posi
   return nullptr;
 }
 
-bool GameEngine::canAddItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count)
+bool GameEngine::canAddItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 
@@ -540,7 +545,7 @@ bool GameEngine::canAddItem(CreatureId creature_id, const GamePosition& position
   return false;
 }
 
-void GameEngine::removeItem(CreatureId creature_id, const ItemPosition& position, int count)
+void GameEngine::removeItem(world::CreatureId creature_id, const ItemPosition& position, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 
@@ -569,7 +574,7 @@ void GameEngine::removeItem(CreatureId creature_id, const ItemPosition& position
   }
 }
 
-void GameEngine::addItem(CreatureId creature_id, const GamePosition& position, const Item& item, int count)
+void GameEngine::addItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 
@@ -602,3 +607,5 @@ void GameEngine::addItem(CreatureId creature_id, const GamePosition& position, c
     m_container_manager->updateRootPosition(item.getItemUniqueId(), position);
   }
 }
+
+}  // namespace gameengine

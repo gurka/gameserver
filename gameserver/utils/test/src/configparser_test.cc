@@ -28,6 +28,9 @@
 
 #include "gtest/gtest.h"
 
+namespace utils
+{
+
 TEST(ConfigParserTest, ParseValidFile)
 {
   // Create valid xml-file stream
@@ -105,3 +108,5 @@ TEST(ConfigParserTest, ParseInvalidFile)
   "[sectionA]\n";
   ASSERT_EQ(ConfigParser::parseStream(&xmlStreamFive).parsedOk(), false);
 }
+
+}  // namespace utils

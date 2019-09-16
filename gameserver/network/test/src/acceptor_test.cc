@@ -30,6 +30,9 @@
 #include "acceptor.h"
 #include "backend_mock.h"
 
+namespace network
+{
+
 class AcceptorTest : public ::testing::Test
 {
  public:
@@ -141,3 +144,5 @@ TEST_F(AcceptorTest, AsyncAcceptAbort)
   EXPECT_CALL(service_, acceptor_cancel());
   acceptor_.reset();
 }
+
+}  // namespace network

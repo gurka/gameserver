@@ -32,6 +32,9 @@
 #include <memory>
 #include <vector>
 
+namespace network
+{
+
 class OutgoingPacket
 {
  public:
@@ -71,5 +74,7 @@ class OutgoingPacket
 
   static std::stack<std::unique_ptr<std::array<std::uint8_t, 8192>>> m_bufferpool;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_EXPORT_OUTGOING_PACKET_H_

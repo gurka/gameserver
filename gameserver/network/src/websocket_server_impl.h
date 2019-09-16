@@ -38,6 +38,9 @@
 #include "connection_impl.h"
 #include "logger.h"
 
+namespace network
+{
+
 class WebsocketServerImpl;
 
 struct WebsocketBackend
@@ -149,5 +152,7 @@ class WebsocketServerImpl : public Server
   };
   std::vector<BufferedData> m_buffered_data;
 };
+
+}  // namespace network
 
 #endif  // NETWORK_SRC_WEBSOCKET_SERVER_IMPL_H_

@@ -26,6 +26,9 @@
 #include "gtest/gtest.h"
 #include "account.h"
 
+namespace account
+{
+
 class AccountTest : public ::testing::Test
 {
  public:
@@ -132,3 +135,5 @@ TEST_F(AccountTest, Characters)
   EXPECT_EQ("Default", characterBob->world_name);
   EXPECT_EQ(7172, characterBob->world_port);
 }
+
+}  // namespace account

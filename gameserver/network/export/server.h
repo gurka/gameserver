@@ -25,6 +25,9 @@
 #ifndef NETWORK_EXPORT_SERVER_H_
 #define NETWORK_EXPORT_SERVER_H_
 
+namespace network
+{
+
 class Server
 {
  public:
@@ -32,5 +35,7 @@ class Server
 
   // TODO(simon): start / stop?
 };
+
+}  // namespace network
 
 #endif  // NETWORK_EXPORT_SERVER_H_

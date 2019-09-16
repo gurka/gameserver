@@ -2,30 +2,32 @@ cmake_minimum_required(VERSION 3.12)
 
 project(gameserver)
 
-# -- Options --
-option(GAMESERVER_WSCLIENT "Build wsclient" OFF)
-option(GAMESERVER_USE_LD_GOLD "Pass -fuse-ld=gold to compiler" OFF)
-option(GAMESERVER_USE_ASAN "Compile with ASAN" OFF)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+# -- Options --
+option(GAMESERVER_WSCLIENT "Build wsclient" OFF)
+option(GAMESERVER_DEBUG_FULL "Compile with ASAN and clang-tidy" OFF)
+
 if(NOT GAMESERVER_WSCLIENT)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++14 -pedantic -pthread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -std=c++17 -pedantic -pthread")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
 endif()
 
-if(GAMESERVER_USE_LD_GOLD)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
-endif()
-
-if(GAMESERVER_USE_ASAN)
+if(GAMESERVER_DEBUG_FULL)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fsanitize=undefined")
+  set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
 endif()
 
-set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
+# Use ld.gold if available
+if(NOT GAMESERVER_WSCLIENT)
+  find_program(LD_GOLD "ld.gold")
+  if(LD_GOLD)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
+  endif()
+endif()
 
 # -- Binaries --
 if(NOT GAMESERVER_WSCLIENT)
