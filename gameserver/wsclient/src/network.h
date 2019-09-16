@@ -26,11 +26,14 @@
 
 #include <functional>
 
+namespace network
+{
 class IncomingPacket;
+}
 
 namespace Network
 {
-  void start(const std::function<void(IncomingPacket*)> callback);
+  void start(const std::function<void(network::IncomingPacket*)> callback);
 }
 
 #endif  // NETWORK_H_

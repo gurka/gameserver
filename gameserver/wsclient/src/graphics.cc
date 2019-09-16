@@ -68,7 +68,7 @@ namespace Graphics
     screen = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
   }
 
-  void draw(const Map& map, const Position& position, std::uint32_t playerId)
+  void draw(const Map& map, const world::Position& position, std::uint32_t player_id)
   {
     if (SDL_MUSTLOCK(screen))
     {
@@ -79,14 +79,14 @@ namespace Graphics
     {
       for (auto x = 0; x < types::draw_tiles_x; x++)
       {
-        const auto& tile = map.getTile(Position(x - 7 + position.getX(),
-                                                y - 5 + position.getY(),
-                                                position.getZ()));
+        const auto& tile = map.getTile(world::Position(x - 7 + position.getX(),
+                                                       y - 5 + position.getY(),
+                                                       position.getZ()));
         for (const auto& thing : tile.things)
         {
-          if (thing.isItem)
+          if (thing.is_item)
           {
-            if (thing.item.itemTypeId == 694)
+            if (thing.item.item_type_id == 694)
             {
               // Ground, fill with brown
               fillRect(x * tile_size,
@@ -98,7 +98,7 @@ namespace Graphics
                        32);
 
             }
-            else if (thing.item.itemTypeId == 475)
+            else if (thing.item.item_type_id == 475)
             {
               // Water, fill with blue
               fillRect(x * tile_size,
@@ -111,8 +111,8 @@ namespace Graphics
             }
             else
             {
-              // Unknown itemTypeId, fill with black
-              LOG_INFO("%s: unknown itemTypeId: %d", __func__, thing.item.itemTypeId);
+              // Unknown item_type_id, fill with black
+              LOG_INFO("%s: unknown item_type_id: %d", __func__, thing.item.item_type_id);
               fillRect(x * tile_size,
                        y * tile_size,
                        tile_size,
@@ -125,7 +125,7 @@ namespace Graphics
           else
           {
             // Creature
-            if (thing.creatureId == playerId)
+            if (thing.creature_id == player_id)
             {
               // Fill sprite with green
               fillRect(x * tile_size,

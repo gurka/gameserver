@@ -36,7 +36,7 @@
 namespace
 {
   emscripten::val ws = emscripten::val::null();
-  std::function<void(IncomingPacket*)> handle_packet;
+  std::function<void(network::IncomingPacket*)> handle_packet;
 
   void connect()
   {
@@ -45,7 +45,7 @@ namespace
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }
 
-  void send_packet(const OutgoingPacket& packet)
+  void send_packet(const network::OutgoingPacket& packet)
   {
     static std::uint8_t header[2];
     header[0] = packet.getLength();
@@ -59,7 +59,7 @@ namespace
     (void)event;
 
     // Send login packet
-    OutgoingPacket packet;
+    network::OutgoingPacket packet;
     packet.addU8(0x0A);
     packet.skipBytes(5);
     packet.addString("Alice");
@@ -93,7 +93,7 @@ namespace
       //LOG_INFO("%s: next_packet_length: %d", __func__, next_packet_length);
       if (buffer.size() >= 2u + next_packet_length)
       {
-        IncomingPacket packet(buffer.data() + 2, next_packet_length);
+        network::IncomingPacket packet(buffer.data() + 2, next_packet_length);
         handle_packet(&packet);
         buffer.erase(buffer.begin(), buffer.begin() + 2u + next_packet_length);
       }
@@ -117,7 +117,7 @@ namespace
 
 namespace Network
 {
-  void start(const std::function<void(IncomingPacket*)> callback)
+  void start(const std::function<void(network::IncomingPacket*)> callback)
   {
     handle_packet = callback;
     connect();

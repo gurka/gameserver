@@ -29,7 +29,7 @@
 #include "outgoing_packet.h"
 #include "incoming_packet.h"
 #include "position.h"
-#include "protocol_helper.h"
+#include "protocol.h"
 #include "protocol_types.h"
 
 #include "types.h"
@@ -37,87 +37,88 @@
 #include "graphics.h"
 #include "map.h"
 
-std::uint32_t playerId;
-Position playerPosition;
-Map map;
-std::vector<ProtocolTypes::Client::Creature> creatures;
+using namespace protocol::client;
 
-void handleLoginPacket(const ProtocolTypes::Client::Login& login)
+std::uint32_t player_id;
+world::Position player_position = { 0, 0, 0 };
+Map map;
+std::vector<Creature> creatures;
+
+void handleLoginPacket(const Login& login)
 {
-  playerId = login.playerId;
+  player_id = login.player_id;
 }
 
-void handleLoginFailedPacket(const ProtocolTypes::Client::LoginFailed& failed)
+void handleLoginFailedPacket(const LoginFailed& failed)
 {
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const ProtocolTypes::Client::MapData& mapData)
+void handleFullMapPacket(const MapData& mapData)
 {
-  playerPosition = mapData.position;
+  player_position = mapData.position;
   map.setMapData(mapData);
-  Graphics::draw(map, playerPosition, playerId);
+  Graphics::draw(map, player_position, player_id);
 }
 
-void handleMagicEffect(const ProtocolTypes::Client::MagicEffect& effect)
+void handleMagicEffect(const MagicEffect& effect)
 {
 }
 
-void handlePlayerStats(const ProtocolTypes::Client::PlayerStats& stats)
+void handlePlayerStats(const PlayerStats& stats)
 {
 }
 
-void handleWorldLight(const ProtocolTypes::Client::WorldLight& light)
+void handleWorldLight(const WorldLight& light)
 {
 }
 
-void handlePlayerSkills(const ProtocolTypes::Client::PlayerSkills& skills)
+void handlePlayerSkills(const PlayerSkills& skills)
 {
 }
 
-void handleEquipmentUpdate(const ProtocolTypes::Client::Equipment& equipment)
+void handleEquipmentUpdate(const Equipment& equipment)
 {
 }
 
-void handleTextMessage(const ProtocolTypes::Client::TextMessage& message)
+void handleTextMessage(const TextMessage& message)
 {
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
-void handleCreatureMove(const ProtocolTypes::Client::CreatureMove& move)
+void handleCreatureMove(const CreatureMove& move)
 {
-  LOG_INFO("%s: canSeeOldPos: %s, canSeeNewPos: %s",
+  LOG_INFO("%s: can_see_old_pos: %s, can_see_new_pos: %s",
            __func__,
-           move.canSeeOldPos ? "true" : "false",
-           move.canSeeNewPos ? "true" : "false");
+           move.can_see_old_pos ? "true" : "false",
+           move.can_see_new_pos ? "true" : "false");
 
-  if (move.canSeeOldPos && move.canSeeNewPos)
+  if (move.can_see_old_pos && move.can_see_new_pos)
   {
     // Move creature
-    const auto cid = map.getTile(move.oldPosition).things[move.oldStackPosition].creatureId;
-    map.removeThing(move.oldPosition, move.oldStackPosition);
-    map.addCreature(move.newPosition, cid);
+    const auto cid = map.getTile(move.old_position).things[move.old_stackpos].creature_id;
+    map.removeThing(move.old_position, move.old_stackpos);
+    map.addCreature(move.new_position, cid);
   }
-  else if (move.canSeeOldPos)
+  else if (move.can_see_old_pos)
   {
     // Remove creature
-    map.removeThing(move.oldPosition, move.oldStackPosition);
+    map.removeThing(move.old_position, move.old_stackpos);
   }
-  else if (move.canSeeNewPos)
+  else if (move.can_see_new_pos)
   {
     // Add new creature
-    map.addCreature(move.newPosition, move.creature.id);
+    map.addCreature(move.new_position, move.creature.id);
   }
 
-  // If this played moved then we need to update map's playerPosition
+  // If this played moved then we need to update map's player_position
   // BEFORE OR AFTER MOVING PLAYER???
 
-  Graphics::draw(map, playerPosition, playerId);
+  Graphics::draw(map, player_position, player_id);
 }
 
-void handle_packet(IncomingPacket* packet)
+void handle_packet(network::IncomingPacket* packet)
 {
-  using namespace ProtocolHelper::Client;
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();

@@ -25,15 +25,15 @@
 
 #include "logger.h"
 
-void Map::setMapData(const ProtocolTypes::Client::MapData& mapData)
+void Map::setMapData(const protocol::client::MapData& mapData)
 {
-  playerPosition_ = mapData.position;
+  m_player_position = mapData.position;
   auto it = mapData.tiles.begin();
   for (auto x = 0; x < types::known_tiles_x; x++)
   {
     for (auto y = 0; y < types::known_tiles_y; y++)
     {
-      tiles_[y][x].things.clear();
+      m_tiles[y][x].things.clear();
 
       if (!it->skip)
       {
@@ -42,24 +42,24 @@ void Map::setMapData(const ProtocolTypes::Client::MapData& mapData)
                                           it->creatures.empty() ? 0 : it->creatures.back().stackpos);
 
         // Make things vector this big
-        tiles_[y][x].things.resize(maxStackpos + 1);
+        m_tiles[y][x].things.resize(maxStackpos + 1);
 
         // Add items
         for (const auto& item : it->items)
         {
-          LOG_INFO("Adding an item at stackpos=%d with itemTypeId=%d", item.stackpos, item.item.itemTypeId);
-          tiles_[y][x].things[item.stackpos].isItem = true;
-          tiles_[y][x].things[item.stackpos].item.itemTypeId = item.item.itemTypeId;
-          tiles_[y][x].things[item.stackpos].item.extra = item.item.extra;
-          tiles_[y][x].things[item.stackpos].item.onTop = false;  // TODO fix
+          LOG_INFO("Adding an item at stackpos=%d with item_type_id=%d", item.stackpos, item.item.item_type_id);
+          m_tiles[y][x].things[item.stackpos].is_item = true;
+          m_tiles[y][x].things[item.stackpos].item.item_type_id = item.item.item_type_id;
+          m_tiles[y][x].things[item.stackpos].item.extra = item.item.extra;
+          m_tiles[y][x].things[item.stackpos].item.onTop = false;  // TODO fix
         }
 
         // Add creatures
         for (const auto& creature : it->creatures)
         {
-          LOG_INFO("Adding a creature at stackpos=%d with creatureId=%d", creature.stackpos, creature.creature.id);
-          tiles_[y][x].things[creature.stackpos].isItem = false;
-          tiles_[y][x].things[creature.stackpos].creatureId = creature.creature.id;
+          LOG_INFO("Adding a creature at stackpos=%d with creature_id=%d", creature.stackpos, creature.creature.id);
+          m_tiles[y][x].things[creature.stackpos].is_item = false;
+          m_tiles[y][x].things[creature.stackpos].creature_id = creature.creature.id;
         }
       }
       ++it;
@@ -67,16 +67,16 @@ void Map::setMapData(const ProtocolTypes::Client::MapData& mapData)
   }
 }
 
-void Map::addCreature(const Position& position, CreatureId creatureId)
+void Map::addCreature(const world::Position& position, world::CreatureId creature_id)
 {
-  const auto x = position.getX() + 8 - playerPosition_.getX();
-  const auto y = position.getY() + 6 - playerPosition_.getY();
+  const auto x = position.getX() + 8 - m_player_position.getX();
+  const auto y = position.getY() + 6 - m_player_position.getY();
 
   // Find first creature, bottom item or end
-  auto it = tiles_[y][x].things.cbegin() + 1;
-  while (it != tiles_[y][x].things.cend())
+  auto it = m_tiles[y][x].things.cbegin() + 1;
+  while (it != m_tiles[y][x].things.cend())
   {
-    if (!it->isItem || !it->item.onTop)
+    if (!it->is_item || !it->item.onTop)
     {
       break;
     }
@@ -85,23 +85,23 @@ void Map::addCreature(const Position& position, CreatureId creatureId)
 
   // Add creature here
   Tile::Thing thing;
-  thing.isItem = false;
-  thing.creatureId = creatureId;
-  it = tiles_[y][x].things.insert(it, thing);
+  thing.is_item = false;
+  thing.creature_id = creature_id;
+  it = m_tiles[y][x].things.insert(it, thing);
 
-  LOG_INFO("%s: added creatureId=%d on position=%s stackpos=%d",
+  LOG_INFO("%s: added creature_id=%d on position=%s stackpos=%d",
            __func__,
-           creatureId,
+           creature_id,
            position.toString().c_str(),
-           std::distance(tiles_[y][x].things.cbegin(), it));
+           std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::addItem(const Position& position, ItemTypeId itemTypeId, std::uint8_t extra, bool onTop)
+void Map::addItem(const world::Position& position, world::ItemTypeId item_type_id, std::uint8_t extra, bool onTop)
 {
-  const auto x = position.getX() + 8 - playerPosition_.getX();
-  const auto y = position.getY() + 6 - playerPosition_.getY();
+  const auto x = position.getX() + 8 - m_player_position.getX();
+  const auto y = position.getY() + 6 - m_player_position.getY();
 
-  auto it = tiles_[y][x].things.cbegin() + 1;
+  auto it = m_tiles[y][x].things.cbegin() + 1;
   if (onTop)
   {
     // Insert after ground item
@@ -110,10 +110,10 @@ void Map::addItem(const Position& position, ItemTypeId itemTypeId, std::uint8_t 
   else
   {
     // Find first bottom item or end
-    auto it = tiles_[y][x].things.cbegin();
-    while (it != tiles_[y][x].things.cend())
+    auto it = m_tiles[y][x].things.cbegin();
+    while (it != m_tiles[y][x].things.cend())
     {
-      if (it->isItem && !it->item.onTop)
+      if (it->is_item && !it->item.onTop)
       {
         break;
       }
@@ -123,25 +123,25 @@ void Map::addItem(const Position& position, ItemTypeId itemTypeId, std::uint8_t 
 
   // Add item here
   Tile::Thing thing;
-  thing.isItem = true;
-  thing.item.itemTypeId = itemTypeId;
+  thing.is_item = true;
+  thing.item.item_type_id = item_type_id;
   thing.item.extra = extra;
   thing.item.onTop = onTop;
-  it = tiles_[y][x].things.insert(it, thing);
+  it = m_tiles[y][x].things.insert(it, thing);
 
-  LOG_INFO("%s: added itemTypeId=%d on position=%s stackpos=%d",
+  LOG_INFO("%s: added item_type_id=%d on position=%s stackpos=%d",
            __func__,
-           itemTypeId,
+           item_type_id,
            position.toString().c_str(),
-           std::distance(tiles_[y][x].things.cbegin(), it));
+           std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::removeThing(const Position& position, std::uint8_t stackpos)
+void Map::removeThing(const world::Position& position, std::uint8_t stackpos)
 {
-  const auto x = position.getX() + 8 - playerPosition_.getX();
-  const auto y = position.getY() + 6 - playerPosition_.getY();
+  const auto x = position.getX() + 8 - m_player_position.getX();
+  const auto y = position.getY() + 6 - m_player_position.getY();
 
-  tiles_[y][x].things.erase(tiles_[y][x].things.cbegin() + stackpos);
+  m_tiles[y][x].things.erase(m_tiles[y][x].things.cbegin() + stackpos);
 
   LOG_INFO("%s: removed thing from position=%s stackpos=%d",
            __func__,
@@ -149,10 +149,10 @@ void Map::removeThing(const Position& position, std::uint8_t stackpos)
            stackpos);
 }
 
-const Map::Tile& Map::getTile(const Position& position) const
+const Map::Tile& Map::getTile(const world::Position& position) const
 {
-  const auto x = position.getX() + 8 - playerPosition_.getX();
-  const auto y = position.getY() + 6 - playerPosition_.getY();
+  const auto x = position.getX() + 8 - m_player_position.getX();
+  const auto y = position.getY() + 6 - m_player_position.getY();
 
-  return tiles_[y][x];
+  return m_tiles[y][x];
 }

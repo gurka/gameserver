@@ -34,8 +34,8 @@ namespace Graphics
 
   void init();
   void draw(const Map& map,
-            const Position& position,
-            std::uint32_t playerId);
+            const world::Position& position,
+            std::uint32_t player_id);
 
 }
 
