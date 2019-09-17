@@ -43,9 +43,10 @@ using ::world::ItemTypeId;
 
 struct ItemType
 {
-  int  id             = 0;
+  ItemTypeId id       = 0U;
+
   bool ground         = false;
-  int  speed          = 0;
+  std::uint8_t speed  = 0U;
   bool is_blocking    = false;
   bool always_on_top  = false;
   bool is_container   = false;
@@ -54,6 +55,15 @@ struct ItemType
   bool is_multitype   = false;
   bool is_not_movable = false;
   bool is_equipable   = false;
+
+  std::uint8_t sprite_width  = 0U;
+  std::uint8_t sprite_height = 0U;
+  std::uint8_t sprite_extra  = 0U;
+  std::uint8_t blend_frames  = 0U;
+  std::uint8_t xdiv          = 0U;
+  std::uint8_t ydiv          = 0U;
+  std::uint8_t num_anim      = 0U;
+  std::vector<std::uint16_t> sprites;
 };
 
 using ItemTypes = std::array<ItemType, 4096>;

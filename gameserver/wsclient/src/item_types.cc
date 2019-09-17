@@ -176,20 +176,31 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
       opt_byte = fgetc(f);
     }
 
-    // Skip size and sprite data
-    const auto width = fgetc(f);
-    const auto height = fgetc(f);
-    if (width > 1 || height > 1)
+    // Size and sprite data
+    item_type.sprite_width = fgetc(f);
+    item_type.sprite_height = fgetc(f);
+    if (item_type.sprite_width > 1 || item_type.sprite_height > 1)
     {
-      fgetc(f);  // skip
+      item_type.sprite_extra = fgetc(f);
     }
 
-    const auto blend_frames = fgetc(f);
-    const auto xdiv = fgetc(f);
-    const auto ydiv = fgetc(f);
-    const auto anim_count = fgetc(f);
+    item_type.blend_frames = fgetc(f);
+    item_type.xdiv = fgetc(f);
+    item_type.ydiv = fgetc(f);
+    item_type.num_anim = fgetc(f);
 
-    fseek(f, width * height * blend_frames * xdiv * ydiv * anim_count * 2, SEEK_CUR);
+    const auto num_sprites = item_type.sprite_width  *
+                             item_type.sprite_height *
+                             item_type.blend_frames *
+                             item_type.xdiv *
+                             item_type.ydiv *
+                             item_type.num_anim;
+    for (auto i = 0; i < num_sprites; i++)
+    {
+      auto sprite_id = fgetc(f);
+      sprite_id |= (fgetc(f) << 8);
+      item_type.sprites.push_back(sprite_id);
+    }
 
     // Add ItemData and increase next item id
     item_types[next_id] = item_type;

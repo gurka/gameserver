@@ -191,6 +191,22 @@ int main()
     return 1;
   }
 
+  // test
+  //const auto item_type = item_types->at(475);
+//  const auto item_type = item_types->at(694);
+//  LOG_INFO("sprite_width: %d", item_type.sprite_width);
+//  LOG_INFO("sprite_height: %d", item_type.sprite_height);
+//  LOG_INFO("sprite_extra: %d", item_type.sprite_extra);
+//  LOG_INFO("blend_frames: %d", item_type.blend_frames);
+//  LOG_INFO("xdiv: %d", item_type.xdiv);
+//  LOG_INFO("ydiv: %d", item_type.ydiv);
+//  LOG_INFO("num_anim: %d", item_type.num_anim);
+//  for (const auto& sprite_id : item_type.sprites)
+//  {
+//    LOG_INFO("sprite_id: %d", sprite_id);
+//  }
+
+
   wsclient::graphics::init(&(item_types.value()));
   wsclient::network::start(&wsclient::handle_packet);
 }
