@@ -30,27 +30,32 @@
 
 #include "logger.h"
 
-namespace wsclient::graphics
+namespace
 {
 
 constexpr auto tile_size = 32;
 constexpr auto scale = 2;
-constexpr auto width  = consts::draw_tiles_x * tile_size * scale;
-constexpr auto height = consts::draw_tiles_y * tile_size * scale;
+constexpr auto tile_size_scaled = tile_size * scale;
+
+constexpr auto screen_width  = wsclient::consts::draw_tiles_x * tile_size_scaled;
+constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled;
 
 SDL_Surface* screen = nullptr;
-const std::array<wsworld::ItemType, 4096>* item_types = nullptr;
+const std::array<wsclient::wsworld::ItemType, 4096>* item_types = nullptr;
 
-void fillRect(int x, int y, int width, int height, int red, int green, int blue)
+void drawSprite(int x, int y, int red, int green, int blue)
 {
+  x *= tile_size;
+  y *= tile_size;
+
   // Probably UB...
   auto* pixel = reinterpret_cast<std::uint32_t*>(screen->pixels) + (y * scale * screen->w) + (x * scale);
-  for (auto y = 0; y < height * scale; y++)
+  for (auto y = 0; y < tile_size_scaled; y++)
   {
-    for (auto x = 0; x < width * scale; x++)
+    for (auto x = 0; x < tile_size_scaled; x++)
     {
       // Black border
-      if (y == 0 || x == -0 || y == (height * scale) - 1 || x == (height * scale - 1))
+      if (y == 0 || x == -0 || y == tile_size_scaled - 1 || x == tile_size_scaled - 1)
       {
         *pixel = SDL_MapRGBA(screen->format, 0, 0, 0, 0);
       }
@@ -60,15 +65,20 @@ void fillRect(int x, int y, int width, int height, int red, int green, int blue)
       }
       pixel += 1;
     }
-    pixel += screen->w - (width * scale);
+    pixel += screen->w - (tile_size * scale);
   }
 }
+
+}
+
+namespace wsclient::graphics
+{
 
 void init(const wsworld::ItemTypes* item_types_in)
 {
   SDL_Init(SDL_INIT_VIDEO);
   // Client displays 15x11 tiles
-  screen = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
+  screen = SDL_SetVideoMode(screen_width, screen_height, 32, SDL_SWSURFACE);
   item_types = item_types_in;
 }
 
@@ -96,18 +106,18 @@ void draw(const wsworld::Map& map,
           if (item_type.ground)
           {
             // Ground => brown
-            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 218, 165, 32);
+            drawSprite(x, y, 218, 165, 32);
 
           }
           else if (item_type.is_blocking)
           {
             // Blocking => gray
-            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 33, 33, 33);
+            drawSprite(x, y, 33, 33, 33);
           }
           else
           {
             // Other => black
-            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 0, 0, 0);
+            drawSprite(x, y, 0, 0, 0);
           }
         }
         else
@@ -116,12 +126,12 @@ void draw(const wsworld::Map& map,
           if (thing.creature_id == player_id)
           {
             // Fill sprite with green
-            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 0, 255, 0);
+            drawSprite(x, y, 0, 255, 0);
           }
           else
           {
             // Fill sprite with red
-            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 255, 0, 0);
+            drawSprite(x, y, 255, 0, 0);
           }
         }
       }
