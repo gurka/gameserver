@@ -40,6 +40,7 @@ namespace wsclient::world
 using ::world::Position;
 using ::world::CreatureId;
 using ::world::ItemTypeId;
+using ::world::ItemType;
 
 class Map
 {

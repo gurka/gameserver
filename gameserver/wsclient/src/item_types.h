@@ -21,22 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
 
-#include <cstdint>
+#ifndef WSCLIENT_SRC_ITEM_TYPES_H_
+#define WSCLIENT_SRC_ITEM_TYPES_H_
 
-#include "position.h"
-#include "map.h"
+#include <array>
+#include <string>
+#include <optional>
 
-namespace wsclient::graphics
+#include "item.h"
+
+namespace wsclient::item_types
 {
 
-void init(const std::array<world::ItemType, 4096>* item_types_in);
-void draw(const world::Map& map,
-          const world::Position& position,
-          std::uint32_t player_id);
+std::optional<std::array<world::ItemType, 4096>> load(const std::string& data_filename);
 
-}  // namespace wsclient::graphics
+}  // namespace wsclient::item_types
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+#endif  // WSCLIENT_SRC_ITEM_TYPES_H_

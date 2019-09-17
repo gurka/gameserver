@@ -82,6 +82,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "network.cc",               Module::WSCLIENT    },
   { "graphics.cc",              Module::WSCLIENT    },
   { "map.cc",                   Module::WSCLIENT    },
+  { "item_types.cc",            Module::WSCLIENT    },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =

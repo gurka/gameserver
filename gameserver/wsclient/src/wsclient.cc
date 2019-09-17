@@ -32,10 +32,11 @@
 #include "protocol.h"
 #include "protocol_types.h"
 
-#include "types.h"
-#include "network.h"
 #include "graphics.h"
+#include "item_types.h"
 #include "map.h"
+#include "network.h"
+#include "types.h"
 
 namespace wsclient
 {
@@ -183,6 +184,13 @@ void handle_packet(network::IncomingPacket* packet)
 
 int main()
 {
-  wsclient::graphics::init();
+  const auto item_types = wsclient::item_types::load("data.dat");
+  if (!item_types)
+  {
+    LOG_ERROR("Could not load \"data.dat\"");
+    return 1;
+  }
+
+  wsclient::graphics::init(&(item_types.value()));
   wsclient::network::start(&wsclient::handle_packet);
 }

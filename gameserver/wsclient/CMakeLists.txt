@@ -13,6 +13,8 @@ configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/data.dat
 add_executable(wsclient
   "src/graphics.cc"
   "src/graphics.h"
+  "src/item_types.cc"
+  "src/item_types.h"
   "src/map.cc"
   "src/map.h"
   "src/network.cc"

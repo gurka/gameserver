@@ -39,6 +39,7 @@ constexpr auto width  = consts::draw_tiles_x * tile_size * scale;
 constexpr auto height = consts::draw_tiles_y * tile_size * scale;
 
 SDL_Surface* screen = nullptr;
+const std::array<world::ItemType, 4096>* item_types = nullptr;
 
 void fillRect(int x, int y, int width, int height, int red, int green, int blue)
 {
@@ -63,11 +64,12 @@ void fillRect(int x, int y, int width, int height, int red, int green, int blue)
   }
 }
 
-void init()
+void init(const std::array<world::ItemType, 4096>* item_types_in)
 {
   SDL_Init(SDL_INIT_VIDEO);
   // Client displays 15x11 tiles
   screen = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
+  item_types = item_types_in;
 }
 
 void draw(const world::Map& map, const world::Position& position, std::uint32_t player_id)
@@ -88,40 +90,22 @@ void draw(const world::Map& map, const world::Position& position, std::uint32_t 
       {
         if (thing.is_item)
         {
-          if (thing.item.item_type_id == 694)
+          const auto& item_type = (*item_types)[thing.item.item_type_id];
+          if (item_type.ground)
           {
-            // Ground, fill with brown
-            fillRect(x * tile_size,
-                     y * tile_size,
-                     tile_size,
-                     tile_size,
-                     218,
-                     165,
-                     32);
+            // Ground => brown
+            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 218, 165, 32);
 
           }
-          else if (thing.item.item_type_id == 475)
+          else if (item_type.is_blocking)
           {
-            // Water, fill with blue
-            fillRect(x * tile_size,
-                     y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     0,
-                     255);
+            // Blocking => gray
+            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 33, 33, 33);
           }
           else
           {
-            // Unknown item_type_id, fill with black
-            LOG_INFO("%s: unknown item_type_id: %d", __func__, thing.item.item_type_id);
-            fillRect(x * tile_size,
-                     y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     0,
-                     0);
+            // Other => black
+            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 0, 0, 0);
           }
         }
         else
@@ -130,24 +114,12 @@ void draw(const world::Map& map, const world::Position& position, std::uint32_t 
           if (thing.creature_id == player_id)
           {
             // Fill sprite with green
-            fillRect(x * tile_size,
-                     y * tile_size,
-                     tile_size,
-                     tile_size,
-                     0,
-                     255,
-                     0);
+            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 0, 255, 0);
           }
           else
           {
             // Fill sprite with red
-            fillRect(x * tile_size,
-                     y * tile_size,
-                     tile_size,
-                     tile_size,
-                     255,
-                     0,
-                     0);
+            fillRect(x * tile_size, y * tile_size, tile_size, tile_size, 255, 0, 0);
           }
         }
       }
