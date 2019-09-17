@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 
 project(wsclient)
 
@@ -7,6 +7,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
+
+configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/data.dat" COPYONLY)
 
 add_executable(wsclient
   "src/graphics.cc"
@@ -49,3 +51,4 @@ target_include_directories(wsclient PRIVATE
   "../utils/export"
 )
 set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
+target_link_options(wsclient PRIVATE --preload-file "data.dat")

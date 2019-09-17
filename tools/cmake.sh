@@ -35,6 +35,7 @@ function wsclient {
   mkdir -p "$BUILD_DIR/wsclient"
   pushd "$BUILD_DIR/wsclient"
   CC=emcc CXX=em++ cmake "$GAMESERVER_DIR/wsclient" -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_VERSION=4.12 -DCMAKE_CXX_COMPILER_ARG1=-std=c++17 -DCMAKE_ECLIPSE_GENERATE_LINKED_RESOURCES=FALSE -DCMAKE_BUILD_TYPE=debug
+  ln -sfn "$DATA_DIR" data
   popd
 }
 
