@@ -39,7 +39,7 @@ constexpr auto width  = consts::draw_tiles_x * tile_size * scale;
 constexpr auto height = consts::draw_tiles_y * tile_size * scale;
 
 SDL_Surface* screen = nullptr;
-const std::array<world::ItemType, 4096>* item_types = nullptr;
+const std::array<wsworld::ItemType, 4096>* item_types = nullptr;
 
 void fillRect(int x, int y, int width, int height, int red, int green, int blue)
 {
@@ -64,7 +64,7 @@ void fillRect(int x, int y, int width, int height, int red, int green, int blue)
   }
 }
 
-void init(const std::array<world::ItemType, 4096>* item_types_in)
+void init(const wsworld::ItemTypes* item_types_in)
 {
   SDL_Init(SDL_INIT_VIDEO);
   // Client displays 15x11 tiles
@@ -72,7 +72,9 @@ void init(const std::array<world::ItemType, 4096>* item_types_in)
   item_types = item_types_in;
 }
 
-void draw(const world::Map& map, const world::Position& position, std::uint32_t player_id)
+void draw(const wsworld::Map& map,
+          const wsworld::Position& position,
+          wsworld::CreatureId player_id)
 {
   if (SDL_MUSTLOCK(screen))
   {

@@ -33,9 +33,9 @@
 namespace wsclient::item_types
 {
 
-std::optional<std::array<world::ItemType, 4096>> load(const std::string& data_filename)
+std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
 {
-  std::array<world::ItemType, 4096> item_types;
+  wsworld::ItemTypes item_types;
 
   // 100 is the first item id
   const auto id_first = 100;
@@ -56,7 +56,7 @@ std::optional<std::array<world::ItemType, 4096>> load(const std::string& data_fi
 
   while (ftell(f) < size)
   {
-    world::ItemType item_type;
+    wsworld::ItemType item_type;
     item_type.id = next_id;
 
     auto opt_byte = fgetc(f);

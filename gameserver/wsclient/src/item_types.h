@@ -29,12 +29,12 @@
 #include <string>
 #include <optional>
 
-#include "item.h"
+#include "wsworld.h"
 
 namespace wsclient::item_types
 {
 
-std::optional<std::array<world::ItemType, 4096>> load(const std::string& data_filename);
+std::optional<wsworld::ItemTypes> load(const std::string& data_filename);
 
 }  // namespace wsclient::item_types
 

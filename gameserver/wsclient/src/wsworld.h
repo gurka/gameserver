@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_MAP_H_
-#define WSCLIENT_SRC_MAP_H_
+#ifndef WSCLIENT_SRC_WSWORLD_H_
+#define WSCLIENT_SRC_WSWORLD_H_
 
 #include <array>
 #include <vector>
@@ -34,13 +34,29 @@
 
 #include "types.h"
 
-namespace wsclient::world
+namespace wsclient::wsworld
 {
 
 using ::world::Position;
 using ::world::CreatureId;
 using ::world::ItemTypeId;
-using ::world::ItemType;
+
+struct ItemType
+{
+  int  id             = 0;
+  bool ground         = false;
+  int  speed          = 0;
+  bool is_blocking    = false;
+  bool always_on_top  = false;
+  bool is_container   = false;
+  bool is_stackable   = false;
+  bool is_usable      = false;
+  bool is_multitype   = false;
+  bool is_not_movable = false;
+  bool is_equipable   = false;
+};
+
+using ItemTypes = std::array<ItemType, 4096>;
 
 class Map
 {
@@ -79,6 +95,6 @@ class Map
   std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
 };
 
-}  // namespace wsclient::world
+}  // namespace wsclient::wsworld
 
-#endif  // WSCLIENT_SRC_MAP_H_
+#endif  // WSCLIENT_SRC_WSWORLD_H_

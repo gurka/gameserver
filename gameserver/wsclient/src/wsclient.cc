@@ -34,7 +34,7 @@
 
 #include "graphics.h"
 #include "item_types.h"
-#include "map.h"
+#include "wsworld.h"
 #include "network.h"
 #include "types.h"
 
@@ -43,9 +43,9 @@ namespace wsclient
 
 using namespace protocol::client;
 
-std::uint32_t player_id;
-world::Position player_position = { 0, 0, 0 };
-world::Map map;
+wsworld::CreatureId player_id;
+wsworld::Position player_position = { 0, 0, 0 };
+wsworld::Map map;
 std::vector<Creature> creatures;
 
 void handleLoginPacket(const Login& login)

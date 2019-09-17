@@ -27,14 +27,14 @@
 #include <cstdint>
 
 #include "position.h"
-#include "map.h"
+#include "wsworld.h"
 
 namespace wsclient::graphics
 {
 
-void init(const std::array<world::ItemType, 4096>* item_types_in);
-void draw(const world::Map& map,
-          const world::Position& position,
+void init(const wsworld::ItemTypes* item_types_in);
+void draw(const wsworld::Map& map,
+          const wsworld::Position& position,
           std::uint32_t player_id);
 
 }  // namespace wsclient::graphics

@@ -15,12 +15,12 @@ add_executable(wsclient
   "src/graphics.h"
   "src/item_types.cc"
   "src/item_types.h"
-  "src/map.cc"
-  "src/map.h"
   "src/network.cc"
   "src/network.h"
   "src/types.h"
   "src/wsclient.cc"
+  "src/wsworld.cc"
+  "src/wsworld.h"
 
   # network
   "../network/export/incoming_packet.h"

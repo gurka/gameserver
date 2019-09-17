@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "map.h"
+#include "wsworld.h"
 
 #include "logger.h"
 
-namespace wsclient::world
+namespace wsclient::wsworld
 {
 
 void Map::setMapData(const protocol::client::MapData& map_data)
@@ -160,4 +160,4 @@ const Map::Tile& Map::getTile(const Position& position) const
   return m_tiles[y][x];
 }
 
-}  // namespace wsclient::world
+}  // namespace wsclient::wsworld
