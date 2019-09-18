@@ -8,7 +8,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
 
-configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/data.dat" COPYONLY)
+configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/files/data.dat" COPYONLY)
+configure_file("${CMAKE_BINARY_DIR}/data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
 
 add_executable(wsclient
   "src/graphics.cc"
@@ -53,4 +54,4 @@ target_include_directories(wsclient PRIVATE
   "../utils/export"
 )
 set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
-target_link_options(wsclient PRIVATE --preload-file "data.dat")
+target_link_options(wsclient PRIVATE --preload-file "files/")
