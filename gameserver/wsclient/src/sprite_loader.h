@@ -21,22 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
+#define WSCLIENT_SRC_SPRITE_LOADER_H_
 
-#include <cstdint>
+#include <fstream>
+#include <string>
+#include <vector>
 
-#include "position.h"
-#include "wsworld.h"
+struct SDL_Renderer;
+struct SDL_Texture;
 
-namespace wsclient::graphics
+namespace wsclient::sprite
 {
 
-bool init(const std::string& data_filename, const std::string& sprite_filename);
-void draw(const wsworld::Map& map,
-          const wsworld::Position& position,
-          std::uint32_t player_id);
+class Reader
+{
+ public:
+  bool load(const std::string& filename);
+  SDL_Texture* get_sprite(int sprite_id, SDL_Renderer* renderer);
 
-}  // namespace wsclient::graphics
+ private:
+  std::uint8_t readU8();
+  std::uint16_t readU16();
+  std::uint32_t readU32();
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+  std::ifstream m_ifs;
+  std::vector<std::uint32_t> m_offsets;
+
+  struct TextureCache
+  {
+    int sprite_id;
+    SDL_Texture* texture;
+  };
+  std::vector<TextureCache> m_textures;
+};
+
+}  // namespace wsclient::sprite
+
+#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_

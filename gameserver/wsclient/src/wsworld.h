@@ -56,13 +56,13 @@ struct ItemType
   bool is_not_movable = false;
   bool is_equipable   = false;
 
-  std::uint8_t sprite_width  = 0U;
-  std::uint8_t sprite_height = 0U;
-  std::uint8_t sprite_extra  = 0U;
-  std::uint8_t blend_frames  = 0U;
-  std::uint8_t xdiv          = 0U;
-  std::uint8_t ydiv          = 0U;
-  std::uint8_t num_anim      = 0U;
+  std::uint8_t sprite_width         = 0U;
+  std::uint8_t sprite_height        = 0U;
+  std::uint8_t sprite_extra         = 0U;
+  std::uint8_t sprite_blend_frames  = 0U;
+  std::uint8_t sprite_xdiv          = 0U;
+  std::uint8_t sprite_ydiv          = 0U;
+  std::uint8_t sprite_num_anim      = 0U;
   std::vector<std::uint16_t> sprites;
 };
 

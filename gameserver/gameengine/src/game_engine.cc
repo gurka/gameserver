@@ -126,7 +126,7 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   player_ctrl->setPlayerId(player.getCreatureId());
 
   // Spawn the player
-  auto rc = m_world->addCreature(&player, player_ctrl, world::Position(208, 208, 7));
+  auto rc = m_world->addCreature(&player, player_ctrl, world::Position(222, 222, 7));
   if (rc != world::ReturnCode::OK)
   {
     LOG_DEBUG("%s: could not spawn player", __func__);

@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1 -s USE_SDL=2")
 
 configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/files/data.dat" COPYONLY)
 configure_file("${CMAKE_BINARY_DIR}/data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
@@ -18,6 +18,8 @@ add_executable(wsclient
   "src/item_types.h"
   "src/network.cc"
   "src/network.h"
+  "src/sprite_loader.cc"
+  "src/sprite_loader.h"
   "src/types.h"
   "src/wsclient.cc"
   "src/wsworld.cc"

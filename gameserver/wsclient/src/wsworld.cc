@@ -50,7 +50,7 @@ void Map::setMapData(const protocol::client::MapData& map_data)
         // Add items
         for (const auto& item : it->items)
         {
-          LOG_INFO("Adding an item at stackpos=%d with item_type_id=%d", item.stackpos, item.item.item_type_id);
+          //LOG_INFO("Adding an item at stackpos=%d with item_type_id=%d", item.stackpos, item.item.item_type_id);
           m_tiles[y][x].things[item.stackpos].is_item = true;
           m_tiles[y][x].things[item.stackpos].item.item_type_id = item.item.item_type_id;
           m_tiles[y][x].things[item.stackpos].item.extra = item.item.extra;

@@ -29,6 +29,8 @@
 #include <SDL/SDL.h>
 
 #include "logger.h"
+#include "item_types.h"
+#include "sprite_loader.h"
 
 namespace
 {
@@ -40,56 +42,123 @@ constexpr auto tile_size_scaled = tile_size * scale;
 constexpr auto screen_width  = wsclient::consts::draw_tiles_x * tile_size_scaled;
 constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled;
 
-SDL_Surface* screen = nullptr;
-const std::array<wsclient::wsworld::ItemType, 4096>* item_types = nullptr;
+SDL_Window* sdl_window = nullptr;
+SDL_Renderer* sdl_renderer = nullptr;
+wsclient::wsworld::ItemTypes itemtypes;
+wsclient::sprite::Reader sprite_reader;
 
-void drawSprite(int x, int y, int red, int green, int blue)
+void drawTexture(int x, int y, SDL_Texture* texture)
 {
-  x *= tile_size;
-  y *= tile_size;
+  const SDL_Rect dest { x, y, tile_size_scaled, tile_size_scaled };
+  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+}
 
-  // Probably UB...
-  auto* pixel = reinterpret_cast<std::uint32_t*>(screen->pixels) + (y * scale * screen->w) + (x * scale);
-  for (auto y = 0; y < tile_size_scaled; y++)
+void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type)
+{
+  // Need to use global positon, not local
+  const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
+  const auto ydiv = item_type.sprite_ydiv == 0 ? 0 : y % item_type.sprite_ydiv;
+  auto sprite_index = xdiv + (ydiv * item_type.sprite_xdiv);
+  if (sprite_index < 0 || sprite_index >= static_cast<int>(item_type.sprites.size()))
   {
-    for (auto x = 0; x < tile_size_scaled; x++)
+    LOG_ERROR("%s: sprite_index: %d is invalid (sprites.size(): %d)",
+              __func__,
+              sprite_index,
+              static_cast<int>(item_type.sprites.size()));
+    return;
+  }
+
+  auto* texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+  if (!texture)
+  {
+    return;
+  }
+
+  drawTexture(x * tile_size_scaled, y * tile_size_scaled, texture);
+
+  // TODO: Take care of this when loading texture, e.g. combine the extra sprites
+  //       into one single texture
+  if (item_type.sprite_extra > 0)
+  {
+    // sprite_extra = n means that the sprite is not 32 x 32 but rather:
+    // if sprite_width = 2 and sprite_height = 1: n x 32
+    // if sprite_width = 1 and sprite_height = 2: 32 x n
+    // if sprite_width = 2 and sprite_height = 2: n x n
+    //
+    x *= tile_size;
+    y *= tile_size;
+    if (item_type.sprite_width == 2)
     {
-      // Black border
-      if (y == 0 || x == -0 || y == tile_size_scaled - 1 || x == tile_size_scaled - 1)
-      {
-        *pixel = SDL_MapRGBA(screen->format, 0, 0, 0, 0);
-      }
-      else
-      {
-        *pixel = SDL_MapRGBA(screen->format, red, green, blue, 0);
-      }
-      pixel += 1;
+      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      drawTexture((x - tile_size) * scale,
+                  y * scale,
+                  texture);
     }
-    pixel += screen->w - (tile_size * scale);
+
+    if (item_type.sprite_height == 2)
+    {
+      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      drawTexture(x * scale,
+                  (y - tile_size) * scale,
+                  texture);
+    }
+
+    if (item_type.sprite_width == 2 && item_type.sprite_height == 2)
+    {
+      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      drawTexture((x - tile_size) * scale,
+                  (y - tile_size) * scale,
+                  texture);
+    }
   }
 }
 
-}
+}  // namespace
 
 namespace wsclient::graphics
 {
 
-void init(const wsworld::ItemTypes* item_types_in)
+bool init(const std::string& data_filename, const std::string& sprite_filename)
 {
+  const auto tmp = item_types::load(data_filename);
+  if (!tmp)
+  {
+    LOG_ERROR("Could not load \"%s\"", data_filename.c_str());
+    return false;
+  }
+  itemtypes = tmp.value();
+
   SDL_Init(SDL_INIT_VIDEO);
-  // Client displays 15x11 tiles
-  screen = SDL_SetVideoMode(screen_width, screen_height, 32, SDL_SWSURFACE);
-  item_types = item_types_in;
+
+  sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, 0);
+  if (!sdl_window)
+  {
+    LOG_ERROR("%s: could not create window: %s", __func__, SDL_GetError());
+    return false;
+  }
+
+  sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
+  if (!sdl_renderer)
+  {
+    LOG_ERROR("%s: could not create renderer: %s", __func__, SDL_GetError());
+    return false;
+  }
+
+  if (!sprite_reader.load(sprite_filename))
+  {
+    LOG_ERROR("%s: could not sprites", __func__);
+    return false;
+  }
+
+  return true;
 }
 
 void draw(const wsworld::Map& map,
           const wsworld::Position& position,
           wsworld::CreatureId player_id)
 {
-  if (SDL_MUSTLOCK(screen))
-  {
-    SDL_LockSurface(screen);
-  }
+  SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
+  SDL_RenderClear(sdl_renderer);
 
   for (auto y = 0; y < consts::draw_tiles_y; y++)
   {
@@ -98,50 +167,30 @@ void draw(const wsworld::Map& map,
       const auto& tile = map.getTile(world::Position(x - 7 + position.getX(),
                                                      y - 5 + position.getY(),
                                                      position.getZ()));
-      for (const auto& thing : tile.things)
+
+      // Draw ground
+      const auto& ground = tile.things.front();
+      drawItem(x, y, itemtypes[ground.item.item_type_id]);
+
+      // Draw things in reverse order, except ground
+      for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
+        const auto& thing = *it;
         if (thing.is_item)
         {
-          const auto& item_type = (*item_types)[thing.item.item_type_id];
-          if (item_type.ground)
-          {
-            // Ground => brown
-            drawSprite(x, y, 218, 165, 32);
+          // TODO: probably need things like count later
+          const auto& item_type = itemtypes[thing.item.item_type_id];
+          drawItem(x, y, item_type);
 
-          }
-          else if (item_type.is_blocking)
-          {
-            // Blocking => gray
-            drawSprite(x, y, 33, 33, 33);
-          }
-          else
-          {
-            // Other => black
-            drawSprite(x, y, 0, 0, 0);
-          }
+          // TODO: add offset to item_type and draw things on top of it
+          //       with an offset, e.g. boxes
         }
-        else
-        {
-          // Creature
-          if (thing.creature_id == player_id)
-          {
-            // Fill sprite with green
-            drawSprite(x, y, 0, 255, 0);
-          }
-          else
-          {
-            // Fill sprite with red
-            drawSprite(x, y, 255, 0, 0);
-          }
-        }
+        // Creature: TODO
       }
     }
   }
 
-  if (SDL_MUSTLOCK(screen))
-  {
-    SDL_UnlockSurface(screen);
-  }
+  SDL_RenderPresent(sdl_renderer);
 }
 
 }  // namespace wsclient::graphics

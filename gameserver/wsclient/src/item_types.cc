@@ -184,17 +184,17 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
       item_type.sprite_extra = fgetc(f);
     }
 
-    item_type.blend_frames = fgetc(f);
-    item_type.xdiv = fgetc(f);
-    item_type.ydiv = fgetc(f);
-    item_type.num_anim = fgetc(f);
+    item_type.sprite_blend_frames = fgetc(f);
+    item_type.sprite_xdiv = fgetc(f);
+    item_type.sprite_ydiv = fgetc(f);
+    item_type.sprite_num_anim = fgetc(f);
 
     const auto num_sprites = item_type.sprite_width  *
                              item_type.sprite_height *
-                             item_type.blend_frames *
-                             item_type.xdiv *
-                             item_type.ydiv *
-                             item_type.num_anim;
+                             item_type.sprite_blend_frames *
+                             item_type.sprite_xdiv *
+                             item_type.sprite_ydiv *
+                             item_type.sprite_num_anim;
     for (auto i = 0; i < num_sprites; i++)
     {
       auto sprite_id = fgetc(f);
