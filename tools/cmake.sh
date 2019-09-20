@@ -39,6 +39,12 @@ function wsclient {
   popd
 }
 
+# Use clang and clang++, unless specified by the caller
+CC="${CC:=clang}"
+CXX="${CXX:=clang++}"
+export CC
+export CXX
+
 case $1 in
   'all')
     release
