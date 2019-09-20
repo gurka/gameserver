@@ -16,9 +16,9 @@ if(GAMESERVER_DEBUG_FULL)
   set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-header-filter=.*;-warnings-as-errors=*")
 endif()
 
-# Use ld.gold if available
+# Use ld.gold if available and if we are using gcc
 find_program(LD_GOLD "ld.gold")
-if(LD_GOLD)
+if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") AND LD_GOLD)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
 endif()
 
