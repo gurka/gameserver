@@ -3,6 +3,8 @@ set -e
 
 cd "$(git rev-parse --show-toplevel)"
 
+export CC=clang
+export CXX=clang++
 STATUS=0
 
 # Build 'debug-full' and run tests
