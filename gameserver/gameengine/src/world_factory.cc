@@ -157,10 +157,23 @@ std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world
     }
   }
 
+  // Transpose the tiles
+  // TODO: Fix this, or rather, fix the input world xml
+  std::vector<world::Tile> tiles_trans;
+  tiles_trans.reserve(world_size_x * world_size_y);
+  for (int y = 0; y < world_size_y; y++)
+  {
+    for (int x = 0; x < world_size_x; x++)
+    {
+      const auto index = x * world_size_y + y;
+      tiles_trans.push_back(std::move(tiles[index]));
+    }
+  }
+
   LOG_INFO("World loaded, size: %d x %d", world_size_x, world_size_y);
   free(xml_string);
 
-  return std::make_unique<world::World>(world_size_x, world_size_y, std::move(tiles));  // NOLINT bug in clang-tidy used in Travis (?)
+  return std::make_unique<world::World>(world_size_x, world_size_y, std::move(tiles_trans));  // NOLINT bug in clang-tidy used in Travis (?)
 }
 
 }  // namespace gameengine
