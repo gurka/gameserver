@@ -21,60 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef IO_EXPORT_SPRITE_LOADER_H_
+#define IO_EXPORT_SPRITE_LOADER_H_
 
-#ifndef WSCLIENT_SRC_FILE_READER_H_
-#define WSCLIENT_SRC_FILE_READER_H_
-
+#include <array>
 #include <fstream>
+#include <memory>
 #include <string>
+#include <vector>
 
-class FileReader
+namespace io
+{
+
+class FileReader;
+
+class SpriteLoader
 {
  public:
-  bool load(const std::string& filename)
-  {
-    m_ifs = std::ifstream(filename, std::ios::binary);
-    return static_cast<bool>(m_ifs);
-  }
+  using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
 
-  int offset()
-  {
-    return m_ifs.tellg();
-  }
+  SpriteLoader();
+  ~SpriteLoader();
 
-  void set(int offset)
-  {
-    m_ifs.seekg(offset);
-  }
-
-  void skip(int n)
-  {
-    m_ifs.seekg(n, std::ifstream::cur);
-  }
-
-  std::uint8_t readU8()
-  {
-    return m_ifs.get();
-  }
-
-  std::uint16_t readU16()
-  {
-    std::uint16_t val = readU8();
-    val |= (readU8() << 8);
-    return val;
-  }
-
-  std::uint32_t readU32()
-  {
-    std::uint32_t val = readU8();
-    val |= (readU8() << 8);
-    val |= (readU8() << 16);
-    val |= (readU8() << 24);
-    return val;
-  }
+  bool load(const std::string& filename);
+  SpritePixels getSpritePixels(int sprite_id);
 
  private:
-  std::ifstream m_ifs;
+  std::unique_ptr<FileReader> m_fr;
+  std::vector<std::uint32_t> m_offsets;
 };
 
-#endif  // WSCLIENT_SRC_FILE_READER_H_
+}  // namespace io
+
+#endif  // IO_EXPORT_SPRITE_LOADER_H_

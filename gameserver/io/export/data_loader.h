@@ -22,20 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_ITEM_TYPES_H_
-#define WSCLIENT_SRC_ITEM_TYPES_H_
+#ifndef IO_EXPORT_DATA_LOADER_H_
+#define IO_EXPORT_DATA_LOADER_H_
 
 #include <array>
 #include <string>
-#include <optional>
 
-#include "wsworld.h"
+#include "item.h"
 
-namespace wsclient::item_types
+namespace io::data_loader
 {
 
-std::optional<wsworld::ItemTypes> load(const std::string& data_filename);
+constexpr auto MAX_ITEM_TYPES = 4096;
+using ItemTypes = std::array<world::ItemType, MAX_ITEM_TYPES>;
+bool load(const std::string& data_filename,
+          ItemTypes* item_types,
+          world::ItemTypeId* id_first,
+          world::ItemTypeId* id_last);
 
-}  // namespace wsclient::item_types
+}  // namespace io::data_loader
 
-#endif  // WSCLIENT_SRC_ITEM_TYPES_H_
+#endif  // IO_EXPORT_DATA_LOADER_H_

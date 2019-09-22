@@ -54,6 +54,7 @@ class Logger
   {
     ACCOUNT,
     GAMEENGINE,
+    IO,
     LOGINSERVER,
     NETWORK,
     PROTOCOL,

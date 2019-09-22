@@ -28,75 +28,72 @@
 #include <fstream>
 #include <vector>
 
-#include <SDL/SDL.h>
-
 #include "logger.h"
+#include "file_reader.h"
 
-namespace wsclient::sprite
+namespace io
 {
 
-bool Reader::load(const std::string& filename)
+SpriteLoader::SpriteLoader()
+    : m_fr(new FileReader)
 {
-  if (!m_fr.load(filename))
+}
+
+SpriteLoader::~SpriteLoader() = default;
+
+bool SpriteLoader::load(const std::string& filename)
+{
+  if (!m_fr->load(filename))
   {
     LOG_ERROR("%s: could not open file: %s", __func__, filename.c_str());
     return false;
   }
 
-  const auto checksum = m_fr.readU32();
+  const auto checksum = m_fr->readU32();
   LOG_INFO("%s: checksum: 0x%x", __func__, checksum);
 
-  const auto num_sprites = m_fr.readU16();
+  const auto num_sprites = m_fr->readU16();
   LOG_INFO("%s: number of sprites: %d", __func__, num_sprites);
 
   for (auto i = 0; i < num_sprites; i++)
   {
-    const auto offset = m_fr.readU32();
+    const auto offset = m_fr->readU32();
     m_offsets.push_back(offset);
   }
 
   return true;
 }
 
-SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
+SpriteLoader::SpritePixels SpriteLoader::getSpritePixels(int sprite_id)
 {
+  SpriteLoader::SpritePixels sprite_pixels = {};
+
+  // Because reasons
   sprite_id -= 1;
 
   if (sprite_id < 0 || sprite_id >= static_cast<int>(m_offsets.size()))
   {
     LOG_ERROR("%s: sprite_id: %d is out of bounds", __func__, sprite_id);
-    return nullptr;
+    return sprite_pixels;
   }
 
-  // Check cache
-  const auto it = std::find_if(m_textures.cbegin(), m_textures.cend(), [&sprite_id](const TextureCache& tc)
-  {
-    return tc.sprite_id == sprite_id;
-  });
-
-  if (it != m_textures.cend())
-  {
-    return it->texture;
-  }
 
   const auto offset = m_offsets[sprite_id];
   if (offset == 0)
   {
-    // TODO: return empty texture
-    LOG_ERROR("%s: sprite_id: %d is empty", __func__, sprite_id);
-    return nullptr;
+    LOG_DEBUG("%s: sprite_id: %d is empty", __func__, sprite_id);
+    return sprite_pixels;
   }
 
-  // Skip 3 first bytes (color key?)
-  m_fr.set(offset + 3);
+  // Go to offset + skip 3 first bytes (color key?)
+  m_fr->set(offset + 3);
 
-  const auto bytes_to_read = m_fr.readU16();
+  const auto bytes_to_read = m_fr->readU16();
   auto bytes_read = 0U;
-  std::array<std::uint8_t, 32 * 32 * 4> pixel_data {};
   auto pixel_index = 0;
   while (bytes_read < bytes_to_read)
   {
-    const auto num_transparent = m_fr.readU16();
+    const auto num_transparent = m_fr->readU16();
     bytes_read += 2;
     pixel_index += (4 * num_transparent);
 
@@ -105,56 +102,24 @@ SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
       break;
     }
 
-    const auto num_pixels = m_fr.readU16();
+    const auto num_pixels = m_fr->readU16();
     bytes_read += 2;
     if (bytes_read >= bytes_to_read && num_pixels > 0)
     {
       LOG_ERROR("%s: num_pixels: %d but we have read all bytes...", __func__, num_pixels);
-      return nullptr;
+      return sprite_pixels;
     }
     for (int i = 0; i < num_pixels; i++)
     {
-      pixel_data[pixel_index++] = m_fr.readU8();  // red
-      pixel_data[pixel_index++] = m_fr.readU8();  // green
-      pixel_data[pixel_index++] = m_fr.readU8();  // blue
-      pixel_data[pixel_index++] = 0xFF;
+      sprite_pixels[pixel_index++] = m_fr->readU8();  // red
+      sprite_pixels[pixel_index++] = m_fr->readU8();  // green
+      sprite_pixels[pixel_index++] = m_fr->readU8();  // blue
+      sprite_pixels[pixel_index++] = 0xFF;
       bytes_read += 3;
     }
   }
 
-  // Create surface from pixels
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-  constexpr auto rmask = 0xFF000000U;
-  constexpr auto gmask = 0x00FF0000U;
-  constexpr auto bmask = 0x0000FF00U;
-  constexpr auto amask = 0x000000FFU;
-#else
-  constexpr auto rmask = 0x000000FFU;
-  constexpr auto gmask = 0x0000FF00U;
-  constexpr auto bmask = 0x00FF0000U;
-  constexpr auto amask = 0xFF000000U;
-#endif
-  auto* surface = SDL_CreateRGBSurfaceFrom(pixel_data.data(), 32, 32, 32, 32 * 4, rmask, gmask, bmask, amask);
-  if (!surface)
-  {
-    LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  // Create texture from surface
-  auto* texture = SDL_CreateTextureFromSurface(renderer, surface);
-  if (!texture)
-  {
-    LOG_ERROR("%s: could not create texture: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  SDL_FreeSurface(surface);
-
-  // Add to cache
-  m_textures.push_back(TextureCache{sprite_id, texture});
-
-  return texture;
+  return sprite_pixels;
 }
 
-}  // namespace wsclient::sprite_loader
+}  // namespace io

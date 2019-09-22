@@ -77,13 +77,15 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "protocol.cc",              Module::PROTOCOL    },
   { "protocol_helper.cc",       Module::PROTOCOL    },
 
+  // io
+  { "data_loader.cc",           Module::IO          },
+  { "sprite_loader.cc",         Module::IO          },
+
   // wsclient
   { "wsclient.cc",              Module::WSCLIENT    },
   { "network.cc",               Module::WSCLIENT    },
   { "graphics.cc",              Module::WSCLIENT    },
   { "wsworld.cc",               Module::WSCLIENT    },
-  { "item_types.cc",            Module::WSCLIENT    },
-  { "sprite_loader.cc",         Module::WSCLIENT    },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =
@@ -91,6 +93,7 @@ std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::mo
   // Default settings
   { Module::ACCOUNT,     Level::DEBUG },
   { Module::GAMEENGINE,  Level::DEBUG },
+  { Module::IO,          Level::DEBUG },
   { Module::LOGINSERVER, Level::DEBUG },
   { Module::NETWORK,     Level::DEBUG },
   { Module::PROTOCOL,    Level::DEBUG },

@@ -27,6 +27,7 @@ add_subdirectory("loginserver")
 add_subdirectory("worldserver")
 
 # -- Modules --
+add_subdirectory("io")
 add_subdirectory("protocol")
 add_subdirectory("utils")
 add_subdirectory("world")

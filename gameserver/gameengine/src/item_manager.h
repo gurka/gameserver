@@ -31,6 +31,7 @@
 #include <unordered_map>
 
 #include "item.h"
+#include "data_loader.h"
 
 namespace gameengine
 {
@@ -53,7 +54,6 @@ class ItemManager
   world::Item* getItem(world::ItemUniqueId item_unique_id);
 
  private:
-  bool loadItemTypesDataFile(const std::string& data_filename);
   bool loadItemTypesItemsFile(const std::string& items_filename);
   void dumpItemTypeToJson() const;
 
@@ -84,7 +84,7 @@ class ItemManager
   std::unordered_map<world::ItemUniqueId, ItemImpl> m_items;
   world::ItemUniqueId m_next_item_unique_id{1};
 
-  std::array<world::ItemType, 4096> m_item_types;
+  io::data_loader::ItemTypes  m_item_types;
   world::ItemTypeId m_item_types_id_first{0};
   world::ItemTypeId m_item_types_id_last{0};
 };

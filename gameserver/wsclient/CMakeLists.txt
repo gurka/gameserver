@@ -12,19 +12,21 @@ configure_file("${CMAKE_BINARY_DIR}/data/data.dat" "${CMAKE_BINARY_DIR}/files/da
 configure_file("${CMAKE_BINARY_DIR}/data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
 
 add_executable(wsclient
-  "src/file_reader.h"
   "src/graphics.cc"
   "src/graphics.h"
-  "src/item_types.cc"
-  "src/item_types.h"
   "src/network.cc"
   "src/network.h"
-  "src/sprite_loader.cc"
-  "src/sprite_loader.h"
   "src/types.h"
   "src/wsclient.cc"
   "src/wsworld.cc"
   "src/wsworld.h"
+  
+  # io
+  "../io/export/data_loader.h"
+  "../io/export/sprite_loader.h"
+  "../io/src/data_loader.cc"
+  "../io/src/file_reader.h"
+  "../io/src/sprite_loader.cc"
 
   # network
   "../network/export/incoming_packet.h"

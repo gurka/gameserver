@@ -107,15 +107,17 @@ int main()
   const auto world_filename    = config.getString("world", "world_file",    "data/world.xml");
 
   // Read [logger] settings
-  const auto logger_account     = config.getString("logger", "account", "ERROR");
-  const auto logger_network     = config.getString("logger", "network", "ERROR");
-  const auto logger_protocol    = config.getString("logger", "protocol", "ERROR");
-  const auto logger_utils       = config.getString("logger", "utils", "ERROR");
-  const auto logger_world       = config.getString("logger", "world", "ERROR");
+  const auto logger_account     = config.getString("logger", "account",     "ERROR");
+  const auto logger_io          = config.getString("logger", "io",          "ERROR");
+  const auto logger_network     = config.getString("logger", "network",     "ERROR");
+  const auto logger_protocol    = config.getString("logger", "protocol",    "ERROR");
+  const auto logger_utils       = config.getString("logger", "utils",       "ERROR");
+  const auto logger_world       = config.getString("logger", "world",       "ERROR");
   const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
   // Set logger settings
   utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
+  utils::Logger::setLevel(utils::Logger::Module::IO,          logger_io);
   utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
   utils::Logger::setLevel(utils::Logger::Module::PROTOCOL,    logger_protocol);
   utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
@@ -136,6 +138,7 @@ int main()
   printf("World filename:            %s\n", world_filename.c_str());
   printf("\n");
   printf("Account logging:           %s\n", logger_account.c_str());
+  printf("IO logging:                %s\n", logger_io.c_str());
   printf("Network logging:           %s\n", logger_network.c_str());
   printf("Protocol logging:          %s\n", logger_protocol.c_str());
   printf("Utils logging:             %s\n", logger_utils.c_str());

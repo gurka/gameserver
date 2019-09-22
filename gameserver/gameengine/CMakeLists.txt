@@ -20,6 +20,7 @@ add_library(gameengine
   "src/world_factory.h"
 )
 target_link_libraries(gameengine
+  io
   utils
   world
   rapidxml

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "item_types.h"
+#include "data_loader.h"
 
 #include <cstdio>
 #include <cstring>
@@ -31,18 +31,19 @@
 #include "logger.h"
 #include "file_reader.h"
 
-namespace wsclient::item_types
+namespace io::data_loader
 {
 
-std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
+bool load(const std::string& data_filename,
+          ItemTypes* item_types,
+          world::ItemTypeId* id_first,
+          world::ItemTypeId* id_last)
 {
-  wsworld::ItemTypes item_types;
-
   FileReader fr;
   if (!fr.load(data_filename))
   {
     LOG_ERROR("%s: could not open file: %s", __func__, data_filename.c_str());
-    return {};
+    return false;
   }
 
   fr.skip(4);  // skip checksum
@@ -59,17 +60,12 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
            num_missiles);
 
   // 100 is the first item id
-  const auto id_first = 100;
-  auto next_id = id_first;
+  *id_first = 100;
+  auto next_id = *id_first;
   for (int i = 0; i < num_items; i++)
   {
-    wsworld::ItemType item_type;
+    world::ItemType item_type;
     item_type.id = next_id;
-
-    if (item_type.id == 1292)
-    {
-      LOG_INFO("1292 offset 0x%X", fr.offset());
-    }
 
     auto opt_byte = fr.readU8();
     while (opt_byte != 0xFFU)
@@ -85,7 +81,7 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
           {
             item_type.is_blocking = true;
           }
-          fr.skip(1);  // TODO: ??
+          fr.skip(1);  // TODO(simon): ??
           break;
         }
 
@@ -219,19 +215,16 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
     }
 
     // Add ItemData and increase next item id
-    item_types[next_id] = item_type;
+    (*item_types)[next_id] = item_type;
     ++next_id;
-
-    // 1705, 1292
   }
 
-  const auto id_last = next_id - 1;
+  *id_last = next_id - 1;
 
-  LOG_INFO("%s: Offset: 0x%X", __func__, fr.offset());
-  LOG_INFO("%s: Successfully loaded %d items", __func__, id_last - id_first + 1);
-  LOG_DEBUG("%s: Last item_id = %d", __func__, id_last);
+  LOG_INFO("%s: Successfully loaded %d items", __func__, *id_last - *id_first + 1);
+  LOG_DEBUG("%s: Last item_id = %d", __func__, *id_last);
 
-  return item_types;
+  return true;
 }
 
-}  // namespace wsclient::item_types
+}  // namespace io::data_loader

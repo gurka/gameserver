@@ -27,6 +27,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace world
 {
@@ -50,7 +51,18 @@ struct ItemType
   bool is_not_movable = false;
   bool is_equipable   = false;
 
-  // Loaded from xml file
+  std::uint16_t offset = 0U;
+
+  std::uint8_t sprite_width         = 0U;
+  std::uint8_t sprite_height        = 0U;
+  std::uint8_t sprite_extra         = 0U;
+  std::uint8_t sprite_blend_frames  = 0U;
+  std::uint8_t sprite_xdiv          = 0U;
+  std::uint8_t sprite_ydiv          = 0U;
+  std::uint8_t sprite_num_anim      = 0U;
+  std::vector<std::uint16_t> sprites;
+
+  // Loaded from xml file (server only)
   std::string name      = "";
   int weight            = 0;
   int decayto           = 0;
