@@ -17,17 +17,10 @@ General:
     Actual Item objects are owned and managed by ItemManager
     Actual Creature objects are owned and managed by... GameEngine?
 
-  * Add namespaces to each module
+  * Common data reader (new module io) for server and wsclient
+
+  * Make /debug print full itemtype data, even unknown fields
 
 ContainerManager:
   * Add support for weight calculation
 
-Protocol:
-  * Put protocol.cc/.h back in GameEngine
-  * Split helper into something like
-    - PacketWriterServer
-    - PacketWriterClient
-    - PacketReaderServer
-    - PacketReaderClient
-  * Or perhaps put Packet*Server in GameEngine, Packet*Client in wsclient
-    and just remove protocol?
