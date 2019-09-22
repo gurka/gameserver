@@ -54,9 +54,6 @@ class ItemManager
   world::Item* getItem(world::ItemUniqueId item_unique_id);
 
  private:
-  bool loadItemTypesItemsFile(const std::string& items_filename);
-  void dumpItemTypeToJson() const;
-
   class ItemImpl : public world::Item
   {
    public:

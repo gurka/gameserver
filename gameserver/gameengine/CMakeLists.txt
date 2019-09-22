@@ -23,6 +23,5 @@ target_link_libraries(gameengine
   io
   utils
   world
-  rapidxml
 )
 target_include_directories(gameengine PUBLIC "export")

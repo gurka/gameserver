@@ -39,6 +39,13 @@ bool load(const std::string& data_filename,
           ItemTypes* item_types,
           world::ItemTypeId* id_first,
           world::ItemTypeId* id_last);
+bool loadXml(const std::string& items_filename,
+             ItemTypes* item_types,
+             world::ItemTypeId id_first,
+             world::ItemTypeId id_last);
+void dumpToJson(const ItemTypes& item_types,
+                world::ItemTypeId id_first,
+                world::ItemTypeId id_last);
 
 }  // namespace io::data_loader
 

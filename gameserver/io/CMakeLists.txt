@@ -10,5 +10,6 @@ add_library(io
 )
 target_link_libraries(io
   world
+  rapidxml
 )
 target_include_directories(io PUBLIC "export")
