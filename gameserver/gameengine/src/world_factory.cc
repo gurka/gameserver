@@ -158,7 +158,7 @@ std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world
   }
 
   // Transpose the tiles
-  // TODO: Fix this, or rather, fix the input world xml
+  // TODO(simon): Fix this, or rather, fix the input world xml
   std::vector<world::Tile> tiles_trans;
   tiles_trans.reserve(world_size_x * world_size_y);
   for (int y = 0; y < world_size_y; y++)

@@ -310,7 +310,7 @@ void GameEngine::say(world::CreatureId creature_id,
         },
         [&oss](const world::Item* item)
         {
-          oss << "Item: " << item->getItemUniqueId() << "\n";
+          oss << "Item: " << item->getItemTypeId() << "\n";
         }
       );
 
