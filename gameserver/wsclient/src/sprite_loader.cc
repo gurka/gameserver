@@ -37,22 +37,21 @@ namespace wsclient::sprite
 
 bool Reader::load(const std::string& filename)
 {
-  m_ifs = std::ifstream(filename, std::ios::binary);
-  if (!m_ifs)
+  if (!m_fr.load(filename))
   {
     LOG_ERROR("%s: could not open file: %s", __func__, filename.c_str());
     return false;
   }
 
-  const auto checksum = readU32();
+  const auto checksum = m_fr.readU32();
   LOG_INFO("%s: checksum: 0x%x", __func__, checksum);
 
-  const auto num_sprites = readU16();
+  const auto num_sprites = m_fr.readU16();
   LOG_INFO("%s: number of sprites: %d", __func__, num_sprites);
 
   for (auto i = 0; i < num_sprites; i++)
   {
-    const auto offset = readU32();
+    const auto offset = m_fr.readU32();
     m_offsets.push_back(offset);
   }
 
@@ -89,15 +88,15 @@ SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
   }
 
   // Skip 3 first bytes (color key?)
-  m_ifs.seekg(offset + 3);
+  m_fr.set(offset + 3);
 
-  const auto bytes_to_read = readU16();
+  const auto bytes_to_read = m_fr.readU16();
   auto bytes_read = 0U;
   std::array<std::uint8_t, 32 * 32 * 4> pixel_data {};
   auto pixel_index = 0;
   while (bytes_read < bytes_to_read)
   {
-    const auto num_transparent = readU16();
+    const auto num_transparent = m_fr.readU16();
     bytes_read += 2;
     pixel_index += (4 * num_transparent);
 
@@ -106,7 +105,7 @@ SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
       break;
     }
 
-    const auto num_pixels = readU16();
+    const auto num_pixels = m_fr.readU16();
     bytes_read += 2;
     if (bytes_read >= bytes_to_read && num_pixels > 0)
     {
@@ -115,9 +114,9 @@ SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
     }
     for (int i = 0; i < num_pixels; i++)
     {
-      pixel_data[pixel_index++] = readU8();  // red
-      pixel_data[pixel_index++] = readU8();  // green
-      pixel_data[pixel_index++] = readU8();  // blue
+      pixel_data[pixel_index++] = m_fr.readU8();  // red
+      pixel_data[pixel_index++] = m_fr.readU8();  // green
+      pixel_data[pixel_index++] = m_fr.readU8();  // blue
       pixel_data[pixel_index++] = 0xFF;
       bytes_read += 3;
     }
@@ -156,27 +155,6 @@ SDL_Texture* Reader::get_sprite(int sprite_id, SDL_Renderer* renderer)
   m_textures.push_back(TextureCache{sprite_id, texture});
 
   return texture;
-}
-
-std::uint8_t Reader::readU8()
-{
-  return m_ifs.get();
-}
-
-std::uint16_t Reader::readU16()
-{
-  std::uint16_t val = readU8();
-  val |= (readU8() << 8);
-  return val;
-}
-
-std::uint32_t Reader::readU32()
-{
-  std::uint32_t val = readU8();
-  val |= (readU8() << 8);
-  val |= (readU8() << 16);
-  val |= (readU8() << 24);
-  return val;
 }
 
 }  // namespace wsclient::sprite_loader

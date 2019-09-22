@@ -21,39 +21,60 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
-#define WSCLIENT_SRC_SPRITE_LOADER_H_
+
+#ifndef WSCLIENT_SRC_FILE_READER_H_
+#define WSCLIENT_SRC_FILE_READER_H_
 
 #include <fstream>
 #include <string>
-#include <vector>
 
-#include "file_reader.h"
-
-struct SDL_Renderer;
-struct SDL_Texture;
-
-namespace wsclient::sprite
-{
-
-class Reader
+class FileReader
 {
  public:
-  bool load(const std::string& filename);
-  SDL_Texture* get_sprite(int sprite_id, SDL_Renderer* renderer);
+  bool load(const std::string& filename)
+  {
+    m_ifs = std::ifstream(filename, std::ios::binary);
+    return static_cast<bool>(m_ifs);
+  }
+
+  int offset()
+  {
+    return m_ifs.tellg();
+  }
+
+  void set(int offset)
+  {
+    m_ifs.seekg(offset);
+  }
+
+  void skip(int n)
+  {
+    m_ifs.seekg(n, std::ifstream::cur);
+  }
+
+  std::uint8_t readU8()
+  {
+    return m_ifs.get();
+  }
+
+  std::uint16_t readU16()
+  {
+    std::uint16_t val = readU8();
+    val |= (readU8() << 8);
+    return val;
+  }
+
+  std::uint32_t readU32()
+  {
+    std::uint32_t val = readU8();
+    val |= (readU8() << 8);
+    val |= (readU8() << 16);
+    val |= (readU8() << 24);
+    return val;
+  }
 
  private:
-  FileReader m_fr;
-  std::vector<std::uint32_t> m_offsets;
-
-  struct TextureCache
-  {
-    int sprite_id;
-    SDL_Texture* texture;
-  };
-  std::vector<TextureCache> m_textures;
+  std::ifstream m_ifs;
 };
 
-}  // namespace wsclient::sprite
-
-#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_
+#endif  // WSCLIENT_SRC_FILE_READER_H_

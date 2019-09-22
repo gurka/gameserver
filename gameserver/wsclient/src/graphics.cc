@@ -49,11 +49,11 @@ wsclient::sprite::Reader sprite_reader;
 
 void drawTexture(int x, int y, SDL_Texture* texture)
 {
-  const SDL_Rect dest { x, y, tile_size_scaled, tile_size_scaled };
+  const SDL_Rect dest { x * scale, y * scale, tile_size_scaled, tile_size_scaled };
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
-void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type)
+void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type, std::uint16_t offset)
 {
   // Need to use global positon, not local
   const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
@@ -71,10 +71,16 @@ void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type)
   auto* texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
   if (!texture)
   {
+    LOG_ERROR("%s: missing texture for sprite id: %d", __func__, sprite_index - 1);
     return;
   }
 
-  drawTexture(x * tile_size_scaled, y * tile_size_scaled, texture);
+  // Convert from tile position to pixel position
+  // TODO: there is probably a max offset...
+  x = x * tile_size - offset;
+  y = y * tile_size - offset;
+
+  drawTexture(x, y, texture);
 
   // TODO: Take care of this when loading texture, e.g. combine the extra sprites
   //       into one single texture
@@ -85,30 +91,22 @@ void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type)
     // if sprite_width = 1 and sprite_height = 2: 32 x n
     // if sprite_width = 2 and sprite_height = 2: n x n
     //
-    x *= tile_size;
-    y *= tile_size;
     if (item_type.sprite_width == 2)
     {
       texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
-      drawTexture((x - tile_size) * scale,
-                  y * scale,
-                  texture);
+      drawTexture(x - tile_size, y, texture);
     }
 
     if (item_type.sprite_height == 2)
     {
       texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
-      drawTexture(x * scale,
-                  (y - tile_size) * scale,
-                  texture);
+      drawTexture(x, y - tile_size, texture);
     }
 
     if (item_type.sprite_width == 2 && item_type.sprite_height == 2)
     {
       texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
-      drawTexture((x - tile_size) * scale,
-                  (y - tile_size) * scale,
-                  texture);
+      drawTexture(x - tile_size, y - tile_size, texture);
     }
   }
 }
@@ -169,10 +167,11 @@ void draw(const wsworld::Map& map,
                                                      position.getZ()));
 
       // Draw ground
-      const auto& ground = tile.things.front();
-      drawItem(x, y, itemtypes[ground.item.item_type_id]);
+      const auto& ground_type = itemtypes[tile.things.front().item.item_type_id];
+      drawItem(x, y, ground_type, 0);
 
       // Draw things in reverse order, except ground
+      auto offset = ground_type.offset;
       for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
         const auto& thing = *it;
@@ -180,10 +179,9 @@ void draw(const wsworld::Map& map,
         {
           // TODO: probably need things like count later
           const auto& item_type = itemtypes[thing.item.item_type_id];
-          drawItem(x, y, item_type);
+          drawItem(x, y, item_type, offset);
 
-          // TODO: add offset to item_type and draw things on top of it
-          //       with an offset, e.g. boxes
+          offset += item_type.offset;
         }
         // Creature: TODO
       }

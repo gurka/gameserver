@@ -29,6 +29,7 @@
 #include <sstream>
 
 #include "logger.h"
+#include "file_reader.h"
 
 namespace wsclient::item_types
 {
@@ -37,30 +38,41 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
 {
   wsworld::ItemTypes item_types;
 
-  // 100 is the first item id
-  const auto id_first = 100;
-  auto next_id = id_first;
-
-  // TODO(simon): Use std::ifstream?
-  FILE* f = fopen(data_filename.c_str(), "rb");
-  if (f == nullptr)
+  FileReader fr;
+  if (!fr.load(data_filename))
   {
     LOG_ERROR("%s: could not open file: %s", __func__, data_filename.c_str());
     return {};
   }
 
-  fseek(f, 0, SEEK_END);
-  auto size = ftell(f);
+  fr.skip(4);  // skip checksum
+  const auto num_items = fr.readU16();
+  const auto num_outfits = fr.readU16();
+  const auto num_effects = fr.readU16();
+  const auto num_missiles = fr.readU16();
 
-  fseek(f, 0x0C, SEEK_SET);
+  LOG_INFO("%s: num_items: %u num_outfits: %u num_effects: %u, num_missiles: %u",
+           __func__,
+           num_items,
+           num_outfits,
+           num_effects,
+           num_missiles);
 
-  while (ftell(f) < size)
+  // 100 is the first item id
+  const auto id_first = 100;
+  auto next_id = id_first;
+  for (int i = 0; i < num_items; i++)
   {
     wsworld::ItemType item_type;
     item_type.id = next_id;
 
-    auto opt_byte = fgetc(f);
-    while (opt_byte  >= 0 && opt_byte != 0xFF)
+    if (item_type.id == 1292)
+    {
+      LOG_INFO("1292 offset 0x%X", fr.offset());
+    }
+
+    auto opt_byte = fr.readU8();
+    while (opt_byte != 0xFFU)
     {
       switch (opt_byte)
       {
@@ -68,12 +80,12 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
         {
           // Ground item
           item_type.ground = true;
-          item_type.speed = fgetc(f);
+          item_type.speed = fr.readU8();
           if (item_type.speed == 0)
           {
             item_type.is_blocking = true;
           }
-          fgetc(f);  // ??
+          fr.skip(1);  // TODO: ??
           break;
         }
 
@@ -137,7 +149,7 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
         case 0x10:
         {
           // Makes light (skip 4 bytes)
-          fseek(f, 4, SEEK_CUR);
+          fr.skip(4);
           break;
         }
 
@@ -157,37 +169,43 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
 
         case 0x07:
         case 0x08:
-        case 0x13:
         case 0x16:
         case 0x1A:
         {
           // Unknown?
-          fseek(f, 2, SEEK_CUR);
+          fr.skip(2);
+          break;
+        }
+
+        case 0x13:  // render position offset for e.g. boxes, tables, parcels
+        {
+          item_type.offset = fr.readU16();
           break;
         }
 
         default:
         {
-          LOG_ERROR("%s: Unknown opt_byte: %d", __func__, opt_byte);
+          LOG_ERROR("%s: Unknown opt_byte: 0x%X", __func__, opt_byte);
+          break;
         }
       }
 
       // Get next optByte
-      opt_byte = fgetc(f);
+      opt_byte = fr.readU8();
     }
 
     // Size and sprite data
-    item_type.sprite_width = fgetc(f);
-    item_type.sprite_height = fgetc(f);
+    item_type.sprite_width = fr.readU8();
+    item_type.sprite_height = fr.readU8();
     if (item_type.sprite_width > 1 || item_type.sprite_height > 1)
     {
-      item_type.sprite_extra = fgetc(f);
+      item_type.sprite_extra = fr.readU8();;
     }
 
-    item_type.sprite_blend_frames = fgetc(f);
-    item_type.sprite_xdiv = fgetc(f);
-    item_type.sprite_ydiv = fgetc(f);
-    item_type.sprite_num_anim = fgetc(f);
+    item_type.sprite_blend_frames = fr.readU8();
+    item_type.sprite_xdiv = fr.readU8();
+    item_type.sprite_ydiv = fr.readU8();
+    item_type.sprite_num_anim = fr.readU8();
 
     const auto num_sprites = item_type.sprite_width  *
                              item_type.sprite_height *
@@ -197,22 +215,21 @@ std::optional<wsworld::ItemTypes> load(const std::string& data_filename)
                              item_type.sprite_num_anim;
     for (auto i = 0; i < num_sprites; i++)
     {
-      auto sprite_id = fgetc(f);
-      sprite_id |= (fgetc(f) << 8);
-      item_type.sprites.push_back(sprite_id);
+      item_type.sprites.push_back(fr.readU16());
     }
 
     // Add ItemData and increase next item id
     item_types[next_id] = item_type;
     ++next_id;
+
+    // 1705, 1292
   }
 
   const auto id_last = next_id - 1;
 
+  LOG_INFO("%s: Offset: 0x%X", __func__, fr.offset());
   LOG_INFO("%s: Successfully loaded %d items", __func__, id_last - id_first + 1);
   LOG_DEBUG("%s: Last item_id = %d", __func__, id_last);
-
-  fclose(f);
 
   return item_types;
 }

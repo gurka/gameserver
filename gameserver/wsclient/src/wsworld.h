@@ -56,6 +56,8 @@ struct ItemType
   bool is_not_movable = false;
   bool is_equipable   = false;
 
+  std::uint16_t offset = 0U;
+
   std::uint8_t sprite_width         = 0U;
   std::uint8_t sprite_height        = 0U;
   std::uint8_t sprite_extra         = 0U;
