@@ -25,6 +25,8 @@
 #ifndef NETWORK_EXPORT_CONNECTION_H_
 #define NETWORK_EXPORT_CONNECTION_H_
 
+#include <functional>
+
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
