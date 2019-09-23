@@ -22,6 +22,9 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") AND LD_GOLD)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
 endif()
 
+# Check for boost (asio + date_time)
+find_package(Boost 1.67.0 REQUIRED COMPONENTS system thread date_time)
+
 # -- Binaries --
 add_subdirectory("loginserver")
 add_subdirectory("worldserver")
