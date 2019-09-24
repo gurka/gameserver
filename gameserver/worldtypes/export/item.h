@@ -62,6 +62,26 @@ struct ItemType
   std::uint8_t sprite_num_anim      = 0U;
   std::vector<std::uint16_t> sprites;
 
+  // List of unknown properties read from
+  // data file
+  struct UnknownProp
+  {
+    explicit UnknownProp(std::uint8_t id)
+        : id(id)
+    {
+    }
+
+    UnknownProp(std::uint8_t id, std::uint16_t extra)
+        : id(id),
+          extra(extra)
+    {
+    }
+
+    std::uint8_t  id    = 0U;
+    std::uint16_t extra = 0U;
+  };
+  std::vector<UnknownProp> unknown_properties;
+
   // Loaded from xml file (server only)
   std::string name      = "";
   int weight            = 0;

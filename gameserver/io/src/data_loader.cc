@@ -159,7 +159,7 @@ bool load(const std::string& data_filename,
         case 0x18:
         case 0x19:
         {
-          // Unknown?
+          item_type.unknown_properties.emplace_back(opt_byte);
           break;
         }
 
@@ -168,8 +168,7 @@ bool load(const std::string& data_filename,
         case 0x16:
         case 0x1A:
         {
-          // Unknown?
-          fr.skip(2);
+          item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
           break;
         }
 
