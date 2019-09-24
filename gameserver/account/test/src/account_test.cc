@@ -43,78 +43,69 @@ class AccountTest : public ::testing::Test
 
   AccountTest()
   {
-    // Create valid xml-file stream
-    xmlStream <<
-    "<?xml version=\"1.0\"?>\n"
-    "<accounts>\n"
-    "  <account number=\"" << ACCOUNT_1 << "\" password=\"" << PASSWORD_1 << "\" paid_days=\"90\">\n"
-    "    <character name=\"Alice\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
-    "    <character name=\"Bob\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
-    "  </account>\n"
-    "  <account number=\"" << ACCOUNT_2 << "\" password=\"" << PASSWORD_2 << "\" paid_days=\"1337\">\n"
-    "    <character name=\"Gamemaster\" world_name=\"Default\" world_ip=\"192.168.0.4\" world_port=\"7172\" />\n"
-    "  </account>\n"
-    "</accounts>\n";
+    Character alice { "Alice", "Default", 123456U, 7172 };
+    Character bob { "Bob", "Default", 123456U, 7172 };
+    Character gamemaster { "Gamemaster", "Default", 123456U, 7172 };
+
+    Account acc1(90, { alice, bob });
+    Account acc2(1337, { gamemaster });
+
+    m_account_reader.m_account_data.accounts.emplace(ACCOUNT_1, acc1);
+    m_account_reader.m_account_data.accounts.emplace(ACCOUNT_2, acc2);
+
+    m_account_reader.m_account_data.passwords.emplace(ACCOUNT_1, PASSWORD_1);
+    m_account_reader.m_account_data.passwords.emplace(ACCOUNT_2, PASSWORD_2);
+
+    m_account_reader.m_account_data.char_to_acc_num.emplace("Alice", ACCOUNT_1);
+    m_account_reader.m_account_data.char_to_acc_num.emplace("Bob", ACCOUNT_1);
+    m_account_reader.m_account_data.char_to_acc_num.emplace("Gamemaster", ACCOUNT_2);
   }
 
-  std::stringstream xmlStream;
+  AccountReader m_account_reader;
 };
-
-TEST_F(AccountTest, LoadFile)
-{
-  // Create AccountReader and load file sream
-  AccountReader accountReader;
-  EXPECT_TRUE(accountReader.loadFile(&xmlStream));
-}
 
 TEST_F(AccountTest, Accounts)
 {
-  AccountReader accountReader;
-  accountReader.loadFile(&xmlStream);
+  EXPECT_TRUE(m_account_reader.accountExists(ACCOUNT_1));
+  EXPECT_TRUE(m_account_reader.accountExists(ACCOUNT_2));
+  EXPECT_FALSE(m_account_reader.accountExists(ACCOUNT_INVALID));
 
-  EXPECT_TRUE(accountReader.accountExists(ACCOUNT_1));
-  EXPECT_TRUE(accountReader.accountExists(ACCOUNT_2));
-  EXPECT_FALSE(accountReader.accountExists(ACCOUNT_INVALID));
+  EXPECT_TRUE(m_account_reader.verifyPassword(ACCOUNT_1, PASSWORD_1));
+  EXPECT_TRUE(m_account_reader.verifyPassword(ACCOUNT_2, PASSWORD_2));
+  EXPECT_FALSE(m_account_reader.verifyPassword(ACCOUNT_INVALID, PASSWORD_INVALID));
+  EXPECT_FALSE(m_account_reader.verifyPassword(ACCOUNT_1, PASSWORD_2));
+  EXPECT_FALSE(m_account_reader.verifyPassword(ACCOUNT_2, PASSWORD_1));
 
-  EXPECT_TRUE(accountReader.verifyPassword(ACCOUNT_1, PASSWORD_1));
-  EXPECT_TRUE(accountReader.verifyPassword(ACCOUNT_2, PASSWORD_2));
-  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_INVALID, PASSWORD_INVALID));
-  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_1, PASSWORD_2));
-  EXPECT_FALSE(accountReader.verifyPassword(ACCOUNT_2, PASSWORD_1));
+  EXPECT_NE(nullptr, m_account_reader.getAccount(ACCOUNT_1));
+  EXPECT_NE(nullptr, m_account_reader.getAccount(ACCOUNT_2));
+  EXPECT_EQ(nullptr, m_account_reader.getAccount(ACCOUNT_INVALID));
 
-  EXPECT_NE(nullptr, accountReader.getAccount(ACCOUNT_1));
-  EXPECT_NE(nullptr, accountReader.getAccount(ACCOUNT_2));
-  EXPECT_EQ(nullptr, accountReader.getAccount(ACCOUNT_INVALID));
-
-  EXPECT_EQ(90, accountReader.getAccount(ACCOUNT_1)->premium_days);
-  EXPECT_EQ(1337, accountReader.getAccount(ACCOUNT_2)->premium_days);
+  EXPECT_EQ(90, m_account_reader.getAccount(ACCOUNT_1)->premium_days);
+  EXPECT_EQ(1337, m_account_reader.getAccount(ACCOUNT_2)->premium_days);
 }
 
 TEST_F(AccountTest, Characters)
 {
-  AccountReader accountReader;
-  accountReader.loadFile(&xmlStream);
+  EXPECT_TRUE(m_account_reader.characterExists("Alice"));
+  EXPECT_TRUE(m_account_reader.characterExists("Bob"));
+  EXPECT_TRUE(m_account_reader.characterExists("Gamemaster"));
+  EXPECT_FALSE(m_account_reader.characterExists("Simon"));
 
-  EXPECT_TRUE(accountReader.characterExists("Alice"));
-  EXPECT_TRUE(accountReader.characterExists("Bob"));
-  EXPECT_TRUE(accountReader.characterExists("Gamemaster"));
-  EXPECT_FALSE(accountReader.characterExists("Simon"));
+  EXPECT_TRUE(m_account_reader.verifyPassword("Alice", PASSWORD_1));
+  EXPECT_TRUE(m_account_reader.verifyPassword("Bob", PASSWORD_1));
+  EXPECT_TRUE(m_account_reader.verifyPassword("Gamemaster", PASSWORD_2));
+  EXPECT_FALSE(m_account_reader.verifyPassword("Simon", PASSWORD_INVALID));
+  EXPECT_FALSE(m_account_reader.verifyPassword("Alice", PASSWORD_2));
+  EXPECT_FALSE(m_account_reader.verifyPassword("Gamemaster", PASSWORD_1));
 
-  EXPECT_TRUE(accountReader.verifyPassword("Alice", PASSWORD_1));
-  EXPECT_TRUE(accountReader.verifyPassword("Bob", PASSWORD_1));
-  EXPECT_TRUE(accountReader.verifyPassword("Gamemaster", PASSWORD_2));
-  EXPECT_FALSE(accountReader.verifyPassword("Simon", PASSWORD_INVALID));
-  EXPECT_FALSE(accountReader.verifyPassword("Alice", PASSWORD_2));
-  EXPECT_FALSE(accountReader.verifyPassword("Gamemaster", PASSWORD_1));
+  EXPECT_NE(nullptr, m_account_reader.getCharacter("Alice"));
+  EXPECT_NE(nullptr, m_account_reader.getCharacter("Bob"));
+  EXPECT_NE(nullptr, m_account_reader.getCharacter("Gamemaster"));
+  EXPECT_EQ(nullptr, m_account_reader.getCharacter("Simon"));
 
-  EXPECT_NE(nullptr, accountReader.getCharacter("Alice"));
-  EXPECT_NE(nullptr, accountReader.getCharacter("Bob"));
-  EXPECT_NE(nullptr, accountReader.getCharacter("Gamemaster"));
-  EXPECT_EQ(nullptr, accountReader.getCharacter("Simon"));
-
-  const auto* accountAlice = accountReader.getAccount("Alice");
-  const auto* accountBob = accountReader.getAccount("Bob");
-  const auto* accountGamemaster = accountReader.getAccount("Gamemaster");
+  const auto* accountAlice = m_account_reader.getAccount("Alice");
+  const auto* accountBob = m_account_reader.getAccount("Bob");
+  const auto* accountGamemaster = m_account_reader.getAccount("Gamemaster");
 
   EXPECT_TRUE(accountAlice == accountBob);
   EXPECT_FALSE(accountAlice == accountGamemaster);
@@ -131,7 +122,7 @@ TEST_F(AccountTest, Characters)
 
   EXPECT_NE(accountAlice->characters.cend(), it);
 
-  const auto* characterBob = accountReader.getCharacter("Bob");
+  const auto* characterBob = m_account_reader.getCharacter("Bob");
   EXPECT_EQ("Default", characterBob->world_name);
   EXPECT_EQ(7172, characterBob->world_port);
 }

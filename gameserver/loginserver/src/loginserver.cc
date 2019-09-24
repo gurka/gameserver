@@ -220,7 +220,7 @@ int main()
 
   // Create and load AccountReader
   account_reader = std::make_unique<account::AccountReader>();
-  if (!account_reader->loadFile(accounts_filename))
+  if (!account_reader->load(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
     return 1;

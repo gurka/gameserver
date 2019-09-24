@@ -37,6 +37,8 @@ struct Character
 {
   std::string name;
   std::string world_name;
+
+  // TODO(simon): these don't belong here
   std::uint32_t world_ip;
   int world_port;
 };
@@ -53,11 +55,18 @@ struct Account
   std::vector<Character> characters;
 };
 
+struct AccountData
+{
+  std::unordered_map<int, Account> accounts;
+  std::unordered_map<int, std::string> passwords;
+  std::unordered_map<std::string, int> char_to_acc_num;
+};
+
+// TODO(simon): rename to AccountManager or Accounts
 class AccountReader
 {
  public:
-  bool loadFile(const std::string& accounts_filename);
-  bool loadFile(std::istream* accounts_file_stream);
+  bool load(const std::string& accounts_filename);
 
   bool accountExists(int account_number) const;
   bool verifyPassword(int account_number, const std::string& password) const;
@@ -69,9 +78,11 @@ class AccountReader
   const Account* getAccount(const std::string& character_name) const;
 
  private:
-  std::unordered_map<int, Account> m_accounts;
-  std::unordered_map<int, std::string> m_passwords;
-  std::unordered_map<std::string, int> m_char_to_acc_num;
+  AccountData m_account_data;
+
+#ifdef UNITTEST
+  friend class AccountTest;
+#endif
 };
 
 }  // namespace account
