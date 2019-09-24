@@ -17,9 +17,10 @@ General:
     Actual Item objects are owned and managed by ItemManager
     Actual Creature objects are owned and managed by... GameEngine?
 
-  * Common data reader (new module io) for server and wsclient
-
   * Make /debug print full itemtype data, even unknown fields
+
+  * Maybe: split World into World and WorldTypes (or something)
+           the latter should only contain types/headers/interfaces - no logic!
 
 ContainerManager:
   * Add support for weight calculation
