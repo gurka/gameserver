@@ -15,9 +15,10 @@ add_library(io
 )
 
 target_link_libraries(io
-  world
-  account
-  rapidxml
+  PRIVATE account
+  PRIVATE utils
+  PRIVATE world
+  PRIVATE rapidxml
 )
 
 target_include_directories(io PUBLIC "export")

@@ -18,7 +18,7 @@ add_library(world
 )
 
 target_link_libraries(world
-  utils
+  PRIVATE utils
 )
 
 target_include_directories(world PUBLIC "export")

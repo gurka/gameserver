@@ -22,9 +22,9 @@ add_library(gameengine
 )
 
 target_link_libraries(gameengine
-  io
-  utils
-  world
+  PRIVATE io
+  PRIVATE utils
+  PRIVATE world
 )
 
 target_include_directories(gameengine PUBLIC "export")

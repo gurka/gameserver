@@ -10,6 +10,6 @@ add_library(account
 target_include_directories(account PUBLIC "export")
 
 target_link_libraries(account
-  io
-  utils
+  PRIVATE io
+  PRIVATE utils
 )

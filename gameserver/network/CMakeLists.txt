@@ -19,8 +19,8 @@ add_library(network
 )
 
 target_link_libraries(network
-  utils
-  websocketpp
+  PRIVATE utils
+  PRIVATE websocketpp
 )
 
 target_include_directories(network PUBLIC "export")

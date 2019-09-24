@@ -9,10 +9,10 @@ add_library(protocol
 )
 
 target_link_libraries(protocol
-  gameengine
-  network
-  utils
-  world
+  PRIVATE gameengine
+  PRIVATE network
+  PRIVATE utils
+  PRIVATE world
 )
 
 target_include_directories(protocol PUBLIC "export")
