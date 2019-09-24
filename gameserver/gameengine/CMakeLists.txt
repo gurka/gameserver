@@ -25,6 +25,7 @@ target_link_libraries(gameengine
   PRIVATE io
   PRIVATE utils
   PRIVATE world
+  PRIVATE worldtypes
 )
 
 target_include_directories(gameengine PUBLIC "export")

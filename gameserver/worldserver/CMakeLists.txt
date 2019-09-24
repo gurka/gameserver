@@ -14,6 +14,7 @@ target_link_libraries(worldserver
   network
   protocol
   world
+  worldtypes
   utils
   boost_system
   pthread

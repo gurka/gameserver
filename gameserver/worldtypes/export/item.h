@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_ITEM_H_
-#define WORLD_EXPORT_ITEM_H_
+#ifndef WORLD_TYPES_EXPORT_ITEM_H_
+#define WORLD_TYPES_EXPORT_ITEM_H_
 
 #include <cstdint>
 #include <string>
@@ -109,4 +109,4 @@ class Item
 
 }  // namespace world
 
-#endif  // WORLD_EXPORT_ITEM_H_
+#endif  // WORLD_TYPES_EXPORT_ITEM_H_

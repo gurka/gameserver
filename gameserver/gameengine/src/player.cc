@@ -168,8 +168,8 @@ const world::Item* Equipment::getItem(int inventory_slot) const
   return m_items[inventory_slot];
 }
 
-Player::Player(const std::string& name)
-  : Creature(name),
+Player::Player(world::CreatureId creature_id, const std::string& name)
+  : Creature(creature_id, name),
     m_max_mana(100),
     m_mana(100),
     m_capacity(300),

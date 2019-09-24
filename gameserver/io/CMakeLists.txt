@@ -18,6 +18,7 @@ target_link_libraries(io
   PRIVATE account
   PRIVATE utils
   PRIVATE world
+  PRIVATE worldtypes
   PRIVATE rapidxml
 )
 
