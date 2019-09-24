@@ -22,6 +22,8 @@ General:
   * Maybe: split World into World and WorldTypes (or something)
            the latter should only contain types/headers/interfaces - no logic!
 
+  * Find more good warning flags to enable
+
 ContainerManager:
   * Add support for weight calculation
 
