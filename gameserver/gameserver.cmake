@@ -27,6 +27,16 @@ find_package(Boost 1.67.0 REQUIRED COMPONENTS system thread date_time)
 add_subdirectory("loginserver")
 add_subdirectory("worldserver")
 
+# -- Data files --
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/loginserver.cfg" "${CMAKE_BINARY_DIR}/data/loginserver.cfg" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/worldserver.cfg" "${CMAKE_BINARY_DIR}/data/worldserver.cfg" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/accounts.xml"    "${CMAKE_BINARY_DIR}/data/accounts.xml"    COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"        "${CMAKE_BINARY_DIR}/data/data.dat"        COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/items.xml"       "${CMAKE_BINARY_DIR}/data/items.xml"       COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/world.xml"       "${CMAKE_BINARY_DIR}/data/world.xml"       COPYONLY)
+endif()
+
 # -- Modules --
 add_subdirectory("io")
 add_subdirectory("protocol")

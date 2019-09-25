@@ -8,6 +8,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -
 
 add_subdirectory(wsclient)
 
+set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat" "${CMAKE_BINARY_DIR}/files/data.dat" COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
+
+target_link_options(wsclient PRIVATE --preload-file "files/")
+
 # Hack to build subset of the modules that gameserver use
 
 add_library(gameengine INTERFACE)

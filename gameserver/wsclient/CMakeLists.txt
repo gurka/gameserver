@@ -21,10 +21,3 @@ target_link_libraries(wsclient
   utils
   world
 )
-
-set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
-
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../../data/data.dat" "${CMAKE_BINARY_DIR}/files/data.dat" COPYONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../../data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
-
-target_link_options(wsclient PRIVATE --preload-file "files/")
