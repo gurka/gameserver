@@ -21,6 +21,7 @@ General:
 
   * Maybe: split World into World and WorldTypes (or something)
            the latter should only contain types/headers/interfaces - no logic!
+    Actually: move all more or less common data types to own module...
 
   * Find more good warning flags to enable
 
