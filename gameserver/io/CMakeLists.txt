@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(io)
+
 add_library(io
   "export/account_loader.h"
   "export/data_loader.h"
@@ -12,9 +13,11 @@ add_library(io
   "src/sprite_loader.cc"
   "src/world_loader.cc"
 )
+
 target_link_libraries(io
   world
   account
   rapidxml
 )
+
 target_include_directories(io PUBLIC "export")
