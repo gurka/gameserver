@@ -13,7 +13,6 @@ target_link_libraries(protocol PRIVATE
   network
   utils
   world
-  worldtypes
 )
 
 target_include_directories(protocol PUBLIC "export")

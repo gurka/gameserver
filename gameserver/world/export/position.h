@@ -22,11 +22,10 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_TYPES_EXPORT_POSITION_H_
-#define WORLD_TYPES_EXPORT_POSITION_H_
+#ifndef WORLD_EXPORT_POSITION_H_
+#define WORLD_EXPORT_POSITION_H_
 
 #include <cstdint>
-#include <sstream>
 #include <string>
 
 #include "direction.h"
@@ -37,45 +36,13 @@ namespace world
 class Position
 {
  public:
-  Position(std::uint16_t x, std::uint16_t y, std::uint8_t z)
-      : m_x(x),
-        m_y(y),
-        m_z(z)
-  {
-  }
+  Position(std::uint16_t x, std::uint16_t y, std::uint8_t z);
 
-  bool operator==(const Position& other) const
-  {
-    return (m_x == other.m_x) && (m_y == other.m_y) && (m_z == other.m_z);
-  }
+  bool operator==(const Position& other) const;
+  bool operator!=(const Position& other) const;
 
-  bool operator!=(const Position& other) const
-  {
-    return !(*this == other);
-  }
-
-  std::string toString() const
-  {
-    std::ostringstream ss;
-    ss << "(" << m_x << ", " << m_y << ", " << static_cast<int>(m_z) << ")";
-    return ss.str();
-  }
-
-  Position addDirection(const Direction& direction) const
-  {
-    switch (direction)
-    {
-    case Direction::EAST:
-      return { std::uint16_t(m_x + 1),                    m_y, m_z };
-    case Direction::NORTH:
-      return {                    m_x, std::uint16_t(m_y - 1), m_z };
-    case Direction::SOUTH:
-      return {                    m_x, std::uint16_t(m_y + 1), m_z };
-    case Direction::WEST:
-      return { std::uint16_t(m_x - 1),                    m_y, m_z };
-    }
-    return *this;
-  }
+  std::string toString() const;
+  Position addDirection(const Direction& direction) const;
 
   std::uint16_t getX() const { return m_x; }
   std::uint16_t getY() const { return m_y; }
@@ -89,4 +56,4 @@ class Position
 
 }  // namespace world
 
-#endif  // WORLD_TYPES_EXPORT_POSITION_H_
+#endif  // WORLD_EXPORT_POSITION_H_

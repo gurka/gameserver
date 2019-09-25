@@ -22,20 +22,32 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_TYPES_EXPORT_DIRECTION_H_
-#define WORLD_TYPES_EXPORT_DIRECTION_H_
+#include "creature.h"
 
 namespace world
 {
 
-enum class Direction
+CreatureId Creature::next_creature_id = 0x4713;
+
+Creature::Creature(std::string name)
+  : m_creature_id(Creature::getFreeCreatureId()),
+    m_name(std::move(name)),
+    m_max_health(100),
+    m_health(100),
+    m_speed(110),
+    m_outfit({ 128, 0, 20, 30, 40, 50 }),
+    m_next_walk_tick(0)
 {
-  NORTH = 0,
-  EAST  = 1,
-  SOUTH = 2,
-  WEST  = 3
-};
+}
+
+bool Creature::operator==(const Creature& other) const
+{
+  return m_creature_id == other.m_creature_id;
+}
+
+bool Creature::operator!=(const Creature& other) const
+{
+  return !(*this == other);
+}
 
 }  // namespace world
-
-#endif  // WORLD_TYPES_EXPORT_DIRECTION_H_

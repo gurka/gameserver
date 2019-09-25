@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_TYPES_EXPORT_THING_H_
-#define WORLD_TYPES_EXPORT_THING_H_
+#ifndef WORLD_EXPORT_THING_H_
+#define WORLD_EXPORT_THING_H_
 
 #include <functional>
 #include <type_traits>
@@ -94,4 +94,4 @@ struct Thing
 
 }  // namespace world
 
-#endif  // WORLD_TYPES_EXPORT_THING_H_
+#endif  // WORLD_EXPORT_THING_H_

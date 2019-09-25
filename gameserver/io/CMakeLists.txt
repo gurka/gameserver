@@ -18,7 +18,6 @@ target_link_libraries(io PRIVATE
   account
   utils
   world
-  worldtypes
   rapidxml
 )
 
