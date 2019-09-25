@@ -63,9 +63,9 @@ std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world
 
   LOG_INFO("World loaded, size: %d x %d", world_data.world_size_x, world_data.world_size_y);
 
-  return std::make_unique<world::World>(world_data.world_size_x,
+  return std::make_unique<world::World>(world_data.world_size_x,  // NOLINT bug in clang-tidy used in Travis (?)
                                         world_data.world_size_y,
-                                        std::move(world_data.tiles));  // NOLINT bug in clang-tidy used in Travis (?)
+                                        std::move(world_data.tiles));
 }
 
 }  // namespace gameengine
