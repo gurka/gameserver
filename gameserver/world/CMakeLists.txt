@@ -10,9 +10,9 @@ add_library(world
   "src/world.cc"
 )
 
-target_link_libraries(world
-  PRIVATE utils
-  PRIVATE worldtypes
+target_link_libraries(world PRIVATE
+  utils
+  worldtypes
 )
 
 target_include_directories(world PUBLIC "export")

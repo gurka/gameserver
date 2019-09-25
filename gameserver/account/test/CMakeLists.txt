@@ -6,7 +6,7 @@ add_executable(account_test
   "src/account_test.cc"
 )
 
-target_link_libraries(account_test
+target_link_libraries(account_test PRIVATE
   account
   utils
   gtest_main

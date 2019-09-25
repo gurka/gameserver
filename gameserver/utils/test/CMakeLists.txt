@@ -6,7 +6,7 @@ add_executable(utils_test
   "src/configparser_test.cc"
 )
 
-target_link_libraries(utils_test
+target_link_libraries(utils_test PRIVATE
   utils
   gtest_main
   gmock_main

@@ -10,8 +10,9 @@ add_executable(world_test
   "src/tile_test.cc"
 )
 
-target_link_libraries(world_test
+target_link_libraries(world_test PRIVATE
   world
+  worldtypes
   utils
   gtest_main
   gmock_main

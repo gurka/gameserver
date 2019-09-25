@@ -14,12 +14,12 @@ add_library(io
   "src/world_loader.cc"
 )
 
-target_link_libraries(io
-  PRIVATE account
-  PRIVATE utils
-  PRIVATE world
-  PRIVATE worldtypes
-  PRIVATE rapidxml
+target_link_libraries(io PRIVATE
+  account
+  utils
+  world
+  worldtypes
+  rapidxml
 )
 
 target_include_directories(io PUBLIC "export")

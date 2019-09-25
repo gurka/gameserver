@@ -8,12 +8,12 @@ add_library(protocol
   "src/protocol.cc"
 )
 
-target_link_libraries(protocol
-  PRIVATE gameengine
-  PRIVATE network
-  PRIVATE utils
-  PRIVATE world
-  PRIVATE worldtypes
+target_link_libraries(protocol PRIVATE
+  gameengine
+  network
+  utils
+  world
+  worldtypes
 )
 
 target_include_directories(protocol PUBLIC "export")
