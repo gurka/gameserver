@@ -6,7 +6,6 @@ add_library(gameengine
   "export/container.h"
   "export/game_engine_queue.h"
   "export/game_engine.h"
-  "export/game_position.h"
   "export/player_ctrl.h"
   "export/player.h"
   "src/container_manager.cc"
