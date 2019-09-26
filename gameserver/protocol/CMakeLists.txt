@@ -8,7 +8,8 @@ add_library(protocol
   "src/protocol.cc"
 )
 
-target_link_libraries(protocol
+target_link_libraries(protocol PRIVATE
+  common
   gameengine
   network
   utils

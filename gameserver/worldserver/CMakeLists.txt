@@ -8,8 +8,9 @@ add_executable(worldserver
   "src/worldserver.cc"
 )
 
-target_link_libraries(worldserver
+target_link_libraries(worldserver PRIVATE
   account
+  common
   gameengine
   network
   protocol

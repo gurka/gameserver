@@ -37,53 +37,53 @@ using namespace world;
 class PlayerCtrlMock : public PlayerCtrl
 {
  public:
-  MOCK_METHOD2(onCreatureSpawn, void(const Creature& creature,
-                                     const Position& position));
+  MOCK_METHOD2(onCreatureSpawn, void(const common::Creature& creature,
+                                     const common::Position& position));
 
-  MOCK_METHOD3(onCreatureDespawn, void(const Creature& creature,
-                                       const Position& position,
+  MOCK_METHOD3(onCreatureDespawn, void(const common::Creature& creature,
+                                       const common::Position& position,
                                        std::uint8_t stackPos));
 
-  MOCK_METHOD4(onCreatureMove, void(const Creature& creature,
-                                    const Position& oldPosition,
+  MOCK_METHOD4(onCreatureMove, void(const common::Creature& creature,
+                                    const common::Position& oldPosition,
                                     std::uint8_t oldStackPos,
-                                    const Position& newPosition));
+                                    const common::Position& newPosition));
 
-  MOCK_METHOD3(onCreatureTurn, void(const Creature& creature,
-                                    const Position& position,
+  MOCK_METHOD3(onCreatureTurn, void(const common::Creature& creature,
+                                    const common::Position& position,
                                     std::uint8_t stackPos));
 
-  MOCK_METHOD3(onCreatureSay, void(const Creature& creature,
-                                   const Position& position,
+  MOCK_METHOD3(onCreatureSay, void(const common::Creature& creature,
+                                   const common::Position& position,
                                    const std::string& message));
 
-  MOCK_METHOD2(onItemRemoved, void(const Position& position,
+  MOCK_METHOD2(onItemRemoved, void(const common::Position& position,
                                    std::uint8_t stackPos));
 
-  MOCK_METHOD2(onItemAdded, void (const Item& item,
-                                  const Position& position));
+  MOCK_METHOD2(onItemAdded, void (const common::Item& item,
+                                  const common::Position& position));
 
-  MOCK_METHOD1(onTileUpdate, void(const Position& position));
+  MOCK_METHOD1(onTileUpdate, void(const common::Position& position));
 
-  MOCK_CONST_METHOD0(getPlayerId, CreatureId());
-  MOCK_METHOD1(setPlayerId, void(CreatureId playerId));
+  MOCK_CONST_METHOD0(getPlayerId, common::CreatureId());
+  MOCK_METHOD1(setPlayerId, void(common::CreatureId playerId));
 
   MOCK_METHOD2(onEquipmentUpdated, void(const Player& player, std::uint8_t inventoryIndex));
 
-  MOCK_METHOD3(onOpenContainer, void(std::uint8_t newContainerId, const Container& container, const Item& item));
-  MOCK_METHOD2(onCloseContainer, void(ItemUniqueId itemUniqueId, bool resetContainerId));
+  MOCK_METHOD3(onOpenContainer, void(std::uint8_t newContainerId, const Container& container, const common::Item& item));
+  MOCK_METHOD2(onCloseContainer, void(common::ItemUniqueId itemUniqueId, bool resetContainerId));
 
-  MOCK_METHOD2(onContainerAddItem, void(ItemUniqueId itemUniqueId, const Item& item));
-  MOCK_METHOD3(onContainerUpdateItem, void(ItemUniqueId itemUniqueId, std::uint8_t containerSlot, const Item& item));
-  MOCK_METHOD2(onContainerRemoveItem, void(ItemUniqueId itemUniqueId, std::uint8_t containerSlot));
+  MOCK_METHOD2(onContainerAddItem, void(common::ItemUniqueId itemUniqueId, const common::Item& item));
+  MOCK_METHOD3(onContainerUpdateItem, void(common::ItemUniqueId itemUniqueId, std::uint8_t containerSlot, const common::Item& item));
+  MOCK_METHOD2(onContainerRemoveItem, void(common::ItemUniqueId itemUniqueId, std::uint8_t containerSlot));
 
   MOCK_METHOD2(sendTextMessage, void(std::uint8_t message_type, const std::string& message));
 
   MOCK_METHOD1(sendCancel, void(const std::string& message));
   MOCK_METHOD0(cancelMove, void());
 
-  MOCK_CONST_METHOD0(getContainerIds, const std::array<ItemUniqueId, 64>&());
-  MOCK_CONST_METHOD1(hasContainerOpen, bool(ItemUniqueId itemUniqueId));
+  MOCK_CONST_METHOD0(getContainerIds, const std::array<common::ItemUniqueId, 64>&());
+  MOCK_CONST_METHOD1(hasContainerOpen, bool(common::ItemUniqueId itemUniqueId));
 };
 
 }  // namespace gameengine

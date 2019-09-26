@@ -31,13 +31,13 @@
 namespace world
 {
 
-class ItemMock : public Item
+class ItemMock : public common::Item
 {
  public:
-  MOCK_CONST_METHOD0(getItemUniqueId, ItemUniqueId());
-  MOCK_CONST_METHOD0(getItemTypeId, ItemTypeId());
+  MOCK_CONST_METHOD0(getItemUniqueId, common::ItemUniqueId());
+  MOCK_CONST_METHOD0(getItemTypeId, common::ItemTypeId());
 
-  MOCK_CONST_METHOD0(getItemType, const ItemType&());
+  MOCK_CONST_METHOD0(getItemType, const common::ItemType&());
 
   MOCK_CONST_METHOD0(getCount, std::uint8_t());
   MOCK_METHOD1(setCount, void(std::uint8_t count));

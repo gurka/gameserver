@@ -36,8 +36,8 @@ namespace io::data_loader
 
 bool load(const std::string& data_filename,
           ItemTypes* item_types,
-          world::ItemTypeId* id_first,
-          world::ItemTypeId* id_last)
+          common::ItemTypeId* id_first,
+          common::ItemTypeId* id_last)
 {
   FileReader fr;
   if (!fr.load(data_filename))
@@ -64,7 +64,7 @@ bool load(const std::string& data_filename,
   auto next_id = *id_first;
   for (int i = 0; i < num_items; i++)
   {
-    world::ItemType item_type;
+    common::ItemType item_type;
     item_type.id = next_id;
 
     auto opt_byte = fr.readU8();
@@ -159,7 +159,7 @@ bool load(const std::string& data_filename,
         case 0x18:
         case 0x19:
         {
-          // Unknown?
+          item_type.unknown_properties.emplace_back(opt_byte);
           break;
         }
 
@@ -168,8 +168,7 @@ bool load(const std::string& data_filename,
         case 0x16:
         case 0x1A:
         {
-          // Unknown?
-          fr.skip(2);
+          item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
           break;
         }
 
@@ -229,8 +228,8 @@ bool load(const std::string& data_filename,
 
 bool loadXml(const std::string& items_filename,
              ItemTypes* item_types,
-             world::ItemTypeId id_first,
-             world::ItemTypeId id_last)
+             common::ItemTypeId id_first,
+             common::ItemTypeId id_last)
 {
   std::ifstream xml_file(items_filename);
   if (!xml_file.is_open())
@@ -386,8 +385,8 @@ bool loadXml(const std::string& items_filename,
 }
 
 void dumpToJson(const ItemTypes& item_types,
-                world::ItemTypeId id_first,
-                world::ItemTypeId id_last)
+                common::ItemTypeId id_first,
+                common::ItemTypeId id_last)
 {
   LOG_INFO(__func__);
 

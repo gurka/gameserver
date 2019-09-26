@@ -67,40 +67,40 @@ class World
   World& operator=(const World&) = delete;
 
   // Creature management
-  ReturnCode addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position);
-  void removeCreature(CreatureId creature_id);
-  bool creatureExists(CreatureId creature_id) const;
-  ReturnCode creatureMove(CreatureId creature_id, Direction direction);
-  ReturnCode creatureMove(CreatureId creature_id, const Position& to_position);
-  void creatureTurn(CreatureId creature_id, Direction direction);
-  void creatureSay(CreatureId creature_id, const std::string& message);
-  const Position* getCreaturePosition(CreatureId creature_id) const;
-  bool creatureCanThrowTo(CreatureId creature_id, const Position& position) const;
-  bool creatureCanReach(CreatureId creature_id, const Position& position) const;
+  ReturnCode addCreature(common::Creature* creature, CreatureCtrl* creature_ctrl, const common::Position& position);
+  void removeCreature(common::CreatureId creature_id);
+  bool creatureExists(common::CreatureId creature_id) const;
+  ReturnCode creatureMove(common::CreatureId creature_id, common::Direction direction);
+  ReturnCode creatureMove(common::CreatureId creature_id, const common::Position& to_position);
+  void creatureTurn(common::CreatureId creature_id, common::Direction direction);
+  void creatureSay(common::CreatureId creature_id, const std::string& message);
+  const common::Position* getCreaturePosition(common::CreatureId creature_id) const;
+  bool creatureCanThrowTo(common::CreatureId creature_id, const common::Position& position) const;
+  bool creatureCanReach(common::CreatureId creature_id, const common::Position& position) const;
 
   // Item management
-  bool canAddItem(const Item& item, const Position& position) const;
-  ReturnCode addItem(const Item& item, const Position& position);
-  ReturnCode removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos);
-  ReturnCode moveItem(CreatureId creature_id,
-                      const Position& from_position,
+  bool canAddItem(const common::Item& item, const common::Position& position) const;
+  ReturnCode addItem(const common::Item& item, const common::Position& position);
+  ReturnCode removeItem(common::ItemTypeId item_type_id, int count, const common::Position& position, int stackpos);
+  ReturnCode moveItem(common::CreatureId creature_id,
+                      const common::Position& from_position,
                       int from_stackpos,
-                      ItemTypeId item_type_id,
+                      common::ItemTypeId item_type_id,
                       int count,
-                      const Position& to_position);
+                      const common::Position& to_position);
 
   // Tile management
-  const Tile* getTile(const Position& position) const;
+  const Tile* getTile(const common::Position& position) const;
 
  private:
   // Functions to use instead of accessing the containers directly
-  Tile* getTile(const Position& position);
-  Creature* getCreature(CreatureId creature_id);
-  CreatureCtrl& getCreatureCtrl(CreatureId creature_id);
+  Tile* getTile(const common::Position& position);
+  common::Creature* getCreature(common::CreatureId creature_id);
+  CreatureCtrl& getCreatureCtrl(common::CreatureId creature_id);
 
   // Helper functions
-  std::vector<CreatureId> getCreatureIdsThatCanSeePosition(const Position& position) const;
-  int getCreatureStackpos(const Position& position, CreatureId creature_id) const;
+  std::vector<common::CreatureId> getCreatureIdsThatCanSeePosition(const common::Position& position) const;
+  int getCreatureStackpos(const common::Position& position, common::CreatureId creature_id) const;
 
   // World size
   int m_world_size_x;
@@ -113,20 +113,20 @@ class World
 
   struct CreatureData
   {
-    CreatureData(Creature* creature,
+    CreatureData(common::Creature* creature,
                  CreatureCtrl* creature_ctrl,
-                 const Position& position)
+                 const common::Position& position)
       : creature(creature),
         creature_ctrl(creature_ctrl),
         position(position)
     {
     }
 
-    Creature* creature;
+    common::Creature* creature;
     CreatureCtrl* creature_ctrl;
-    Position position;
+    common::Position position;
   };
-  std::unordered_map<CreatureId, CreatureData> m_creature_data;
+  std::unordered_map<common::CreatureId, CreatureData> m_creature_data;
 };
 
 }  // namespace world

@@ -46,12 +46,12 @@ bool ItemManager::loadItemTypes(const std::string& data_filename, const std::str
   return true;
 }
 
-world::ItemUniqueId ItemManager::createItem(world::ItemTypeId item_type_id)
+common::ItemUniqueId ItemManager::createItem(common::ItemTypeId item_type_id)
 {
   if (item_type_id < m_item_types_id_first || item_type_id > m_item_types_id_last)
   {
     LOG_ERROR("%s: item_type_id: %d out of range", __func__, item_type_id);
-    return world::Item::INVALID_UNIQUE_ID;
+    return common::Item::INVALID_UNIQUE_ID;
   }
 
   const auto item_unique_id = m_next_item_unique_id;
@@ -63,7 +63,7 @@ world::ItemUniqueId ItemManager::createItem(world::ItemTypeId item_type_id)
   return item_unique_id;
 }
 
-void ItemManager::destroyItem(world::ItemUniqueId item_unique_id)
+void ItemManager::destroyItem(common::ItemUniqueId item_unique_id)
 {
   if (m_items.count(item_unique_id) == 0)
   {
@@ -75,7 +75,7 @@ void ItemManager::destroyItem(world::ItemUniqueId item_unique_id)
   m_items.erase(item_unique_id);
 }
 
-world::Item* ItemManager::getItem(world::ItemUniqueId item_unique_id)
+common::Item* ItemManager::getItem(common::ItemUniqueId item_unique_id)
 {
   if (m_items.count(item_unique_id) == 0)
   {

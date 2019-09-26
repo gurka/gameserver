@@ -120,7 +120,7 @@ WorldData load(const std::string& filename,
 
       const auto ground_item_type_id = std::stoi(ground_item_attr->value());
       const auto ground_item_id = create_item(ground_item_type_id);
-      if (ground_item_id == world::Item::INVALID_UNIQUE_ID)
+      if (ground_item_id == common::Item::INVALID_UNIQUE_ID)
       {
         LOG_ERROR("%s: ground_item_type_id: %d is invalid", __func__, ground_item_type_id);
         free(xml_string);
@@ -144,7 +144,7 @@ WorldData load(const std::string& filename,
 
         const auto item_type_id = std::stoi(item_id_attr->value());
         const auto item_id = create_item(item_type_id);
-        if (item_id == world::Item::INVALID_UNIQUE_ID)
+        if (item_id == common::Item::INVALID_UNIQUE_ID)
         {
           LOG_ERROR("%s: item_type_id: %d is invalid", __func__, item_type_id);
           free(xml_string);

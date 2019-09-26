@@ -33,9 +33,11 @@
 #include "creature.h"
 #include "item.h"
 
-namespace world
+namespace common
 {
+
 class Item;
+
 }
 
 namespace gameengine
@@ -50,19 +52,19 @@ class PlayerCtrl : public world::CreatureCtrl
   ~PlayerCtrl() override = default;
 
   // Called by GameEngine
-  virtual world::CreatureId getPlayerId() const = 0;
-  virtual void setPlayerId(world::CreatureId player_id) = 0;
+  virtual common::CreatureId getPlayerId() const = 0;
+  virtual void setPlayerId(common::CreatureId player_id) = 0;
 
   virtual void onEquipmentUpdated(const Player& player, std::uint8_t inventory_index) = 0;
 
-  virtual void onOpenContainer(std::uint8_t new_container_id, const Container& container, const world::Item& item) = 0;
-  virtual void onCloseContainer(world::ItemUniqueId container_item_unique_id, bool reset_container_id) = 0;
+  virtual void onOpenContainer(std::uint8_t new_container_id, const Container& container, const common::Item& item) = 0;
+  virtual void onCloseContainer(common::ItemUniqueId container_item_unique_id, bool reset_container_id) = 0;
 
-  virtual void onContainerAddItem(world::ItemUniqueId container_item_unique_id, const world::Item& item) = 0;
-  virtual void onContainerUpdateItem(world::ItemUniqueId container_item_unique_id,
+  virtual void onContainerAddItem(common::ItemUniqueId container_item_unique_id, const common::Item& item) = 0;
+  virtual void onContainerUpdateItem(common::ItemUniqueId container_item_unique_id,
                                      std::uint8_t container_slot,
-                                     const world::Item& item) = 0;
-  virtual void onContainerRemoveItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot) = 0;
+                                     const common::Item& item) = 0;
+  virtual void onContainerRemoveItem(common::ItemUniqueId container_item_unique_id, std::uint8_t container_slot) = 0;
 
   virtual void sendTextMessage(std::uint8_t message_type, const std::string& message) = 0;
 
@@ -70,8 +72,8 @@ class PlayerCtrl : public world::CreatureCtrl
   virtual void cancelMove() = 0;
 
   // Called by ContainerManager
-  virtual const std::array<world::ItemUniqueId, 64>& getContainerIds() const = 0;
-  virtual bool hasContainerOpen(world::ItemUniqueId item_unique_id) const = 0;
+  virtual const std::array<common::ItemUniqueId, 64>& getContainerIds() const = 0;
+  virtual bool hasContainerOpen(common::ItemUniqueId item_unique_id) const = 0;
 };
 
 }  // namespace gameengine

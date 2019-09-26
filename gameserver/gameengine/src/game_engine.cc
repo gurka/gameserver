@@ -109,8 +109,10 @@ bool GameEngine::init(GameEngineQueue* game_engine_queue,
 bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   // Create the Player
-  Player new_player{name};
-  auto creature_id = new_player.getCreatureId();
+  // TODO(simon): need this static for other types of creatures as well
+  static common::CreatureId next_creature_id = 0x4713;
+  const auto creature_id = next_creature_id++;
+  Player new_player(creature_id, name);
 
   // Store the Player and the PlayerCtrl
   m_player_data.emplace(std::piecewise_construct,
@@ -126,12 +128,12 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   player_ctrl->setPlayerId(player.getCreatureId());
 
   // Spawn the player
-  auto rc = m_world->addCreature(&player, player_ctrl, world::Position(222, 222, 7));
+  auto rc = m_world->addCreature(&player, player_ctrl, common::Position(222, 222, 7));
   if (rc != world::ReturnCode::OK)
   {
     LOG_DEBUG("%s: could not spawn player", __func__);
     m_container_manager->playerDespawn(player_ctrl);
-    player_ctrl->setPlayerId(world::Creature::INVALID_ID);
+    player_ctrl->setPlayerId(common::Creature::INVALID_ID);
     m_player_data.erase(creature_id);
     return false;
   }
@@ -140,7 +142,7 @@ bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
   return true;
 }
 
-void GameEngine::despawn(world::CreatureId creature_id)
+void GameEngine::despawn(common::CreatureId creature_id)
 {
   LOG_DEBUG("%s: Despawn player, creature id: %d", __func__, creature_id);
 
@@ -158,7 +160,7 @@ void GameEngine::despawn(world::CreatureId creature_id)
   m_player_data.erase(creature_id);
 }
 
-void GameEngine::move(world::CreatureId creature_id, world::Direction direction)
+void GameEngine::move(common::CreatureId creature_id, common::Direction direction)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creature_id);
 
@@ -183,7 +185,7 @@ void GameEngine::move(world::CreatureId creature_id, world::Direction direction)
   }
 }
 
-void GameEngine::movePath(world::CreatureId creature_id, std::deque<world::Direction>&& path)
+void GameEngine::movePath(common::CreatureId creature_id, std::deque<common::Direction>&& path)
 {
   getPlayerData(creature_id).queued_moves = std::move(path);
 
@@ -221,7 +223,7 @@ void GameEngine::movePath(world::CreatureId creature_id, std::deque<world::Direc
   task(this);
 }
 
-void GameEngine::cancelMove(world::CreatureId creature_id)
+void GameEngine::cancelMove(common::CreatureId creature_id)
 {
   LOG_DEBUG("%s: creature id: %d", __func__, creature_id);
 
@@ -235,13 +237,13 @@ void GameEngine::cancelMove(world::CreatureId creature_id)
   // Don't cancel the task, just let it expire and do nothing
 }
 
-void GameEngine::turn(world::CreatureId creature_id, world::Direction direction)
+void GameEngine::turn(common::CreatureId creature_id, common::Direction direction)
 {
   LOG_DEBUG("%s: Player turn, creature id: %d", __func__, creature_id);
   m_world->creatureTurn(creature_id, direction);
 }
 
-void GameEngine::say(world::CreatureId creature_id,
+void GameEngine::say(common::CreatureId creature_id,
                      int type,
                      const std::string& message,
                      const std::string& receiver,
@@ -304,11 +306,11 @@ void GameEngine::say(world::CreatureId creature_id,
       oss << "Position: " << position.toString() << "\n";
 
       tile->visitThings(
-        [&oss](const world::Creature* creature)
+        [&oss](const common::Creature* creature)
         {
           oss << "Creature: " << creature->getCreatureId() << "\n";
         },
-        [&oss](const world::Item* item)
+        [&oss](const common::Item* item)
         {
           oss << "Item: " << item->getItemTypeId() << "\n";
         }
@@ -348,9 +350,9 @@ void GameEngine::say(world::CreatureId creature_id,
   }
 }
 
-void GameEngine::moveItem(world::CreatureId creature_id,
-                          const ItemPosition& from_position,
-                          const GamePosition& to_position,
+void GameEngine::moveItem(common::CreatureId creature_id,
+                          const common::ItemPosition& from_position,
+                          const common::GamePosition& to_position,
                           int count)
 {
   LOG_DEBUG("%s: creature_id: %d from_position: %s to_position: %s count: %d",
@@ -397,7 +399,7 @@ void GameEngine::moveItem(world::CreatureId creature_id,
   addItem(creature_id, to_position, *item, count);
 }
 
-void GameEngine::useItem(world::CreatureId creature_id, const ItemPosition& position, int new_container_id)
+void GameEngine::useItem(common::CreatureId creature_id, const common::ItemPosition& position, int new_container_id)
 {
   LOG_DEBUG("%s: creature_id: %d position: %s new_container_id: %d",
             __func__,
@@ -422,7 +424,7 @@ void GameEngine::useItem(world::CreatureId creature_id, const ItemPosition& posi
   }
 }
 
-void GameEngine::lookAt(world::CreatureId creature_id, const ItemPosition& position)
+void GameEngine::lookAt(common::CreatureId creature_id, const common::ItemPosition& position)
 {
   LOG_DEBUG("%s: creature_id: %d position: %s",
             __func__,
@@ -474,13 +476,13 @@ void GameEngine::lookAt(world::CreatureId creature_id, const ItemPosition& posit
   player_data.player_ctrl->sendTextMessage(0x13, ss.str());
 }
 
-void GameEngine::closeContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id)
+void GameEngine::closeContainer(common::CreatureId creature_id, common::ItemUniqueId item_unique_id)
 {
   LOG_DEBUG("%s: creature_id: %d item_unique_id: %d", __func__, creature_id, item_unique_id);
   m_container_manager->closeContainer(getPlayerData(creature_id).player_ctrl, item_unique_id);
 }
 
-void GameEngine::openParentContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id, int new_container_id)
+void GameEngine::openParentContainer(common::CreatureId creature_id, common::ItemUniqueId item_unique_id, int new_container_id)
 {
   LOG_DEBUG("%s: creature_id: %d item_unique_id: %d", __func__, creature_id, item_unique_id);
   m_container_manager->openParentContainer(getPlayerData(creature_id).player_ctrl,
@@ -488,7 +490,7 @@ void GameEngine::openParentContainer(world::CreatureId creature_id, world::ItemU
                                            new_container_id);
 }
 
-const world::Item* GameEngine::getItem(world::CreatureId creature_id, const ItemPosition& position)
+const common::Item* GameEngine::getItem(common::CreatureId creature_id, const common::ItemPosition& position)
 {
   // TODO(simon): verify ItemId
   auto& player_data = getPlayerData(creature_id);
@@ -512,11 +514,11 @@ const world::Item* GameEngine::getItem(world::CreatureId creature_id, const Item
                                       game_position.getContainerSlot());
   }
 
-  LOG_ERROR("%s: GamePosition: %s, is invalid", __func__, game_position.toString().c_str());
+  LOG_ERROR("%s: common::GamePosition: %s, is invalid", __func__, game_position.toString().c_str());
   return nullptr;
 }
 
-bool GameEngine::canAddItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count)
+bool GameEngine::canAddItem(common::CreatureId creature_id, const common::GamePosition& position, const common::Item& item, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 
@@ -545,7 +547,7 @@ bool GameEngine::canAddItem(world::CreatureId creature_id, const GamePosition& p
   return false;
 }
 
-void GameEngine::removeItem(world::CreatureId creature_id, const ItemPosition& position, int count)
+void GameEngine::removeItem(common::CreatureId creature_id, const common::ItemPosition& position, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 
@@ -574,7 +576,7 @@ void GameEngine::removeItem(world::CreatureId creature_id, const ItemPosition& p
   }
 }
 
-void GameEngine::addItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count)
+void GameEngine::addItem(common::CreatureId creature_id, const common::GamePosition& position, const common::Item& item, int count)
 {
   auto& player_data = getPlayerData(creature_id);
 

@@ -38,6 +38,7 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
 endif()
 
 # -- Modules --
+add_subdirectory("common")
 add_subdirectory("io")
 add_subdirectory("protocol")
 add_subdirectory("utils")
@@ -57,12 +58,14 @@ target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 # -- Unit tests --
 add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)
 add_subdirectory("account/test" EXCLUDE_FROM_ALL)
+add_subdirectory("common/test" EXCLUDE_FROM_ALL)
 add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)
 add_subdirectory("network/test" EXCLUDE_FROM_ALL)
 add_subdirectory("utils/test" EXCLUDE_FROM_ALL)
 add_subdirectory("world/test" EXCLUDE_FROM_ALL)
 add_custom_target(unittest DEPENDS
   account_test
+  common_test
   gameengine_test
   network_test
   utils_test

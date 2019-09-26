@@ -71,7 +71,7 @@ class WorldTest : public ::testing::Test
   }
 
   ItemMock itemMock_;
-  ItemType itemType_;
+  common::ItemType itemType_;
   std::unique_ptr<World> world;
   const World* cworld;
 };
@@ -80,9 +80,9 @@ TEST_F(WorldTest, AddCreature)
 {
   // Add first Creature at (192, 192, 7)
   // Can see from (184, 186, 7) to (201, 199, 7)
-  Creature creatureOne("TestCreatureOne");
+  common::Creature creatureOne(1U, "TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
-  Position creaturePositionOne(192, 192, 7);
+  common::Position creaturePositionOne(192, 192, 7);
 
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(creatureOne, creaturePositionOne));
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
@@ -94,9 +94,9 @@ TEST_F(WorldTest, AddCreature)
 
   // Add second Creature at (193, 193, 7)
   // Can see from (185, 187, 7) to (202, 200, 7)
-  Creature creatureTwo("TestCreatureTwo");
+  common::Creature creatureTwo(2U, "TestCreatureTwo");
   MockCreatureCtrl creatureCtrlTwo;
-  Position creaturePositionTwo(193, 193, 7);
+  common::Position creaturePositionTwo(193, 193, 7);
 
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(creatureTwo, creaturePositionTwo));
   EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(creatureTwo, creaturePositionTwo));
@@ -110,9 +110,9 @@ TEST_F(WorldTest, AddCreature)
   // Add third Creature at (202, 193, 7)
   // Can see from (194, 187, 7) to (211, 200, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on x axis)
-  Creature creatureThree("TestCreatureThree");
+  common::Creature creatureThree(3U, "TestCreatureThree");
   MockCreatureCtrl creatureCtrlThree;
-  Position creaturePositionThree(202, 193, 7);
+  common::Position creaturePositionThree(202, 193, 7);
 
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(0);
   EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(creatureThree, creaturePositionThree));
@@ -127,9 +127,9 @@ TEST_F(WorldTest, AddCreature)
   // Add fourth Creature at (195, 200, 7)
   // Can see from (187, 194, 7) to (204, 207, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on y axis)
-  Creature creatureFour("TestCreatureFour");
+  common::Creature creatureFour(4U, "TestCreatureFour");
   MockCreatureCtrl creatureCtrlFour;
-  Position creaturePositionFour(195, 200, 7);
+  common::Position creaturePositionFour(195, 200, 7);
 
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(0);
   EXPECT_CALL(creatureCtrlTwo, onCreatureSpawn(creatureFour, creaturePositionFour));
@@ -150,20 +150,20 @@ TEST_F(WorldTest, RemoveCreature)
   // creatureThree can only see creatureFour
   // creatureFour cannot see anyone
 
-  Creature creatureOne("TestCreatureOne");
-  Creature creatureTwo("TestCreatureTwo");
-  Creature creatureThree("TestCreatureThree");
-  Creature creatureFour("TestCreatureFour");
+  common::Creature creatureOne(1U, "TestCreatureOne");
+  common::Creature creatureTwo(2U, "TestCreatureTwo");
+  common::Creature creatureThree(3U, "TestCreatureThree");
+  common::Creature creatureFour(4U, "TestCreatureFour");
 
   MockCreatureCtrl creatureCtrlOne;
   MockCreatureCtrl creatureCtrlTwo;
   MockCreatureCtrl creatureCtrlThree;
   MockCreatureCtrl creatureCtrlFour;
 
-  Position creaturePositionOne(192, 192, 7);
-  Position creaturePositionTwo(193, 193, 7);
-  Position creaturePositionThree(202, 193, 7);
-  Position creaturePositionFour(195, 200, 7);
+  common::Position creaturePositionOne(192, 192, 7);
+  common::Position creaturePositionTwo(193, 193, 7);
+  common::Position creaturePositionThree(202, 193, 7);
+  common::Position creaturePositionFour(195, 200, 7);
 
   // We don't actually care about these since they are tested in AddCreature
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _)).Times(2);    // himself and creatureTwo
@@ -205,22 +205,22 @@ TEST_F(WorldTest, RemoveCreature)
 
 TEST_F(WorldTest, CreatureMoveSingleCreature)
 {
-  Creature creatureOne("TestCreatureOne");
+  common::Creature creatureOne(1U, "TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
-  Position creaturePositionOne(192, 192, 7);
+  common::Position creaturePositionOne(192, 192, 7);
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _));
   world->addCreature(&creatureOne, &creatureCtrlOne, creaturePositionOne);
 
   // Test with Direction
   EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _));
-  Direction direction(Direction::EAST);
+  common::Direction direction(common::Direction::EAST);
   world->creatureMove(creatureOne.getCreatureId(), direction);
   EXPECT_EQ(creaturePositionOne.addDirection(direction),
             *(cworld->getCreaturePosition(creatureOne.getCreatureId())));
 
   // Test with Position, from (193, 192, 7) to (193, 193, 7)
   EXPECT_CALL(creatureCtrlOne, onCreatureMove(_, _, _, _));
-  Position position(193, 193, 7);
+  common::Position position(193, 193, 7);
   world->creatureMove(creatureOne.getCreatureId(), position);
   EXPECT_EQ(position, *(cworld->getCreaturePosition(creatureOne.getCreatureId())));
 }

@@ -44,12 +44,12 @@ namespace gameengine
 std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world_filename,
                                                         ItemManager* item_manager)
 {
-  const auto create_item = [&item_manager](world::ItemTypeId item_type_id)
+  const auto create_item = [&item_manager](common::ItemTypeId item_type_id)
   {
     return item_manager->createItem(item_type_id);
   };
 
-  const auto get_item = [&item_manager](world::ItemUniqueId item_unique_id)
+  const auto get_item = [&item_manager](common::ItemUniqueId item_unique_id)
   {
     return item_manager->getItem(item_unique_id);
   };

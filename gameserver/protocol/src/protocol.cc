@@ -38,7 +38,7 @@
 namespace protocol
 {
 
-world::Position getPosition(network::IncomingPacket* packet)
+common::Position getPosition(network::IncomingPacket* packet)
 {
   const auto x  = packet->getU16();
   const auto y  = packet->getU16();
@@ -46,9 +46,9 @@ world::Position getPosition(network::IncomingPacket* packet)
   return { x, y, z };
 }
 
-world::Outfit getOutfit(network::IncomingPacket* packet)
+common::Outfit getOutfit(network::IncomingPacket* packet)
 {
-  world::Outfit outfit;
+  common::Outfit outfit;
   packet->get(&outfit.type);
   packet->get(&outfit.head);
   packet->get(&outfit.body);
@@ -60,7 +60,7 @@ world::Outfit getOutfit(network::IncomingPacket* packet)
 namespace server
 {
 
-void addLogin(world::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet)
+void addLogin(common::CreatureId player_id, std::uint16_t server_beat, network::OutgoingPacket* packet)
 {
   packet->addU8(0x0A);
   packet->add(player_id);
@@ -73,14 +73,14 @@ void addLoginFailed(const std::string& reason, network::OutgoingPacket* packet)
   packet->add(reason);
 }
 void addMapFull(const world::World& world,
-                const world::Position& position,
+                const common::Position& position,
                 KnownCreatures* known_creatures,
                 network::OutgoingPacket* packet)
 {
   packet->addU8(0x64);
   addPosition(position, packet);
   addMapData(world,
-             world::Position(position.getX() - 8, position.getY() - 6, position.getZ()),
+             common::Position(position.getX() - 8, position.getY() - 6, position.getZ()),
              18,
              14,
              known_creatures,
@@ -88,8 +88,8 @@ void addMapFull(const world::World& world,
 }
 
 void addMap(const world::World& world,
-            const world::Position& old_position,
-            const world::Position& new_position,
+            const common::Position& old_position,
+            const common::Position& new_position,
             KnownCreatures* known_creatures,
             network::OutgoingPacket* packet)
 {
@@ -98,7 +98,7 @@ void addMap(const world::World& world,
     // North
     packet->addU8(0x65);
     addMapData(world,
-               world::Position(old_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
+               common::Position(old_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
                18,
                1,
                known_creatures,
@@ -109,7 +109,7 @@ void addMap(const world::World& world,
     // South
     packet->addU8(0x67);
     addMapData(world,
-               world::Position(old_position.getX() - 8, new_position.getY() + 7, old_position.getZ()),
+               common::Position(old_position.getX() - 8, new_position.getY() + 7, old_position.getZ()),
                18,
                1,
                known_creatures,
@@ -121,7 +121,7 @@ void addMap(const world::World& world,
     // West
     packet->addU8(0x68);
     addMapData(world,
-               world::Position(new_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
+               common::Position(new_position.getX() - 8, new_position.getY() - 6, old_position.getZ()),
                1,
                14,
                known_creatures,
@@ -132,7 +132,7 @@ void addMap(const world::World& world,
     // East
     packet->addU8(0x66);
     addMapData(world,
-               world::Position(new_position.getX() + 9, new_position.getY() - 6, old_position.getZ()),
+               common::Position(new_position.getX() + 9, new_position.getY() - 6, old_position.getZ()),
                1,
                14,
                known_creatures,
@@ -140,7 +140,7 @@ void addMap(const world::World& world,
   }
 }
 
-void addTileUpdated(const world::Position& position,
+void addTileUpdated(const common::Position& position,
                     const world::World& world,
                     KnownCreatures* known_creatures,
                     network::OutgoingPacket* packet)
@@ -160,8 +160,8 @@ void addTileUpdated(const world::Position& position,
   packet->addU8(0xFF);
 }
 
-void addThingAdded(const world::Position& position,
-                   const world::Thing& thing,
+void addThingAdded(const common::Position& position,
+                   const common::Thing& thing,
                    KnownCreatures* known_creatures,
                    network::OutgoingPacket* packet)
 {
@@ -170,9 +170,9 @@ void addThingAdded(const world::Position& position,
   addThing(thing, known_creatures, packet);
 }
 
-void addThingChanged(const world::Position& position,
+void addThingChanged(const common::Position& position,
                      std::uint8_t stackpos,
-                     const world::Thing& thing,
+                     const common::Thing& thing,
                      KnownCreatures* known_creatures,
                      network::OutgoingPacket* packet)
 {
@@ -188,16 +188,16 @@ void addThingChanged(const world::Position& position,
   }
 }
 
-void addThingRemoved(const world::Position& position, std::uint8_t stackpos, network::OutgoingPacket* packet)
+void addThingRemoved(const common::Position& position, std::uint8_t stackpos, network::OutgoingPacket* packet)
 {
   packet->addU8(0x6C);
   addPosition(position, packet);
   packet->add(stackpos);
 }
 
-void addThingMoved(const world::Position& old_position,
+void addThingMoved(const common::Position& old_position,
                    std::uint8_t old_stackpos,
-                   const world::Position& new_position,
+                   const common::Position& new_position,
                    network::OutgoingPacket* packet)
 {
   packet->addU8(0x6D);
@@ -207,7 +207,7 @@ void addThingMoved(const world::Position& old_position,
 }
 
 void addContainerOpen(std::uint8_t container_id,
-                      const world::Thing& thing,
+                      const common::Thing& thing,
                       const gameengine::Container& container,
                       network::OutgoingPacket* packet)
 {
@@ -216,7 +216,7 @@ void addContainerOpen(std::uint8_t container_id,
   addThing(thing, nullptr, packet);
   packet->add(thing.item()->getItemType().name);
   packet->add(thing.item()->getItemType().maxitems);
-  packet->addU8(container.parent_item_unique_id == world::Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
+  packet->addU8(container.parent_item_unique_id == common::Item::INVALID_UNIQUE_ID ? 0x00 : 0x01);
   packet->addU8(container.items.size());
   for (const auto* item : container.items)
   {
@@ -234,7 +234,7 @@ void addContainerClose(std::uint8_t container_id, network::OutgoingPacket* packe
   packet->add(container_id);
 }
 
-void addContainerAddItem(std::uint8_t container_id, const world::Thing& thing, network::OutgoingPacket* packet)
+void addContainerAddItem(std::uint8_t container_id, const common::Thing& thing, network::OutgoingPacket* packet)
 {
   packet->addU8(0x70);
   packet->add(container_id);
@@ -243,7 +243,7 @@ void addContainerAddItem(std::uint8_t container_id, const world::Thing& thing, n
 
 void addContainerUpdateItem(std::uint8_t container_id,
                             std::uint8_t container_slot,
-                            const world::Thing& thing,
+                            const common::Thing& thing,
                             network::OutgoingPacket* packet)
 {
   packet->addU8(0x71);
@@ -268,7 +268,7 @@ void addEquipmentUpdated(const gameengine::Equipment& equipment, std::uint8_t in
   {
     packet->addU8(0x78);
     packet->add(inventory_index);
-    addThing(world::Thing(item), nullptr, packet);
+    addThing(common::Thing(item), nullptr, packet);
   }
   else
   {
@@ -284,7 +284,7 @@ void addWorldLight(std::uint8_t intensity, std::uint8_t color, network::Outgoing
   packet->add(color);
 }
 
-void addMagicEffect(const world::Position& position, std::uint8_t type, network::OutgoingPacket* packet)
+void addMagicEffect(const common::Position& position, std::uint8_t type, network::OutgoingPacket* packet)
 {
   packet->addU8(0x83);
   addPosition(position, packet);
@@ -318,7 +318,7 @@ void addPlayerSkills(const gameengine::Player& player, network::OutgoingPacket* 
 
 void addTalk(const std::string& name,
              std::uint8_t type,
-             const world::Position& position,
+             const common::Position& position,
              const std::string& message,
              network::OutgoingPacket* packet)
 {
@@ -346,35 +346,35 @@ void addCancelMove(network::OutgoingPacket* packet)
   packet->addU8(0xB5);
 }
 
-void addPosition(const world::Position& position, network::OutgoingPacket* packet)
+void addPosition(const common::Position& position, network::OutgoingPacket* packet)
 {
   packet->add(position.getX());
   packet->add(position.getY());
   packet->add(position.getZ());
 }
 
-void addThing(const world::Thing& thing, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
+void addThing(const common::Thing& thing, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
 {
   thing.visit(
-    [&known_creatures, &packet](const world::Creature* creature)
+    [&known_creatures, &packet](const common::Creature* creature)
     {
       addCreature(creature, known_creatures, packet);
     },
-    [&packet](const world::Item* item)
+    [&packet](const common::Item* item)
     {
       addItem(item, packet);
     }
   );
 }
 
-void addCreature(const world::Creature* creature, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
+void addCreature(const common::Creature* creature, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
 {
   // First check if we know about this creature or not
   auto it = std::find(known_creatures->begin(), known_creatures->end(), creature->getCreatureId());
   if (it == known_creatures->end())
   {
     // Find an empty spot
-    auto unused = std::find(known_creatures->begin(), known_creatures->end(), world::Creature::INVALID_ID);
+    auto unused = std::find(known_creatures->begin(), known_creatures->end(), common::Creature::INVALID_ID);
     if (unused == known_creatures->end())
     {
       // No empty spot!
@@ -409,7 +409,7 @@ void addCreature(const world::Creature* creature, KnownCreatures* known_creature
   packet->add(creature->getSpeed());
 }
 
-void addItem(const world::Item* item, network::OutgoingPacket* packet)
+void addItem(const common::Item* item, network::OutgoingPacket* packet)
 {
   packet->add(item->getItemTypeId());
   if (item->getItemType().is_stackable)
@@ -424,7 +424,7 @@ void addItem(const world::Item* item, network::OutgoingPacket* packet)
 }
 
 void addMapData(const world::World& world,
-                const world::Position& position,
+                const common::Position& position,
                 int width,
                 int height,
                 KnownCreatures* known_creatures,
@@ -471,7 +471,7 @@ void addMapData(const world::World& world,
     {
       for (auto y = position.getY(); y < position.getY() + height; y++)
       {
-        const auto* tile = world.getTile(world::Position(x, y, position.getZ()));
+        const auto* tile = world.getTile(common::Position(x, y, position.getZ()));
         if (!tile)
         {
           skip += 1;
@@ -529,7 +529,7 @@ void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, netwo
   }
 }
 
-void addOutfitData(const world::Outfit& outfit, network::OutgoingPacket* packet)
+void addOutfitData(const common::Outfit& outfit, network::OutgoingPacket* packet)
 {
   packet->add(outfit.type);
   packet->add(outfit.head);
@@ -556,7 +556,7 @@ MoveClick getMoveClick(network::IncomingPacket* packet)
   const auto length = packet->getU8();
   for (auto i = 0U; i < length; i++)
   {
-    move.path.push_back(static_cast<world::Direction>(packet->getU8()));
+    move.path.push_back(static_cast<common::Direction>(packet->getU8()));
   }
   return move;
 }
@@ -620,7 +620,7 @@ Say getSay(network::IncomingPacket* packet)
   return say;
 }
 
-gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet)
+common::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
   const auto x = packet->getU16();
   const auto y = packet->getU16();
@@ -631,14 +631,14 @@ gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network
   if (x != 0xFFFF)
   {
     // Positions have x not fully set
-    return gameengine::GamePosition(world::Position(x, y, z));
+    return common::GamePosition(common::Position(x, y, z));
   }
 
   if ((y & 0x40) == 0x00)
   {
     // Inventory have x fully set and 7th bit in y not set
     // Inventory slot is 4 lower bits in y
-    return gameengine::GamePosition(y & ~0x40);
+    return common::GamePosition(y & ~0x40);
   }
 
   // Container have x fully set and 7th bit in y set
@@ -652,7 +652,7 @@ gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network
   }
 
   const auto item_unique_id = container_ids->at(container_id);
-  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == common::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: container_id does not map to a valid ItemUniqueId: %d", __func__, container_id);
     return {};
@@ -661,7 +661,7 @@ gameengine::GamePosition getGamePosition(KnownContainers* container_ids, network
   return { item_unique_id, z };
 }
 
-gameengine::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet)
+common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet)
 {
   const auto game_position = getGamePosition(container_ids, packet);
   const auto item_id = packet->getU16();
@@ -705,7 +705,7 @@ Creature getCreature(bool known, network::IncomingPacket* packet)
     packet->get(&creature.name);
   }
   packet->get(&creature.health_percent);
-  creature.direction = static_cast<world::Direction>(packet->getU8());
+  creature.direction = static_cast<common::Direction>(packet->getU8());
   creature.outfit = getOutfit(packet);
   packet->getU16();  // unknown 0xDC00
   packet->get(&creature.speed);

@@ -18,7 +18,7 @@ add_library(network
   "src/websocket_server_impl.h"
 )
 
-target_link_libraries(network
+target_link_libraries(network PRIVATE
   utils
   websocketpp
 )

@@ -50,7 +50,7 @@ World::World(int world_size_x,
 
 World::~World() = default;
 
-ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, const Position& position)
+ReturnCode World::addCreature(common::Creature* creature, CreatureCtrl* creature_ctrl, const common::Position& position)
 {
   auto creature_id = creature->getCreatureId();
 
@@ -88,7 +88,7 @@ ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, c
   Tile* tile = nullptr;
   for (const auto& offsets : position_offsets)
   {
-    adjusted_position = Position(position.getX() + std::get<0>(offsets),
+    adjusted_position = common::Position(position.getX() + std::get<0>(offsets),
                                  position.getY() + std::get<1>(offsets),
                                  position.getZ());
 
@@ -133,7 +133,7 @@ ReturnCode World::addCreature(Creature* creature, CreatureCtrl* creature_ctrl, c
   return ReturnCode::OTHER_ERROR;
 }
 
-void World::removeCreature(CreatureId creature_id)
+void World::removeCreature(common::CreatureId creature_id)
 {
   if (!creatureExists(creature_id))
   {
@@ -173,12 +173,12 @@ void World::removeCreature(CreatureId creature_id)
   tile->removeThing(stackpos);
 }
 
-bool World::creatureExists(CreatureId creature_id) const
+bool World::creatureExists(common::CreatureId creature_id) const
 {
-  return creature_id != Creature::INVALID_ID && m_creature_data.count(creature_id) == 1;
+  return creature_id != common::Creature::INVALID_ID && m_creature_data.count(creature_id) == 1;
 }
 
-ReturnCode World::creatureMove(CreatureId creature_id, Direction direction)
+ReturnCode World::creatureMove(common::CreatureId creature_id, common::Direction direction)
 {
   const auto* position = getCreaturePosition(creature_id);
   if (!position)
@@ -189,7 +189,7 @@ ReturnCode World::creatureMove(CreatureId creature_id, Direction direction)
   return creatureMove(creature_id, position->addDirection(direction));
 }
 
-ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_position)
+ReturnCode World::creatureMove(common::CreatureId creature_id, const common::Position& to_position)
 {
   if (!creatureExists(creature_id))
   {
@@ -264,19 +264,19 @@ ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_positi
   // Update direction
   if (from_position.getY() > to_position.getY())
   {
-    creature->setDirection(Direction::NORTH);
+    creature->setDirection(common::Direction::NORTH);
   }
   else if (from_position.getY() < to_position.getY())
   {
-    creature->setDirection(Direction::SOUTH);
+    creature->setDirection(common::Direction::SOUTH);
   }
   if (from_position.getX() > to_position.getX())
   {
-    creature->setDirection(Direction::WEST);
+    creature->setDirection(common::Direction::WEST);
   }
   else if (from_position.getX() < to_position.getX())
   {
-    creature->setDirection(Direction::EAST);
+    creature->setDirection(common::Direction::EAST);
   }
 
   // Call onCreatureMove on all creatures that can see the movement
@@ -295,14 +295,14 @@ ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_positi
   {
     for (auto y = y_min - 7; y <= y_max + 6; y++)
     {
-      const auto position = Position(x, y, 7);
+      const auto position = common::Position(x, y, 7);
       const auto* tile = getTile(position);
       if (!tile)
       {
         continue;
       }
 
-      tile->visitCreatures([this, &from_position, &from_stackpos, &to_position](const Creature* creature)
+      tile->visitCreatures([this, &from_position, &from_stackpos, &to_position](const common::Creature* creature)
       {
         getCreatureCtrl(creature->getCreatureId()).onCreatureMove(*creature,
                                                                   from_position,
@@ -326,7 +326,7 @@ ReturnCode World::creatureMove(CreatureId creature_id, const Position& to_positi
   return ReturnCode::OK;
 }
 
-void World::creatureTurn(CreatureId creature_id, Direction direction)
+void World::creatureTurn(common::CreatureId creature_id, common::Direction direction)
 {
   if (!creatureExists(creature_id))
   {
@@ -358,7 +358,7 @@ void World::creatureTurn(CreatureId creature_id, Direction direction)
   }
 }
 
-void World::creatureSay(CreatureId creature_id, const std::string& message)
+void World::creatureSay(common::CreatureId creature_id, const std::string& message)
 {
   if (!creatureExists(creature_id))
   {
@@ -385,7 +385,7 @@ void World::creatureSay(CreatureId creature_id, const std::string& message)
   }
 }
 
-const Position* World::getCreaturePosition(CreatureId creature_id) const
+const common::Position* World::getCreaturePosition(common::CreatureId creature_id) const
 {
   if (!creatureExists(creature_id))
   {
@@ -395,7 +395,7 @@ const Position* World::getCreaturePosition(CreatureId creature_id) const
   return &(m_creature_data.at(creature_id).position);
 }
 
-bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position) const
+bool World::creatureCanThrowTo(common::CreatureId creature_id, const common::Position& position) const
 {
   // TODO(simon): Fix
   (void)creature_id;
@@ -403,7 +403,7 @@ bool World::creatureCanThrowTo(CreatureId creature_id, const Position& position)
   return true;
 }
 
-bool World::creatureCanReach(CreatureId creature_id, const Position& position) const
+bool World::creatureCanReach(common::CreatureId creature_id, const common::Position& position) const
 {
   const auto* creature_position = getCreaturePosition(creature_id);
   return creature_position &&  // NOLINT readability-implicit-bool-conversion
@@ -412,7 +412,7 @@ bool World::creatureCanReach(CreatureId creature_id, const Position& position) c
            creature_position->getZ() != position.getZ());
 }
 
-bool World::canAddItem(const Item& item, const Position& position) const
+bool World::canAddItem(const common::Item& item, const common::Position& position) const
 {
   // TODO(simon): are there cases where only specific items can be added to certain tiles?
   (void)item;
@@ -427,7 +427,7 @@ bool World::canAddItem(const Item& item, const Position& position) const
   return !tile->isBlocking();
 }
 
-ReturnCode World::addItem(const Item& item, const Position& position)
+ReturnCode World::addItem(const common::Item& item, const common::Position& position)
 {
   auto* tile = getTile(position);
   if (!tile)
@@ -449,7 +449,7 @@ ReturnCode World::addItem(const Item& item, const Position& position)
   return ReturnCode::OK;
 }
 
-ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Position& position, int stackpos)
+ReturnCode World::removeItem(common::ItemTypeId item_type_id, int count, const common::Position& position, int stackpos)
 {
   // TODO(simon): implement count
   (void)count;
@@ -499,12 +499,12 @@ ReturnCode World::removeItem(ItemTypeId item_type_id, int count, const Position&
   return ReturnCode::OK;
 }
 
-ReturnCode World::moveItem(CreatureId creature_id,
-                                  const Position& from_position,
+ReturnCode World::moveItem(common::CreatureId creature_id,
+                                  const common::Position& from_position,
                                   int from_stackpos,
-                                  ItemTypeId item_type_id,
+                                  common::ItemTypeId item_type_id,
                                   int count,
-                                  const Position& to_position)
+                                  const common::Position& to_position)
 {
   // TODO(simon): implement count
   (void)count;
@@ -606,7 +606,7 @@ ReturnCode World::moveItem(CreatureId creature_id,
   return ReturnCode::OK;
 }
 
-const Tile* World::getTile(const Position& position) const
+const Tile* World::getTile(const common::Position& position) const
 {
   if (position.getX() < POSITION_OFFSET ||
       position.getX() >= POSITION_OFFSET + m_world_size_x ||
@@ -622,14 +622,14 @@ const Tile* World::getTile(const Position& position) const
   return &m_tiles[index];
 }
 
-Tile* World::getTile(const Position& position)
+Tile* World::getTile(const common::Position& position)
 {
   // According to https://stackoverflow.com/a/123995/969365
   const auto* tile = static_cast<const World*>(this)->getTile(position);
   return const_cast<Tile*>(tile);
 }
 
-Creature* World::getCreature(CreatureId creature_id)
+common::Creature* World::getCreature(common::CreatureId creature_id)
 {
   if (!creatureExists(creature_id))
   {
@@ -639,7 +639,7 @@ Creature* World::getCreature(CreatureId creature_id)
   return m_creature_data.at(creature_id).creature;
 }
 
-CreatureCtrl& World::getCreatureCtrl(CreatureId creature_id)
+CreatureCtrl& World::getCreatureCtrl(common::CreatureId creature_id)
 {
   if (!creatureExists(creature_id))
   {
@@ -648,22 +648,22 @@ CreatureCtrl& World::getCreatureCtrl(CreatureId creature_id)
   return *(m_creature_data.at(creature_id).creature_ctrl);
 }
 
-std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& position) const
+std::vector<common::CreatureId> World::getCreatureIdsThatCanSeePosition(const common::Position& position) const
 {
-  std::vector<CreatureId> creature_ids;
+  std::vector<common::CreatureId> creature_ids;
 
   // TODO(simon): fix these constants (see creatureMove)
   for (int x = position.getX() - 9; x <= position.getX() + 8; ++x)
   {
     for (int y = position.getY() - 7; y <= position.getY() + 6; ++y)
     {
-      const auto* tile = getTile(Position(x, y, position.getZ()));
+      const auto* tile = getTile(common::Position(x, y, position.getZ()));
       if (!tile)
       {
         continue;
       }
 
-      tile->visitCreatures([&creature_ids](const Creature* creature)
+      tile->visitCreatures([&creature_ids](const common::Creature* creature)
       {
         creature_ids.push_back(creature->getCreatureId());
       });
@@ -673,7 +673,7 @@ std::vector<CreatureId> World::getCreatureIdsThatCanSeePosition(const Position& 
   return creature_ids;
 }
 
-int World::getCreatureStackpos(const Position& position, CreatureId creature_id) const
+int World::getCreatureStackpos(const common::Position& position, common::CreatureId creature_id) const
 {
   const auto* tile = getTile(position);
   if (!tile)

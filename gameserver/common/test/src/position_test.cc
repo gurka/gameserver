@@ -28,7 +28,7 @@
 
 #include "gtest/gtest.h"
 
-namespace world
+namespace common
 {
 
 TEST(PositionTest, Constructor)
@@ -94,4 +94,4 @@ TEST(PositionTest, AddDirection)
   ASSERT_EQ(position, Position(5, 0, 5));
 }
 
-}  // namespace world
+}  // namespace common

@@ -22,32 +22,22 @@
  * SOFTWARE.
  */
 
-#include "creature.h"
+#ifndef COMMON_EXPORT_DIRECTION_H_
+#define COMMON_EXPORT_DIRECTION_H_
 
-namespace world
+#include <cstdint>
+
+namespace common
 {
 
-CreatureId Creature::next_creature_id = 0x4713;
-
-Creature::Creature(std::string name)
-  : m_creature_id(Creature::getFreeCreatureId()),
-    m_name(std::move(name)),
-    m_max_health(100),
-    m_health(100),
-    m_speed(110),
-    m_outfit({ 128, 0, 20, 30, 40, 50 }),
-    m_next_walk_tick(0)
+enum class Direction
 {
-}
+  NORTH = 0,
+  EAST  = 1,
+  SOUTH = 2,
+  WEST  = 3
+};
 
-bool Creature::operator==(const Creature& other) const
-{
-  return m_creature_id == other.m_creature_id;
-}
+}  // namespace common
 
-bool Creature::operator!=(const Creature& other) const
-{
-  return !(*this == other);
-}
-
-}  // namespace world
+#endif  // COMMON_EXPORT_DIRECTION_H_

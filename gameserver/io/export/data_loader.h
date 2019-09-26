@@ -34,18 +34,18 @@ namespace io::data_loader
 {
 
 constexpr auto MAX_ITEM_TYPES = 4096;
-using ItemTypes = std::array<world::ItemType, MAX_ITEM_TYPES>;
+using ItemTypes = std::array<common::ItemType, MAX_ITEM_TYPES>;
 bool load(const std::string& data_filename,
           ItemTypes* item_types,
-          world::ItemTypeId* id_first,
-          world::ItemTypeId* id_last);
+          common::ItemTypeId* id_first,
+          common::ItemTypeId* id_last);
 bool loadXml(const std::string& items_filename,
              ItemTypes* item_types,
-             world::ItemTypeId id_first,
-             world::ItemTypeId id_last);
+             common::ItemTypeId id_first,
+             common::ItemTypeId id_last);
 void dumpToJson(const ItemTypes& item_types,
-                world::ItemTypeId id_first,
-                world::ItemTypeId id_last);
+                common::ItemTypeId id_first,
+                common::ItemTypeId id_last);
 
 }  // namespace io::data_loader
 

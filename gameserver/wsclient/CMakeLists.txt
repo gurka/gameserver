@@ -13,7 +13,7 @@ add_executable(wsclient
   "src/wsworld.h"
 )
 
-target_link_libraries(wsclient
+target_link_libraries(wsclient PRIVATE
   gameengine
   io
   network

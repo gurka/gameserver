@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_CREATURE_H_
-#define WORLD_EXPORT_CREATURE_H_
+#ifndef COMMON_EXPORT_CREATURE_H_
+#define COMMON_EXPORT_CREATURE_H_
 
 #include <cstdint>
 #include <string>
 
 #include "direction.h"
 
-namespace world
+namespace common
 {
 
 using CreatureId = std::uint32_t;
@@ -50,11 +50,27 @@ class Creature
  public:
   static constexpr CreatureId INVALID_ID = 0U;
 
-  explicit Creature(std::string name);
+  Creature(CreatureId creature_id, std::string name)
+      : m_creature_id(creature_id),
+        m_name(std::move(name)),
+        m_max_health(100),
+        m_health(100),
+        m_speed(110),
+        m_outfit({ 128, 0, 20, 30, 40, 50 }),
+        m_next_walk_tick(0)
+  {
+  }
   virtual ~Creature() = default;
 
-  bool operator==(const Creature& other) const;
-  bool operator!=(const Creature& other) const;
+  bool operator==(const Creature& other) const
+  {
+    return m_creature_id == other.m_creature_id;
+  }
+
+  bool operator!=(const Creature& other) const
+  {
+    return !(*this == other);
+  }
 
   CreatureId getCreatureId() const { return m_creature_id; }
   const std::string& getName() const { return m_name; }
@@ -83,8 +99,6 @@ class Creature
   std::int64_t getNextWalkTick() const { return m_next_walk_tick; }
   void setNextWalkTick(std::int64_t tick) { m_next_walk_tick = tick; }
 
-  static int getFreeCreatureId() { return Creature::next_creature_id++; }
-
  private:
   CreatureId m_creature_id;
   std::string m_name;
@@ -97,10 +111,8 @@ class Creature
   int m_light_level{0};
 
   std::int64_t m_next_walk_tick{0};
-
-  static CreatureId next_creature_id;
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_CREATURE_H_
+#endif  // COMMON_EXPORT_CREATURE_H_

@@ -35,8 +35,8 @@
 namespace io::world_loader
 {
 
-using CreateItem = std::function<world::ItemUniqueId(world::ItemTypeId)>;
-using GetItem = std::function<const world::Item*(world::ItemUniqueId)>;
+using CreateItem = std::function<common::ItemUniqueId(common::ItemTypeId)>;
+using GetItem = std::function<const common::Item*(common::ItemUniqueId)>;
 
 struct WorldData
 {
