@@ -31,18 +31,24 @@ namespace world
 
 TEST(CreatureTest, Constructor)
 {
-  std::string TestCreatureName("TestCreature");
-  Creature creature(TestCreatureName);
+  const CreatureId id = 1U;
+  const std::string TestCreatureName("TestCreature");
+  const Creature creature(id, TestCreatureName);
 
+  ASSERT_EQ(creature.getCreatureId(), id);
   ASSERT_NE(creature.getCreatureId(), Creature::INVALID_ID);
   ASSERT_EQ(creature.getName(), TestCreatureName);
 }
 
 TEST(CreatureTest, CreatureId)
 {
-  Creature creatureFoo("foo");
-  Creature creatureBar("bar");
+  const CreatureId id_foo = 2U;
+  const CreatureId id_bar = 3U;
+  const Creature creatureFoo(id_foo, "foo");
+  const Creature creatureBar(id_bar, "bar");
 
+  ASSERT_EQ(creatureFoo.getCreatureId(), id_foo);
+  ASSERT_EQ(creatureBar.getCreatureId(), id_bar);
   ASSERT_NE(creatureFoo.getCreatureId(), Creature::INVALID_ID);
   ASSERT_NE(creatureBar.getCreatureId(), Creature::INVALID_ID);
   ASSERT_NE(creatureFoo.getCreatureId(), creatureBar.getCreatureId());
@@ -50,9 +56,11 @@ TEST(CreatureTest, CreatureId)
 
 TEST(CreatureTest, Equals)
 {
-  Creature creatureFoo("foo");
-  Creature creatureBar("bar");
-  Creature& creatureFooRef(creatureFoo);
+  const CreatureId id_foo = 4U;
+  const CreatureId id_bar = 5U;
+  const Creature creatureFoo(id_foo, "foo");
+  const Creature creatureBar(id_bar, "bar");
+  const Creature& creatureFooRef(creatureFoo);
 
   ASSERT_NE(creatureFoo, creatureBar);
   ASSERT_NE(creatureBar, creatureFooRef);
@@ -61,7 +69,8 @@ TEST(CreatureTest, Equals)
 
 TEST(CreatureTest, GettersSetters)
 {
-  Creature creature("TestCreature");
+  const CreatureId id = 1U;
+  Creature creature(id, "TestCreature");
 
   creature.setDirection(Direction::NORTH);
   ASSERT_EQ(creature.getDirection(), Direction::NORTH);

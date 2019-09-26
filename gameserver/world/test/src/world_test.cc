@@ -80,7 +80,7 @@ TEST_F(WorldTest, AddCreature)
 {
   // Add first Creature at (192, 192, 7)
   // Can see from (184, 186, 7) to (201, 199, 7)
-  Creature creatureOne("TestCreatureOne");
+  Creature creatureOne(1U, "TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
   Position creaturePositionOne(192, 192, 7);
 
@@ -94,7 +94,7 @@ TEST_F(WorldTest, AddCreature)
 
   // Add second Creature at (193, 193, 7)
   // Can see from (185, 187, 7) to (202, 200, 7)
-  Creature creatureTwo("TestCreatureTwo");
+  Creature creatureTwo(2U, "TestCreatureTwo");
   MockCreatureCtrl creatureCtrlTwo;
   Position creaturePositionTwo(193, 193, 7);
 
@@ -110,7 +110,7 @@ TEST_F(WorldTest, AddCreature)
   // Add third Creature at (202, 193, 7)
   // Can see from (194, 187, 7) to (211, 200, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on x axis)
-  Creature creatureThree("TestCreatureThree");
+  Creature creatureThree(3U, "TestCreatureThree");
   MockCreatureCtrl creatureCtrlThree;
   Position creaturePositionThree(202, 193, 7);
 
@@ -127,7 +127,7 @@ TEST_F(WorldTest, AddCreature)
   // Add fourth Creature at (195, 200, 7)
   // Can see from (187, 194, 7) to (204, 207, 7)
   // Should not call creatureOne's onCreatureSpawn due to being outside its vision (on y axis)
-  Creature creatureFour("TestCreatureFour");
+  Creature creatureFour(4U, "TestCreatureFour");
   MockCreatureCtrl creatureCtrlFour;
   Position creaturePositionFour(195, 200, 7);
 
@@ -150,10 +150,10 @@ TEST_F(WorldTest, RemoveCreature)
   // creatureThree can only see creatureFour
   // creatureFour cannot see anyone
 
-  Creature creatureOne("TestCreatureOne");
-  Creature creatureTwo("TestCreatureTwo");
-  Creature creatureThree("TestCreatureThree");
-  Creature creatureFour("TestCreatureFour");
+  Creature creatureOne(1U, "TestCreatureOne");
+  Creature creatureTwo(2U, "TestCreatureTwo");
+  Creature creatureThree(3U, "TestCreatureThree");
+  Creature creatureFour(4U, "TestCreatureFour");
 
   MockCreatureCtrl creatureCtrlOne;
   MockCreatureCtrl creatureCtrlTwo;
@@ -205,7 +205,7 @@ TEST_F(WorldTest, RemoveCreature)
 
 TEST_F(WorldTest, CreatureMoveSingleCreature)
 {
-  Creature creatureOne("TestCreatureOne");
+  Creature creatureOne(1U, "TestCreatureOne");
   MockCreatureCtrl creatureCtrlOne;
   Position creaturePositionOne(192, 192, 7);
   EXPECT_CALL(creatureCtrlOne, onCreatureSpawn(_, _));

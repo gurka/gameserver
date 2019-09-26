@@ -35,8 +35,8 @@ namespace world
 class CreatureMock : public Creature
 {
  public:
-  CreatureMock(int id)
-      : Creature("CreatureMock-" + std::to_string(id))
+  CreatureMock(CreatureId id)
+      : Creature(id, "CreatureMock-" + std::to_string(id))
   {
   }
 };
