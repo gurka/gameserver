@@ -26,7 +26,7 @@
 
 #include "gtest/gtest.h"
 
-namespace world
+namespace common
 {
 
 TEST(CreatureTest, Constructor)
@@ -107,4 +107,4 @@ TEST(CreatureTest, GettersSetters)
   ASSERT_EQ(outfitGet.feet, 66);
 }
 
-}  // namespace world
+}  // namespace common

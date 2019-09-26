@@ -40,7 +40,7 @@ using ::testing::SaveArg;
 using ::testing::WithArg;
 using ::testing::Invoke;
 
-using namespace world;
+using namespace common;
 
 struct ItemStub : public Item
 {

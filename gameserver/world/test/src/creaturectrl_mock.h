@@ -35,33 +35,33 @@ namespace world
 class MockCreatureCtrl : public CreatureCtrl
 {
  public:
-  MOCK_METHOD2(onCreatureSpawn, void(const Creature& creature,
-                                     const Position& position));
+  MOCK_METHOD2(onCreatureSpawn, void(const common::Creature& creature,
+                                     const common::Position& position));
 
-  MOCK_METHOD3(onCreatureDespawn, void(const Creature& creature,
-                                       const Position& position,
+  MOCK_METHOD3(onCreatureDespawn, void(const common::Creature& creature,
+                                       const common::Position& position,
                                        std::uint8_t stackPos));
 
-  MOCK_METHOD4(onCreatureMove, void(const Creature& creature,
-                                    const Position& oldPosition,
+  MOCK_METHOD4(onCreatureMove, void(const common::Creature& creature,
+                                    const common::Position& oldPosition,
                                     std::uint8_t oldStackPos,
-                                    const Position& newPosition));
+                                    const common::Position& newPosition));
 
-  MOCK_METHOD3(onCreatureTurn, void(const Creature& creature,
-                                    const Position& position,
+  MOCK_METHOD3(onCreatureTurn, void(const common::Creature& creature,
+                                    const common::Position& position,
                                     std::uint8_t stackPos));
 
-  MOCK_METHOD3(onCreatureSay, void(const Creature& creature,
-                                   const Position& position,
+  MOCK_METHOD3(onCreatureSay, void(const common::Creature& creature,
+                                   const common::Position& position,
                                    const std::string& message));
 
-  MOCK_METHOD2(onItemRemoved, void(const Position& position,
+  MOCK_METHOD2(onItemRemoved, void(const common::Position& position,
                                    std::uint8_t stackPos));
 
-  MOCK_METHOD2(onItemAdded, void (const Item& item,
-                                  const Position& position));
+  MOCK_METHOD2(onItemAdded, void (const common::Item& item,
+                                  const common::Position& position));
 
-  MOCK_METHOD1(onTileUpdate, void(const Position& position));
+  MOCK_METHOD1(onTileUpdate, void(const common::Position& position));
 };
 
 }  // namespace world

@@ -32,10 +32,10 @@
 namespace world
 {
 
-class CreatureMock : public Creature
+class CreatureMock : public common::Creature
 {
  public:
-  CreatureMock(CreatureId id)
+  CreatureMock(common::CreatureId id)
       : Creature(id, "CreatureMock-" + std::to_string(id))
   {
   }

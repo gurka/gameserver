@@ -40,7 +40,7 @@ class TileTest : public ::testing::Test
 
 TEST_F(TileTest, Constructor)
 {
-  ItemType groundItemType;
+  common::ItemType groundItemType;
   ItemMock groundItem;
   const auto tile = Tile(&groundItem);
 
@@ -51,7 +51,7 @@ TEST_F(TileTest, Constructor)
 
 TEST_F(TileTest, AddRemoveCreatures)
 {
-  ItemType groundItemType;
+  common::ItemType groundItemType;
   ItemMock groundItem;
   auto tile = Tile(&groundItem);
 
@@ -88,21 +88,21 @@ TEST_F(TileTest, AddRemoveCreatures)
 
 TEST_F(TileTest, AddRemoveItems)
 {
-  ItemType groundItemType;
+  common::ItemType groundItemType;
   ItemMock groundItem;
   auto tile = Tile(&groundItem);
 
-  ItemType itemTypeA;
+  common::ItemType itemTypeA;
   ItemMock itemA;
   EXPECT_CALL(itemA, getItemTypeId()).WillRepeatedly(Return(1));
   EXPECT_CALL(itemA, getItemType()).WillRepeatedly(ReturnRef(itemTypeA));
 
-  ItemType itemTypeB;
+  common::ItemType itemTypeB;
   ItemMock itemB;
   EXPECT_CALL(itemB, getItemTypeId()).WillRepeatedly(Return(2));
   EXPECT_CALL(itemB, getItemType()).WillRepeatedly(ReturnRef(itemTypeB));
 
-  ItemType itemTypeC;
+  common::ItemType itemTypeC;
   ItemMock itemC;
   EXPECT_CALL(itemC, getItemTypeId()).WillRepeatedly(Return(3));
   EXPECT_CALL(itemC, getItemType()).WillRepeatedly(ReturnRef(itemTypeC));
