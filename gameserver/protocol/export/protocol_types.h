@@ -52,19 +52,19 @@ struct Login
 
 struct MoveClick
 {
-  std::deque<world::Direction> path;
+  std::deque<common::Direction> path;
 };
 
 struct MoveItem  // or MoveThing?
 {
-  gameengine::ItemPosition from_item_position;
-  gameengine::GamePosition to_game_position;
+  common::ItemPosition from_item_position;
+  common::GamePosition to_game_position;
   std::uint8_t count;
 };
 
 struct UseItem
 {
-  gameengine::ItemPosition item_position;
+  common::ItemPosition item_position;
   std::uint8_t new_container_id;
 };
 
@@ -80,7 +80,7 @@ struct OpenParentContainer
 
 struct LookAt
 {
-  gameengine::ItemPosition item_position;
+  common::ItemPosition item_position;
 };
 
 struct Say
@@ -114,8 +114,8 @@ struct Creature
   std::uint32_t id;
   std::string name;  // only if known = false
   std::uint8_t health_percent;
-  world::Direction direction;
-  world::Outfit outfit;
+  common::Direction direction;
+  common::Outfit outfit;
   std::uint16_t speed;
 };
 
@@ -134,7 +134,7 @@ struct Equipment
 
 struct MagicEffect
 {
-  world::Position position = { 0, 0, 0 };
+  common::Position position = { 0, 0, 0 };
   std::uint8_t type;
 };
 
@@ -194,7 +194,7 @@ struct MapData
     std::vector<ItemData> items;
   };
 
-  world::Position position = { 0, 0, 0 };
+  common::Position position = { 0, 0, 0 };
   std::vector<TileData> tiles;
 };
 
@@ -203,9 +203,9 @@ struct CreatureMove
   bool can_see_old_pos;
   bool can_see_new_pos;
 
-  world::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
+  common::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
   std::uint8_t old_stackpos;                   // only if canSeeOldPos = true
-  world::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
+  common::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
   Creature creature;                           // only if canSeeOldPos = false and canSeeNewPos = true
 };
 

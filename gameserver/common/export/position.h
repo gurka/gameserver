@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_POSITION_H_
-#define WORLD_EXPORT_POSITION_H_
+#ifndef COMMON_EXPORT_POSITION_H_
+#define COMMON_EXPORT_POSITION_H_
 
 #include <cstdint>
 #include <string>
@@ -31,7 +31,7 @@
 
 #include "direction.h"
 
-namespace world
+namespace common
 {
 
 class Position
@@ -74,7 +74,6 @@ class Position
     case Direction::WEST:
       return { std::uint16_t(m_x - 1),                    m_y, m_z };
     }
-  
     return *this;
   }
 
@@ -88,6 +87,6 @@ class Position
   std::uint8_t m_z{0};
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_POSITION_H_
+#endif  // COMMON_EXPORT_POSITION_H_

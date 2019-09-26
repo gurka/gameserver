@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef GAMEENGINE_EXPORT_GAME_POSITION_H_
-#define GAMEENGINE_EXPORT_GAME_POSITION_H_
+#ifndef COMMON_EXPORT_GAME_POSITION_H_
+#define COMMON_EXPORT_GAME_POSITION_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -32,7 +32,7 @@
 #include "position.h"
 #include "item.h"
 
-namespace gameengine
+namespace common
 {
 
 class GamePosition
@@ -42,7 +42,7 @@ class GamePosition
   {
   }
 
-  explicit GamePosition(const world::Position& position)
+  explicit GamePosition(const Position& position)
     : m_type(Type::POSITION)
   {
     m_up.position = position;
@@ -54,7 +54,7 @@ class GamePosition
     m_up.inventory_slot = inventory_slot;
   }
 
-  GamePosition(world::ItemUniqueId item_unique_id, int container_slot)
+  GamePosition(ItemUniqueId item_unique_id, int container_slot)
     : m_type(Type::CONTAINER)
   {
     m_up.container.item_unique_id = item_unique_id;
@@ -103,13 +103,13 @@ class GamePosition
   bool isValid() const { return m_type != Type::INVALID; }
 
   bool isPosition() const { return m_type == Type::POSITION; }
-  const world::Position& getPosition() const { return m_up.position; }
+  const Position& getPosition() const { return m_up.position; }
 
   bool isInventory() const { return m_type == Type::INVENTORY; }
   int getInventorySlot() const { return m_up.inventory_slot; }
 
   bool isContainer() const { return m_type == Type::CONTAINER; }
-  world::ItemUniqueId getItemUniqueId() const { return m_up.container.item_unique_id; }
+  ItemUniqueId getItemUniqueId() const { return m_up.container.item_unique_id; }
   int getContainerSlot() const { return m_up.container.slot; }
 
  private:
@@ -123,11 +123,11 @@ class GamePosition
 
   union
   {
-    world::Position position = { 0, 0, 0 };
+    Position position = { 0, 0, 0 };
     int inventory_slot;
     struct
     {
-      world::ItemUniqueId item_unique_id;
+      ItemUniqueId item_unique_id;
       int slot;
     } container;
   } m_up;
@@ -142,13 +142,13 @@ class ItemPosition
   }
 
   // TODO(simon): stackpos is only used for GamePosition Type::POSITION, or??
-  ItemPosition(const GamePosition& game_position, world::ItemTypeId item_type_id)
+  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id)
     : m_game_position(game_position),
       m_item_type_id(item_type_id)
   {
   }
 
-  ItemPosition(const GamePosition& game_position, world::ItemTypeId item_type_id, int stackpos)
+  ItemPosition(const GamePosition& game_position, ItemTypeId item_type_id, int stackpos)
     : m_game_position(game_position),
       m_item_type_id(item_type_id),
       m_stackpos(stackpos)
@@ -173,15 +173,15 @@ class ItemPosition
   }
 
   const GamePosition& getGamePosition() const { return m_game_position; }
-  world::ItemTypeId getItemTypeId() const { return m_item_type_id; }
+  ItemTypeId getItemTypeId() const { return m_item_type_id; }
   int getStackPosition() const { return m_stackpos; }
 
  private:
   GamePosition m_game_position;
-  world::ItemTypeId m_item_type_id{0};
+  ItemTypeId m_item_type_id{0};
   int m_stackpos{0};
 };
 
-}  // namespace gameengine
+}  // namespace common
 
-#endif  // GAMEENGINE_EXPORT_GAME_POSITION_H_
+#endif  // COMMON_EXPORT_GAME_POSITION_H_

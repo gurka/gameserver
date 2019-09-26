@@ -33,9 +33,11 @@
 #include "creature.h"
 #include "game_position.h"
 
-namespace world
+namespace common
 {
+
 class Item;
+
 }
 
 namespace gameengine
@@ -48,35 +50,35 @@ class ContainerManager
  public:
   void playerDespawn(const PlayerCtrl* player_ctrl);
 
-  const Container* getContainer(world::ItemUniqueId item_unique_id) const;
-  Container* getContainer(world::ItemUniqueId item_unique_id);
+  const Container* getContainer(common::ItemUniqueId item_unique_id) const;
+  Container* getContainer(common::ItemUniqueId item_unique_id);
 
-  const world::Item* getItem(world::ItemUniqueId item_unique_id, int container_slot) const;
+  const common::Item* getItem(common::ItemUniqueId item_unique_id, int container_slot) const;
 
   void useContainer(PlayerCtrl* player_ctrl,
-                    const world::Item& item,
-                    const GamePosition& game_position,
+                    const common::Item& item,
+                    const common::GamePosition& game_position,
                     int new_container_id);
-  void closeContainer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id);
-  void openParentContainer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id, int new_container_id);
+  void closeContainer(PlayerCtrl* player_ctrl, common::ItemUniqueId item_unique_id);
+  void openParentContainer(PlayerCtrl* player_ctrl, common::ItemUniqueId item_unique_id, int new_container_id);
 
-  bool canAddItem(world::ItemUniqueId item_unique_id, int container_slot, const world::Item& item);
-  void removeItem(world::ItemUniqueId item_unique_id, int container_slot);
-  void addItem(world::ItemUniqueId item_unique_id, int container_slot, const world::Item& item);
+  bool canAddItem(common::ItemUniqueId item_unique_id, int container_slot, const common::Item& item);
+  void removeItem(common::ItemUniqueId item_unique_id, int container_slot);
+  void addItem(common::ItemUniqueId item_unique_id, int container_slot, const common::Item& item);
 
-  void updateRootPosition(world::ItemUniqueId item_unique_id, const GamePosition& game_position);
+  void updateRootPosition(common::ItemUniqueId item_unique_id, const common::GamePosition& game_position);
 
  private:
   Container* getInnerContainer(Container* container, int container_slot);
 
-  void createContainer(const world::Item* item, const GamePosition& game_position);
-  void openContainer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id, int new_container_id);
+  void createContainer(const common::Item* item, const common::GamePosition& game_position);
+  void openContainer(PlayerCtrl* player_ctrl, common::ItemUniqueId item_unique_id, int new_container_id);
 
-  void addRelatedPlayer(PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id);
-  void removeRelatedPlayer(const PlayerCtrl* player_ctrl, world::ItemUniqueId item_unique_id);
+  void addRelatedPlayer(PlayerCtrl* player_ctrl, common::ItemUniqueId item_unique_id);
+  void removeRelatedPlayer(const PlayerCtrl* player_ctrl, common::ItemUniqueId item_unique_id);
 
-  // Maps world::ItemUniqueId to Container
-  std::unordered_map<world::ItemUniqueId, Container> m_containers;
+  // Maps common::ItemUniqueId to Container
+  std::unordered_map<common::ItemUniqueId, Container> m_containers;
 
 #ifdef UNITTEST
  public:

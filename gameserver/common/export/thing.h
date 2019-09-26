@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_THING_H_
-#define WORLD_EXPORT_THING_H_
+#ifndef COMMON_EXPORT_THING_H_
+#define COMMON_EXPORT_THING_H_
 
 #include <functional>
 #include <type_traits>
 #include <variant>
 
-namespace world
+namespace common
 {
 
 class Creature;
@@ -92,6 +92,6 @@ struct Thing
   struct AlwaysFalse : std::false_type {};
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_THING_H_
+#endif  // COMMON_EXPORT_THING_H_

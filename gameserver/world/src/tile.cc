@@ -31,7 +31,7 @@
 namespace world
 {
 
-void Tile::addThing(const Thing& thing)
+void Tile::addThing(const common::Thing& thing)
 {
   // Add the new thing before the first thing with the
   // same or greater prio than the new thing
@@ -67,7 +67,7 @@ bool Tile::removeThing(int stackpos)
   return true;
 }
 
-const Creature* Tile::getCreature(int stackpos) const
+const common::Creature* Tile::getCreature(int stackpos) const
 {
   if (static_cast<int>(m_things.size()) < stackpos)
   {
@@ -81,7 +81,7 @@ const Creature* Tile::getCreature(int stackpos) const
   return m_things[stackpos].creature();
 }
 
-const Item* Tile::getItem(int stackpos) const
+const common::Item* Tile::getItem(int stackpos) const
 {
   if (static_cast<int>(m_things.size()) < stackpos)
   {
@@ -98,12 +98,12 @@ const Item* Tile::getItem(int stackpos) const
 bool Tile::isBlocking() const
 {
   auto blocking = false;
-  visitThings([&blocking](const Creature* /*unused*/) { blocking = true; },
-              [&blocking](const Item* item) { blocking |= item->getItemType().is_blocking; });
+  visitThings([&blocking](const common::Creature* /*unused*/) { blocking = true; },
+              [&blocking](const common::Item* item) { blocking |= item->getItemType().is_blocking; });
   return blocking;
 }
 
-int Tile::getCreatureStackpos(CreatureId creature_id) const
+int Tile::getCreatureStackpos(common::CreatureId creature_id) const
 {
   auto it = m_things.cbegin() + 1;
   while (it != m_things.cend())
@@ -123,8 +123,8 @@ int Tile::getCreatureStackpos(CreatureId creature_id) const
   return std::distance(m_things.cbegin(), it);
 }
 
-void Tile::visitThings(const std::function<void(const Creature*)>& creature_func,
-                       const std::function<void(const Item*)>& item_func) const
+void Tile::visitThings(const std::function<void(const common::Creature*)>& creature_func,
+                       const std::function<void(const common::Item*)>& item_func) const
 {
   for (const auto& thing : m_things)
   {
@@ -132,12 +132,12 @@ void Tile::visitThings(const std::function<void(const Creature*)>& creature_func
   }
 }
 
-void Tile::visitCreatures(const std::function<void(const Creature*)>& func) const
+void Tile::visitCreatures(const std::function<void(const common::Creature*)>& func) const
 {
   visitThings(func, {});
 }
 
-void Tile::visitItems(const std::function<void(const Item*)>& func) const
+void Tile::visitItems(const std::function<void(const common::Item*)>& func) const
 {
   visitThings({}, func);
 }

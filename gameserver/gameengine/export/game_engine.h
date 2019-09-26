@@ -66,31 +66,31 @@ class GameEngine
   const world::World* getWorld() const { return m_world.get(); }
 
   bool spawn(const std::string& name, PlayerCtrl* player_ctrl);
-  void despawn(world::CreatureId creature_id);
+  void despawn(common::CreatureId creature_id);
 
-  void move(world::CreatureId creature_id, world::Direction direction);
-  void movePath(world::CreatureId creature_id, std::deque<world::Direction>&& path);
-  void cancelMove(world::CreatureId creature_id);
-  void turn(world::CreatureId creature_id, world::Direction direction);
+  void move(common::CreatureId creature_id, common::Direction direction);
+  void movePath(common::CreatureId creature_id, std::deque<common::Direction>&& path);
+  void cancelMove(common::CreatureId creature_id);
+  void turn(common::CreatureId creature_id, common::Direction direction);
 
-  void say(world::CreatureId creature_id,
+  void say(common::CreatureId creature_id,
            int type,
            const std::string& message,
            const std::string& receiver,
            int channel_id);
 
-  void moveItem(world::CreatureId creature_id, const ItemPosition& from_position, const GamePosition& to_position, int count);
-  void useItem(world::CreatureId creature_id, const ItemPosition& position, int new_container_id);
-  void lookAt(world::CreatureId creature_id, const ItemPosition& position);
+  void moveItem(common::CreatureId creature_id, const common::ItemPosition& from_position, const common::GamePosition& to_position, int count);
+  void useItem(common::CreatureId creature_id, const common::ItemPosition& position, int new_container_id);
+  void lookAt(common::CreatureId creature_id, const common::ItemPosition& position);
 
-  void closeContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id);
-  void openParentContainer(world::CreatureId creature_id, world::ItemUniqueId item_unique_id, int new_container_id);
+  void closeContainer(common::CreatureId creature_id, common::ItemUniqueId item_unique_id);
+  void openParentContainer(common::CreatureId creature_id, common::ItemUniqueId item_unique_id, int new_container_id);
 
  private:
-  const world::Item* getItem(world::CreatureId creature_id, const ItemPosition& position);
-  bool canAddItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count);
-  void removeItem(world::CreatureId creature_id, const ItemPosition& position, int count);
-  void addItem(world::CreatureId creature_id, const GamePosition& position, const world::Item& item, int count);
+  const common::Item* getItem(common::CreatureId creature_id, const common::ItemPosition& position);
+  bool canAddItem(common::CreatureId creature_id, const common::GamePosition& position, const common::Item& item, int count);
+  void removeItem(common::CreatureId creature_id, const common::ItemPosition& position, int count);
+  void addItem(common::CreatureId creature_id, const common::GamePosition& position, const common::Item& item, int count);
 
   // This structure holds all player data that shouldn't go into Player
   struct PlayerData
@@ -103,14 +103,14 @@ class GameEngine
 
     Player player;
     PlayerCtrl* player_ctrl;
-    std::deque<world::Direction> queued_moves;
+    std::deque<common::Direction> queued_moves;
   };
 
   // Use these instead of the unordered_map directly
-  PlayerData& getPlayerData(world::CreatureId creature_id) { return m_player_data.at(creature_id); }
-  const PlayerData& getPlayerData(world::CreatureId creature_id) const { return m_player_data.at(creature_id); }
+  PlayerData& getPlayerData(common::CreatureId creature_id) { return m_player_data.at(creature_id); }
+  const PlayerData& getPlayerData(common::CreatureId creature_id) const { return m_player_data.at(creature_id); }
 
-  std::unordered_map<world::CreatureId, PlayerData> m_player_data;
+  std::unordered_map<common::CreatureId, PlayerData> m_player_data;
   std::unique_ptr<ItemManager> m_item_manager;
   std::unique_ptr<world::World> m_world;
   GameEngineQueue* m_game_engine_queue{nullptr};

@@ -67,10 +67,10 @@ ConnectionCtrl::ConnectionCtrl(std::function<void(void)> close_protocol,
       m_world(world),
       m_game_engine_queue(game_engine_queue),
       m_account_reader(account_reader),
-      m_player_id(world::Creature::INVALID_ID)
+      m_player_id(common::Creature::INVALID_ID)
 {
-  m_known_creatures.fill(world::Creature::INVALID_ID);
-  m_container_ids.fill(world::Item::INVALID_UNIQUE_ID);
+  m_known_creatures.fill(common::Creature::INVALID_ID);
+  m_container_ids.fill(common::Item::INVALID_UNIQUE_ID);
 
   network::Connection::Callbacks callbacks
   {
@@ -91,7 +91,7 @@ ConnectionCtrl::ConnectionCtrl(std::function<void(void)> close_protocol,
   m_connection->init(callbacks);
 }
 
-void ConnectionCtrl::onCreatureSpawn(const world::Creature& creature, const world::Position& position)
+void ConnectionCtrl::onCreatureSpawn(const common::Creature& creature, const common::Position& position)
 {
   if (!isConnected())
   {
@@ -128,14 +128,14 @@ void ConnectionCtrl::onCreatureSpawn(const world::Creature& creature, const worl
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onCreatureDespawn(const world::Creature& creature, const world::Position& position, std::uint8_t stackpos)
+void ConnectionCtrl::onCreatureDespawn(const common::Creature& creature, const common::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
     if (creature.getCreatureId() == m_player_id)
     {
       // We are no longer in game and the connection has been closed, close the protocol
-      m_player_id = world::Creature::INVALID_ID;
+      m_player_id = common::Creature::INVALID_ID;
       m_close_protocol();  // WARNING: This instance is deleted after this call
     }
     return;
@@ -151,15 +151,15 @@ void ConnectionCtrl::onCreatureDespawn(const world::Creature& creature, const wo
     // This player despawned, close the connection gracefully
     // The protocol will be deleted as soon as the connection has been closed
     // (via onConnectionClosed callback)
-    m_player_id = world::Creature::INVALID_ID;
+    m_player_id = common::Creature::INVALID_ID;
     m_connection->close(false);
   }
 }
 
-void ConnectionCtrl::onCreatureMove(const world::Creature& creature,
-                              const world::Position& old_position,
+void ConnectionCtrl::onCreatureMove(const common::Creature& creature,
+                              const common::Position& old_position,
                               std::uint8_t old_stackpos,
-                              const world::Position& new_position)
+                              const common::Position& new_position)
 {
   if (!isConnected())
   {
@@ -220,7 +220,7 @@ void ConnectionCtrl::onCreatureMove(const world::Creature& creature,
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onCreatureTurn(const world::Creature& creature, const world::Position& position, std::uint8_t stackpos)
+void ConnectionCtrl::onCreatureTurn(const common::Creature& creature, const common::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
@@ -232,7 +232,7 @@ void ConnectionCtrl::onCreatureTurn(const world::Creature& creature, const world
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onCreatureSay(const world::Creature& creature, const world::Position& position, const std::string& message)
+void ConnectionCtrl::onCreatureSay(const common::Creature& creature, const common::Position& position, const std::string& message)
 {
   if (!isConnected())
   {
@@ -244,7 +244,7 @@ void ConnectionCtrl::onCreatureSay(const world::Creature& creature, const world:
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onItemRemoved(const world::Position& position, std::uint8_t stackpos)
+void ConnectionCtrl::onItemRemoved(const common::Position& position, std::uint8_t stackpos)
 {
   if (!isConnected())
   {
@@ -256,7 +256,7 @@ void ConnectionCtrl::onItemRemoved(const world::Position& position, std::uint8_t
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onItemAdded(const world::Item& item, const world::Position& position)
+void ConnectionCtrl::onItemAdded(const common::Item& item, const common::Position& position)
 {
   if (!isConnected())
   {
@@ -268,7 +268,7 @@ void ConnectionCtrl::onItemAdded(const world::Item& item, const world::Position&
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onTileUpdate(const world::Position& position)
+void ConnectionCtrl::onTileUpdate(const common::Position& position)
 {
   if (!isConnected())
   {
@@ -292,7 +292,7 @@ void ConnectionCtrl::onEquipmentUpdated(const gameengine::Player& player, std::u
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const world::Item& item)
+void ConnectionCtrl::onOpenContainer(std::uint8_t new_container_id, const gameengine::Container& container, const common::Item& item)
 {
   if (!isConnected())
   {
@@ -316,7 +316,7 @@ void ConnectionCtrl::onOpenContainer(std::uint8_t new_container_id, const gameen
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onCloseContainer(world::ItemUniqueId container_item_unique_id, bool reset_container_id)
+void ConnectionCtrl::onCloseContainer(common::ItemUniqueId container_item_unique_id, bool reset_container_id)
 {
   if (!isConnected())
   {
@@ -334,7 +334,7 @@ void ConnectionCtrl::onCloseContainer(world::ItemUniqueId container_item_unique_
 
   if (reset_container_id)
   {
-    setContainerId(container_id, world::Item::INVALID_UNIQUE_ID);
+    setContainerId(container_id, common::Item::INVALID_UNIQUE_ID);
   }
 
   LOG_DEBUG("%s: container_item_unique_id: %u -> container_id: %d", __func__, container_item_unique_id, container_id);
@@ -344,7 +344,7 @@ void ConnectionCtrl::onCloseContainer(world::ItemUniqueId container_item_unique_
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onContainerAddItem(world::ItemUniqueId container_item_unique_id, const world::Item& item)
+void ConnectionCtrl::onContainerAddItem(common::ItemUniqueId container_item_unique_id, const common::Item& item)
 {
   if (!isConnected())
   {
@@ -370,7 +370,7 @@ void ConnectionCtrl::onContainerAddItem(world::ItemUniqueId container_item_uniqu
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onContainerUpdateItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const world::Item& item)
+void ConnectionCtrl::onContainerUpdateItem(common::ItemUniqueId container_item_unique_id, std::uint8_t container_slot, const common::Item& item)
 {
   if (!isConnected())
   {
@@ -397,7 +397,7 @@ void ConnectionCtrl::onContainerUpdateItem(world::ItemUniqueId container_item_un
   m_connection->sendPacket(std::move(packet));
 }
 
-void ConnectionCtrl::onContainerRemoveItem(world::ItemUniqueId container_item_unique_id, std::uint8_t container_slot)
+void ConnectionCtrl::onContainerRemoveItem(common::ItemUniqueId container_item_unique_id, std::uint8_t container_slot)
 {
   if (!isConnected())
   {
@@ -460,7 +460,7 @@ void ConnectionCtrl::cancelMove()
   m_connection->sendPacket(std::move(packet));
 }
 
-bool ConnectionCtrl::hasContainerOpen(world::ItemUniqueId item_unique_id) const
+bool ConnectionCtrl::hasContainerOpen(common::ItemUniqueId item_unique_id) const
 {
   return getContainerId(item_unique_id) != INVALID_CONTAINER_ID;
 }
@@ -530,7 +530,7 @@ void ConnectionCtrl::parsePacket(network::IncomingPacket* packet)
       {
         m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
-          game_engine->move(m_player_id, static_cast<world::Direction>(packet_id - 0x65));
+          game_engine->move(m_player_id, static_cast<common::Direction>(packet_id - 0x65));
         });
         break;
       }
@@ -551,7 +551,7 @@ void ConnectionCtrl::parsePacket(network::IncomingPacket* packet)
       {
         m_game_engine_queue->addTask(m_player_id, [this, packet_id](gameengine::GameEngine* game_engine)
         {
-          game_engine->turn(m_player_id, static_cast<world::Direction>(packet_id - 0x6F));
+          game_engine->turn(m_player_id, static_cast<common::Direction>(packet_id - 0x6F));
         });
         break;
       }
@@ -726,7 +726,7 @@ void ConnectionCtrl::parseCloseContainer(network::IncomingPacket* packet)
 {
   const auto close = getCloseContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(close.container_id);
-  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == common::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: container_id: %d does not map to a valid ItemUniqueId", __func__, close.container_id);
     disconnect();
@@ -745,7 +745,7 @@ void ConnectionCtrl::parseOpenParentContainer(network::IncomingPacket* packet)
 {
   const auto open_parent = getOpenParentContainer(packet);
   const auto item_unique_id = getContainerItemUniqueId(open_parent.container_id);
-  if (item_unique_id == world::Item::INVALID_UNIQUE_ID)
+  if (item_unique_id == common::Item::INVALID_UNIQUE_ID)
   {
     LOG_ERROR("%s: container_id: %d does not map to a valid ItemUniqueId", __func__, open_parent.container_id);
     disconnect();
@@ -783,12 +783,12 @@ void ConnectionCtrl::parseSay(network::IncomingPacket* packet)
   });
 }
 
-void ConnectionCtrl::setContainerId(std::uint8_t container_id, world::ItemUniqueId item_unique_id)
+void ConnectionCtrl::setContainerId(std::uint8_t container_id, common::ItemUniqueId item_unique_id)
 {
   m_container_ids[container_id] = item_unique_id;
 }
 
-std::uint8_t ConnectionCtrl::getContainerId(world::ItemUniqueId item_unique_id) const
+std::uint8_t ConnectionCtrl::getContainerId(common::ItemUniqueId item_unique_id) const
 {
   const auto it = std::find(m_container_ids.cbegin(),
                             m_container_ids.cend(),
@@ -800,18 +800,18 @@ std::uint8_t ConnectionCtrl::getContainerId(world::ItemUniqueId item_unique_id) 
   return INVALID_CONTAINER_ID;
 }
 
-world::ItemUniqueId ConnectionCtrl::getContainerItemUniqueId(std::uint8_t container_id) const
+common::ItemUniqueId ConnectionCtrl::getContainerItemUniqueId(std::uint8_t container_id) const
 {
   if (container_id >= 64)
   {
     LOG_ERROR("%s: invalid container_id: %d", __func__, container_id);
-    return world::Item::INVALID_UNIQUE_ID;
+    return common::Item::INVALID_UNIQUE_ID;
   }
 
   return m_container_ids.at(container_id);
 }
 
-bool ConnectionCtrl::canSee(const world::Position& player_position, const world::Position& to_position)
+bool ConnectionCtrl::canSee(const common::Position& player_position, const common::Position& to_position)
 {
   // Note: client displays 15x11 tiles, but it know about 18x14 tiles.
   //

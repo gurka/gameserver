@@ -48,42 +48,42 @@ class ItemManager
 
   bool loadItemTypes(const std::string& data_filename, const std::string& items_filename);
 
-  world::ItemUniqueId createItem(world::ItemTypeId item_type_id);
-  void destroyItem(world::ItemUniqueId item_unique_id);
+  common::ItemUniqueId createItem(common::ItemTypeId item_type_id);
+  void destroyItem(common::ItemUniqueId item_unique_id);
 
-  world::Item* getItem(world::ItemUniqueId item_unique_id);
+  common::Item* getItem(common::ItemUniqueId item_unique_id);
 
  private:
-  class ItemImpl : public world::Item
+  class ItemImpl : public common::Item
   {
    public:
-    ItemImpl(world::ItemUniqueId item_unique_id, const world::ItemType* item_type)
+    ItemImpl(common::ItemUniqueId item_unique_id, const common::ItemType* item_type)
       : m_item_unique_id(item_unique_id),
         m_itemType(item_type),
         m_count(1)
     {
     }
 
-    world::ItemUniqueId getItemUniqueId() const override { return m_item_unique_id; }
-    world::ItemTypeId getItemTypeId() const override { return m_itemType->id; }
+    common::ItemUniqueId getItemUniqueId() const override { return m_item_unique_id; }
+    common::ItemTypeId getItemTypeId() const override { return m_itemType->id; }
 
-    const world::ItemType& getItemType() const override { return *m_itemType; }
+    const common::ItemType& getItemType() const override { return *m_itemType; }
 
     std::uint8_t getCount() const override { return m_count; }
     void setCount(std::uint8_t count) override { m_count = count; }
 
    private:
-    world::ItemUniqueId m_item_unique_id;
-    const world::ItemType* m_itemType;
+    common::ItemUniqueId m_item_unique_id;
+    const common::ItemType* m_itemType;
     std::uint8_t m_count;
   };
 
-  std::unordered_map<world::ItemUniqueId, ItemImpl> m_items;
-  world::ItemUniqueId m_next_item_unique_id{1};
+  std::unordered_map<common::ItemUniqueId, ItemImpl> m_items;
+  common::ItemUniqueId m_next_item_unique_id{1};
 
   io::data_loader::ItemTypes  m_item_types;
-  world::ItemTypeId m_item_types_id_first{0};
-  world::ItemTypeId m_item_types_id_last{0};
+  common::ItemTypeId m_item_types_id_first{0};
+  common::ItemTypeId m_item_types_id_last{0};
 };
 
 }  // namespace gameengine

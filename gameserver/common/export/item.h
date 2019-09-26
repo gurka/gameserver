@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_ITEM_H_
-#define WORLD_EXPORT_ITEM_H_
+#ifndef COMMON_EXPORT_ITEM_H_
+#define COMMON_EXPORT_ITEM_H_
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-namespace world
+namespace common
 {
 
 using ItemUniqueId = std::uint64_t;
@@ -127,6 +127,6 @@ class Item
   }
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_ITEM_H_
+#endif  // COMMON_EXPORT_ITEM_H_

@@ -40,7 +40,7 @@ class Tile
  public:
   Tile() = default;
 
-  explicit Tile(const Item* ground_item)
+  explicit Tile(const common::Item* ground_item)
   {
     m_things.emplace_back(ground_item);
   }
@@ -54,30 +54,30 @@ class Tile
   Tile& operator=(Tile&&) = default;
 
   // Thing management
-  void addThing(const Thing& thing);
+  void addThing(const common::Thing& thing);
   bool removeThing(int stackpos);
-  const std::vector<Thing>& getThings() const { return m_things; }
+  const std::vector<common::Thing>& getThings() const { return m_things; }
   std::size_t getNumberOfThings() const { return m_things.size(); }
 
-  const Creature* getCreature(int stackpos) const;
-  const Item* getItem(int stackpos) const;
+  const common::Creature* getCreature(int stackpos) const;
+  const common::Item* getItem(int stackpos) const;
 
   // Helpers
   bool isBlocking() const;
-  int getCreatureStackpos(CreatureId creature_id) const;
+  int getCreatureStackpos(common::CreatureId creature_id) const;
 
   // Visitor pattern stuff
-  void visitThings(const std::function<void(const Creature*)>& creature_func,
-                   const std::function<void(const Item*)>& item_func) const;
-  void visitCreatures(const std::function<void(const Creature*)>& func) const;
-  void visitItems(const std::function<void(const Item*)>& func) const;
+  void visitThings(const std::function<void(const common::Creature*)>& creature_func,
+                   const std::function<void(const common::Item*)>& item_func) const;
+  void visitCreatures(const std::function<void(const common::Creature*)>& func) const;
+  void visitItems(const std::function<void(const common::Item*)>& func) const;
 
  private:
   // First ground
   // Then onTop items
   // Then creatures
   // Then other items
-  std::vector<Thing> m_things;
+  std::vector<common::Thing> m_things;
 };
 
 }  // namespace world

@@ -46,13 +46,13 @@ class Equipment
   {
   }
 
-  bool canAddItem(const world::Item& item, int inventory_slot) const;
-  bool addItem(const world::Item& item, int inventory_slot);
-  bool removeItem(world::ItemTypeId item_type_id, int inventory_slot);
-  const world::Item* getItem(int inventory_slot) const;
+  bool canAddItem(const common::Item& item, int inventory_slot) const;
+  bool addItem(const common::Item& item, int inventory_slot);
+  bool removeItem(common::ItemTypeId item_type_id, int inventory_slot);
+  const common::Item* getItem(int inventory_slot) const;
 
  private:
-  std::array<const world::Item*, 11> m_items;  // index 0 is invalid
+  std::array<const common::Item*, 11> m_items;  // index 0 is invalid
   enum InventorySlotInfo
   {
     HELMET     = 1,
@@ -68,10 +68,10 @@ class Equipment
   };
 };
 
-class Player : public world::Creature
+class Player : public common::Creature
 {
  public:
-  Player(world::CreatureId creature_id, const std::string& name);
+  Player(common::CreatureId creature_id, const std::string& name);
 
   // From Creature
   std::uint16_t getSpeed() const override;

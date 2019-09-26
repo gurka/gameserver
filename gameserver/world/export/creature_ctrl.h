@@ -27,13 +27,18 @@
 
 #include <string>
 
-namespace world
+namespace common
 {
 
 class Creature;
 class Position;
 class Tile;
 class Item;
+
+}
+
+namespace world
+{
 
 class CreatureCtrl
 {
@@ -42,40 +47,40 @@ class CreatureCtrl
 
   // Called when the creature has spawned nearby this creature
   // Can be the creature itself that has spawned
-  virtual void onCreatureSpawn(const Creature& creature,
-                               const Position& position) = 0;
+  virtual void onCreatureSpawn(const common::Creature& creature,
+                               const common::Position& position) = 0;
 
   // Called when a creature has despawned nearby this creature
-  virtual void onCreatureDespawn(const Creature& creature,
-                                 const Position& position,
+  virtual void onCreatureDespawn(const common::Creature& creature,
+                                 const common::Position& position,
                                  std::uint8_t stackpos) = 0;
 
   // Called when a creature has moved
-  virtual void onCreatureMove(const Creature& creature,
-                              const Position& old_position,
+  virtual void onCreatureMove(const common::Creature& creature,
+                              const common::Position& old_position,
                               std::uint8_t old_stackpos,
-                              const Position& new_position) = 0;
+                              const common::Position& new_position) = 0;
 
   // Called when a creature has turned
-  virtual void onCreatureTurn(const Creature& creature,
-                              const Position& position,
+  virtual void onCreatureTurn(const common::Creature& creature,
+                              const common::Position& position,
                               std::uint8_t stackpos) = 0;
 
   // Called when a creature says something
-  virtual void onCreatureSay(const Creature& creature,
-                             const Position& position,
+  virtual void onCreatureSay(const common::Creature& creature,
+                             const common::Position& position,
                              const std::string& message) = 0;
 
   // Called when an Item was removed from a Tile
-  virtual void onItemRemoved(const Position& position,
+  virtual void onItemRemoved(const common::Position& position,
                              std::uint8_t stackpos) = 0;
 
   // Called when an Item was added to a Tile
-  virtual void onItemAdded(const Item& item,
-                           const Position& position) = 0;
+  virtual void onItemAdded(const common::Item& item,
+                           const common::Position& position) = 0;
 
   // Called when a Tile has been updated
-  virtual void onTileUpdate(const Position& position) = 0;
+  virtual void onTileUpdate(const common::Position& position) = 0;
 };
 
 }  // namespace world

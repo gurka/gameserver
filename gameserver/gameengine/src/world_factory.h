@@ -30,7 +30,9 @@
 
 namespace world
 {
+
 class World;
+
 }
 
 namespace gameengine

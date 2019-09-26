@@ -31,7 +31,7 @@
 namespace gameengine
 {
 
-bool Equipment::canAddItem(const world::Item& item, int inventory_slot) const
+bool Equipment::canAddItem(const common::Item& item, int inventory_slot) const
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -123,7 +123,7 @@ bool Equipment::canAddItem(const world::Item& item, int inventory_slot) const
   return false;
 }
 
-bool Equipment::addItem(const world::Item& item, int inventory_slot)
+bool Equipment::addItem(const common::Item& item, int inventory_slot)
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -140,7 +140,7 @@ bool Equipment::addItem(const world::Item& item, int inventory_slot)
   return true;
 }
 
-bool Equipment::removeItem(world::ItemTypeId item_type_id, int inventory_slot)
+bool Equipment::removeItem(common::ItemTypeId item_type_id, int inventory_slot)
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -157,7 +157,7 @@ bool Equipment::removeItem(world::ItemTypeId item_type_id, int inventory_slot)
   return true;
 }
 
-const world::Item* Equipment::getItem(int inventory_slot) const
+const common::Item* Equipment::getItem(int inventory_slot) const
 {
   if (inventory_slot < 1 || inventory_slot > 10)
   {
@@ -168,7 +168,7 @@ const world::Item* Equipment::getItem(int inventory_slot) const
   return m_items[inventory_slot];
 }
 
-Player::Player(world::CreatureId creature_id, const std::string& name)
+Player::Player(common::CreatureId creature_id, const std::string& name)
   : Creature(creature_id, name),
     m_max_mana(100),
     m_mana(100),

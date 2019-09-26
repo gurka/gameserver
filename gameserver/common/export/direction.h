@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_DIRECTION_H_
-#define WORLD_EXPORT_DIRECTION_H_
+#ifndef COMMON_EXPORT_DIRECTION_H_
+#define COMMON_EXPORT_DIRECTION_H_
 
 #include <cstdint>
 
-namespace world
+namespace common
 {
 
 enum class Direction
@@ -38,6 +38,6 @@ enum class Direction
   WEST  = 3
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_DIRECTION_H_
+#endif  // COMMON_EXPORT_DIRECTION_H_

@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef WORLD_EXPORT_CREATURE_H_
-#define WORLD_EXPORT_CREATURE_H_
+#ifndef COMMON_EXPORT_CREATURE_H_
+#define COMMON_EXPORT_CREATURE_H_
 
 #include <cstdint>
 #include <string>
 
 #include "direction.h"
 
-namespace world
+namespace common
 {
 
 using CreatureId = std::uint32_t;
@@ -113,6 +113,6 @@ class Creature
   std::int64_t m_next_walk_tick{0};
 };
 
-}  // namespace world
+}  // namespace common
 
-#endif  // WORLD_EXPORT_CREATURE_H_
+#endif  // COMMON_EXPORT_CREATURE_H_
