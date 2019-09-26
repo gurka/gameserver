@@ -1,3 +1,5 @@
 correct namespace in common
 unittest moved/created in common
 move/fix Creature to common
+maybe put Player and Equipment in common as well...???
+verify all module dependencies now when things have moved
