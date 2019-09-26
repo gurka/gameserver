@@ -11,6 +11,7 @@ add_executable(world_test
 )
 
 target_link_libraries(world_test PRIVATE
+  common
   world
   utils
   gtest_main

@@ -9,6 +9,7 @@ add_executable(gameengine_test
 target_include_directories(gameengine_test PRIVATE "../src")
 
 target_link_libraries(gameengine_test PRIVATE
+  common
   gameengine
   utils
   world
