@@ -71,7 +71,7 @@ class Equipment
 class Player : public world::Creature
 {
  public:
-  explicit Player(const std::string& name);
+  Player(world::CreatureId creature_id, const std::string& name);
 
   // From Creature
   std::uint16_t getSpeed() const override;

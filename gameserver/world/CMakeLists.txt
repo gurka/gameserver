@@ -4,10 +4,8 @@ project(world)
 
 add_library(world
   "export/creature_ctrl.h"
-  "export/creature.h"
   "export/tile.h"
   "export/world.h"
-  "src/creature.cc"
   "src/tile.cc"
   "src/world.cc"
 )

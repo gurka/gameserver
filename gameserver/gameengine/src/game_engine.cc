@@ -109,8 +109,10 @@ bool GameEngine::init(GameEngineQueue* game_engine_queue,
 bool GameEngine::spawn(const std::string& name, PlayerCtrl* player_ctrl)
 {
   // Create the Player
-  Player new_player{name};
-  auto creature_id = new_player.getCreatureId();
+  // TODO(simon): need this static for other types of creatures as well
+  static world::CreatureId next_creature_id = 0x4713;
+  const auto creature_id = next_creature_id++;
+  Player new_player(creature_id, name);
 
   // Store the Player and the PlayerCtrl
   m_player_data.emplace(std::piecewise_construct,
