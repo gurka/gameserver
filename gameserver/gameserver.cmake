@@ -38,6 +38,7 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
 endif()
 
 # -- Modules --
+add_subdirectory("common")
 add_subdirectory("io")
 add_subdirectory("protocol")
 add_subdirectory("utils")

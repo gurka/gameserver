@@ -16,6 +16,7 @@ add_library(io
 
 target_link_libraries(io PRIVATE
   account
+  common
   utils
   world
   rapidxml

@@ -22,6 +22,7 @@ add_library(gameengine
 )
 
 target_link_libraries(gameengine PRIVATE
+  common
   io
   utils
   world

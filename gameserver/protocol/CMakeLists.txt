@@ -9,6 +9,7 @@ add_library(protocol
 )
 
 target_link_libraries(protocol PRIVATE
+  common
   gameengine
   network
   utils

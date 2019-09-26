@@ -8,7 +8,6 @@ add_library(world
   "export/direction.h"
   "export/item.h"
   "export/position.h"
-  "export/thing.h"
   "export/tile.h"
   "export/world.h"
   "src/creature.cc"
@@ -18,6 +17,7 @@ add_library(world
 )
 
 target_link_libraries(world PRIVATE
+  common
   utils
 )
 

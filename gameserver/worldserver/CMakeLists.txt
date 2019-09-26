@@ -10,6 +10,7 @@ add_executable(worldserver
 
 target_link_libraries(worldserver PRIVATE
   account
+  common
   gameengine
   network
   protocol
