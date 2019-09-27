@@ -35,11 +35,24 @@ namespace utils
 
 const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 {
-  // utils
-  { "config_parser.h",          Module::UTILS       },
-
   // account
   { "account.cc",               Module::ACCOUNT     },
+
+  // gameengine
+  { "container_manager.cc",     Module::GAMEENGINE  },
+  { "game_engine.cc",           Module::GAMEENGINE  },
+  { "game_engine_queue.cc",     Module::GAMEENGINE  },
+  { "player.cc",                Module::GAMEENGINE  },
+  { "item_manager.cc",          Module::GAMEENGINE  },
+
+  // io
+  { "account_loader.cc",        Module::IO          },
+  { "data_loader.cc",           Module::IO          },
+  { "sprite_loader.cc",         Module::IO          },
+  { "world_loader.cc",          Module::IO          },
+
+  // loginserver
+  { "loginserver.cc",           Module::LOGINSERVER },
 
   // network
   { "connection_impl.h",        Module::NETWORK     },
@@ -50,6 +63,13 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "websocket_server_impl.h",  Module::NETWORK     },
   { "websocket_server_impl.cc", Module::NETWORK     },
 
+  // protocol
+  { "protocol.cc",              Module::PROTOCOL    },
+  { "protocol_helper.cc",       Module::PROTOCOL    },
+
+  // utils
+  { "config_parser.h",          Module::UTILS       },
+
   // world
   { "item.cc",                  Module::WORLD       },
   { "tile.cc",                  Module::WORLD       },
@@ -59,27 +79,9 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "item_factory.cc",          Module::WORLD       },
   { "world_factory.cc",         Module::WORLD       },
 
-  // loginserver
-  { "loginserver.cc",           Module::LOGINSERVER },
-
-  // gameengine
-  { "container_manager.cc",     Module::GAMEENGINE  },
-  { "game_engine.cc",           Module::GAMEENGINE  },
-  { "game_engine_queue.cc",     Module::GAMEENGINE  },
-  { "player.cc",                Module::GAMEENGINE  },
-  { "item_manager.cc",          Module::GAMEENGINE  },
-
   // worldserver
   { "worldserver.cc",           Module::WORLDSERVER },
   { "connection_ctrl.cc",       Module::WORLDSERVER },
-
-  // protocol
-  { "protocol.cc",              Module::PROTOCOL    },
-  { "protocol_helper.cc",       Module::PROTOCOL    },
-
-  // io
-  { "data_loader.cc",           Module::IO          },
-  { "sprite_loader.cc",         Module::IO          },
 
   // wsclient
   { "wsclient.cc",              Module::WSCLIENT    },
