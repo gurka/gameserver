@@ -158,6 +158,7 @@ WorldData load(const std::string& filename,
       tile_node = tile_node->next_sibling();
     }
   }
+  free(xml_string);
 
   // Transpose the tiles
   // TODO(simon): Fix this, or rather, fix the input world xml
