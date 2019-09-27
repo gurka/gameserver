@@ -459,7 +459,7 @@ void GameEngine::lookAt(common::CreatureId creature_id, const common::ItemPositi
   }
   else
   {
-    ss << "You see an item with ItemTypeId: " << item->getItemTypeId() << ".";
+    ss << "You see an item without name (ItemTypeId: " << item->getItemTypeId() << ").";
   }
 
   // TODO(simon): only if standing next to the item
@@ -474,6 +474,48 @@ void GameEngine::lookAt(common::CreatureId creature_id, const common::ItemPositi
   }
 
   player_data.player_ctrl->sendTextMessage(0x13, ss.str());
+
+  // Send additional message with detail internal info
+  ss.str("");
+  ss << "ItemTypeId=" << item_type.id;
+  ss << (item_type.ground ? " ground" : "");
+  ss << " speed=" << item_type.speed;
+  ss << (item_type.is_blocking ? " is_blocking" : "");
+  ss << (item_type.always_on_top ? " always_on_top" : "");
+  ss << (item_type.is_container ? " is_container" : "");
+  ss << (item_type.is_stackable ? " is_stackable" : "");
+  ss << (item_type.is_usable ? " is_usable" : "");
+  ss << (item_type.is_multitype ? " is_multitype" : "");
+  ss << (item_type.is_not_movable ? " is_not_movable" : "");
+  ss << (item_type.is_equipable ? " is_equipable" : "");
+  player_data.player_ctrl->sendTextMessage(0x11, ss.str());
+
+  ss.str("");
+  ss << "Sprite:";
+  ss << " width="    << static_cast<int>(item_type.sprite_width)
+     << " height="   << static_cast<int>(item_type.sprite_height)
+     << " extra="    << static_cast<int>(item_type.sprite_extra)
+     << " blend="    << static_cast<int>(item_type.sprite_blend_frames)
+     << " xdiv="     << static_cast<int>(item_type.sprite_xdiv)
+     << " ydiv="     << static_cast<int>(item_type.sprite_ydiv)
+     << " num_anim=" << static_cast<int>(item_type.sprite_num_anim);
+  player_data.player_ctrl->sendTextMessage(0x11, ss.str());
+
+  ss.str("");
+  ss << "Sprite IDs:";
+  for (const auto& sprite_id : item_type.sprites)
+  {
+    ss << " " << sprite_id;
+  }
+  player_data.player_ctrl->sendTextMessage(0x11, ss.str());
+
+  ss.str("");
+  ss << "Unknowns:";
+  for (const auto& unknown : item_type.unknown_properties)
+  {
+    ss << " id=" << static_cast<int>(unknown.id) << ",extra=" << unknown.extra;
+  }
+  player_data.player_ctrl->sendTextMessage(0x11, ss.str());
 }
 
 void GameEngine::closeContainer(common::CreatureId creature_id, common::ItemUniqueId item_unique_id)
