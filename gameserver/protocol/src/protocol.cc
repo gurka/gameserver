@@ -176,15 +176,22 @@ void addThingChanged(const common::Position& position,
                      KnownCreatures* known_creatures,
                      network::OutgoingPacket* packet)
 {
+  (void)known_creatures;
+
   packet->addU8(0x6B);
   addPosition(position, packet);
   packet->add(stackpos);
-  addThing(thing, known_creatures, packet);
 
-  // Only for creature 0x0063?
+  // TODO(simon): fix this, also see addCreature
   if (thing.creature())
   {
+    packet->addU16(0x0063);
+    packet->add(thing.creature()->getCreatureId());
     packet->add(static_cast<std::uint8_t>(thing.creature()->getDirection()));
+  }
+  else
+  {
+    addItem(thing.item(), packet);
   }
 }
 
