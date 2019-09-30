@@ -42,8 +42,8 @@ namespace wsclient
 
 using namespace protocol::client;
 
-wsworld::CreatureId player_id;
-wsworld::Position player_position = { 0, 0, 0 };
+common::CreatureId player_id;
+common::Position player_position = { 0, 0, 0 };
 wsworld::Map map;
 std::vector<Creature> creatures;
 

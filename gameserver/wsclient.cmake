@@ -13,9 +13,11 @@ set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat" "${CMAKE_BINARY_DIR}/files/data.dat" COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
 
-target_link_options(wsclient PRIVATE --preload-file "files/")
+target_link_options(wsclient PRIVATE --preload-file "../files/")
 
 # Hack to build subset of the modules that gameserver use
+
+add_subdirectory(common)
 
 add_library(gameengine INTERFACE)
 target_include_directories(gameengine INTERFACE "gameengine/export")
@@ -29,8 +31,8 @@ add_library(io
 )
 target_include_directories(io PUBLIC "io/export")
 target_link_libraries(io PRIVATE
+  common
   utils
-  world
   rapidxml
 )
 
@@ -52,6 +54,7 @@ add_library(protocol
 )
 target_include_directories(protocol PUBLIC "protocol/export")
 target_link_libraries(protocol PRIVATE
+  common
   gameengine
   network
   world
@@ -64,18 +67,8 @@ add_library(utils
 )
 target_include_directories(utils PUBLIC "utils/export")
 
-add_library(world
-  "world/export/creature.h"
-  "world/export/direction.h"
-  "world/export/item.h"
-  "world/export/position.h"
-  "world/src/creature.cc"
-  "world/src/position.cc"
-)
-target_include_directories(world PUBLIC "world/export")
-target_link_libraries(world PRIVATE
-  utils
-)
+add_library(world INTERFACE)
+target_include_directories(world INTERFACE "world/export")
 
 add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")

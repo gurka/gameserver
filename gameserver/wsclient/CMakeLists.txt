@@ -14,10 +14,10 @@ add_executable(wsclient
 )
 
 target_link_libraries(wsclient PRIVATE
+  common
   gameengine
   io
   network
   protocol
   utils
-  world
 )

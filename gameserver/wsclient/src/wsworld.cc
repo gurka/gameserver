@@ -70,7 +70,7 @@ void Map::setMapData(const protocol::client::MapData& map_data)
   }
 }
 
-void Map::addCreature(const Position& position, CreatureId creature_id)
+void Map::addCreature(const common::Position& position, common::CreatureId creature_id)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -99,7 +99,10 @@ void Map::addCreature(const Position& position, CreatureId creature_id)
            std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::addItem(const Position& position, ItemTypeId item_type_id, std::uint8_t extra, bool onTop)
+void Map::addItem(const common::Position& position,
+                  common::ItemTypeId item_type_id,
+                  std::uint8_t extra,
+                  bool onTop)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -139,7 +142,7 @@ void Map::addItem(const Position& position, ItemTypeId item_type_id, std::uint8_
            std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::removeThing(const Position& position, std::uint8_t stackpos)
+void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();
@@ -152,7 +155,7 @@ void Map::removeThing(const Position& position, std::uint8_t stackpos)
            stackpos);
 }
 
-const Map::Tile& Map::getTile(const Position& position) const
+const Map::Tile& Map::getTile(const common::Position& position) const
 {
   const auto x = position.getX() + 8 - m_player_position.getX();
   const auto y = position.getY() + 6 - m_player_position.getY();

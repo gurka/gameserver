@@ -24,18 +24,20 @@
 #ifndef WSCLIENT_SRC_GRAPHICS_H_
 #define WSCLIENT_SRC_GRAPHICS_H_
 
-#include <cstdint>
+#include <string>
 
-#include "position.h"
 #include "wsworld.h"
+#include "position.h"
+#include "creature.h"
+
 
 namespace wsclient::graphics
 {
 
 bool init(const std::string& data_filename, const std::string& sprite_filename);
 void draw(const wsworld::Map& map,
-          const wsworld::Position& position,
-          std::uint32_t player_id);
+          const common::Position& position,
+          common::CreatureId player_id);
 
 }  // namespace wsclient::graphics
 
