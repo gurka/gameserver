@@ -47,6 +47,66 @@ SDL_Renderer* sdl_renderer = nullptr;
 io::data_loader::ItemTypes itemtypes;
 io::SpriteLoader sprite_loader;
 
+struct Texture
+{
+  std::uint16_t sprite_id;
+  SDL_Texture* texture;
+};
+
+std::vector<Texture> textures;
+
+SDL_Texture* getTexture(std::uint16_t sprite_id)
+{
+  const auto it = std::find_if(textures.cbegin(),
+                               textures.cend(),
+                               [&sprite_id](const Texture& texture)
+  {
+    return texture.sprite_id == sprite_id;
+  });
+
+  if (it != textures.cend())
+  {
+    return it->texture;
+  }
+
+  // Load new texture
+  // Cannot be const due to SDL_CreateRGBSurfaceFrom
+  auto pixels = sprite_loader.getSpritePixels(sprite_id);
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  constexpr auto rmask = 0xFF000000U;
+  constexpr auto gmask = 0x00FF0000U;
+  constexpr auto bmask = 0x0000FF00U;
+  constexpr auto amask = 0x000000FFU;
+#else
+  constexpr auto rmask = 0x000000FFU;
+  constexpr auto gmask = 0x0000FF00U;
+  constexpr auto bmask = 0x00FF0000U;
+  constexpr auto amask = 0xFF000000U;
+#endif
+  auto* surface = SDL_CreateRGBSurfaceFrom(pixels.data(), 32, 32, 32, 32 * 4, rmask, gmask, bmask, amask);
+  if (!surface)
+  {
+    LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
+    return nullptr;
+  }
+
+  // Create texture from surface
+  auto* texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
+  if (!texture)
+  {
+    LOG_ERROR("%s: could not create texture: %s", __func__, SDL_GetError());
+    return nullptr;
+  }
+
+  SDL_FreeSurface(surface);
+
+  // Add to cache
+  textures.push_back(Texture{sprite_id, texture});
+
+  return texture;
+}
+
 void drawTexture(int x, int y, SDL_Texture* texture)
 {
   const SDL_Rect dest { x * scale, y * scale, tile_size_scaled, tile_size_scaled };
@@ -68,8 +128,7 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
     return;
   }
 
-#if 0
-  auto* texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+  auto* texture = getTexture(item_type.sprites[sprite_index++]);
   if (!texture)
   {
     LOG_ERROR("%s: missing texture for sprite id: %d", __func__, sprite_index - 1);
@@ -94,23 +153,22 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
     //
     if (item_type.sprite_width == 2)
     {
-      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      texture = getTexture(item_type.sprites[sprite_index++]);
       drawTexture(x - tile_size, y, texture);
     }
 
     if (item_type.sprite_height == 2)
     {
-      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      texture = getTexture(item_type.sprites[sprite_index++]);
       drawTexture(x, y - tile_size, texture);
     }
 
     if (item_type.sprite_width == 2 && item_type.sprite_height == 2)
     {
-      texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
+      texture = getTexture(item_type.sprites[sprite_index++]);
       drawTexture(x - tile_size, y - tile_size, texture);
     }
   }
-#endif
 }
 
 }  // namespace

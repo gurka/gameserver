@@ -39,6 +39,19 @@ bool load(const std::string& data_filename,
           common::ItemTypeId* id_first,
           common::ItemTypeId* id_last)
 {
+  // Allow nullptr id_first and id_last, but then we need to use
+  // internal variables
+  common::ItemTypeId id_first_internal;
+  if (!id_first)
+  {
+    id_first = &id_first_internal;
+  }
+  common::ItemTypeId id_last_internal;
+  if (!id_last)
+  {
+    id_last = &id_last_internal;
+  }
+
   FileReader fr;
   if (!fr.load(data_filename))
   {
