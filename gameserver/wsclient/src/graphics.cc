@@ -29,7 +29,7 @@
 #include <SDL/SDL.h>
 
 #include "logger.h"
-#include "item_types.h"
+#include "data_loader.h"
 #include "sprite_loader.h"
 
 namespace
@@ -44,8 +44,8 @@ constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
-wsclient::wsworld::ItemTypes itemtypes;
-wsclient::sprite::Reader sprite_reader;
+io::data_loader::ItemTypes itemtypes;
+io::SpriteLoader sprite_loader;
 
 void drawTexture(int x, int y, SDL_Texture* texture)
 {
@@ -53,7 +53,7 @@ void drawTexture(int x, int y, SDL_Texture* texture)
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
-void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type, std::uint16_t offset)
+void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset)
 {
   // Need to use global positon, not local
   const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
@@ -68,6 +68,7 @@ void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type, std::u
     return;
   }
 
+#if 0
   auto* texture = sprite_reader.get_sprite(item_type.sprites[sprite_index++], sdl_renderer);
   if (!texture)
   {
@@ -109,6 +110,7 @@ void drawItem(int x, int y, const wsclient::wsworld::ItemType& item_type, std::u
       drawTexture(x - tile_size, y - tile_size, texture);
     }
   }
+#endif
 }
 
 }  // namespace
@@ -118,13 +120,11 @@ namespace wsclient::graphics
 
 bool init(const std::string& data_filename, const std::string& sprite_filename)
 {
-  const auto tmp = item_types::load(data_filename);
-  if (!tmp)
+  if (!io::data_loader::load(data_filename, &itemtypes, nullptr, nullptr))
   {
     LOG_ERROR("Could not load \"%s\"", data_filename.c_str());
     return false;
   }
-  itemtypes = tmp.value();
 
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -142,7 +142,7 @@ bool init(const std::string& data_filename, const std::string& sprite_filename)
     return false;
   }
 
-  if (!sprite_reader.load(sprite_filename))
+  if (!sprite_loader.load(sprite_filename))
   {
     LOG_ERROR("%s: could not sprites", __func__);
     return false;
@@ -152,8 +152,8 @@ bool init(const std::string& data_filename, const std::string& sprite_filename)
 }
 
 void draw(const wsworld::Map& map,
-          const wsworld::Position& position,
-          wsworld::CreatureId player_id)
+          const common::Position& position,
+          common::CreatureId player_id)
 {
   SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
   SDL_RenderClear(sdl_renderer);
@@ -162,9 +162,9 @@ void draw(const wsworld::Map& map,
   {
     for (auto x = 0; x < consts::draw_tiles_x; x++)
     {
-      const auto& tile = map.getTile(world::Position(x - 7 + position.getX(),
-                                                     y - 5 + position.getY(),
-                                                     position.getZ()));
+      const auto& tile = map.getTile(common::Position(x - 7 + position.getX(),
+                                                      y - 5 + position.getY(),
+                                                      position.getZ()));
 
       // Draw ground
       const auto& ground_type = itemtypes[tile.things.front().item.item_type_id];
