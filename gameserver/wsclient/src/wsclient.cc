@@ -192,4 +192,5 @@ int main()
     return 1;
   }
   wsclient::network::start(&wsclient::handle_packet);
+  LOG_INFO("%s: WSClient started!");
 }
