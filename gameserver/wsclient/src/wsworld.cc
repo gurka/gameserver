@@ -68,6 +68,8 @@ void Map::setMapData(const protocol::client::MapData& map_data)
       ++it;
     }
   }
+
+  m_ready = true;
 }
 
 void Map::addCreature(const common::Position& position, common::CreatureId creature_id)

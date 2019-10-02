@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+#include <emscripten.h>
+
 #include "logger.h"
 #include "outgoing_packet.h"
 #include "incoming_packet.h"
@@ -61,7 +63,6 @@ void handleFullMapPacket(const MapData& mapData)
 {
   player_position = mapData.position;
   map.setMapData(mapData);
-  graphics::draw(map, player_position, player_id);
 }
 
 void handleMagicEffect(const MagicEffect& effect)
@@ -117,7 +118,6 @@ void handleCreatureMove(const CreatureMove& move)
   // If this played moved then we need to update map's player_position
   // BEFORE OR AFTER MOVING PLAYER???
 
-  graphics::draw(map, player_position, player_id);
 }
 
 void handle_packet(network::IncomingPacket* packet)
@@ -181,6 +181,11 @@ void handle_packet(network::IncomingPacket* packet)
 
 }  // namespace wsclient
 
+extern "C" void main_loop()
+{
+  wsclient::graphics::draw(wsclient::map, wsclient::player_position, wsclient::player_id);
+}
+
 int main()
 {
   constexpr auto data_filename = "files/data.dat";
@@ -192,5 +197,7 @@ int main()
     return 1;
   }
   wsclient::network::start(&wsclient::handle_packet);
-  LOG_INFO("%s: WSClient started!");
+
+  LOG_INFO("%s: starting main loop", __func__);
+  emscripten_set_main_loop(main_loop, 0, true);
 }

@@ -113,12 +113,12 @@ void drawTexture(int x, int y, SDL_Texture* texture)
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
-void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset)
+void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset, int anim_tick)
 {
   // Need to use global positon, not local
   const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
   const auto ydiv = item_type.sprite_ydiv == 0 ? 0 : y % item_type.sprite_ydiv;
-  auto sprite_index = xdiv + (ydiv * item_type.sprite_xdiv);
+  auto sprite_index = xdiv + (ydiv * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
   if (sprite_index < 0 || sprite_index >= static_cast<int>(item_type.sprites.size()))
   {
     LOG_ERROR("%s: sprite_index: %d is invalid (sprites.size(): %d)",
@@ -213,8 +213,16 @@ void draw(const wsworld::Map& map,
           const common::Position& position,
           common::CreatureId player_id)
 {
+  const auto anim_tick = SDL_GetTicks() / 540;
+
   SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
   SDL_RenderClear(sdl_renderer);
+
+  if (!map.ready())
+  {
+    SDL_RenderPresent(sdl_renderer);
+    return;
+  }
 
   for (auto y = 0; y < consts::draw_tiles_y; y++)
   {
@@ -226,7 +234,7 @@ void draw(const wsworld::Map& map,
 
       // Draw ground
       const auto& ground_type = itemtypes[tile.things.front().item.item_type_id];
-      drawItem(x, y, ground_type, 0);
+      drawItem(x, y, ground_type, 0, anim_tick);
 
       // Draw things in reverse order, except ground
       auto offset = ground_type.offset;
@@ -237,7 +245,7 @@ void draw(const wsworld::Map& map,
         {
           // TODO: probably need things like count later
           const auto& item_type = itemtypes[thing.item.item_type_id];
-          drawItem(x, y, item_type, offset);
+          drawItem(x, y, item_type, offset, anim_tick);
 
           offset += item_type.offset;
         }

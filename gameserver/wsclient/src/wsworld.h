@@ -71,10 +71,12 @@ class Map
   void removeThing(const common::Position& position, std::uint8_t stackpos);
 
   const Tile& getTile(const common::Position& position) const;
+  bool ready() const { return m_ready; }
 
  private:
   common::Position m_player_position = { 0, 0, 0 };
   std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
+  bool m_ready = false;
 };
 
 }  // namespace wsclient::wsworld
