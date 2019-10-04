@@ -158,6 +158,8 @@ int main()
   if (!game_engine->init(game_engine_queue.get(), login_message, data_filename, items_filename, world_filename))
   {
     LOG_ERROR("Could not initialize GameEngine");
+    game_engine.reset();
+    game_engine_queue.reset();
     return 1;
   }
 
@@ -166,6 +168,9 @@ int main()
   if (!account_reader->load(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
+    account_reader.reset();
+    game_engine.reset();
+    game_engine_queue.reset();
     return 1;
   }
 

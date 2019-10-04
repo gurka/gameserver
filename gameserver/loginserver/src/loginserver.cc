@@ -223,6 +223,7 @@ int main()
   if (!account_reader->load(accounts_filename))
   {
     LOG_ERROR("Could not load accounts file: %s", accounts_filename.c_str());
+    account_reader.reset();
     return 1;
   }
 
