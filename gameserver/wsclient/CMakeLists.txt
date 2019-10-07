@@ -5,6 +5,7 @@ project(wsclient)
 add_executable(wsclient
   "src/graphics.cc"
   "src/graphics.h"
+  "src/itemtexture.h"
   "src/network.cc"
   "src/network.h"
   "src/types.h"

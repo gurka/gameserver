@@ -21,24 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef WSCLIENT_SRC_ITEM_TEXTURE_H_
+#define WSCLIENT_SRC_ITEM_TEXTURE_H_
 
-#include <string>
+#include "item.h"
 
-#include "wsworld.h"
-#include "position.h"
-#include "creature.h"
-#include "itemtexture.h"
+struct SDL_Texture;
 
-namespace wsclient::graphics
+namespace wsclient
 {
 
-bool init(const std::string& data_filename, const std::string& sprite_filename);
-void draw(const wsworld::Map& map,
-          const common::Position& position,
-          common::CreatureId player_id);
+struct ItemTexture
+{
+  common::ItemTypeId item_type_id;
+  std::vector<SDL_Texture*> textures;
+};
 
-}  // namespace wsclient::graphics
+}  // namespace wsclient
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+#endif  // WSCLIENT_SRC_ITEM_TEXTURE_H_
+
