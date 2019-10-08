@@ -176,33 +176,91 @@ Texture Texture::create(SDL_Renderer* renderer,
   Texture texture;
   texture.item_type_id = item_type.id;
 
-  if (item_type.sprite_blend_frames != 1U)
+  if (item_type.sprite_blend_frames != 1U &&
+      item_type.sprite_blend_frames != 2U)
   {
-    LOG_ERROR("%s: item with blend not supported! (id: %u)", __func__, item_type.id);
+    LOG_ERROR("%s: invalid blend: %u in item type: %u",
+              __func__,
+              item_type.sprite_blend_frames,
+              item_type.id);
     return texture;
   }
 
   const auto num_sprites_per_texture = item_type.sprite_width * item_type.sprite_height;
   const auto num_textures = item_type.sprite_xdiv * item_type.sprite_ydiv * item_type.sprite_num_anim;
-  auto sprite_it = item_type.sprites.begin();
-  for (auto i = 0; i < num_textures; i++)
+  if (item_type.sprite_blend_frames == 1U)
   {
-    const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
-                                                       sprite_it + num_sprites_per_texture);
-    auto* sdl_texture = createSDLTexture(renderer,
-                                         sprite_loader,
-                                         sprite_ids,
-                                         item_type.sprite_width,
-                                         item_type.sprite_height,
-                                         item_type.sprite_extra);
-    if (!sdl_texture)
+    auto sprite_it = item_type.sprites.begin();
+    for (auto i = 0; i < num_textures; i++)
     {
-      LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
-      texture.textures.clear();
-      return texture;
+      const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
+                                                         sprite_it + num_sprites_per_texture);
+      sprite_it += num_sprites_per_texture;
+
+      auto* sdl_texture = createSDLTexture(renderer,
+                                           sprite_loader,
+                                           sprite_ids,
+                                           item_type.sprite_width,
+                                           item_type.sprite_height,
+                                           item_type.sprite_extra);
+      if (!sdl_texture)
+      {
+        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
+        texture.textures.clear();
+        return texture;
+      }
+      texture.textures.push_back(sdl_texture);
     }
-    texture.textures.push_back(sdl_texture);
-    sprite_it += num_sprites_per_texture;
+  }
+  else  // sprite_blend_frames == 2U
+  {
+    // Add first set of textures
+    for (auto i = 0; i < num_textures; i++)
+    {
+      std::vector<std::uint16_t> sprite_ids;
+      for (auto j = 0; j < num_sprites_per_texture; j++)
+      {
+        sprite_ids.push_back(item_type.sprites[(i * num_sprites_per_texture) + (j * 2)]);
+      }
+
+      auto* sdl_texture = createSDLTexture(renderer,
+                                           sprite_loader,
+                                           sprite_ids,
+                                           item_type.sprite_width,
+                                           item_type.sprite_height,
+                                           item_type.sprite_extra);
+      if (!sdl_texture)
+      {
+        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
+        texture.textures.clear();
+        return texture;
+      }
+      texture.textures.push_back(sdl_texture);
+    }
+
+    // Add second set of textures
+    for (auto i = 0; i < num_textures; i++)
+    {
+      std::vector<std::uint16_t> sprite_ids;
+      for (auto j = 0; j < num_sprites_per_texture; j++)
+      {
+        sprite_ids.push_back(item_type.sprites[(i * num_sprites_per_texture) + (j * 2) + 1]);
+      }
+
+      auto* sdl_texture = createSDLTexture(renderer,
+                                           sprite_loader,
+                                           sprite_ids,
+                                           item_type.sprite_width,
+                                           item_type.sprite_height,
+                                           item_type.sprite_extra);
+      if (!sdl_texture)
+      {
+        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
+        texture.textures.clear();
+        return texture;
+      }
+      texture.textures.push_back(sdl_texture);
+    }
   }
 
   return texture;
