@@ -31,7 +31,7 @@
 #include "logger.h"
 #include "data_loader.h"
 #include "sprite_loader.h"
-#include "itemtexture.h"
+#include "texture.h"
 
 namespace
 {
@@ -43,151 +43,17 @@ constexpr auto tile_size_scaled = tile_size * scale;
 constexpr auto screen_width  = wsclient::consts::draw_tiles_x * tile_size_scaled;
 constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled;
 
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-constexpr auto rmask = 0xFF000000U;
-constexpr auto gmask = 0x00FF0000U;
-constexpr auto bmask = 0x0000FF00U;
-constexpr auto amask = 0x000000FFU;
-#else
-constexpr auto rmask = 0x000000FFU;
-constexpr auto gmask = 0x0000FF00U;
-constexpr auto bmask = 0x00FF0000U;
-constexpr auto amask = 0xFF000000U;
-#endif
-
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
 io::data_loader::ItemTypes itemtypes;
 io::SpriteLoader sprite_loader;
-std::vector<wsclient::ItemTexture> item_textures;
-
-/*
- * Item -> ItemType -> Sprites -> Texture info
- *
- * Item has an ItemType (ItemTypeId)
- * ItemType has sprite information:
- *  width:     >1 if the full sprite has more than 1 sprite in width
- *  height:    >1 if the full sprite has more than 1 sprite in height
- *  extra:     only used if width > 1 or height > 1, see drawItem()
- *  blend:     used for sprites with custom color, e.g. player sprites,
- *             1 template sprite, 1 color sprite, and so on
- *             valid values 1 and 2?
- *  xdiv:      different sprites for different (global) position in x
- *  ydiv:      different sprites for different (global) position in y
- *  num_anims: number of animations
- *
- * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
- *
- * Texture is a "full" sprite, e.g. full width and height
- *
- * Total number of textures: xdiv * ydiv * num_anim
- *
- * Select texture based on global position and animation tick
- * This is only valid for non blend sprites (all but player sprites?)
- */
-
-SDL_Texture* createTexture(const std::vector<std::uint16_t>& sprite_ids,
-                           std::uint8_t width,
-                           std::uint8_t height,
-                           std::uint8_t extra)
-{
-  // For now, ignore extra and always create the texture either
-  // 32x32, 64x32, 32x64 or 64x64
-  extra = 64U;
-
-  const auto full_width = width == 1U ? 32U : extra;
-  const auto full_height = height == 1U ? 32U : extra;
-
-  // Validate number of sprites
-  if (width * height != sprite_ids.size())
-  {
-    LOG_ERROR("%s: unexpected number of sprite ids: %u with width: %u height: %u",
-              __func__,
-              sprite_ids.size(),
-              width,
-              height);
-    return nullptr;
-  }
-
-  // Combinations:
-  //
-  // width == 1 && height == 1 (32 x 32):
-  //    A
-  //
-  // width == 2 && height == 1 (extra x 32):
-  //   BA
-  //
-  // width == 1 && height == 2 (32 x extra): (see hack below)
-  //    C
-  //    A
-  //
-  // width == 2 && height == 2 (extra x extra):
-  //   DC
-  //   BA
-
-  std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
-  for (auto i = 0U; i < sprite_ids.size(); i++)
-  {
-    const auto sprite_pixels = sprite_loader.getSpritePixels(sprite_ids[i]);
-
-    // Hack to treat the two sprites as A and C when width == 1 and height == 2
-    if (i == 1 && width == 1 && height == 2)
-    {
-      i = 2;
-    }
-
-    // Where to start writing the pixels on texture_pixels
-    const auto start_x = (i == 0 || i == 2) && width == 2 ? 32U : 0U;
-    const auto start_y = (i == 0 || i == 1) && height == 2 ? 32U : 0U;
-
-    // Copy sprite pixels to texture pixels one row at a time
-    auto it_source = sprite_pixels.begin();
-    auto it_dest = texture_pixels.begin() + (start_y * full_width * 4) + (start_x * 4);
-    for (auto y = 0; y < 32; y++)
-    {
-      std::copy(it_source,
-                it_source + (32 * 4),
-                it_dest);
-
-      it_source += (32 * 4);
-      it_dest += (full_width * 4);
-    }
-  }
-
-  // Create surface and texture from pixels
-  auto* surface = SDL_CreateRGBSurfaceFrom(texture_pixels.data(),
-                                           full_width,
-                                           full_height,
-                                           32,
-                                           full_width * 4,
-                                           rmask,
-                                           gmask,
-                                           bmask,
-                                           amask);
-  if (!surface)
-  {
-    LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  auto* texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
-  SDL_FreeSurface(surface);
-  if (!texture)
-  {
-    LOG_ERROR("%s: could not create texture: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  return texture;
-}
+std::vector<wsclient::Texture> item_textures;
 
 const std::vector<SDL_Texture*>& getTextures(common::ItemTypeId item_type_id)
 {
-  static const std::vector<SDL_Texture*> empty;
-
   auto it = std::find_if(item_textures.cbegin(),
                          item_textures.cend(),
-                         [&item_type_id](const wsclient::ItemTexture& item_texture)
+                         [&item_type_id](const wsclient::Texture& item_texture)
   {
     return item_texture.item_type_id == item_type_id;
   });
@@ -195,38 +61,10 @@ const std::vector<SDL_Texture*>& getTextures(common::ItemTypeId item_type_id)
   // Create textures if not found
   if (it == item_textures.end())
   {
-    wsclient::ItemTexture item_texture;
-    item_texture.item_type_id = item_type_id;
     const auto& item_type = itemtypes[item_type_id];
-
-    if (item_type.sprite_blend_frames != 1U)
-    {
-      LOG_ERROR("%s: item with blend not supported! (id: %u)", __func__, item_type_id);
-      return empty;
-    }
-
-    const auto num_sprites_per_texture = item_type.sprite_width * item_type.sprite_height;
-    const auto num_textures = item_type.sprite_xdiv * item_type.sprite_ydiv * item_type.sprite_num_anim;
-    auto sprite_it = item_type.sprites.begin();
-    for (auto i = 0; i < num_textures; i++)
-    {
-      const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
-                                                         sprite_it + num_sprites_per_texture);
-      auto* texture = createTexture(sprite_ids,
-                                    item_type.sprite_width,
-                                    item_type.sprite_height,
-                                    item_type.sprite_extra);
-      if (!texture)
-      {
-        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type_id);
-        return empty;
-      }
-      item_texture.textures.push_back(texture);
-      sprite_it += num_sprites_per_texture;
-    }
-
-    item_textures.push_back(item_texture);
-
+    item_textures.push_back(wsclient::Texture::create(sdl_renderer,
+                                                      sprite_loader,
+                                                      item_type));
     it = item_textures.end() - 1;
   }
 

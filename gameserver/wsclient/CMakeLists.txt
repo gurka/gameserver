@@ -5,9 +5,10 @@ project(wsclient)
 add_executable(wsclient
   "src/graphics.cc"
   "src/graphics.h"
-  "src/itemtexture.h"
   "src/network.cc"
   "src/network.h"
+  "src/texture.cc"
+  "src/texture.h"
   "src/types.h"
   "src/wsclient.cc"
   "src/wsworld.cc"
@@ -29,6 +30,8 @@ target_link_options(wsclient PRIVATE --preload-file "../files/")
 
 add_executable(itemview
   "src/itemview.cc"
+  "src/texture.cc"
+  "src/texture.h"
 )
 
 target_link_libraries(itemview PRIVATE

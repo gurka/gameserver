@@ -29,7 +29,6 @@
 #include "wsworld.h"
 #include "position.h"
 #include "creature.h"
-#include "itemtexture.h"
 
 namespace wsclient::graphics
 {

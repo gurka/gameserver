@@ -21,23 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_ITEM_TEXTURE_H_
-#define WSCLIENT_SRC_ITEM_TEXTURE_H_
+#ifndef WSCLIENT_SRC_TEXTURE_H_
+#define WSCLIENT_SRC_TEXTURE_H_
 
+#include <vector>
 #include "item.h"
+#include "sprite_loader.h"
 
+struct SDL_Renderer;
 struct SDL_Texture;
 
 namespace wsclient
 {
 
-struct ItemTexture
+struct Texture
 {
+  static Texture create(SDL_Renderer* renderer,
+                        const io::SpriteLoader& sprite_loader,
+                        const common::ItemType& item_type);
+
   common::ItemTypeId item_type_id;
   std::vector<SDL_Texture*> textures;
 };
 
 }  // namespace wsclient
 
-#endif  // WSCLIENT_SRC_ITEM_TEXTURE_H_
+#endif  // WSCLIENT_SRC_TEXTURE_H_
 

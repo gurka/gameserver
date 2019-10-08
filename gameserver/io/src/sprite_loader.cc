@@ -64,7 +64,7 @@ bool SpriteLoader::load(const std::string& filename)
   return true;
 }
 
-SpriteLoader::SpritePixels SpriteLoader::getSpritePixels(int sprite_id)
+SpriteLoader::SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
 {
   SpriteLoader::SpritePixels sprite_pixels = {};
 

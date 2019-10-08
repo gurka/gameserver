@@ -44,7 +44,7 @@ class SpriteLoader
   ~SpriteLoader();
 
   bool load(const std::string& filename);
-  SpritePixels getSpritePixels(int sprite_id);
+  SpritePixels getSpritePixels(int sprite_id) const;
 
  private:
   std::unique_ptr<FileReader> m_fr;
