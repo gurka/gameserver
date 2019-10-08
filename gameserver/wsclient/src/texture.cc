@@ -42,7 +42,27 @@ constexpr auto bmask = 0x00FF0000U;
 constexpr auto amask = 0xFF000000U;
 #endif
 
+io::SpriteLoader::SpritePixels blendSprites(const io::SpriteLoader::SpritePixels& bottom,
+                                            const io::SpriteLoader::SpritePixels& top)
+{
+  io::SpriteLoader::SpritePixels result = bottom;
+  for (auto i = 0U; i < result.size(); i += 4)
+  {
+    // Add pixel from top if it is not alpha
+    if (top[i + 3] != 0x00U)
+    {
+      result[i + 0] = top[i + 0];
+      result[i + 1] = top[i + 1];
+      result[i + 2] = top[i + 2];
+      result[i + 3] = 0xFFU;
+    }
+  }
+  return result;
+}
+
 /*
+ * TODO(simon): add/correct blend info
+ *
  * Item -> ItemType -> Sprites -> Texture info
  *
  * Item has an ItemType (ItemTypeId)
@@ -72,7 +92,8 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                               const std::vector<std::uint16_t>& sprite_ids,
                               std::uint8_t width,
                               std::uint8_t height,
-                              std::uint8_t extra)
+                              std::uint8_t extra,
+                              bool blend)
 {
   // For now, ignore extra and always create the texture either
   // 32x32, 64x32, 32x64 or 64x64
@@ -82,7 +103,7 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
   const auto full_height = height == 1U ? 32U : extra;
 
   // Validate number of sprites
-  if (width * height != sprite_ids.size())
+  if (width * height * (blend ? 2 : 1) != sprite_ids.size())
   {
     LOG_ERROR("%s: unexpected number of sprite ids: %u with width: %u height: %u",
               __func__,
@@ -109,9 +130,11 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
   //   BA
 
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
-  for (auto i = 0U; i < sprite_ids.size(); i++)
+  for (auto i = 0U; i < sprite_ids.size(); i += (blend ? 2 : 1))
   {
-    const auto sprite_pixels = sprite_loader.getSpritePixels(sprite_ids[i]);
+    const auto sprite_pixels = blend ? blendSprites(sprite_loader.getSpritePixels(sprite_ids[i + 0]),
+                                                    sprite_loader.getSpritePixels(sprite_ids[i + 1]))
+                                     : sprite_loader.getSpritePixels(sprite_ids[i]);
 
     // Hack to treat the two sprites as A and C when width == 1 and height == 2
     if (i == 1 && width == 1 && height == 2)
@@ -169,6 +192,16 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 namespace wsclient
 {
 
+Texture::~Texture()
+{
+  // We copy Texture alot so this isn't working
+  // Add unqiue_ptr<SDL*> to use instead
+//  for (auto* texture : textures)
+//  {
+//    SDL_DestroyTexture(texture);
+//  }
+}
+
 Texture Texture::create(SDL_Renderer* renderer,
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type)
@@ -186,81 +219,33 @@ Texture Texture::create(SDL_Renderer* renderer,
     return texture;
   }
 
-  const auto num_sprites_per_texture = item_type.sprite_width * item_type.sprite_height;
-  const auto num_textures = item_type.sprite_xdiv * item_type.sprite_ydiv * item_type.sprite_num_anim;
-  if (item_type.sprite_blend_frames == 1U)
+  const auto num_sprites_per_texture = item_type.sprite_width *
+                                       item_type.sprite_height *
+                                       item_type.sprite_blend_frames;
+  const auto num_textures = item_type.sprite_xdiv *
+                            item_type.sprite_ydiv *
+                            item_type.sprite_num_anim;
+  auto sprite_it = item_type.sprites.begin();
+  for (auto i = 0; i < num_textures; i++)
   {
-    auto sprite_it = item_type.sprites.begin();
-    for (auto i = 0; i < num_textures; i++)
+    const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
+                                                       sprite_it + num_sprites_per_texture);
+    sprite_it += num_sprites_per_texture;
+
+    auto* sdl_texture = createSDLTexture(renderer,
+                                         sprite_loader,
+                                         sprite_ids,
+                                         item_type.sprite_width,
+                                         item_type.sprite_height,
+                                         item_type.sprite_extra,
+                                         item_type.sprite_blend_frames == 2U);
+    if (!sdl_texture)
     {
-      const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
-                                                         sprite_it + num_sprites_per_texture);
-      sprite_it += num_sprites_per_texture;
-
-      auto* sdl_texture = createSDLTexture(renderer,
-                                           sprite_loader,
-                                           sprite_ids,
-                                           item_type.sprite_width,
-                                           item_type.sprite_height,
-                                           item_type.sprite_extra);
-      if (!sdl_texture)
-      {
-        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
-        texture.textures.clear();
-        return texture;
-      }
-      texture.textures.push_back(sdl_texture);
+      LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
+      texture.textures.clear();
+      return texture;
     }
-  }
-  else  // sprite_blend_frames == 2U
-  {
-    // Add first set of textures
-    for (auto i = 0; i < num_textures; i++)
-    {
-      std::vector<std::uint16_t> sprite_ids;
-      for (auto j = 0; j < num_sprites_per_texture; j++)
-      {
-        sprite_ids.push_back(item_type.sprites[(i * num_sprites_per_texture) + (j * 2)]);
-      }
-
-      auto* sdl_texture = createSDLTexture(renderer,
-                                           sprite_loader,
-                                           sprite_ids,
-                                           item_type.sprite_width,
-                                           item_type.sprite_height,
-                                           item_type.sprite_extra);
-      if (!sdl_texture)
-      {
-        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
-        texture.textures.clear();
-        return texture;
-      }
-      texture.textures.push_back(sdl_texture);
-    }
-
-    // Add second set of textures
-    for (auto i = 0; i < num_textures; i++)
-    {
-      std::vector<std::uint16_t> sprite_ids;
-      for (auto j = 0; j < num_sprites_per_texture; j++)
-      {
-        sprite_ids.push_back(item_type.sprites[(i * num_sprites_per_texture) + (j * 2) + 1]);
-      }
-
-      auto* sdl_texture = createSDLTexture(renderer,
-                                           sprite_loader,
-                                           sprite_ids,
-                                           item_type.sprite_width,
-                                           item_type.sprite_height,
-                                           item_type.sprite_extra);
-      if (!sdl_texture)
-      {
-        LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
-        texture.textures.clear();
-        return texture;
-      }
-      texture.textures.push_back(sdl_texture);
-    }
+    texture.textures.push_back(sdl_texture);
   }
 
   return texture;

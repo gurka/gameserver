@@ -123,32 +123,28 @@ void render()
   SDL_RenderClear(sdl_renderer);
 
   // Render all blends, xdivs and ydivs
-  const auto num_textures = texture.textures.size();
-  for (auto b = 0; b < item_type.sprite_blend_frames; b++)
+  for (auto y = 0; y < item_type.sprite_ydiv; y++)
   {
-    for (auto y = 0; y < item_type.sprite_ydiv; y++)
+    for (auto x = 0; x < item_type.sprite_xdiv; x++)
     {
-      for (auto x = 0; x < item_type.sprite_xdiv; x++)
+      const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
+      if (texture_index < 0 || texture_index >= texture.textures.size())
       {
-        const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim) + ((num_textures / 2) * b);
-        if (texture_index < 0 || texture_index >= texture.textures.size())
-        {
-          LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
-                    __func__,
-                    texture_index,
-                    static_cast<int>(texture.textures.size()));
-          return;
-        }
-
-        const SDL_Rect dest
-        {
-          (x - item_type.sprite_width + 1) * tile_size_scaled,
-          (y - item_type.sprite_height + 1 + (item_type.sprite_height * b)) * tile_size_scaled,
-          item_type.sprite_width * tile_size_scaled,
-          item_type.sprite_height * tile_size_scaled
-        };
-        SDL_RenderCopy(sdl_renderer, texture.textures[texture_index], nullptr, &dest);
+        LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
+                  __func__,
+                  texture_index,
+                  static_cast<int>(texture.textures.size()));
+        return;
       }
+
+      const SDL_Rect dest
+      {
+        (x - item_type.sprite_width + 1) * tile_size_scaled,
+        (y - item_type.sprite_height + 1) * tile_size_scaled,
+        item_type.sprite_width * tile_size_scaled,
+        item_type.sprite_height * tile_size_scaled
+      };
+      SDL_RenderCopy(sdl_renderer, texture.textures[texture_index], nullptr, &dest);
     }
   }
 

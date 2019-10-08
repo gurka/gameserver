@@ -40,6 +40,8 @@ struct Texture
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
 
+  ~Texture();
+
   common::ItemTypeId item_type_id;
   std::vector<SDL_Texture*> textures;
 };
