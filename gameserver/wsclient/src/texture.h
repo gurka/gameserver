@@ -34,16 +34,30 @@ struct SDL_Texture;
 namespace wsclient
 {
 
-struct Texture
+class Texture
 {
+ public:
   static Texture create(SDL_Renderer* renderer,
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
 
+  Texture() = default;
   ~Texture();
 
-  common::ItemTypeId item_type_id;
-  std::vector<SDL_Texture*> textures;
+  // Copy bad
+  Texture(const Texture&) = delete;
+  Texture& operator=(const Texture&) = delete;
+
+  // Move good
+  Texture(Texture&&) = default;
+  Texture& operator=(Texture&&) = default;
+
+  common::ItemTypeId getItemTypeId() const { return m_item_type_id; }
+  const std::vector<SDL_Texture*>& getTextures() const { return m_textures; }
+
+ private:
+  common::ItemTypeId m_item_type_id;
+  std::vector<SDL_Texture*> m_textures;
 };
 
 }  // namespace wsclient

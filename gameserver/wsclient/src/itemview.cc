@@ -103,7 +103,7 @@ void setItemType(common::ItemTypeId item_type_id)
 {
   item_type = item_types[item_type_id];
   texture = wsclient::Texture::create(sdl_renderer, sprite_loader, item_type);
-  if (texture.textures.empty())
+  if (texture.getTextures().empty())
   {
     LOG_ERROR("No textures for item type id: %d", item_type_id);
   }
@@ -112,14 +112,16 @@ void setItemType(common::ItemTypeId item_type_id)
 
 void render()
 {
-  if (texture.textures.empty())
+  const auto& textures = texture.getTextures();
+
+  if (textures.empty())
   {
     return;
   }
 
   const auto anim_tick = SDL_GetTicks() / 540;
 
-  SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
+  SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, 255);
   SDL_RenderClear(sdl_renderer);
 
   // Render all blends, xdivs and ydivs
@@ -128,12 +130,12 @@ void render()
     for (auto x = 0; x < item_type.sprite_xdiv; x++)
     {
       const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
-      if (texture_index < 0 || texture_index >= texture.textures.size())
+      if (texture_index < 0 || texture_index >= textures.size())
       {
         LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
                   __func__,
                   texture_index,
-                  static_cast<int>(texture.textures.size()));
+                  static_cast<int>(textures.size()));
         return;
       }
 
@@ -144,7 +146,7 @@ void render()
         item_type.sprite_width * tile_size_scaled,
         item_type.sprite_height * tile_size_scaled
       };
-      SDL_RenderCopy(sdl_renderer, texture.textures[texture_index], nullptr, &dest);
+      SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
     }
   }
 

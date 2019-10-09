@@ -194,12 +194,10 @@ namespace wsclient
 
 Texture::~Texture()
 {
-  // We copy Texture alot so this isn't working
-  // Add unqiue_ptr<SDL*> to use instead
-//  for (auto* texture : textures)
-//  {
-//    SDL_DestroyTexture(texture);
-//  }
+  for (auto* texture : m_textures)
+  {
+    SDL_DestroyTexture(texture);
+  }
 }
 
 Texture Texture::create(SDL_Renderer* renderer,
@@ -207,7 +205,7 @@ Texture Texture::create(SDL_Renderer* renderer,
                         const common::ItemType& item_type)
 {
   Texture texture;
-  texture.item_type_id = item_type.id;
+  texture.m_item_type_id = item_type.id;
 
   if (item_type.sprite_blend_frames != 1U &&
       item_type.sprite_blend_frames != 2U)
@@ -242,10 +240,10 @@ Texture Texture::create(SDL_Renderer* renderer,
     if (!sdl_texture)
     {
       LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
-      texture.textures.clear();
+      texture.m_textures.clear();
       return texture;
     }
-    texture.textures.push_back(sdl_texture);
+    texture.m_textures.push_back(sdl_texture);
   }
 
   return texture;

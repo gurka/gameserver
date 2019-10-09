@@ -55,7 +55,7 @@ const std::vector<SDL_Texture*>& getTextures(common::ItemTypeId item_type_id)
                          item_textures.cend(),
                          [&item_type_id](const wsclient::Texture& item_texture)
   {
-    return item_texture.item_type_id == item_type_id;
+    return item_texture.getItemTypeId() == item_type_id;
   });
 
   // Create textures if not found
@@ -68,7 +68,7 @@ const std::vector<SDL_Texture*>& getTextures(common::ItemTypeId item_type_id)
     it = item_textures.end() - 1;
   }
 
-  return it->textures;
+  return it->getTextures();
 }
 
 void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset, int anim_tick)
