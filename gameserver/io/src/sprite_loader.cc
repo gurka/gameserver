@@ -68,6 +68,12 @@ SpriteLoader::SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
 {
   SpriteLoader::SpritePixels sprite_pixels = {};
 
+  // 0 is full alpha and OK to request, it seems
+  if (sprite_id == 0)
+  {
+    return sprite_pixels;
+  }
+
   // Because reasons
   sprite_id -= 1;
 

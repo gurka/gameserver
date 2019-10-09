@@ -141,8 +141,8 @@ void render()
 
       const SDL_Rect dest
       {
-        (x - item_type.sprite_width + 1) * tile_size_scaled,
-        (y - item_type.sprite_height + 1) * tile_size_scaled,
+        x * item_type.sprite_width * tile_size_scaled,
+        y * item_type.sprite_height * tile_size_scaled,
         item_type.sprite_width * tile_size_scaled,
         item_type.sprite_height * tile_size_scaled
       };
@@ -215,8 +215,11 @@ int main()
     return 1;
   }
 
+  // First creature: 2284
+  // For creatures it looks like xdiv=4 means 4 directions?
+
   // Load initial item type
-  setItemType(item_type_id_first);
+  setItemType(2284);
 
   LOG_INFO("itemview started");
 
