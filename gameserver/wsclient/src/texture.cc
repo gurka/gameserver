@@ -192,14 +192,6 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 namespace wsclient
 {
 
-Texture::~Texture()
-{
-  for (auto* texture : m_textures)
-  {
-    SDL_DestroyTexture(texture);
-  }
-}
-
 Texture Texture::create(SDL_Renderer* renderer,
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type)
@@ -241,9 +233,11 @@ Texture Texture::create(SDL_Renderer* renderer,
     {
       LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
       texture.m_textures.clear();
+      texture.m_texture_ptrs.clear();
       return texture;
     }
-    texture.m_textures.push_back(sdl_texture);
+    texture.m_textures.emplace_back(sdl_texture, SDL_DestroyTexture);
+    texture.m_texture_ptrs.push_back(sdl_texture);
   }
 
   return texture;

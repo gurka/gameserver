@@ -26,7 +26,7 @@
 #include <cstdint>
 
 #include <emscripten.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include "logger.h"
 #include "data_loader.h"

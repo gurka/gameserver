@@ -24,12 +24,13 @@
 #ifndef WSCLIENT_SRC_TEXTURE_H_
 #define WSCLIENT_SRC_TEXTURE_H_
 
+#include <memory>
 #include <vector>
+
+#include <SDL.h>
+
 #include "item.h"
 #include "sprite_loader.h"
-
-struct SDL_Renderer;
-struct SDL_Texture;
 
 namespace wsclient
 {
@@ -41,23 +42,16 @@ class Texture
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
 
-  Texture() = default;
-  ~Texture();
-
-  // Copy bad
-  Texture(const Texture&) = delete;
-  Texture& operator=(const Texture&) = delete;
-
-  // Move good
-  Texture(Texture&&) = default;
-  Texture& operator=(Texture&&) = default;
-
   common::ItemTypeId getItemTypeId() const { return m_item_type_id; }
-  const std::vector<SDL_Texture*>& getTextures() const { return m_textures; }
+  const std::vector<SDL_Texture*>& getTextures() const { return m_texture_ptrs; }
 
  private:
   common::ItemTypeId m_item_type_id;
-  std::vector<SDL_Texture*> m_textures;
+
+  // One for memory management, one for returning
+  using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  std::vector<TexturePtr> m_textures;
+  std::vector<SDL_Texture*> m_texture_ptrs;
 };
 
 }  // namespace wsclient

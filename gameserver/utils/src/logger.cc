@@ -88,6 +88,7 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "wsclient.cc",              Module::WSCLIENT    },
   { "network.cc",               Module::WSCLIENT    },
   { "graphics.cc",              Module::WSCLIENT    },
+  { "texture.cc",               Module::WSCLIENT    },
   { "wsworld.cc",               Module::WSCLIENT    },
   { "itemview.cc",              Module::WSCLIENT    },
 };
