@@ -58,7 +58,15 @@ wsclient::Texture texture;
 void logItem(const common::ItemType& item_type)
 {
   std::ostringstream ss;
-  ss << "ItemTypeId=" << item_type.id;
+  ss << "ItemTypeId=" << item_type.id << " type=";
+  switch (item_type.type)
+  {
+    case common::ItemType::Type::ITEM:     ss << "ITEM";     break;
+    case common::ItemType::Type::CREATURE: ss << "CREATURE"; break;
+    case common::ItemType::Type::EFFECT:   ss << "EFFECT";   break;
+    case common::ItemType::Type::MISSILE:  ss << "MISSILE";  break;
+    default:                               ss << "INVALID";  break;
+  }
   ss << (item_type.ground ? " ground" : "");
   ss << " speed=" << item_type.speed;
   ss << (item_type.is_blocking ? " is_blocking" : "");

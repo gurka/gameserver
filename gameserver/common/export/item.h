@@ -37,7 +37,15 @@ using ItemTypeId = std::uint16_t;
 
 struct ItemType
 {
-  ItemTypeId id     = 0;
+  ItemTypeId id = 0;
+
+  enum class Type
+  {
+    ITEM,
+    CREATURE,
+    EFFECT,
+    MISSILE,
+  } type = Type::ITEM;
 
   // Loaded from data file
   bool ground         = false;
@@ -89,7 +97,7 @@ struct ItemType
   int decaytime         = 0;
   int damage            = 0;
   std::uint8_t maxitems = 0;
-  std::string type      = "";
+  std::string type_xml  = "";
   std::string position  = "";
   int attack            = 0;
   int defence           = 0;
