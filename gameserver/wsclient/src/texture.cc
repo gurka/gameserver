@@ -60,32 +60,6 @@ io::SpriteLoader::SpritePixels blendSprites(const io::SpriteLoader::SpritePixels
   return result;
 }
 
-/*
- * TODO(simon): add/correct blend info
- *
- * Item -> ItemType -> Sprites -> Texture info
- *
- * Item has an ItemType (ItemTypeId)
- * ItemType has sprite information:
- *  width:     >1 if the full sprite has more than 1 sprite in width
- *  height:    >1 if the full sprite has more than 1 sprite in height
- *  extra:     only used if width > 1 or height > 1, see drawItem()
- *  blend:     used for sprites with custom color, e.g. player sprites,
- *             1 template sprite, 1 color sprite, and so on
- *             valid values 1 and 2?
- *  xdiv:      different sprites for different (global) position in x
- *  ydiv:      different sprites for different (global) position in y
- *  num_anims: number of animations
- *
- * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
- *
- * Texture is a "full" sprite, e.g. full width and height
- *
- * Total number of textures: xdiv * ydiv * num_anim
- *
- * Select texture based on global position and animation tick
- * This is only valid for non blend sprites (all but player sprites?)
- */
 // TODO(simon): send in SpriteData directly?
 SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                               const io::SpriteLoader& sprite_loader,
@@ -93,7 +67,8 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                               std::uint8_t width,
                               std::uint8_t height,
                               std::uint8_t extra,
-                              bool blend)
+                              bool blend,
+                              bool directions)
 {
   // For now, ignore extra and always create the texture either
   // 32x32, 64x32, 32x64 or 64x64
@@ -192,6 +167,32 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 namespace wsclient
 {
 
+/*
+ * Item -> ItemType -> Sprites -> Texture
+ *
+ * Item has an ItemType (ItemTypeId)
+ * ItemType has sprite information:
+ *  width:     >1 if the full sprite has more than 1 sprite in width
+ *  height:    >1 if the full sprite has more than 1 sprite in height
+ *  extra:     width and/or height size (instead of 32) depending on width and height
+ *  blend:     default 1: no action
+ *             if ITEM   and blend=2: blend two sprites together
+ *             if OUTFIT and blend=2: sprite is colored based on outfit info
+ *             if OTHER  and blend=2: invalid?
+ *  xdiv:      if ITEM and not countable: different sprites for different (global) position in x
+ *             if ITEM and     countable: 8 sets of sprites for when count is: 1, 2, 3, 4, 5 ... ?
+ *             if OUTFIT and 4: 4 sets of sprites, one per direction
+ *  ydiv:      different sprites for different (global) position in y
+ *  num_anims: number of animations
+ *
+ * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
+ *
+ * Texture is a "full" sprite, e.g. full width and height
+ *
+ * Total number of textures: xdiv * ydiv * num_anim
+ *
+ * Select texture based on global position or creature direction and animation tick
+ */
 Texture Texture::create(SDL_Renderer* renderer,
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type)
@@ -199,19 +200,39 @@ Texture Texture::create(SDL_Renderer* renderer,
   Texture texture;
   texture.m_item_type_id = item_type.id;
 
+  // Validate stuff
+  // This should probably be validated when the data file is read instead
   if (item_type.sprite_blend_frames != 1U &&
       item_type.sprite_blend_frames != 2U)
   {
-    LOG_ERROR("%s: invalid blend: %u in item type: %u",
+    LOG_ERROR("%s: invalid blend value: %u in item type: %u",
               __func__,
               item_type.sprite_blend_frames,
               item_type.id);
     return texture;
   }
+  if (item_type.sprite_blend_frames == 2U &&
+      item_type.type != common::ItemType::Type::ITEM &&
+      item_type.type != common::ItemType::Type::CREATURE)
+  {
+    LOG_ERROR("%s invalid combination of blend value: 2 and type: %d in item type: %u",
+              __func__,
+              static_cast<int>(item_type.type),
+              item_type.id);
+    return texture;
+  }
+  // validate that item that are countable have xdiv=4,ydiv=2?
+
+  const auto directions = item_type.type == common::ItemType::Type::CREATURE &&
+                          item_type.sprite_xdiv == 4U;
+  const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
+                     item_type.sprite_blend_frames == 2U;
+  const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
+                        item_type.sprite_blend_frames == 2U;
 
   const auto num_sprites_per_texture = item_type.sprite_width *
                                        item_type.sprite_height *
-                                       item_type.sprite_blend_frames;
+                                       (blend || colorize ? 2U : 1U);
   const auto num_textures = item_type.sprite_xdiv *
                             item_type.sprite_ydiv *
                             item_type.sprite_num_anim;
@@ -222,13 +243,23 @@ Texture Texture::create(SDL_Renderer* renderer,
                                                        sprite_it + num_sprites_per_texture);
     sprite_it += num_sprites_per_texture;
 
-    auto* sdl_texture = createSDLTexture(renderer,
-                                         sprite_loader,
-                                         sprite_ids,
-                                         item_type.sprite_width,
-                                         item_type.sprite_height,
-                                         item_type.sprite_extra,
-                                         item_type.sprite_blend_frames == 2U);
+    SDL_Texture* sdl_texture = nullptr;
+    if (!colorize)
+    {
+      sdl_texture = createSDLTexture(renderer,
+                                     sprite_loader,
+                                     sprite_ids,
+                                     item_type.sprite_width,
+                                     item_type.sprite_height,
+                                     item_type.sprite_extra,
+                                     blend,
+                                     directions);
+    }
+    else
+    {
+      // TODO
+    }
+
     if (!sdl_texture)
     {
       LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
