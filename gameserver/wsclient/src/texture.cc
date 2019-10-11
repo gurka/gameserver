@@ -184,6 +184,7 @@ namespace wsclient
  *             if OUTFIT and 4: 4 sets of sprites, one per direction
  *  ydiv:      different sprites for different (global) position in y
  *  num_anims: number of animations
+ *             note: for creatures first anim is standing still, and the rest is walking
  *
  * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
  *
@@ -202,6 +203,8 @@ Texture Texture::create(SDL_Renderer* renderer,
 
   // Validate stuff
   // This should probably be validated when the data file is read instead
+
+  // Valid blend value is 1 or 2
   if (item_type.sprite_blend_frames != 1U &&
       item_type.sprite_blend_frames != 2U)
   {
@@ -211,6 +214,8 @@ Texture Texture::create(SDL_Renderer* renderer,
               item_type.id);
     return texture;
   }
+
+  // blend=2 is only valid for item (blend) and creature (colorize)
   if (item_type.sprite_blend_frames == 2U &&
       item_type.type != common::ItemType::Type::ITEM &&
       item_type.type != common::ItemType::Type::CREATURE)
@@ -221,6 +226,19 @@ Texture Texture::create(SDL_Renderer* renderer,
               item_type.id);
     return texture;
   }
+
+  // creature with xdiv=4 means 4 directions, ydiv should be 1
+  if (item_type.type == common::ItemType::Type::CREATURE &&
+      item_type.sprite_xdiv == 4U &&
+      item_type.sprite_ydiv != 1U)
+  {
+    LOG_ERROR("%s: invalid combination of CREATURE, xdiv=%u and ydiv=%u (direction)",
+              __func__,
+              item_type.sprite_xdiv,
+              item_type.sprite_ydiv);
+    return texture;
+  }
+
   // validate that item that are countable have xdiv=4,ydiv=2?
 
   const auto directions = item_type.type == common::ItemType::Type::CREATURE &&

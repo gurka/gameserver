@@ -132,12 +132,15 @@ void render()
   SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, 255);
   SDL_RenderClear(sdl_renderer);
 
-  // Render all blends, xdivs and ydivs
-  for (auto y = 0; y < item_type.sprite_ydiv; y++)
+  const auto direction = item_type.type == common::ItemType::Type::CREATURE &&
+                         item_type.sprite_xdiv == 4;
+
+  if (direction)
   {
-    for (auto x = 0; x < item_type.sprite_xdiv; x++)
+    // Creature with 4 sets of textures for each direction
+    for (auto dir = 0; dir < 4; dir++)
     {
-      const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
+      const auto texture_index = dir + ((anim_tick % item_type.sprite_num_anim) * 4);
       if (texture_index < 0 || texture_index >= textures.size())
       {
         LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
@@ -149,12 +152,41 @@ void render()
 
       const SDL_Rect dest
       {
-        x * item_type.sprite_width * tile_size_scaled,
-        y * item_type.sprite_height * tile_size_scaled,
+        dir * item_type.sprite_width * tile_size_scaled,
+        item_type.sprite_height * tile_size_scaled,
         item_type.sprite_width * tile_size_scaled,
         item_type.sprite_height * tile_size_scaled
       };
       SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+    }
+  }
+  else
+  {
+    // Normal item: render all blends, xdivs and ydivs
+    for (auto y = 0; y < item_type.sprite_ydiv; y++)
+    {
+      for (auto x = 0; x < item_type.sprite_xdiv; x++)
+      {
+        // This isn't correct, x or anim_tick need a multiplier as well
+        const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
+        if (texture_index < 0 || texture_index >= textures.size())
+        {
+          LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
+                    __func__,
+                    texture_index,
+                    static_cast<int>(textures.size()));
+          return;
+        }
+
+        const SDL_Rect dest
+        {
+          x * item_type.sprite_width * tile_size_scaled,
+          y * item_type.sprite_height * tile_size_scaled,
+          item_type.sprite_width * tile_size_scaled,
+          item_type.sprite_height * tile_size_scaled
+        };
+        SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+      }
     }
   }
 
