@@ -141,7 +141,7 @@ class ConnectionCtrl : public gameengine::PlayerCtrl
   common::ItemUniqueId getContainerItemUniqueId(std::uint8_t container_id) const;
 
   // Other helpers
-  bool canSee(const common::Position& player_position, const common::Position& to_position);
+  static bool canSee(const common::Position& player_position, const common::Position& to_position);
 
   std::function<void(void)> m_close_protocol;
   std::unique_ptr<network::Connection> m_connection;

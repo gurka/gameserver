@@ -398,6 +398,7 @@ const common::Position* World::getCreaturePosition(common::CreatureId creature_i
 bool World::creatureCanThrowTo(common::CreatureId creature_id, const common::Position& position) const
 {
   // TODO(simon): Fix
+  (void)this;
   (void)creature_id;
   (void)position;
   return true;

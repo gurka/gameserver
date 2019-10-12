@@ -1,4 +1,4 @@
-Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*,-readability-magic-numbers,-modernize-use-nodiscard'
+Checks: '-*,boost-*,clang-analyzer-*,google-*,misc-*,modernize-*,performance-*,readability-*,-readability-magic-numbers,-modernize-use-nodiscard,-modernize-use-trailing-return-type'
 CheckOptions:
 - { key: readability-implicit-bool-conversion.AllowPointerConditions,                                 value: 1 }
 - { key: misc-non-private-member-variables-in-classes.IgnorePublicMemberVariables, value: 1 }

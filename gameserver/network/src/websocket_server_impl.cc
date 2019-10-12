@@ -31,13 +31,13 @@ namespace network
 
 bool WebsocketBackend::Socket::is_open() const  // NOLINT
 {
-  return server->isOpen(hdl);
+  return static_cast<bool>(hdl.lock());
 }
 
 void WebsocketBackend::Socket::shutdown(shutdown_type type, ErrorCode& ec)
 {
   (void)type;
-  server->shutdown(hdl, ec);
+  ec = WebsocketBackend::ErrorCode();
 }
 
 void WebsocketBackend::Socket::close(ErrorCode& ec)
@@ -150,18 +150,6 @@ void WebsocketServerImpl::asyncWrite(const WebsocketBackend::Socket& socket,
   {
     callback(WebsocketBackend::ErrorCode(), length);
   }
-}
-
-bool WebsocketServerImpl::isOpen(const websocketpp::connection_hdl& hdl) const
-{
-  return static_cast<bool>(hdl.lock());
-}
-
-void WebsocketServerImpl::shutdown(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec)
-{
-  // Do nothing here, ConnectionImpl will call is_open() -> shutdown() -> close()
-  (void)hdl;
-  ec = WebsocketBackend::ErrorCode();
 }
 
 void WebsocketServerImpl::close(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec)

@@ -68,7 +68,7 @@ struct WebsocketBackend
     websocketpp::connection_hdl hdl;
 
     bool is_open() const;  // NOLINT
-    void shutdown(shutdown_type, ErrorCode&);  // NOLINT
+    static void shutdown(shutdown_type, ErrorCode&);  // NOLINT
     void close(ErrorCode&);  // NOLINT
   };
 
@@ -109,8 +109,6 @@ class WebsocketServerImpl : public Server
                   const std::function<void(WebsocketBackend::ErrorCode, std::size_t)>& callback);
 
   // Called from functions in WebsocketBackend::Socket
-  bool isOpen(const websocketpp::connection_hdl& hdl) const;
-  void shutdown(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec);  // NOLINT
   void close(const websocketpp::connection_hdl& hdl, WebsocketBackend::ErrorCode& ec);  // NOLINT
 
  private:
