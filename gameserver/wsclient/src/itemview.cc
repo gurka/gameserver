@@ -138,9 +138,11 @@ void render()
   if (direction)
   {
     // Creature with 4 sets of textures for each direction
+
+    // First row is standing still (animation index 0)
     for (auto dir = 0; dir < 4; dir++)
     {
-      const auto texture_index = dir + ((anim_tick % item_type.sprite_num_anim) * 4);
+      const auto texture_index = dir;
       if (texture_index < 0 || texture_index >= textures.size())
       {
         LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
@@ -153,7 +155,33 @@ void render()
       const SDL_Rect dest
       {
         dir * item_type.sprite_width * tile_size_scaled,
-        item_type.sprite_height * tile_size_scaled,
+        0 * item_type.sprite_height * tile_size_scaled,
+        item_type.sprite_width * tile_size_scaled,
+        item_type.sprite_height * tile_size_scaled
+      };
+      SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+    }
+
+    // FIXME: if num_anim == 1 this should not be executed
+    //
+    // Second row is walking (animation index 1..n)
+    const auto anim_index = (item_type.sprite_num_anim == 1 ? 0 : (anim_tick % (item_type.sprite_num_anim - 1))) + 1;
+    for (auto dir = 0; dir < 4; dir++)
+    {
+      const auto texture_index = dir + (anim_index * 4);
+      if (texture_index < 0 || texture_index >= textures.size())
+      {
+        LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
+                  __func__,
+                  texture_index,
+                  static_cast<int>(textures.size()));
+        return;
+      }
+
+      const SDL_Rect dest
+      {
+        dir * item_type.sprite_width * tile_size_scaled,
+        1 * item_type.sprite_height * tile_size_scaled,
         item_type.sprite_width * tile_size_scaled,
         item_type.sprite_height * tile_size_scaled
       };
