@@ -111,22 +111,11 @@ void setItemType(common::ItemTypeId item_type_id)
 {
   item_type = item_types[item_type_id];
   texture = wsclient::Texture::create(sdl_renderer, sprite_loader, item_type);
-  if (texture.getTextures().empty())
-  {
-    LOG_ERROR("No textures for item type id: %d", item_type_id);
-  }
   logItem(item_type);
 }
 
 void render()
 {
-  const auto& textures = texture.getTextures();
-
-  if (textures.empty())
-  {
-    return;
-  }
-
   const auto anim_tick = SDL_GetTicks() / 540;
 
   SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, 255);
@@ -142,16 +131,11 @@ void render()
     // First row is standing still (animation index 0)
     for (auto dir = 0; dir < 4; dir++)
     {
-      const auto texture_index = dir;
-      if (texture_index < 0 || texture_index >= static_cast<int>(textures.size()))
+      auto* sdl_texture = texture.getCreatureStillTexture(common::Direction(dir));
+      if (!sdl_texture)
       {
-        LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
-                  __func__,
-                  texture_index,
-                  static_cast<int>(textures.size()));
-        return;
+        continue;
       }
-
       const SDL_Rect dest
       {
         dir * item_type.sprite_width * tile_size_scaled,
@@ -159,25 +143,20 @@ void render()
         item_type.sprite_width * tile_size_scaled,
         item_type.sprite_height * tile_size_scaled
       };
-      SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+      SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
     }
 
     if (item_type.sprite_num_anim > 1)
     {
       // Second row is walking (animation index 1..n)
-      const auto anim_index = (anim_tick % (item_type.sprite_num_anim - 1)) + 1;
       for (auto dir = 0; dir < 4; dir++)
       {
-        const auto texture_index = dir + (anim_index * 4);
-        if (texture_index < 0 || texture_index >= textures.size())
+        // Use anim_tick as walk_tick
+        auto* sdl_texture = texture.getCreatureWalkTexture(common::Direction(dir), anim_tick);
+        if (!sdl_texture)
         {
-          LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
-                    __func__,
-                    texture_index,
-                    static_cast<int>(textures.size()));
-          return;
+          continue;
         }
-
         const SDL_Rect dest
         {
           dir * item_type.sprite_width * tile_size_scaled,
@@ -185,7 +164,7 @@ void render()
           item_type.sprite_width * tile_size_scaled,
           item_type.sprite_height * tile_size_scaled
         };
-        SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+        SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
     }
   }
@@ -196,15 +175,10 @@ void render()
     {
       for (auto x = 0; x < item_type.sprite_xdiv; x++)
       {
-        // This isn't correct, x or anim_tick need a multiplier as well
-        const auto texture_index = x + (y * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
-        if (texture_index < 0 || texture_index >= textures.size())
+        auto* sdl_texture = texture.getItemTexture(common::Position(x, y, 0), anim_tick);
+        if (!sdl_texture)
         {
-          LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
-                    __func__,
-                    texture_index,
-                    static_cast<int>(textures.size()));
-          return;
+          continue;
         }
 
         const SDL_Rect dest
@@ -214,7 +188,7 @@ void render()
           item_type.sprite_width * tile_size_scaled,
           item_type.sprite_height * tile_size_scaled
         };
-        SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+        SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
     }
   }

@@ -31,6 +31,8 @@
 
 #include "item.h"
 #include "sprite_loader.h"
+#include "position.h"
+#include "direction.h"
 
 namespace wsclient
 {
@@ -42,16 +44,24 @@ class Texture
                         const io::SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
 
-  common::ItemTypeId getItemTypeId() const { return m_item_type_id; }
-  const std::vector<SDL_Texture*>& getTextures() const { return m_texture_ptrs; }
+  common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
+
+  // Items
+  SDL_Texture* getItemTexture(const common::Position& position, int anim_tick) const;
+
+  // Creature
+  SDL_Texture* getCreatureStillTexture(common::Direction direction) const;
+  SDL_Texture* getCreatureWalkTexture(common::Direction direction, int walk_tick) const;
+
+  // Missile
+  // TODO(simon): add NW, NE, SW and SE to Direction first
 
  private:
-  common::ItemTypeId m_item_type_id;
+  common::ItemType m_item_type;
 
   // One for memory management, one for returning
   using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
   std::vector<TexturePtr> m_textures;
-  std::vector<SDL_Texture*> m_texture_ptrs;
 };
 
 }  // namespace wsclient

@@ -339,7 +339,7 @@ Texture Texture::create(SDL_Renderer* renderer,
                         const common::ItemType& item_type)
 {
   Texture texture;
-  texture.m_item_type_id = item_type.id;
+  texture.m_item_type = item_type;
 
   // Validate stuff
   // This should probably be validated when the data file is read instead
@@ -426,14 +426,58 @@ Texture Texture::create(SDL_Renderer* renderer,
     {
       LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
       texture.m_textures.clear();
-      texture.m_texture_ptrs.clear();
       return texture;
     }
     texture.m_textures.emplace_back(sdl_texture, SDL_DestroyTexture);
-    texture.m_texture_ptrs.push_back(sdl_texture);
   }
 
   return texture;
+}
+
+SDL_Texture* Texture::getItemTexture(const common::Position& position, int anim_tick) const
+{
+  // This isn't correct, x or anim_tick need a multiplier as well
+  const auto texture_index = position.getX() + (position.getY() * m_item_type.sprite_xdiv) + (anim_tick % m_item_type.sprite_num_anim);
+  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  {
+    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
+              __func__,
+              texture_index,
+              static_cast<int>(m_textures.size()));
+    return nullptr;
+  }
+
+  return m_textures[texture_index].get();
+}
+
+SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
+{
+  const auto texture_index = static_cast<int>(direction);
+  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  {
+    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
+              __func__,
+              texture_index,
+              static_cast<int>(m_textures.size()));
+    return nullptr;
+  }
+
+  return m_textures[texture_index].get();
+}
+
+SDL_Texture* Texture::getCreatureWalkTexture(common::Direction direction, int walk_tick) const
+{
+  const auto texture_index = static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_num_anim - 1)) + 1) * 4);
+  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  {
+    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
+              __func__,
+              texture_index,
+              static_cast<int>(m_textures.size()));
+    return nullptr;
+  }
+
+  return m_textures[texture_index].get();
 }
 
 }  // namespace wsclient
