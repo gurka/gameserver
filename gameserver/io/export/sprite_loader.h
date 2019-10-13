@@ -35,11 +35,11 @@ namespace io
 
 class FileReader;
 
+using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
+
 class SpriteLoader
 {
  public:
-  using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
-
   SpriteLoader();
   ~SpriteLoader();
 

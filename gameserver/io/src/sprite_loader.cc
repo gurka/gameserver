@@ -64,9 +64,9 @@ bool SpriteLoader::load(const std::string& filename)
   return true;
 }
 
-SpriteLoader::SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
+SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
 {
-  SpriteLoader::SpritePixels sprite_pixels = {};
+  SpritePixels sprite_pixels = {};
 
   // 0 is full alpha and OK to request, it seems
   if (sprite_id == 0)

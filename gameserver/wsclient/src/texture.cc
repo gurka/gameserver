@@ -42,10 +42,10 @@ constexpr auto bmask = 0x00FF0000U;
 constexpr auto amask = 0xFF000000U;
 #endif
 
-io::SpriteLoader::SpritePixels blendSprites(const io::SpriteLoader::SpritePixels& bottom,
-                                            const io::SpriteLoader::SpritePixels& top)
+io::SpritePixels blendSprites(const io::SpritePixels& bottom,
+                                            const io::SpritePixels& top)
 {
-  io::SpriteLoader::SpritePixels result = bottom;
+  io::SpritePixels result = bottom;
   for (auto i = 0U; i < result.size(); i += 4)
   {
     // Add pixel from top if it is not alpha
@@ -60,10 +60,8 @@ io::SpriteLoader::SpritePixels blendSprites(const io::SpriteLoader::SpritePixels
   return result;
 }
 
-// TODO(simon): send in SpriteData directly?
 SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
-                              const io::SpriteLoader& sprite_loader,
-                              const std::vector<std::uint16_t>& sprite_ids,
+                              const std::vector<io::SpritePixels>& sprite_data,
                               std::uint8_t width,
                               std::uint8_t height,
                               std::uint8_t extra,
@@ -77,22 +75,22 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
   const auto full_height = height == 1U ? 32U : extra;
 
   // Validate number of sprites
-  if (width * height * (blend ? 2 : 1) != sprite_ids.size())
+  if (width * height * (blend ? 2 : 1) != sprite_data.size())
   {
     LOG_ERROR("%s: unexpected number of sprite ids: %u with width: %u height: %u",
               __func__,
-              sprite_ids.size(),
+              sprite_data.size(),
               width,
               height);
     return nullptr;
   }
 
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
-  for (auto i = 0U; i < sprite_ids.size(); i += (blend ? 2 : 1))
+  for (auto i = 0U; i < sprite_data.size(); i += (blend ? 2 : 1))
   {
-    const auto sprite_pixels = blend ? blendSprites(sprite_loader.getSpritePixels(sprite_ids[i + 0]),
-                                                    sprite_loader.getSpritePixels(sprite_ids[i + 1]))
-                                     : sprite_loader.getSpritePixels(sprite_ids[i]);
+    const auto sprite_pixels = blend ? blendSprites(sprite_data[i + 0],
+                                                    sprite_data[i + 1])
+                                     : sprite_data[i];
 
     // Hack to treat the two sprites as A and C when width == 1 and height == 2
     if (i == 1 && width == 1 && height == 2)
@@ -146,8 +144,7 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 }
 
 SDL_Texture* createSDLTextureColorize(SDL_Renderer* renderer,
-                                      const io::SpriteLoader& sprite_loader,
-                                      const std::vector<std::uint16_t>& sprite_ids,
+                                      const std::vector<io::SpritePixels>& sprite_data,
                                       std::uint8_t width,
                                       std::uint8_t height,
                                       std::uint8_t extra)
@@ -160,24 +157,24 @@ SDL_Texture* createSDLTextureColorize(SDL_Renderer* renderer,
   const auto full_height = height == 1U ? 32U : extra;
 
   // Validate number of sprites
-  if (width * height * 2 != sprite_ids.size())
+  if (width * height * 2 != sprite_data.size())
   {
     LOG_ERROR("%s: unexpected number of sprite ids: %u with width: %u height: %u",
               __func__,
-              sprite_ids.size(),
+              sprite_data.size(),
               width,
               height);
     return nullptr;
   }
 
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
-  for (auto i = 0U; i < sprite_ids.size(); i += 2)
+  for (auto i = 0U; i < sprite_data.size(); i += 2)
   {
     // First sprite is the base
-    auto sprite_pixels = sprite_loader.getSpritePixels(sprite_ids[i + 0]);
+    auto sprite_pixels = sprite_data[i];
 
     // Second sprite is the template, with head=yellow, body=red, legs=green and feet=blue
-    const auto sprite_template = sprite_loader.getSpritePixels(sprite_ids[i + 1]);
+    const auto sprite_template = sprite_data[i + 1];
 
     for (auto j = 0U; j < sprite_pixels.size(); j += 4)
     {
@@ -381,8 +378,6 @@ Texture Texture::create(SDL_Renderer* renderer,
 
   // validate that item that are countable have xdiv=4,ydiv=2?
 
-  //const auto directions = item_type.type == common::ItemType::Type::CREATURE &&
-  //                        item_type.sprite_xdiv == 4U;
   const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
                      item_type.sprite_blend_frames == 2U;
   const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
@@ -394,19 +389,21 @@ Texture Texture::create(SDL_Renderer* renderer,
   const auto num_textures = item_type.sprite_xdiv *
                             item_type.sprite_ydiv *
                             item_type.sprite_num_anim;
-  auto sprite_it = item_type.sprites.begin();
   for (auto i = 0; i < num_textures; i++)
   {
-    const auto sprite_ids = std::vector<std::uint16_t>(sprite_it,
-                                                       sprite_it + num_sprites_per_texture);
-    sprite_it += num_sprites_per_texture;
+    std::vector<io::SpritePixels> sprite_data;
+    for (auto j = 0U; j < num_sprites_per_texture; j++)
+    {
+      const auto sprite_index = (i * num_sprites_per_texture) + j;
+      const auto sprite_id = item_type.sprites[sprite_index];
+      sprite_data.push_back(sprite_loader.getSpritePixels(sprite_id));
+    }
 
     SDL_Texture* sdl_texture = nullptr;
     if (!colorize)
     {
       sdl_texture = createSDLTexture(renderer,
-                                     sprite_loader,
-                                     sprite_ids,
+                                     sprite_data,
                                      item_type.sprite_width,
                                      item_type.sprite_height,
                                      item_type.sprite_extra,
@@ -415,8 +412,7 @@ Texture Texture::create(SDL_Renderer* renderer,
     else
     {
       sdl_texture = createSDLTextureColorize(renderer,
-                                             sprite_loader,
-                                             sprite_ids,
+                                             sprite_data,
                                              item_type.sprite_width,
                                              item_type.sprite_height,
                                              item_type.sprite_extra);
