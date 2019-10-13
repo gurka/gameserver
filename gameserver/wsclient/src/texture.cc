@@ -67,8 +67,7 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                               std::uint8_t width,
                               std::uint8_t height,
                               std::uint8_t extra,
-                              bool blend,
-                              bool directions)
+                              bool blend)
 {
   // For now, ignore extra and always create the texture either
   // 32x32, 64x32, 32x64 or 64x64
@@ -88,28 +87,153 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
     return nullptr;
   }
 
-  // Combinations:
-  //
-  // width == 1 && height == 1 (32 x 32):
-  //    A
-  //
-  // width == 2 && height == 1 (extra x 32):
-  //   BA
-  //
-  // width == 1 && height == 2 (32 x extra): (see hack below)
-  //    C
-  //    A
-  //
-  // width == 2 && height == 2 (extra x extra):
-  //   DC
-  //   BA
-
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
   for (auto i = 0U; i < sprite_ids.size(); i += (blend ? 2 : 1))
   {
     const auto sprite_pixels = blend ? blendSprites(sprite_loader.getSpritePixels(sprite_ids[i + 0]),
                                                     sprite_loader.getSpritePixels(sprite_ids[i + 1]))
                                      : sprite_loader.getSpritePixels(sprite_ids[i]);
+
+    // Hack to treat the two sprites as A and C when width == 1 and height == 2
+    if (i == 1 && width == 1 && height == 2)
+    {
+      i = 2;
+    }
+
+    // Where to start writing the pixels on texture_pixels
+    const auto start_x = (i == 0 || i == 2) && width == 2 ? 32U : 0U;
+    const auto start_y = (i == 0 || i == 1) && height == 2 ? 32U : 0U;
+
+    // Copy sprite pixels to texture pixels one row at a time
+    auto it_source = sprite_pixels.begin();
+    auto it_dest = texture_pixels.begin() + (start_y * full_width * 4) + (start_x * 4);
+    for (auto y = 0; y < 32; y++)
+    {
+      std::copy(it_source,
+                it_source + (32 * 4),
+                it_dest);
+
+      it_source += (32 * 4);
+      it_dest += (full_width * 4);
+    }
+  }
+
+  // Create surface and texture from pixels
+  auto* surface = SDL_CreateRGBSurfaceFrom(texture_pixels.data(),
+                                           full_width,
+                                           full_height,
+                                           32,
+                                           full_width * 4,
+                                           rmask,
+                                           gmask,
+                                           bmask,
+                                           amask);
+  if (!surface)
+  {
+    LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
+    return nullptr;
+  }
+
+  auto* texture = SDL_CreateTextureFromSurface(renderer, surface);
+  SDL_FreeSurface(surface);
+  if (!texture)
+  {
+    LOG_ERROR("%s: could not create texture: %s", __func__, SDL_GetError());
+    return nullptr;
+  }
+
+  return texture;
+}
+
+SDL_Texture* createSDLTextureColorize(SDL_Renderer* renderer,
+                                      const io::SpriteLoader& sprite_loader,
+                                      const std::vector<std::uint16_t>& sprite_ids,
+                                      std::uint8_t width,
+                                      std::uint8_t height,
+                                      std::uint8_t extra)
+{
+  // For now, ignore extra and always create the texture either
+  // 32x32, 64x32, 32x64 or 64x64
+  extra = 64U;
+
+  const auto full_width = width == 1U ? 32U : extra;
+  const auto full_height = height == 1U ? 32U : extra;
+
+  // Validate number of sprites
+  if (width * height * 2 != sprite_ids.size())
+  {
+    LOG_ERROR("%s: unexpected number of sprite ids: %u with width: %u height: %u",
+              __func__,
+              sprite_ids.size(),
+              width,
+              height);
+    return nullptr;
+  }
+
+  std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
+  for (auto i = 0U; i < sprite_ids.size(); i += 2)
+  {
+    // First sprite is the base
+    auto sprite_pixels = sprite_loader.getSpritePixels(sprite_ids[i + 0]);
+
+    // Second sprite is the template, with head=yellow, body=red, legs=green and feet=blue
+    const auto sprite_template = sprite_loader.getSpritePixels(sprite_ids[i + 1]);
+
+    for (auto j = 0U; j < sprite_pixels.size(); j += 4)
+    {
+      const auto alpha = sprite_template[j + 3];
+      if (alpha == 0x00U)
+      {
+        // Alpha -> skip
+        continue;
+      }
+
+      // Check template if this is a colorize pixel
+      const auto red = sprite_template[j + 0];
+      const auto green = sprite_template[j + 1];
+      const auto blue = sprite_template[j + 2];
+      if (red == 0xFFU && green == 0xFFU && blue == 0x00U)
+      {
+        // Yellow is head
+        sprite_pixels[j + 0] = (sprite_pixels[j + 0] + 120U) / 2U;
+        sprite_pixels[j + 1] = (sprite_pixels[j + 1] + 61U) / 2U;
+        sprite_pixels[j + 2] = (sprite_pixels[j + 2] + 10U) / 2U;
+        sprite_pixels[j + 3] = 0xFFU;
+      }
+      else if (red == 0xFFU && green == 0x00U && blue == 0x00U)
+      {
+        // Red is body
+        sprite_pixels[j + 0] = (sprite_pixels[j + 0] + 255U) / 2U;
+        sprite_pixels[j + 1] = (sprite_pixels[j + 1] + 135U) / 2U;
+        sprite_pixels[j + 2] = (sprite_pixels[j + 2] + 221U) / 2U;
+        sprite_pixels[j + 3] = 0xFFU;
+      }
+      else if (red == 0x00U && green == 0xFFU && blue == 0x00U)
+      {
+        // Green is legs
+        sprite_pixels[j + 0] = (sprite_pixels[j + 0] + 23U) / 2U;
+        sprite_pixels[j + 1] = (sprite_pixels[j + 1] + 60U) / 2U;
+        sprite_pixels[j + 2] = (sprite_pixels[j + 2] + 128U) / 2U;
+        sprite_pixels[j + 3] = 0xFFU;
+      }
+      else if (red == 0x00U && green == 0x00U && blue == 0xFFU)
+      {
+        // Blue is feet
+        sprite_pixels[j + 0] = (sprite_pixels[j + 0] + 99U) / 2U;
+        sprite_pixels[j + 1] = (sprite_pixels[j + 1] + 99U) / 2U;
+        sprite_pixels[j + 2] = (sprite_pixels[j + 2] + 99U) / 2U;
+        sprite_pixels[j + 3] = 0xFFU;
+      }
+      else
+      {
+        LOG_ERROR("%s: invalid pixel in template: r=%u g=%u b=%u a=%u",
+                  __func__,
+                  red,
+                  green,
+                  blue,
+                  alpha);
+      }
+    }
 
     // Hack to treat the two sprites as A and C when width == 1 and height == 2
     if (i == 1 && width == 1 && height == 2)
@@ -193,6 +317,22 @@ namespace wsclient
  * Total number of textures: xdiv * ydiv * num_anim
  *
  * Select texture based on global position or creature direction and animation tick
+ *
+ *  Combinations:
+ *
+ *  width == 1 && height == 1 (32 x 32):
+ *     A
+ *
+ *  width == 2 && height == 1 (extra x 32):
+ *    BA
+ *
+ *  width == 1 && height == 2 (32 x extra): (see hack below)
+ *     C
+ *     A
+ *
+ *  width == 2 && height == 2 (extra x extra):
+ *    DC
+ *    BA
  */
 Texture Texture::create(SDL_Renderer* renderer,
                         const io::SpriteLoader& sprite_loader,
@@ -241,8 +381,8 @@ Texture Texture::create(SDL_Renderer* renderer,
 
   // validate that item that are countable have xdiv=4,ydiv=2?
 
-  const auto directions = item_type.type == common::ItemType::Type::CREATURE &&
-                          item_type.sprite_xdiv == 4U;
+  //const auto directions = item_type.type == common::ItemType::Type::CREATURE &&
+  //                        item_type.sprite_xdiv == 4U;
   const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
                      item_type.sprite_blend_frames == 2U;
   const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
@@ -270,12 +410,16 @@ Texture Texture::create(SDL_Renderer* renderer,
                                      item_type.sprite_width,
                                      item_type.sprite_height,
                                      item_type.sprite_extra,
-                                     blend,
-                                     directions);
+                                     blend);
     }
     else
     {
-      // TODO
+      sdl_texture = createSDLTextureColorize(renderer,
+                                             sprite_loader,
+                                             sprite_ids,
+                                             item_type.sprite_width,
+                                             item_type.sprite_height,
+                                             item_type.sprite_extra);
     }
 
     if (!sdl_texture)
