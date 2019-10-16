@@ -42,7 +42,7 @@ namespace
 
   void connect()
   {
-    ws = emscripten::val::global("WebSocket").new_(emscripten::val("ws://localhost:8172"));
+    ws = emscripten::val::global("WebSocket").new_(emscripten::val("ws://192.168.1.4:8172"));
     ws.set("onopen", emscripten::val::module_property("onopen"));
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }

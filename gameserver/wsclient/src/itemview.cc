@@ -263,7 +263,7 @@ int main()
 
   // Load initial item type
   // 2284
-  setItemType(2408);
+  setItemType(1021);
 
   LOG_INFO("itemview started");
 

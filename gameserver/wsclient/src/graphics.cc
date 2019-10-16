@@ -73,45 +73,28 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
 
 void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset, int anim_tick)
 {
-  static std::vector<common::ItemTypeId> no_texture;
+  if (item_type.type != common::ItemType::Type::ITEM)
+  {
+    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item_type.id);
+    return;
+  }
 
-  if (std::find(no_texture.begin(), no_texture.end(), item_type.id) != no_texture.end())
+  // TODO(simon): need to use world position, not local position
+  auto* texture = getTexture(item_type.id).getItemTexture(common::Position(x, y, 0U), anim_tick);
+  if (!texture)
   {
     return;
   }
 
-  // TODO(simon): fix
-  //const auto& texture = getTexture(item_type.id);
-  //if (textures.empty())
-  //{
-  //  LOG_ERROR("%s: missing texture for item type id: %u", __func__, item_type.id);
-  //  no_texture.push_back(item_type.id);
-  //  return;
-  //}
-
-  //// Need to use global positon, not local
-  //const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
-  //const auto ydiv = item_type.sprite_ydiv == 0 ? 0 : y % item_type.sprite_ydiv;
-  //const auto texture_index = xdiv + (ydiv * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
-  //if (texture_index < 0 || texture_index >= static_cast<int>(textures.size()))
-  //{
-  //  LOG_ERROR("%s: texture_index: %d is invalid (textures.size(): %d)",
-  //            __func__,
-  //            texture_index,
-  //            static_cast<int>(textures.size()));
-  //  return;
-  //}
-
-  //// Convert from tile position to pixel position
-  //// TODO: there is probably a max offset...
-  //const SDL_Rect dest
-  //{
-  //  (x * tile_size - offset - ((item_type.sprite_width - 1) * 32)) * scale,
-  //  (y * tile_size - offset - ((item_type.sprite_height - 1) * 32)) * scale,
-  //  item_type.sprite_width * tile_size_scaled,
-  //  item_type.sprite_height * tile_size_scaled
-  //};
-  //SDL_RenderCopy(sdl_renderer, textures[texture_index], nullptr, &dest);
+  // TODO(simon): there is probably a max offset...
+  const SDL_Rect dest
+  {
+    (x * tile_size - offset - ((item_type.sprite_width - 1) * 32)) * scale,
+    (y * tile_size - offset - ((item_type.sprite_height - 1) * 32)) * scale,
+    item_type.sprite_width * tile_size_scaled,
+    item_type.sprite_height * tile_size_scaled
+  };
+  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
 }  // namespace

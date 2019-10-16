@@ -86,10 +86,10 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
   }
 
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
-  for (auto i = 0U; i < sprite_data.size(); i += (blend ? 2 : 1))
+  for (auto i = 0U; i < (sprite_data.size() / (blend ? 2 : 1)); i++)
   {
-    const auto sprite_pixels = blend ? blendSprites(sprite_data[i + 0],
-                                                    sprite_data[i + 1])
+    const auto sprite_pixels = blend ? blendSprites(sprite_data[i],
+                                                    sprite_data[i + (width * height)])
                                      : sprite_data[i];
 
     // Hack to treat the two sprites as A and C when width == 1 and height == 2
@@ -433,7 +433,9 @@ Texture Texture::create(SDL_Renderer* renderer,
 SDL_Texture* Texture::getItemTexture(const common::Position& position, int anim_tick) const
 {
   // This isn't correct, x or anim_tick need a multiplier as well
-  const auto texture_index = position.getX() + (position.getY() * m_item_type.sprite_xdiv) + (anim_tick % m_item_type.sprite_num_anim);
+  const auto texture_index = (position.getX() % m_item_type.sprite_xdiv) +
+                             ((position.getY() % m_item_type.sprite_ydiv) * m_item_type.sprite_xdiv) +
+                             (anim_tick % m_item_type.sprite_num_anim);
   if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
   {
     LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
