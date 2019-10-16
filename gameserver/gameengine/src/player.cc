@@ -45,9 +45,9 @@ bool Equipment::canAddItem(const common::Item& item, int inventory_slot) const
   std::string item_type;
   std::string item_position;
 
-  if (!item.getItemType().type.empty())
+  if (!item.getItemType().type_xml.empty())
   {
-    item_type = item.getItemType().type;
+    item_type = item.getItemType().type_xml;
   }
 
   if (!item.getItemType().position.empty())
