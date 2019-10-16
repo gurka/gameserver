@@ -33,6 +33,7 @@
 namespace utils
 {
 
+// TODO(simon): base this on directory structure instead
 const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
 {
   // account
@@ -87,7 +88,9 @@ const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
   { "wsclient.cc",              Module::WSCLIENT    },
   { "network.cc",               Module::WSCLIENT    },
   { "graphics.cc",              Module::WSCLIENT    },
+  { "texture.cc",               Module::WSCLIENT    },
   { "wsworld.cc",               Module::WSCLIENT    },
+  { "itemview.cc",              Module::WSCLIENT    },
 };
 
 std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =

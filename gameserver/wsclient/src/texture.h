@@ -21,23 +21,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef WSCLIENT_SRC_TEXTURE_H_
+#define WSCLIENT_SRC_TEXTURE_H_
 
-#include <string>
+#include <memory>
+#include <vector>
 
-#include "wsworld.h"
+#include <SDL.h>
+
+#include "item.h"
+#include "sprite_loader.h"
 #include "position.h"
-#include "creature.h"
+#include "direction.h"
 
-namespace wsclient::graphics
+namespace wsclient
 {
 
-bool init(const std::string& data_filename, const std::string& sprite_filename);
-void draw(const wsworld::Map& map,
-          const common::Position& position,
-          common::CreatureId player_id);
+class Texture
+{
+ public:
+  static Texture create(SDL_Renderer* renderer,
+                        const io::SpriteLoader& sprite_loader,
+                        const common::ItemType& item_type);
 
-}  // namespace wsclient::graphics
+  common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+  // Items
+  SDL_Texture* getItemTexture(const common::Position& position, int anim_tick) const;
+
+  // Creature
+  SDL_Texture* getCreatureStillTexture(common::Direction direction) const;
+  SDL_Texture* getCreatureWalkTexture(common::Direction direction, int walk_tick) const;
+
+  // Missile
+  // TODO(simon): add NW, NE, SW and SE to Direction first
+
+ private:
+  common::ItemType m_item_type;
+
+  using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  std::vector<TexturePtr> m_textures;
+};
+
+}  // namespace wsclient
+
+#endif  // WSCLIENT_SRC_TEXTURE_H_
+

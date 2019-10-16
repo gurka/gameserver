@@ -60,25 +60,44 @@ bool load(const std::string& data_filename,
   }
 
   fr.skip(4);  // skip checksum
-  const auto num_items = fr.readU16();
+  const auto num_items = fr.readU16() - 100;  // since 100 is the first item id
   const auto num_outfits = fr.readU16();
   const auto num_effects = fr.readU16();
   const auto num_missiles = fr.readU16();
+  const auto num_total = num_items + num_outfits + num_effects + num_missiles;
 
-  LOG_INFO("%s: num_items: %u num_outfits: %u num_effects: %u, num_missiles: %u",
+  LOG_INFO("%s: num_items: %u num_outfits: %u num_effects: %u, num_missiles: %u, num_total: %u",
            __func__,
            num_items,
            num_outfits,
            num_effects,
-           num_missiles);
+           num_missiles,
+           num_total);
 
   // 100 is the first item id
   *id_first = 100;
   auto next_id = *id_first;
-  for (int i = 0; i < num_items; i++)
+  for (int i = 0; i < num_total; i++)
   {
     common::ItemType item_type;
     item_type.id = next_id;
+
+    if (next_id - *id_first < num_items)
+    {
+      item_type.type = common::ItemType::Type::ITEM;
+    }
+    else if (next_id - *id_first - num_items < num_outfits)
+    {
+      item_type.type = common::ItemType::Type::CREATURE;
+    }
+    else if (next_id - *id_first - num_items - num_outfits < num_effects)
+    {
+      item_type.type = common::ItemType::Type::EFFECT;
+    }
+    else  // assume it's a missile
+    {
+      item_type.type = common::ItemType::Type::MISSILE;
+    }
 
     auto opt_byte = fr.readU8();
     while (opt_byte != 0xFFU)
@@ -234,7 +253,7 @@ bool load(const std::string& data_filename,
   *id_last = next_id - 1;
 
   LOG_INFO("%s: Successfully loaded %d items", __func__, *id_last - *id_first + 1);
-  LOG_DEBUG("%s: Last item_id = %d", __func__, *id_last);
+  LOG_DEBUG("%s: Last item_id = %d (file offset = %d)", __func__, *id_last, fr.offset());
 
   return true;
 }
@@ -345,7 +364,7 @@ bool loadXml(const std::string& items_filename,
       }
       else if (attr_name == "type")
       {
-        item_type.type = attr_value;
+        item_type.type_xml = attr_value;
       }
       else if (attr_name == "position")
       {
@@ -438,7 +457,7 @@ void dumpToJson(const ItemTypes& item_types,
     VALUE_INT(decaytime);
     VALUE_INT(damage);
     VALUE_INT(maxitems);
-    VALUE_STR(type);
+    VALUE_STR(type_xml);
     VALUE_STR(position);
     VALUE_INT(attack);
     VALUE_INT(defence);

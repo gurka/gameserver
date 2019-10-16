@@ -7,6 +7,8 @@ add_executable(wsclient
   "src/graphics.h"
   "src/network.cc"
   "src/network.h"
+  "src/texture.cc"
+  "src/texture.h"
   "src/types.h"
   "src/wsclient.cc"
   "src/wsworld.cc"
@@ -21,3 +23,23 @@ target_link_libraries(wsclient PRIVATE
   protocol
   utils
 )
+
+set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
+
+target_link_options(wsclient PRIVATE --preload-file "../files/")
+
+add_executable(itemview
+  "src/itemview.cc"
+  "src/texture.cc"
+  "src/texture.h"
+)
+
+target_link_libraries(itemview PRIVATE
+  common
+  io
+  utils
+)
+
+set_target_properties(itemview PROPERTIES OUTPUT_NAME "itemview.html")
+
+target_link_options(itemview PRIVATE --preload-file "../files/")

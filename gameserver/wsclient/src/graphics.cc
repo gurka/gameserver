@@ -26,11 +26,12 @@
 #include <cstdint>
 
 #include <emscripten.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include "logger.h"
 #include "data_loader.h"
 #include "sprite_loader.h"
+#include "texture.h"
 
 namespace
 {
@@ -46,129 +47,54 @@ SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
 io::data_loader::ItemTypes itemtypes;
 io::SpriteLoader sprite_loader;
+std::vector<wsclient::Texture> item_textures;
 
-struct Texture
+const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
 {
-  std::uint16_t sprite_id;
-  SDL_Texture* texture;
-};
-
-std::vector<Texture> textures;
-
-SDL_Texture* getTexture(std::uint16_t sprite_id)
-{
-  const auto it = std::find_if(textures.cbegin(),
-                               textures.cend(),
-                               [&sprite_id](const Texture& texture)
+  auto it = std::find_if(item_textures.cbegin(),
+                         item_textures.cend(),
+                         [&item_type_id](const wsclient::Texture& item_texture)
   {
-    return texture.sprite_id == sprite_id;
+    return item_texture.getItemTypeId() == item_type_id;
   });
 
-  if (it != textures.cend())
+  // Create textures if not found
+  if (it == item_textures.end())
   {
-    return it->texture;
+    const auto& item_type = itemtypes[item_type_id];
+    item_textures.push_back(wsclient::Texture::create(sdl_renderer,
+                                                      sprite_loader,
+                                                      item_type));
+    it = item_textures.end() - 1;
   }
 
-  // Load new texture
-  // Cannot be const due to SDL_CreateRGBSurfaceFrom
-  auto pixels = sprite_loader.getSpritePixels(sprite_id);
-
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-  constexpr auto rmask = 0xFF000000U;
-  constexpr auto gmask = 0x00FF0000U;
-  constexpr auto bmask = 0x0000FF00U;
-  constexpr auto amask = 0x000000FFU;
-#else
-  constexpr auto rmask = 0x000000FFU;
-  constexpr auto gmask = 0x0000FF00U;
-  constexpr auto bmask = 0x00FF0000U;
-  constexpr auto amask = 0xFF000000U;
-#endif
-  auto* surface = SDL_CreateRGBSurfaceFrom(pixels.data(), 32, 32, 32, 32 * 4, rmask, gmask, bmask, amask);
-  if (!surface)
-  {
-    LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  // Create texture from surface
-  auto* texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
-  if (!texture)
-  {
-    LOG_ERROR("%s: could not create texture: %s", __func__, SDL_GetError());
-    return nullptr;
-  }
-
-  SDL_FreeSurface(surface);
-
-  // Add to cache
-  textures.push_back(Texture{sprite_id, texture});
-
-  return texture;
-}
-
-void drawTexture(int x, int y, SDL_Texture* texture)
-{
-  const SDL_Rect dest { x * scale, y * scale, tile_size_scaled, tile_size_scaled };
-  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+  return *it;
 }
 
 void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset, int anim_tick)
 {
-  // Need to use global positon, not local
-  const auto xdiv = item_type.sprite_xdiv == 0 ? 0 : x % item_type.sprite_xdiv;
-  const auto ydiv = item_type.sprite_ydiv == 0 ? 0 : y % item_type.sprite_ydiv;
-  auto sprite_index = xdiv + (ydiv * item_type.sprite_xdiv) + (anim_tick % item_type.sprite_num_anim);
-  if (sprite_index < 0 || sprite_index >= static_cast<int>(item_type.sprites.size()))
+  if (item_type.type != common::ItemType::Type::ITEM)
   {
-    LOG_ERROR("%s: sprite_index: %d is invalid (sprites.size(): %d)",
-              __func__,
-              sprite_index,
-              static_cast<int>(item_type.sprites.size()));
+    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item_type.id);
     return;
   }
 
-  auto* texture = getTexture(item_type.sprites[sprite_index++]);
+  // TODO(simon): need to use world position, not local position
+  auto* texture = getTexture(item_type.id).getItemTexture(common::Position(x, y, 0U), anim_tick);
   if (!texture)
   {
-    LOG_ERROR("%s: missing texture for sprite id: %d", __func__, sprite_index - 1);
     return;
   }
 
-  // Convert from tile position to pixel position
-  // TODO: there is probably a max offset...
-  x = x * tile_size - offset;
-  y = y * tile_size - offset;
-
-  drawTexture(x, y, texture);
-
-  // TODO: Take care of this when loading texture, e.g. combine the extra sprites
-  //       into one single texture
-  if (item_type.sprite_extra > 0)
+  // TODO(simon): there is probably a max offset...
+  const SDL_Rect dest
   {
-    // sprite_extra = n means that the sprite is not 32 x 32 but rather:
-    // if sprite_width = 2 and sprite_height = 1: n x 32
-    // if sprite_width = 1 and sprite_height = 2: 32 x n
-    // if sprite_width = 2 and sprite_height = 2: n x n
-    //
-    if (item_type.sprite_width == 2)
-    {
-      texture = getTexture(item_type.sprites[sprite_index++]);
-      drawTexture(x - tile_size, y, texture);
-    }
-
-    if (item_type.sprite_height == 2)
-    {
-      texture = getTexture(item_type.sprites[sprite_index++]);
-      drawTexture(x, y - tile_size, texture);
-    }
-
-    if (item_type.sprite_width == 2 && item_type.sprite_height == 2)
-    {
-      texture = getTexture(item_type.sprites[sprite_index++]);
-      drawTexture(x - tile_size, y - tile_size, texture);
-    }
-  }
+    (x * tile_size - offset - ((item_type.sprite_width - 1) * 32)) * scale,
+    (y * tile_size - offset - ((item_type.sprite_height - 1) * 32)) * scale,
+    item_type.sprite_width * tile_size_scaled,
+    item_type.sprite_height * tile_size_scaled
+  };
+  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
 }  // namespace
