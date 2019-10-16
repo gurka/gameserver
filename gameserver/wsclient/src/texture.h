@@ -59,7 +59,6 @@ class Texture
  private:
   common::ItemType m_item_type;
 
-  // One for memory management, one for returning
   using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
   std::vector<TexturePtr> m_textures;
 };
