@@ -258,12 +258,10 @@ int main()
     return 1;
   }
 
-  // First creature: 2284
-  // For creatures it looks like xdiv=4 means 4 directions?
-
   // Load initial item type
-  // 2284
-  setItemType(1021);
+  // First creature (monster): 2284
+  // First creature (outfit): 2410
+  setItemType(2410);
 
   LOG_INFO("itemview started");
 
