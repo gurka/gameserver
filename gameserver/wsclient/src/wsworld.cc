@@ -63,6 +63,43 @@ void Map::setMapData(const protocol::client::MapData& map_data)
           LOG_INFO("Adding a creature at stackpos=%d with creature_id=%d", creature.stackpos, creature.creature.id);
           m_tiles[y][x].things[creature.stackpos].is_item = false;
           m_tiles[y][x].things[creature.stackpos].creature_id = creature.creature.id;
+
+          // Let's see if we should add creature data as well
+          const auto it = std::find_if(m_creatures.begin(),
+                                       m_creatures.end(),
+                                       [creature_id = creature.creature.id](const Creature& creature)
+          {
+            return creature_id == creature.id;
+          });
+          const auto has_creature = it != m_creatures.end();
+          if (!has_creature && creature.creature.known)
+          {
+            LOG_ERROR("%s: we don't have creature data but the server thinks that we do");
+          }
+          else if (has_creature && !creature.creature.known)
+          {
+            LOG_ERROR("%s: we have creature data but the server thinks that we don't");
+          }
+          else if (!has_creature)  // && !creature.creature.known
+          {
+            // Add creature data
+            Creature creature_data;
+            creature_data.id             = creature.creature.id;
+            creature_data.name           = creature.creature.name;
+            creature_data.health_percent = creature.creature.health_percent;
+            creature_data.direction      = creature.creature.direction;
+            creature_data.outfit         = creature.creature.outfit;
+            creature_data.speed          = creature.creature.speed;
+            m_creatures.push_back(creature_data);
+          }
+          else  // has_creature && creature.creature.known
+          {
+            // Update creature data
+            it->health_percent = creature.creature.health_percent;
+            it->direction      = creature.creature.direction;
+            it->outfit         = creature.creature.outfit;
+            it->speed          = creature.creature.speed;
+          }
         }
       }
       ++it;
@@ -99,6 +136,47 @@ void Map::addCreature(const common::Position& position, common::CreatureId creat
            creature_id,
            position.toString().c_str(),
            std::distance(m_tiles[y][x].things.cbegin(), it));
+}
+
+void Map::addCreature(const common::Position& position, const protocol::client::Creature& creature)
+{
+  addCreature(position, creature.id);
+
+  const auto it = std::find_if(m_creatures.begin(),
+                               m_creatures.end(),
+                               [creature_id = creature.id](const Creature& creature)
+  {
+    return creature_id == creature.id;
+  });
+  const auto has_creature = it != m_creatures.end();
+  if (!has_creature && creature.known)
+  {
+    LOG_ERROR("%s: we don't have creature data but the server thinks that we do");
+  }
+  else if (has_creature && !creature.known)
+  {
+    LOG_ERROR("%s: we have creature data but the server thinks that we don't");
+  }
+  else if (!has_creature)  // && !creature.creature.known
+  {
+    // Add creature data
+    Creature creature_data;
+    creature_data.id             = creature.id;
+    creature_data.name           = creature.name;
+    creature_data.health_percent = creature.health_percent;
+    creature_data.direction      = creature.direction;
+    creature_data.outfit         = creature.outfit;
+    creature_data.speed          = creature.speed;
+    m_creatures.push_back(creature_data);
+  }
+  else  // has_creature && creature.creature.known
+  {
+    // Update creature data
+    it->health_percent = creature.health_percent;
+    it->direction      = creature.direction;
+    it->outfit         = creature.outfit;
+    it->speed          = creature.speed;
+  }
 }
 
 void Map::addItem(const common::Position& position,
@@ -163,6 +241,23 @@ const Map::Tile& Map::getTile(const common::Position& position) const
   const auto y = position.getY() + 6 - m_player_position.getY();
 
   return m_tiles[y][x];
+}
+
+const Map::Creature* Map::getCreature(common::CreatureId creature_id) const
+{
+  const auto it = std::find_if(m_creatures.begin(),
+                               m_creatures.end(),
+                               [creature_id](const Creature& creature)
+  {
+    return creature_id == creature.id;
+  });
+
+  if (it == m_creatures.end())
+  {
+    return nullptr;
+  }
+
+  return &(*it);
 }
 
 }  // namespace wsclient::wsworld

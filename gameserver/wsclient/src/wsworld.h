@@ -60,10 +60,21 @@ class Map
     std::vector<Thing> things;
   };
 
+  struct Creature
+  {
+    std::uint32_t id;
+    std::string name;
+    std::uint8_t health_percent;
+    common::Direction direction;
+    common::Outfit outfit;
+    std::uint16_t speed;
+  };
+
   void setMapData(const protocol::client::MapData& map_data);
   void setPlayerPosition(const common::Position& position) { m_player_position = position; }
 
   void addCreature(const common::Position& position, common::CreatureId creature_id);
+  void addCreature(const common::Position& position, const protocol::client::Creature& creature);
   void addItem(const common::Position& position,
                common::ItemTypeId item_type_id,
                std::uint8_t extra,
@@ -71,12 +82,16 @@ class Map
   void removeThing(const common::Position& position, std::uint8_t stackpos);
 
   const Tile& getTile(const common::Position& position) const;
+  const Creature* getCreature(common::CreatureId creature_id) const;
+
   bool ready() const { return m_ready; }
 
  private:
   common::Position m_player_position = { 0, 0, 0 };
   std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
   bool m_ready = false;
+
+  std::vector<Creature> m_creatures;
 };
 
 }  // namespace wsclient::wsworld

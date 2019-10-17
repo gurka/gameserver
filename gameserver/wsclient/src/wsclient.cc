@@ -47,7 +47,6 @@ using namespace protocol::client;
 common::CreatureId player_id;
 common::Position player_position = { 0, 0, 0 };
 wsworld::Map map;
-std::vector<Creature> creatures;
 
 void handleLoginPacket(const Login& login)
 {
@@ -112,7 +111,7 @@ void handleCreatureMove(const CreatureMove& move)
   else if (move.can_see_new_pos)
   {
     // Add new creature
-    map.addCreature(move.new_position, move.creature.id);
+    map.addCreature(move.new_position, move.creature);
   }
 
   // If this played moved then we need to update map's player_position
@@ -183,7 +182,7 @@ void handle_packet(network::IncomingPacket* packet)
 
 extern "C" void main_loop()
 {
-  wsclient::graphics::draw(wsclient::map, wsclient::player_position, wsclient::player_id);
+  wsclient::graphics::draw(wsclient::map, wsclient::player_position);
 }
 
 int main()

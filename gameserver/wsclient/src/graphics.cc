@@ -97,6 +97,29 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
+void drawCreature(int x, int y, const wsclient::wsworld::Map::Creature& creature, std::uint16_t offset)
+{
+  // TODO(simon): fix this
+  //              io::DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
+  //              since the ids are relative
+  const auto itemTypeId = creature.outfit.type + 2282;
+
+  auto* texture = getTexture(itemTypeId).getCreatureStillTexture(creature.direction);
+  if (!texture)
+  {
+    return;
+  }
+
+  const SDL_Rect dest
+  {
+    (x * tile_size - offset - 8) * scale,
+    (y * tile_size - offset - 8) * scale,
+    tile_size_scaled,
+    tile_size_scaled
+  };
+  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+}
+
 }  // namespace
 
 namespace wsclient::graphics
@@ -135,9 +158,7 @@ bool init(const std::string& data_filename, const std::string& sprite_filename)
   return true;
 }
 
-void draw(const wsworld::Map& map,
-          const common::Position& position,
-          common::CreatureId player_id)
+void draw(const wsworld::Map& map, const common::Position& position)
 {
   const auto anim_tick = SDL_GetTicks() / 540;
 
@@ -175,7 +196,20 @@ void draw(const wsworld::Map& map,
 
           offset += item_type.offset;
         }
-        // Creature: TODO
+        else  // creature
+        {
+          const auto* creature = map.getCreature(thing.creature_id);
+          if (creature)
+          {
+            drawCreature(x, y, *creature, offset);
+          }
+          else
+          {
+            LOG_ERROR("%s: cannot render creature with id %u, no creature data",
+                      __func__,
+                      thing.creature_id);
+          }
+        }
       }
     }
   }

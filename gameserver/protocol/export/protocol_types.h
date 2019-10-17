@@ -204,9 +204,9 @@ struct CreatureMove
   bool can_see_new_pos;
 
   common::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
-  std::uint8_t old_stackpos;                   // only if canSeeOldPos = true
+  std::uint8_t old_stackpos;                    // only if canSeeOldPos = true
   common::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
-  Creature creature;                           // only if canSeeOldPos = false and canSeeNewPos = true
+  Creature creature;                            // only if canSeeOldPos = false and canSeeNewPos = true
 };
 
 }  // namespace client
