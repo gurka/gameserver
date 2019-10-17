@@ -163,12 +163,20 @@ void handle_packet(network::IncomingPacket* packet)
         handleTextMessage(getTextMessage(packet));
         break;
 
-      case 0x6C:
-      case 0x6D:
       case 0x6A:
-        handleCreatureMove(getCreatureMove(type == 0x6D || type == 0x6C,
-                                           type == 0x6D || type == 0x6A,
-                                           packet));
+        handleThingAdded(getThingAdded(packet));
+        break;
+
+      case 0x6B:
+        handleThingChanged(getThingChanged(packet));
+        break;
+
+      case 0x6C:
+        handleThingRemoved(getThingRemoved(packet));
+        break;
+
+      case 0x6D:
+        handleThingMoved(getThingMoved(packet));
         break;
 
       default:
