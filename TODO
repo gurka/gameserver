@@ -19,8 +19,6 @@ General:
 
   * Find more good warning flags to enable
 
-  * Logger should determine module based on filepath, see TODO
-
 ContainerManager:
   * Add support for weight calculation
 
