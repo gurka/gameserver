@@ -25,12 +25,7 @@ ContainerManager:
   * Add support for weight calculation
 
 WSClient:
-  * Continuous rendering, either as often as possible, with max fps, or same fps as animation
-    emscripten_set_main_loop, or will that interfere with websocket stuff?
-  * Add animations (tick % num_anims)
-  * Build Texture per item type id instead of per sprite id (combine sprites larger than 32x32, etc.)
   * Render creatures/players
   * Use global position for xdiv,ydiv
   * Add chat/message box and input field/button to send
   * Add arrow key handling to move creature
-  * Use Thing from common instead of own class, maybe
