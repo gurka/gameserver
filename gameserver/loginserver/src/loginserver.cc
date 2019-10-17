@@ -194,10 +194,10 @@ int main()
   auto logger_utils       = config.getString("logger", "utils", "ERROR");
 
   // Set logger settings
-  utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
-  utils::Logger::setLevel(utils::Logger::Module::LOGINSERVER, logger_loginserver);
-  utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
-  utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
+  utils::Logger::setLevel("account",     logger_account);
+  utils::Logger::setLevel("loginserver", logger_loginserver);
+  utils::Logger::setLevel("network",     logger_network);
+  utils::Logger::setLevel("utils",       logger_utils);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

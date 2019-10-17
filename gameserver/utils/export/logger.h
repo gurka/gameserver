@@ -50,40 +50,15 @@ class Logger
     DEBUG = 2,
   };
 
-  enum class Module : std::size_t
-  {
-    ACCOUNT,
-    GAMEENGINE,
-    IO,
-    LOGINSERVER,
-    NETWORK,
-    PROTOCOL,
-    UTILS,
-    WORLD,
-    WORLDSERVER,
-    WSCLIENT,
-  };
-
   static void log(const char* file_full_path, int line, Level level, ...);
-  static void setLevel(Module module, const std::string& level);
-  static void setLevel(Module module, Level level);
+  static void setLevel(const std::string& module, const std::string& level);
+  static void setLevel(const std::string& module, Level level);
+  static Level getLevel(const std::string& module);
 
  private:
   static const std::string& levelToString(const Level& level);
 
-  struct ModuleHash
-  {
-    std::size_t operator()(Module m) const
-    {
-      return static_cast<std::size_t>(m);
-    }
-  };
-
-  // Maps filename to module
-  static const std::unordered_map<std::string, Module> FILE_TO_MODULE;
-
-  // Maps module to level
-  static std::unordered_map<Module, Level, ModuleHash> module_to_level;
+  static std::unordered_map<std::string, Level> module_to_level;
 };
 
 }  // namespace utils

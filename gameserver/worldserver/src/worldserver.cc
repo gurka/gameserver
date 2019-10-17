@@ -116,13 +116,13 @@ int main()
   const auto logger_worldserver = config.getString("logger", "worldserver", "ERROR");
 
   // Set logger settings
-  utils::Logger::setLevel(utils::Logger::Module::ACCOUNT,     logger_account);
-  utils::Logger::setLevel(utils::Logger::Module::IO,          logger_io);
-  utils::Logger::setLevel(utils::Logger::Module::NETWORK,     logger_network);
-  utils::Logger::setLevel(utils::Logger::Module::PROTOCOL,    logger_protocol);
-  utils::Logger::setLevel(utils::Logger::Module::UTILS,       logger_utils);
-  utils::Logger::setLevel(utils::Logger::Module::WORLD,       logger_world);
-  utils::Logger::setLevel(utils::Logger::Module::WORLDSERVER, logger_worldserver);
+  utils::Logger::setLevel("account",     logger_account);
+  utils::Logger::setLevel("io",          logger_io);
+  utils::Logger::setLevel("network",     logger_network);
+  utils::Logger::setLevel("protocol",    logger_protocol);
+  utils::Logger::setLevel("utils",       logger_utils);
+  utils::Logger::setLevel("world",       logger_world);
+  utils::Logger::setLevel("worldserver", logger_worldserver);
 
   // Print configuration values
   printf("--------------------------------------------------------------------------------\n");

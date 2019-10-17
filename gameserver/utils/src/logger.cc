@@ -29,118 +29,46 @@
 #include <cstdarg>
 #include <cstring>
 #include <array>
+#include <sstream>
+#include <vector>
+
+namespace
+{
+
+std::vector<std::string> getTokens(const std::string& str, char delim)
+{
+  std::vector<std::string> result;
+  std::istringstream iss(str);
+  std::string tmp;
+  while (std::getline(iss, tmp, delim))
+  {
+    result.push_back(std::move(tmp));
+  }
+  return result;
+}
+
+}  // namespace
 
 namespace utils
 {
 
-// TODO(simon): base this on directory structure instead
-const std::unordered_map<std::string, Logger::Module> Logger::FILE_TO_MODULE =
-{
-  // account
-  { "account.cc",               Module::ACCOUNT     },
-
-  // gameengine
-  { "container_manager.cc",     Module::GAMEENGINE  },
-  { "game_engine.cc",           Module::GAMEENGINE  },
-  { "game_engine_queue.cc",     Module::GAMEENGINE  },
-  { "player.cc",                Module::GAMEENGINE  },
-  { "item_manager.cc",          Module::GAMEENGINE  },
-
-  // io
-  { "account_loader.cc",        Module::IO          },
-  { "data_loader.cc",           Module::IO          },
-  { "sprite_loader.cc",         Module::IO          },
-  { "world_loader.cc",          Module::IO          },
-
-  // loginserver
-  { "loginserver.cc",           Module::LOGINSERVER },
-
-  // network
-  { "connection_impl.h",        Module::NETWORK     },
-  { "server_impl.h",            Module::NETWORK     },
-  { "incoming_packet.cc",       Module::NETWORK     },
-  { "outgoing_packet.cc",       Module::NETWORK     },
-  { "acceptor.h",               Module::NETWORK     },
-  { "websocket_server_impl.h",  Module::NETWORK     },
-  { "websocket_server_impl.cc", Module::NETWORK     },
-
-  // protocol
-  { "protocol.cc",              Module::PROTOCOL    },
-  { "protocol_helper.cc",       Module::PROTOCOL    },
-
-  // utils
-  { "config_parser.h",          Module::UTILS       },
-
-  // world
-  { "item.cc",                  Module::WORLD       },
-  { "tile.cc",                  Module::WORLD       },
-  { "world.cc",                 Module::WORLD       },
-  { "creature.cc",              Module::WORLD       },
-  { "position.cc",              Module::WORLD       },
-  { "item_factory.cc",          Module::WORLD       },
-  { "world_factory.cc",         Module::WORLD       },
-
-  // worldserver
-  { "worldserver.cc",           Module::WORLDSERVER },
-  { "connection_ctrl.cc",       Module::WORLDSERVER },
-
-  // wsclient
-  { "wsclient.cc",              Module::WSCLIENT    },
-  { "network.cc",               Module::WSCLIENT    },
-  { "graphics.cc",              Module::WSCLIENT    },
-  { "texture.cc",               Module::WSCLIENT    },
-  { "wsworld.cc",               Module::WSCLIENT    },
-  { "itemview.cc",              Module::WSCLIENT    },
-};
-
-std::unordered_map<Logger::Module, Logger::Level, Logger::ModuleHash> Logger::module_to_level =
-{
-  // Default settings
-  { Module::ACCOUNT,     Level::DEBUG },
-  { Module::GAMEENGINE,  Level::DEBUG },
-  { Module::IO,          Level::DEBUG },
-  { Module::LOGINSERVER, Level::DEBUG },
-  { Module::NETWORK,     Level::DEBUG },
-  { Module::PROTOCOL,    Level::DEBUG },
-  { Module::UTILS,       Level::DEBUG },
-  { Module::WORLD,       Level::DEBUG },
-  { Module::WORLDSERVER, Level::DEBUG },
-  { Module::WSCLIENT,    Level::DEBUG },
-};
+std::unordered_map<std::string, Logger::Level> Logger::module_to_level;
 
 void Logger::log(const char* file_full_path, int line, Level level, ...)
 {
-  // Remove directories in file_full_path ("network/server.cc" => "server.cc")
-  const char* filename;
-  if (strrchr(file_full_path, '/'))
+  // Find module name
+  const auto tokens = getTokens(file_full_path, '/');
+  if (tokens.size() < 3)
   {
-    filename = strrchr(file_full_path, '/') + 1;
-  }
-  else
-  {
-    filename = file_full_path;
-  }
-
-  // Get the Module for this filename
-  if (FILE_TO_MODULE.count(filename) == 0)
-  {
-    // Not in levels map, always print it
-    printf("Logger::log: ERROR: Filename not in Logger::FILE_TO_MODULE: %s\n", filename);
+    printf("%s: too few tokens in file_full_path", __func__);
     return;
   }
 
-  const auto& module = FILE_TO_MODULE.at(filename);
+  const auto& module = tokens[tokens.size() - 3];
+  const auto& filename = tokens[tokens.size() - 1];
+  const auto module_level = getLevel(module);
 
-  // Get the current level for this module
-  if (module_to_level.count(module) == 0)
-  {
-    printf("Logger::log: ERROR: Module not in Logger::module_to_level: %d\n", static_cast<int>(module));
-    return;
-  }
-
-  const auto& module_level = module_to_level.at(module);
-
-  // Only print if given level is less than or equal to moduleLevel
+  // Only print if given level is less than or equal to module_level
   // e.g. if INFO is enabled we print ERROR and INFO
   if (level <= module_level)
   {
@@ -163,24 +91,24 @@ void Logger::log(const char* file_full_path, int line, Level level, ...)
     vsnprintf(message.data(), message.size(), format, args);
     va_end(args);
 
-    printf("[%s][%s:%d] %s: %s\n", time_str.data(), filename, line, levelToString(level).c_str(), message.data());
+    printf("[%s][%s:%d] %s: %s\n", time_str.data(), filename.c_str(), line, levelToString(level).c_str(), message.data());
     std::fflush(stdout);
   }
 }
 
-void Logger::setLevel(Module module, const std::string& level)
+void Logger::setLevel(const std::string& module, const std::string& level)
 {
   if (level == "INFO")
   {
-    setLevel(module, Logger::Level::INFO);
+    setLevel(module, Level::INFO);
   }
   else if (level == "DEBUG")
   {
-    setLevel(module, Logger::Level::DEBUG);
+    setLevel(module, Level::DEBUG);
   }
   else if (level == "ERROR")
   {
-    setLevel(module, Logger::Level::ERROR);
+    setLevel(module, Level::ERROR);
   }
   else
   {
@@ -190,17 +118,19 @@ void Logger::setLevel(Module module, const std::string& level)
   }
 }
 
-void Logger::setLevel(Module module, Level level)
+void Logger::setLevel(const std::string& module, Level level)
+{
+  module_to_level[module] = level;
+}
+
+Logger::Level Logger::getLevel(const std::string& module)
 {
   if (module_to_level.count(module) == 0)
   {
-    printf("%s: ERROR: Module %d does not exist in module_to_level!\n",
-           __func__,
-           static_cast<int>(module));
-    return;
+    // Set default level
+    module_to_level[module] = Level::DEBUG;
   }
-
-  module_to_level[module] = level;
+  return module_to_level[module];
 }
 
 const std::string& Logger::levelToString(const Level& level)
