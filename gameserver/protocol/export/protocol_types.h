@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <deque>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "direction.h"
@@ -36,6 +37,32 @@
 
 namespace protocol
 {
+
+struct Creature
+{
+  bool known;
+  std::uint32_t id_to_remove;  // only if known = false
+  std::uint32_t id;
+  std::string name;  // only if known = false
+  std::uint8_t health_percent;
+  common::Direction direction;
+  common::Outfit outfit;
+  std::uint16_t speed;
+};
+
+struct Item
+{
+  std::uint16_t item_type_id;
+  std::uint8_t extra;  // only if type is stackable or multitype
+};
+
+using Thing = std::variant<Creature, Item>;
+
+struct Tile
+{
+  bool skip;
+  std::vector<Thing> things;
+};
 
 namespace server
 {
@@ -107,24 +134,6 @@ struct LoginFailed
   std::string reason;
 };
 
-struct Creature
-{
-  bool known;
-  std::uint32_t id_to_remove;  // only if known = false
-  std::uint32_t id;
-  std::string name;  // only if known = false
-  std::uint8_t health_percent;
-  common::Direction direction;
-  common::Outfit outfit;
-  std::uint16_t speed;
-};
-
-struct Item
-{
-  std::uint16_t item_type_id;
-  std::uint8_t extra;  // only if type is stackable or multitype
-};
-
 struct Equipment
 {
   bool empty;
@@ -173,40 +182,31 @@ struct TextMessage
   std::string message;
 };
 
-struct MapData
+struct ThingAdded
 {
-  struct CreatureData
-  {
-    Creature creature;
-    std::uint8_t stackpos;
-  };
-
-  struct ItemData
-  {
-    Item item;
-    std::uint8_t stackpos;
-  };
-
-  struct TileData
-  {
-    bool skip;
-    std::vector<CreatureData> creatures;
-    std::vector<ItemData> items;
-  };
-
-  common::Position position = { 0, 0, 0 };
-  std::vector<TileData> tiles;
+  //common::Position position;
+  //Thing thing;
 };
 
-struct CreatureMove
+struct ThingChanged
 {
-  bool can_see_old_pos;
-  bool can_see_new_pos;
 
-  common::Position old_position = { 0, 0, 0 };  // only if canSeeOldPos = true
-  std::uint8_t old_stackpos;                    // only if canSeeOldPos = true
-  common::Position new_position = { 0, 0, 0 };  // only if canSeeNewPos = true
-  Creature creature;                            // only if canSeeOldPos = false and canSeeNewPos = true
+};
+
+struct ThingRemoved
+{
+
+};
+
+struct ThingMoved
+{
+
+};
+
+struct Map
+{
+  common::Position position = { 0, 0, 0 };
+  std::vector<Tile> tiles;
 };
 
 }  // namespace client

@@ -71,15 +71,35 @@ class World;
 namespace protocol
 {
 
-// Common stuff
+using KnownCreatures = std::array<common::CreatureId, 64>;
+using KnownContainers = std::array<common::ItemUniqueId, 64>;
+
 common::Position getPosition(network::IncomingPacket* packet);
 common::Outfit getOutfit(network::IncomingPacket* packet);
+common::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
+common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
+Creature getCreature(bool known, network::IncomingPacket* packet);
+Item getItem(network::IncomingPacket* packet);
+
+void addPosition(const common::Position& position, network::OutgoingPacket* packet);
+void addThing(const common::Thing& thing,
+              KnownCreatures* known_creatures,
+              network::OutgoingPacket* packet);
+void addCreature(const common::Creature* creature,
+                 KnownCreatures* known_creatures,
+                 network::OutgoingPacket* packet);
+void addItem(const common::Item* item, network::OutgoingPacket* packet);
+void addMapData(const world::World& world_interface,
+                const common::Position& position,
+                int width,
+                int height,
+                KnownCreatures* known_creatures,
+                network::OutgoingPacket* packet);
+void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
+void addOutfitData(const common::Outfit& outfit, network::OutgoingPacket* packet);
 
 namespace server
 {
-
-using KnownCreatures = std::array<common::CreatureId, 64>;
-using KnownContainers = std::array<common::ItemUniqueId, 64>;
 
 // Writing packets
 
@@ -179,58 +199,75 @@ void addTextMessage(std::uint8_t type, const std::string& text, network::Outgoin
 // 0xB5
 void addCancelMove(network::OutgoingPacket* packet);
 
-// Writing helpers
-void addPosition(const common::Position& position, network::OutgoingPacket* packet);
-void addThing(const common::Thing& thing,
-              KnownCreatures* known_creatures,
-              network::OutgoingPacket* packet);
-void addCreature(const common::Creature* creature,
-                 KnownCreatures* known_creatures,
-                 network::OutgoingPacket* packet);
-void addItem(const common::Item* item, network::OutgoingPacket* packet);
-void addMapData(const world::World& world_interface,
-                const common::Position& position,
-                int width,
-                int height,
-                KnownCreatures* known_creatures,
-                network::OutgoingPacket* packet);
-void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
-void addOutfitData(const common::Outfit& outfit, network::OutgoingPacket* packet);
-
-
 // Reading packets
-Login getLogin(network::IncomingPacket* packet);
-MoveClick getMoveClick(network::IncomingPacket* packet);
-MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet);
-UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet);
-CloseContainer getCloseContainer(network::IncomingPacket* packet);
-OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet);
-LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet);
-Say getSay(network::IncomingPacket* packet);
 
-// Reading helpers
-common::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
-common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
+// 0x0A
+Login getLogin(network::IncomingPacket* packet);
+
+// 0x64
+MoveClick getMoveClick(network::IncomingPacket* packet);
+
+// 0x78
+MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x82
+UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x87
+CloseContainer getCloseContainer(network::IncomingPacket* packet);
+
+// 0x88
+OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet);
+
+// 0x8C
+LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x96
+Say getSay(network::IncomingPacket* packet);
 
 }  // namespace server
 
 namespace client
 {
 
-client::Login getLogin(network::IncomingPacket* packet);
-client::LoginFailed getLoginFailed(network::IncomingPacket* packet);
-client::Creature getCreature(bool known, network::IncomingPacket* packet);
-client::Item getItem(network::IncomingPacket* packet);
-client::Equipment getEquipment(bool empty, network::IncomingPacket* packet);
-client::MagicEffect getMagicEffect(network::IncomingPacket* packet);
-client::PlayerStats getPlayerStats(network::IncomingPacket* packet);
-client::WorldLight getWorldLight(network::IncomingPacket* packet);
-client::PlayerSkills getPlayerSkills(network::IncomingPacket* packet);
-client::TextMessage getTextMessage(network::IncomingPacket* packet);
-client::MapData getMapData(int width, int height, network::IncomingPacket* packet);
-client::CreatureMove getCreatureMove(bool can_see_old_pos,
-                                     bool can_see_new_pos,
-                                     network::IncomingPacket* packet);
+// 0x0A
+Login getLogin(network::IncomingPacket* packet);
+
+// 0x14
+LoginFailed getLoginFailed(network::IncomingPacket* packet);
+
+// 0x64
+Map getMap(int width, int height, network::IncomingPacket* packet);
+
+// 0x83
+MagicEffect getMagicEffect(network::IncomingPacket* packet);
+
+// 0x78 0x79
+Equipment getEquipment(bool empty, network::IncomingPacket* packet);
+
+// 0x0A
+PlayerStats getPlayerStats(network::IncomingPacket* packet);
+
+// 0x82
+WorldLight getWorldLight(network::IncomingPacket* packet);
+
+// 0xA1
+PlayerSkills getPlayerSkills(network::IncomingPacket* packet);
+
+// 0xB4
+TextMessage getTextMessage(network::IncomingPacket* packet);
+
+// 0x6A
+ThingAdded getThingAdded(network::IncomingPacket* packet);
+
+// 0x6B
+ThingChanged getThingChanged(network::IncomingPacket* packet);
+
+// 0x6C
+ThingRemoved getThingRemoved(network::IncomingPacket* packet);
+
+// 0x6D
+ThingMoved getThingMoved(network::IncomingPacket* packet);
 
 }  // namespace client
 

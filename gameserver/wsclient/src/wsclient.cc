@@ -33,6 +33,7 @@
 #include "position.h"
 #include "protocol.h"
 #include "protocol_types.h"
+#include "data_loader.h"
 
 #include "graphics.h"
 #include "wsworld.h"
@@ -46,6 +47,7 @@ using namespace protocol::client;
 
 common::CreatureId player_id;
 common::Position player_position = { 0, 0, 0 };
+io::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 
 void handleLoginPacket(const Login& login)
@@ -58,10 +60,10 @@ void handleLoginFailedPacket(const LoginFailed& failed)
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const MapData& mapData)
+void handleFullMapPacket(const Map& map_data)
 {
-  player_position = mapData.position;
-  map.setMapData(mapData);
+  player_position = map_data.position;
+  map.setMapData(map_data);
 }
 
 void handleMagicEffect(const MagicEffect& effect)
@@ -89,36 +91,6 @@ void handleTextMessage(const TextMessage& message)
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
-void handleCreatureMove(const CreatureMove& move)
-{
-  LOG_INFO("%s: can_see_old_pos: %s, can_see_new_pos: %s",
-           __func__,
-           move.can_see_old_pos ? "true" : "false",
-           move.can_see_new_pos ? "true" : "false");
-
-  if (move.can_see_old_pos && move.can_see_new_pos)
-  {
-    // Move creature
-    const auto cid = map.getTile(move.old_position).things[move.old_stackpos].creature_id;
-    map.removeThing(move.old_position, move.old_stackpos);
-    map.addCreature(move.new_position, cid);
-  }
-  else if (move.can_see_old_pos)
-  {
-    // Remove creature
-    map.removeThing(move.old_position, move.old_stackpos);
-  }
-  else if (move.can_see_new_pos)
-  {
-    // Add new creature
-    map.addCreature(move.new_position, move.creature);
-  }
-
-  // If this played moved then we need to update map's player_position
-  // BEFORE OR AFTER MOVING PLAYER???
-
-}
-
 void handle_packet(network::IncomingPacket* packet)
 {
   while (!packet->isEmpty())
@@ -135,7 +107,7 @@ void handle_packet(network::IncomingPacket* packet)
         break;
 
       case 0x64:
-        handleFullMapPacket(getMapData(18, 14, packet));
+        handleFullMapPacket(getMap(18, 14, packet));
         break;
 
       case 0x83:
@@ -163,21 +135,21 @@ void handle_packet(network::IncomingPacket* packet)
         handleTextMessage(getTextMessage(packet));
         break;
 
-      case 0x6A:
-        handleThingAdded(getThingAdded(packet));
-        break;
-
-      case 0x6B:
-        handleThingChanged(getThingChanged(packet));
-        break;
-
-      case 0x6C:
-        handleThingRemoved(getThingRemoved(packet));
-        break;
-
-      case 0x6D:
-        handleThingMoved(getThingMoved(packet));
-        break;
+//      case 0x6A:
+//        handleThingAdded(getThingAdded(packet));
+//        break;
+//
+//      case 0x6B:
+//        handleThingChanged(getThingChanged(packet));
+//        break;
+//
+//      case 0x6C:
+//        handleThingRemoved(getThingRemoved(packet));
+//        break;
+//
+//      case 0x6D:
+//        handleThingMoved(getThingMoved(packet));
+//        break;
 
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X", __func__, type);
@@ -198,7 +170,15 @@ int main()
   constexpr auto data_filename = "files/data.dat";
   constexpr auto sprite_filename = "files/sprite.dat";
 
-  if (!wsclient::graphics::init(data_filename, sprite_filename))
+  if (!io::data_loader::load(data_filename, &wsclient::itemtypes, nullptr, nullptr))
+  {
+    LOG_ERROR("%s: could not load data file: %s", __func__, data_filename);
+    return 1;
+  }
+
+  wsclient::map.setItemTypes(&wsclient::itemtypes);
+
+  if (!wsclient::graphics::init(&wsclient::itemtypes, sprite_filename))
   {
     LOG_ERROR("%s: could not initialize graphics", __func__);
     return 1;
