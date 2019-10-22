@@ -44,9 +44,10 @@ target_link_libraries(network PRIVATE
 )
 
 add_library(protocol
-  "protocol/export/protocol.h"
-  "protocol/export/protocol_types.h"
-  "protocol/src/protocol.cc"
+  "protocol/export/protocol_client.h"
+  "protocol/export/protocol_common.h"
+  "protocol/src/protocol_client.cc"
+  "protocol/src/protocol_common.cc"
 )
 target_include_directories(protocol PUBLIC "protocol/export")
 target_link_libraries(protocol PRIVATE

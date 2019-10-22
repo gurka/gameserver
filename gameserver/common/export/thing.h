@@ -25,8 +25,6 @@
 #ifndef COMMON_EXPORT_THING_H_
 #define COMMON_EXPORT_THING_H_
 
-#include <functional>
-#include <type_traits>
 #include <variant>
 
 namespace common
@@ -35,61 +33,35 @@ namespace common
 class Creature;
 class Item;
 
-struct Thing
+class Thing
 {
+ public:
   Thing(const Creature* creature)  // NOLINT
-      : thing(creature)
+      : m_thing(creature)
   {
   }
 
   Thing(const Item* item)  // NOLINT
-      : thing(item)
+      : m_thing(item)
   {
   }
+
+  bool hasCreature() const { return std::holds_alternative<const Creature*>(m_thing); }
 
   const Creature* creature() const
   {
-    return thing.index() == 0 ? std::get<0>(thing) : nullptr;
+    return hasCreature() ? std::get<const Creature*>(m_thing) : nullptr;
   }
+
+  bool hasItem() const { return std::holds_alternative<const Item*>(m_thing); }
 
   const Item* item() const
   {
-    return thing.index() == 1 ? std::get<1>(thing) : nullptr;
+    return hasItem() ? std::get<const Item*>(m_thing) : nullptr;
   }
-
-  void visit(const std::function<void(const Creature*)>& creature_func,
-             const std::function<void(const Item*)>& item_func) const
-  {
-    std::visit([&creature_func, &item_func](auto&& arg)
-    {
-      using T = std::decay_t<decltype(arg)>;
-      if constexpr (std::is_same_v<T, const Creature*>)  // NOLINT clang-tidy bug?
-      {
-        if (creature_func)
-        {
-          creature_func(arg);
-        }
-      }
-      else if constexpr (std::is_same_v<T, const Item*>)
-      {
-        if (item_func)
-        {
-          item_func(arg);
-        }
-      }
-      else
-      {
-        static_assert(AlwaysFalse<T>::value, "Invalid type T");
-      }
-    }, thing);
-  }
-
-
-  std::variant<const Creature*, const Item*> thing;
 
  private:
-  template<typename T>
-  struct AlwaysFalse : std::false_type {};
+  std::variant<const Creature*, const Item*> m_thing;
 };
 
 }  // namespace common

@@ -30,7 +30,8 @@
 #include "position.h"
 #include "creature.h"
 #include "item.h"
-#include "protocol_types.h"
+#include "protocol_common.h"
+#include "protocol_client.h"
 #include "data_loader.h"
 
 #include "types.h"

@@ -97,10 +97,19 @@ const common::Item* Tile::getItem(int stackpos) const
 
 bool Tile::isBlocking() const
 {
-  auto blocking = false;
-  visitThings([&blocking](const common::Creature* /*unused*/) { blocking = true; },
-              [&blocking](const common::Item* item) { blocking |= item->getItemType().is_blocking; });
-  return blocking;
+  for (const auto& thing : m_things)
+  {
+    if (thing.hasCreature())
+    {
+      return true;
+    }
+
+    if (thing.item()->getItemType().is_blocking)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 int Tile::getCreatureStackpos(common::CreatureId creature_id) const
@@ -121,25 +130,6 @@ int Tile::getCreatureStackpos(common::CreatureId creature_id) const
   }
 
   return std::distance(m_things.cbegin(), it);
-}
-
-void Tile::visitThings(const std::function<void(const common::Creature*)>& creature_func,
-                       const std::function<void(const common::Item*)>& item_func) const
-{
-  for (const auto& thing : m_things)
-  {
-    thing.visit(creature_func, item_func);
-  }
-}
-
-void Tile::visitCreatures(const std::function<void(const common::Creature*)>& func) const
-{
-  visitThings(func, {});
-}
-
-void Tile::visitItems(const std::function<void(const common::Item*)>& func) const
-{
-  visitThings({}, func);
 }
 
 }  // namespace world

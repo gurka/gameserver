@@ -22,105 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
-#define PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
+#ifndef PROTOCOL_EXPORT_PROTOCOL_CLIENT_H_
+#define PROTOCOL_EXPORT_PROTOCOL_CLIENT_H_
 
 #include <cstdint>
-#include <deque>
 #include <string>
-#include <variant>
-#include <vector>
 
-#include "direction.h"
-#include "position.h"
-#include "game_position.h"
+#include "protocol_common.h"
 
-namespace protocol
-{
-
-struct Creature
-{
-  bool known;
-  std::uint32_t id_to_remove;  // only if known = false
-  std::uint32_t id;
-  std::string name;  // only if known = false
-  std::uint8_t health_percent;
-  common::Direction direction;
-  common::Outfit outfit;
-  std::uint16_t speed;
-};
-
-struct Item
-{
-  std::uint16_t item_type_id;
-  std::uint8_t extra;  // only if type is stackable or multitype
-};
-
-using Thing = std::variant<Creature, Item>;
-
-struct Tile
-{
-  bool skip;
-  std::vector<Thing> things;
-};
-
-namespace server
-{
-
-struct Login
-{
-  std::uint8_t unknown1;
-  std::uint8_t client_os;
-  std::uint16_t client_version;
-  std::uint8_t unknown2;
-  std::string character_name;
-  std::string password;
-};
-
-struct MoveClick
-{
-  std::deque<common::Direction> path;
-};
-
-struct MoveItem  // or MoveThing?
-{
-  common::ItemPosition from_item_position;
-  common::GamePosition to_game_position;
-  std::uint8_t count;
-};
-
-struct UseItem
-{
-  common::ItemPosition item_position;
-  std::uint8_t new_container_id;
-};
-
-struct CloseContainer
-{
-  std::uint8_t container_id;
-};
-
-struct OpenParentContainer
-{
-  std::uint8_t container_id;
-};
-
-struct LookAt
-{
-  common::ItemPosition item_position;
-};
-
-struct Say
-{
-  std::uint8_t type;
-  std::string receiver;
-  std::uint16_t channel_id;
-  std::string message;
-};
-
-}  // namespace server
-
-namespace client
+namespace protocol::client
 {
 
 struct Login
@@ -209,8 +119,47 @@ struct Map
   std::vector<Tile> tiles;
 };
 
-}  // namespace client
+// Reading packets
 
-}  // namespace protocol
+// 0x0A
+Login getLogin(network::IncomingPacket* packet);
 
-#endif  // PROTOCOL_EXPORT_PROTOCOL_TYPES_H_
+// 0x14
+LoginFailed getLoginFailed(network::IncomingPacket* packet);
+
+// 0x64
+Map getMap(int width, int height, network::IncomingPacket* packet);
+
+// 0x83
+MagicEffect getMagicEffect(network::IncomingPacket* packet);
+
+// 0x78 0x79
+Equipment getEquipment(bool empty, network::IncomingPacket* packet);
+
+// 0x0A
+PlayerStats getPlayerStats(network::IncomingPacket* packet);
+
+// 0x82
+WorldLight getWorldLight(network::IncomingPacket* packet);
+
+// 0xA1
+PlayerSkills getPlayerSkills(network::IncomingPacket* packet);
+
+// 0xB4
+TextMessage getTextMessage(network::IncomingPacket* packet);
+
+// 0x6A
+ThingAdded getThingAdded(network::IncomingPacket* packet);
+
+// 0x6B
+ThingChanged getThingChanged(network::IncomingPacket* packet);
+
+// 0x6C
+ThingRemoved getThingRemoved(network::IncomingPacket* packet);
+
+// 0x6D
+ThingMoved getThingMoved(network::IncomingPacket* packet);
+
+}  // namespace protocol::client
+
+#endif  // PROTOCOL_EXPORT_PROTOCOL_CLIENT_H_

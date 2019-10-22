@@ -31,8 +31,8 @@
 #include "outgoing_packet.h"
 #include "incoming_packet.h"
 #include "position.h"
-#include "protocol.h"
-#include "protocol_types.h"
+#include "protocol_common.h"
+#include "protocol_client.h"
 #include "data_loader.h"
 
 #include "graphics.h"
