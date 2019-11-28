@@ -1,0 +1,9 @@
+FROM debian:bullseye
+
+RUN apt-get update && \
+    apt-get install -y acl git cmake clang-9 libboost1.67-all-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /
+COPY build_entrypoint.sh /
+ENTRYPOINT ["/build_entrypoint.sh"]
