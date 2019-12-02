@@ -21,7 +21,7 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") AND LD_GOLD)
 endif()
 
 # Check for boost date_time
-find_package(Boost 1.67.0 REQUIRED COMPONENTS date_time)
+find_package(Boost REQUIRED COMPONENTS date_time)
 
 # -- Binaries --
 add_subdirectory("loginserver")
