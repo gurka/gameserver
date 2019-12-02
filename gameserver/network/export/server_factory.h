@@ -28,12 +28,9 @@
 #include <functional>
 #include <memory>
 
-namespace boost
-{
 namespace asio
 {
 class io_context;
-}
 }
 
 namespace network
@@ -47,11 +44,11 @@ class ServerFactory
  public:
   using OnClientConnectedCallback = std::function<void(std::unique_ptr<Connection>&&)>;
 
-  static std::unique_ptr<Server> createServer(boost::asio::io_context* io_context,
+  static std::unique_ptr<Server> createServer(asio::io_context* io_context,
                                               int port,
                                               const OnClientConnectedCallback& on_client_connected);
 
-  static std::unique_ptr<Server> createWebsocketServer(boost::asio::io_context* io_context,
+  static std::unique_ptr<Server> createWebsocketServer(asio::io_context* io_context,
                                                        int port,
                                                        const OnClientConnectedCallback& on_client_connected);
 };
