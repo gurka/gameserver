@@ -16,6 +16,5 @@ target_link_libraries(worldserver PRIVATE
   protocol
   world
   utils
-  boost_system
   pthread
 )
