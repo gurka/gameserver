@@ -8,5 +8,5 @@ target_link_libraries(loginserver PRIVATE
   account
   network
   utils
-  pthread
+  asio
 )

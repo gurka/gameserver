@@ -50,6 +50,8 @@ add_subdirectory("account")
 set(CMAKE_CXX_CLANG_TIDY "")
 
 # -- External --
+add_library(asio INTERFACE)
+target_include_directories(asio SYSTEM INTERFACE "../external/asio/asio/include")
 add_library(websocketpp INTERFACE)
 target_include_directories(websocketpp SYSTEM INTERFACE "../external/websocketpp")
 add_library(rapidxml INTERFACE)

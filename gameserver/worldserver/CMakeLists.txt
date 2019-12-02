@@ -16,5 +16,5 @@ target_link_libraries(worldserver PRIVATE
   protocol
   world
   utils
-  pthread
+  asio
 )
