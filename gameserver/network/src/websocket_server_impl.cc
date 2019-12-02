@@ -61,7 +61,7 @@ void WebsocketBackend::async_write(Socket socket,  // NOLINT
   socket.server->asyncWrite(socket, buffer, length, callback);
 }
 
-WebsocketServerImpl::WebsocketServerImpl(boost::asio::io_context* io_context,
+WebsocketServerImpl::WebsocketServerImpl(asio::io_context* io_context,
                                          int port,
                                          std::function<void(std::unique_ptr<Connection>&&)> on_client_connected)
     : m_on_client_connected(std::move(on_client_connected))

@@ -3,8 +3,8 @@ language: cpp
 
 before_install:
   - sudo add-apt-repository ppa:mhier/libboost-latest -y
-  - sudo apt update -q
-  - sudo apt install clang clang-tidy libboost1.70-dev valgrind -y
+  - sudo apt-get update -q
+  - sudo apt-get -y install clang clang-tidy libasio-dev libboost1.70-dev valgrind
 
 jobs:
   include:

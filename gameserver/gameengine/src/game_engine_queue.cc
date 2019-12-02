@@ -27,7 +27,7 @@
 namespace gameengine
 {
 
-GameEngineQueue::GameEngineQueue(GameEngine* game_engine, boost::asio::io_context* io_context)
+GameEngineQueue::GameEngineQueue(GameEngine* game_engine, asio::io_context* io_context)
   : m_game_engine(game_engine),
     m_timer(*io_context),
     m_timer_started(false)
@@ -96,7 +96,7 @@ void GameEngineQueue::startTimer()
   boost::posix_time::ptime task_expire(m_queue.front().expire);
   m_timer.expires_from_now(task_expire - now);
 
-  m_timer.async_wait([this](const boost::system::error_code& ec)
+  m_timer.async_wait([this](const std::error_code& ec)
   {
     onTimeout(ec);
   });
@@ -104,9 +104,9 @@ void GameEngineQueue::startTimer()
   m_timer_started = true;
 }
 
-void GameEngineQueue::onTimeout(const boost::system::error_code& ec)
+void GameEngineQueue::onTimeout(const std::error_code& ec)
 {
-  if (ec == boost::asio::error::operation_aborted)
+  if (ec == asio::error::operation_aborted)
   {
     // Canceled by addTask, so just restart the timer
     startTimer();

@@ -26,7 +26,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 // utils
 #include "config_parser.h"
@@ -148,7 +148,7 @@ int main()
 
   LOG_INFO("Starting WorldServer!");
 
-  boost::asio::io_context io_context;
+  asio::io_context io_context;
 
   // Create GameEngine and GameEngineQueue
   game_engine = std::make_unique<gameengine::GameEngine>();
@@ -183,8 +183,8 @@ int main()
   LOG_INFO("WorldServer started!");
 
   // run() will continue to run until ^C from user is catched
-  boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
-  signals.async_wait([&io_context](const boost::system::error_code& error, int signal_number)
+  asio::signal_set signals(io_context, SIGINT, SIGTERM);
+  signals.async_wait([&io_context](const std::error_code& error, int signal_number)
   {
     LOG_INFO("%s: received error: %s, signal_number: %d, stopping io_context",
              __func__,

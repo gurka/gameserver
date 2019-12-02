@@ -32,6 +32,8 @@
 #include <memory>
 #include <vector>
 
+#define ASIO_STANDALONE 1
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
@@ -88,7 +90,7 @@ class WebsocketServerImpl : public Server
   using WebsocketServer = websocketpp::server<websocketpp::config::asio>;
 
  public:
-  WebsocketServerImpl(boost::asio::io_context* io_context,
+  WebsocketServerImpl(asio::io_context* io_context,
                       int port,
                       std::function<void(std::unique_ptr<Connection>&&)> on_client_connected);
 
