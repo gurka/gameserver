@@ -1,7 +1,7 @@
 FROM debian:bullseye
 
 RUN apt-get update && \
-    apt-get install -y acl git cmake clang-9 libboost1.67-all-dev && \
+    apt-get install -y acl git cmake clang-9 libasio-dev libboost-date-time-dev && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /
