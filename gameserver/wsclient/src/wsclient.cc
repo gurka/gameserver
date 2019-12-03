@@ -195,7 +195,7 @@ int main()
     LOG_ERROR("%s: could not initialize graphics", __func__);
     return 1;
   }
-  wsclient::network::start(&wsclient::handle_packet);
+  wsclient::network::start("127.0.0.1", 8172, &wsclient::handle_packet);
 
   LOG_INFO("%s: starting main loop", __func__);
   emscripten_set_main_loop(main_loop, 0, true);
