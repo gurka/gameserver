@@ -20,6 +20,7 @@ add_library(network
 
 target_link_libraries(network PRIVATE
   utils
+  asio
   websocketpp
 )
 

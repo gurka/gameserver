@@ -25,6 +25,7 @@ target_link_libraries(gameengine PRIVATE
   io
   utils
   world
+  asio
 )
 
 target_include_directories(gameengine PUBLIC "export")

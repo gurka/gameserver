@@ -1,2 +1,1 @@
-libasio-dev
 libboost-date-time-dev

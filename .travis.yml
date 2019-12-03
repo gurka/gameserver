@@ -2,9 +2,8 @@ dist: bionic
 language: cpp
 
 before_install:
-  - sudo add-apt-repository ppa:mhier/libboost-latest -y
   - sudo apt-get update -q
-  - sudo apt-get -y install clang clang-tidy libasio-dev libboost1.70-dev valgrind
+  - sudo apt-get -y install clang clang-tidy libasio-dev libboost-date-time-dev valgrind
 
 jobs:
   include:
