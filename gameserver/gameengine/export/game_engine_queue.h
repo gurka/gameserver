@@ -28,7 +28,7 @@
 #include <functional>
 #include <vector>
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace gameengine
@@ -41,7 +41,7 @@ class GameEngineQueue
  public:
   using Task = std::function<void(GameEngine*)>;
 
-  GameEngineQueue(GameEngine* game_engine, boost::asio::io_context* io_context);
+  GameEngineQueue(GameEngine* game_engine, asio::io_context* io_context);
 
   // Delete copy constructors
   GameEngineQueue(const GameEngineQueue&) = delete;
@@ -67,7 +67,7 @@ class GameEngineQueue
   };
 
   void startTimer();
-  void onTimeout(const boost::system::error_code& ec);
+  void onTimeout(const std::error_code& ec);
 
   GameEngine* m_game_engine;
 
@@ -75,7 +75,7 @@ class GameEngineQueue
   // This is handled by addTask()
   std::vector<TaskWrapper> m_queue;
 
-  boost::asio::deadline_timer m_timer;
+  asio::deadline_timer m_timer;
   bool m_timer_started;
 };
 

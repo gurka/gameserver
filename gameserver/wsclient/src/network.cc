@@ -40,9 +40,10 @@ namespace
   emscripten::val ws = emscripten::val::null();
   std::function<void(network::IncomingPacket*)> handle_packet;
 
-  void connect()
+  void connect(const std::string& ip, int port)
   {
-    ws = emscripten::val::global("WebSocket").new_(emscripten::val("ws://localhost:8172"));
+    const auto uri = "ws://" + ip + ":" + std::to_string(port);
+    ws = emscripten::val::global("WebSocket").new_(emscripten::val(uri));
     ws.set("onopen", emscripten::val::module_property("onopen"));
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }
@@ -120,10 +121,10 @@ namespace
 namespace wsclient::network
 {
 
-void start(const std::function<void(IncomingPacket*)> callback)
+void start(const std::string& ip, int port, const std::function<void(IncomingPacket*)> callback)
 {
   handle_packet = callback;
-  connect();
+  connect(ip, port);
 }
 
 }  // namespace wsclient::network

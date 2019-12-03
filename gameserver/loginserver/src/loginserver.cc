@@ -26,7 +26,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 // utils
 #include "config_parser.h"
@@ -216,7 +216,7 @@ int main()
   printf("--------------------------------------------------------------------------------\n");
 
   // Create io_context
-  boost::asio::io_context io_context;
+  asio::io_context io_context;
 
   // Create and load AccountReader
   account_reader = std::make_unique<account::AccountReader>();
@@ -236,8 +236,8 @@ int main()
   LOG_INFO("LoginServer started!");
 
   // run() will continue to run until ^C from user is catched
-  boost::asio::signal_set signals(io_context, SIGINT, SIGTERM);
-  signals.async_wait([&io_context](const boost::system::error_code& error, int signal_number)
+  asio::signal_set signals(io_context, SIGINT, SIGTERM);
+  signals.async_wait([&io_context](const std::error_code& error, int signal_number)
   {
     LOG_INFO("%s: received error: %s, signal_number: %d, stopping io_context",
              __func__,

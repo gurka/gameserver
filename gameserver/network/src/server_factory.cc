@@ -24,7 +24,7 @@
 
 #include "server_factory.h"
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 
 #include "server_impl.h"
 #include "websocket_server_impl.h"
@@ -34,28 +34,28 @@ namespace network
 
 struct Backend
 {
-  using Service = boost::asio::io_context;
+  using Service = asio::io_context;
 
-  class Acceptor : public boost::asio::ip::tcp::acceptor
+  class Acceptor : public asio::ip::tcp::acceptor
   {
    public:
     Acceptor(Service& io_context, int port)  //NOLINT
-      : boost::asio::ip::tcp::acceptor(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port))
+      : asio::ip::tcp::acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
     {
     }
   };
 
-  using Socket = boost::asio::ip::tcp::socket;
-  using ErrorCode = boost::system::error_code;
-  using Error = boost::asio::error::basic_errors;
-  using shutdown_type = boost::asio::ip::tcp::socket::shutdown_type;
+  using Socket = asio::ip::tcp::socket;
+  using ErrorCode = std::error_code;
+  using Error = asio::error::basic_errors;
+  using shutdown_type = asio::ip::tcp::socket::shutdown_type;
 
   static void async_write(Socket& socket,  //NOLINT
                           const std::uint8_t* buffer,
                           std::size_t length,
                           const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
   {
-    boost::asio::async_write(socket, boost::asio::buffer(buffer, length), handler);
+    asio::async_write(socket, asio::buffer(buffer, length), handler);
   }
 
   static void async_read(Socket& socket,  //NOLINT
@@ -63,18 +63,18 @@ struct Backend
                          std::size_t length,
                          const std::function<void(const Backend::ErrorCode&, std::size_t)>& handler)
   {
-    boost::asio::async_read(socket, boost::asio::buffer(buffer, length), handler);
+    asio::async_read(socket, asio::buffer(buffer, length), handler);
   }
 };
 
-std::unique_ptr<Server> ServerFactory::createServer(boost::asio::io_context* io_context,
+std::unique_ptr<Server> ServerFactory::createServer(asio::io_context* io_context,
                                                     int port,
                                                     const OnClientConnectedCallback& on_client_connected)
 {
   return std::make_unique<ServerImpl<Backend>>(io_context, port, on_client_connected);
 }
 
-std::unique_ptr<Server> ServerFactory::createWebsocketServer(boost::asio::io_context* io_context,
+std::unique_ptr<Server> ServerFactory::createWebsocketServer(asio::io_context* io_context,
                                                              int port,
                                                              const OnClientConnectedCallback& on_client_connected)
 {
