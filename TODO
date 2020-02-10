@@ -26,3 +26,8 @@ WSClient:
   * Use global position for xdiv,ydiv
   * Add chat/message box and input field/button to send
   * Add arrow key handling to move creature
+
+Docker:
+  * Build one image with 3 applications: login, world and wsclient
+  * or three images?
+  * How to deploy wsclient?

@@ -4,5 +4,9 @@ WORKDIR /gameserver
 COPY tools/docker/entrypoint_run.sh /gameserver/
 COPY docker_build/bin/worldserver /gameserver/
 COPY docker_build/bin/loginserver /gameserver/
-COPY docker_build/data /gameserver/data/
+
+EXPOSE 7171
+EXPOSE 7172
+EXPOSE 8171
+EXPOSE 8172
 ENTRYPOINT ["/gameserver/entrypoint_run.sh"]
