@@ -1,9 +1,19 @@
 FROM debian:bullseye
 
-RUN apt-get update && \
-    apt-get install -y build-essential acl git cmake clang-9 libboost-date-time-dev && \
+RUN apt-get -qq update -y && \
+    apt-get -qq install -y --no-install-recommends \
+      build-essential acl git cmake clang-9 libboost-date-time-dev python ca-certificates && \
+    apt-get -y clean && \
+    apt-get -y autoclean && \
+    apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /
-COPY tools/docker/entrypoint_build.sh /
-ENTRYPOINT ["/entrypoint_build.sh"]
+WORKDIR /build
+
+RUN git clone https://github.com/emscripten-core/emsdk.git && \
+    cd emsdk && \
+    ./emsdk install latest && \
+    ./emsdk activate latest
+
+COPY tools/docker/entrypoint_build.sh /build
+ENTRYPOINT ["/build/entrypoint_build.sh"]
