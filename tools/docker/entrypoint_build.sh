@@ -19,4 +19,6 @@ mkdir -p /gameserver/docker_build_wsclient
 cd /gameserver/docker_build_wsclient
 CC=emcc CXX=em++ cmake ../gameserver -DWSCLIENT=ON -DCMAKE_BUILD_TYPE=debug
 make
+
 chown -R $USER_ID:$GROUP_ID /gameserver/docker_build_wsclient
+chown -R $USER_ID:$GROUP_ID /gameserver/.emscripten_cache
