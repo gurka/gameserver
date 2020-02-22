@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
+project(gameserver)
+
 option(GAMESERVER "Gameserver Build" OFF)
 option(WSCLIENT "WSClient Build" OFF)
 if (GAMESERVER AND (NOT WSCLIENT))
