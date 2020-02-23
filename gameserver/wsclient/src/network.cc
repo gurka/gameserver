@@ -42,7 +42,11 @@ namespace
 
   void connect()
   {
-    ws = emscripten::val::global("WebSocket").new_(emscripten::val("ws://192.168.1.4:8172"));
+    const auto url = emscripten::val::global("URLSearchParams").new_(emscripten::val::global("location")["search"]);
+    const auto address = url.call<std::string>("get", emscripten::val("address"));
+    LOG_INFO("%s: found address: '%s'", __func__, address.c_str());
+
+    ws = emscripten::val::global("WebSocket").new_(emscripten::val(address));
     ws.set("onopen", emscripten::val::module_property("onopen"));
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }
