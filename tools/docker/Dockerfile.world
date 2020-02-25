@@ -1,0 +1,8 @@
+FROM debian:bullseye
+
+WORKDIR /gameserver
+COPY docker_build/bin/worldserver /gameserver/
+
+EXPOSE 7172
+EXPOSE 8172
+ENTRYPOINT ["/gameserver/worldserver"]
