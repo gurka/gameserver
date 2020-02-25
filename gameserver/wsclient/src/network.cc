@@ -40,13 +40,9 @@ namespace
   emscripten::val ws = emscripten::val::null();
   std::function<void(network::IncomingPacket*)> handle_packet;
 
-  void connect()
+  void connect(const std::string& uri)
   {
-    const auto url = emscripten::val::global("URLSearchParams").new_(emscripten::val::global("location")["search"]);
-    const auto address = url.call<std::string>("get", emscripten::val("address"));
-    LOG_INFO("%s: found address: '%s'", __func__, address.c_str());
-
-    ws = emscripten::val::global("WebSocket").new_(emscripten::val(address));
+    ws = emscripten::val::global("WebSocket").new_(emscripten::val(uri));
     ws.set("onopen", emscripten::val::module_property("onopen"));
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }
@@ -124,10 +120,10 @@ namespace
 namespace wsclient::network
 {
 
-void start(const std::function<void(IncomingPacket*)> callback)
+void start(const std::string& uri, const std::function<void(IncomingPacket*)> callback)
 {
   handle_packet = callback;
-  connect();
+  connect(uri);
 }
 
 }  // namespace wsclient::network

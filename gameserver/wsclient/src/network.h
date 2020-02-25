@@ -38,7 +38,7 @@ namespace wsclient::network
 using ::network::IncomingPacket;
 using ::network::OutgoingPacket;
 
-void start(const std::function<void(IncomingPacket*)> callback);
+void start(const std::string& uri, const std::function<void(IncomingPacket*)> callback);
 
 }  // namespace wsclient::network
 
