@@ -28,6 +28,7 @@ WSClient:
   * Add arrow key handling to move creature
 
 Docker:
-  * Build one image with 3 applications: login, world and wsclient
-  * or three images?
-  * How to deploy wsclient?
+  * Troubleshoot emscripten cache issue (always downloading SDL lib)
+  * Create docker image(s) with make target
+  * (non-Docker): see if we can merge regular and wsclient cmake config
+    and just skip wsclient if emscripten is not available
