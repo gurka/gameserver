@@ -13,10 +13,7 @@ RUN apt-get -qq update -y && \
 
 RUN git clone https://github.com/emscripten-core/emsdk.git && \
     cd emsdk && \
-    ./emsdk install latest && \
-    ./emsdk activate latest
-
-RUN adduser --uid 1337 --disabled-password --gecos ""  user
+    ./emsdk install latest
 
 COPY tools/docker/entrypoint.sh /build
 RUN chmod +x /build/entrypoint.sh
