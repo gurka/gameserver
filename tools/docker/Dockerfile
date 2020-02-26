@@ -1,19 +1,22 @@
 FROM debian:bullseye
 
+USER root
+WORKDIR /build
+
 RUN apt-get -qq update -y && \
     apt-get -qq install -y --no-install-recommends \
-      build-essential acl git cmake clang-9 libboost-date-time-dev python ca-certificates && \
+      build-essential acl git cmake clang-9 libboost-date-time-dev python ca-certificates docker.io && \
     apt-get -y clean && \
     apt-get -y autoclean && \
     apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /build
-
 RUN git clone https://github.com/emscripten-core/emsdk.git && \
     cd emsdk && \
     ./emsdk install latest && \
     ./emsdk activate latest
+
+RUN adduser --uid 1337 --disabled-password --gecos ""  user
 
 COPY tools/docker/entrypoint.sh /build
 RUN chmod +x /build/entrypoint.sh
