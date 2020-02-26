@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <emscripten.h>
+#include <emscripten/val.h>
 
 #include "logger.h"
 #include "outgoing_packet.h"
@@ -183,7 +184,11 @@ int main()
     LOG_ERROR("%s: could not initialize graphics", __func__);
     return 1;
   }
-  wsclient::network::start("127.0.0.1", 8172, &wsclient::handle_packet);
+
+  const auto usp = emscripten::val::global("URLSearchParams").new_(emscripten::val::global("location")["search"]);
+  const auto uri = usp.call<std::string>("get", emscripten::val("uri"));
+  LOG_INFO("%s: found uri: '%s'", __func__, uri.c_str());
+  wsclient::network::start(uri, &wsclient::handle_packet);
 
   LOG_INFO("%s: starting main loop", __func__);
   emscripten_set_main_loop(main_loop, 0, true);

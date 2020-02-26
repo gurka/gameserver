@@ -2,3 +2,7 @@
 /build/
 /data/
 /doc/
+/docker_build/
+/docker_build_wsclient/
+.emscripten_cache.lock
+.emscripten_cache/
