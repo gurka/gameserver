@@ -15,6 +15,6 @@ RUN git clone https://github.com/emscripten-core/emsdk.git && \
     ./emsdk install latest && \
     ./emsdk activate latest
 
-COPY tools/docker/entrypoint_build.sh /build
-RUN chmod +x /build/entrypoint_build.sh
-ENTRYPOINT ["/build/entrypoint_build.sh"]
+COPY tools/docker/entrypoint.sh /build
+RUN chmod +x /build/entrypoint.sh
+ENTRYPOINT ["/build/entrypoint.sh"]

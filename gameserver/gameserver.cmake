@@ -73,3 +73,12 @@ add_custom_target(unittest DEPENDS
   utils_test
   world_test
 )
+
+# -- Docker targets --
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.login" "${CMAKE_BINARY_DIR}/Dockerfile.login" COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.world" "${CMAKE_BINARY_DIR}/Dockerfile.world" COPYONLY)
+add_custom_target(docker
+  COMMAND docker build -t gameserver/login -f "${CMAKE_BINARY_DIR}/Dockerfile.login" "${CMAKE_BINARY_DIR}"
+  COMMAND docker build -t gameserver/world -f "${CMAKE_BINARY_DIR}/Dockerfile.world" "${CMAKE_BINARY_DIR}"
+)
+add_dependencies(docker loginserver worldserver)
