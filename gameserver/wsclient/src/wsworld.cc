@@ -28,7 +28,7 @@
 namespace wsclient::wsworld
 {
 
-void Map::setMapData(const protocol::client::MapData& map_data)
+void Map::setMapData(const protocol::client::Map& map_data)
 {
   m_player_position = map_data.position;
   auto it = map_data.tiles.begin();
@@ -36,69 +36,59 @@ void Map::setMapData(const protocol::client::MapData& map_data)
   {
     for (auto y = 0; y < consts::known_tiles_y; y++)
     {
-      m_tiles[y][x].things.clear();
+      auto& tile = m_tiles[y][x];
+      tile.things.clear();
 
       if (!it->skip)
       {
-        // Find largest stackpos
-        const auto maxStackpos = std::max(it->items.empty() ? 0 : it->items.back().stackpos,
-                                          it->creatures.empty() ? 0 : it->creatures.back().stackpos);
-
-        // Make things vector this big
-        m_tiles[y][x].things.resize(maxStackpos + 1);
-
-        // Add items
-        for (const auto& item : it->items)
+        for (const auto& thing : it->things)
         {
-          //LOG_INFO("Adding an item at stackpos=%d with item_type_id=%d", item.stackpos, item.item.item_type_id);
-          m_tiles[y][x].things[item.stackpos].is_item = true;
-          m_tiles[y][x].things[item.stackpos].item.item_type_id = item.item.item_type_id;
-          m_tiles[y][x].things[item.stackpos].item.extra = item.item.extra;
-          m_tiles[y][x].things[item.stackpos].item.onTop = false;  // TODO fix
-        }
+          if (std::holds_alternative<protocol::Creature>(thing))
+          {
+            const auto& creature = std::get<protocol::Creature>(thing);
+            if (creature.known)
+            {
+              // Update known creature
+              auto* known_creature = getCreature(creature.id);
+              if (!known_creature)
+              {
+                LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
+                return;
+              }
+              known_creature->health_percent = creature.health_percent;
+              known_creature->direction = creature.direction;
+              known_creature->outfit = creature.outfit;
+              known_creature->speed = creature.speed;
+            }
+            else
+            {
+              // Remove known creature if set
+              if (creature.id_to_remove != 0U)
+              {
+                LOG_ERROR("%s: remove known creature not yet implemented", __func__);
+              }
 
-        // Add creatures
-        for (const auto& creature : it->creatures)
-        {
-          LOG_INFO("Adding a creature at stackpos=%d with creature_id=%d", creature.stackpos, creature.creature.id);
-          m_tiles[y][x].things[creature.stackpos].is_item = false;
-          m_tiles[y][x].things[creature.stackpos].creature_id = creature.creature.id;
+              // Add new creature
+              m_known_creatures.emplace_back();
+              m_known_creatures.back().id = creature.id;
+              m_known_creatures.back().name = creature.name;
+              m_known_creatures.back().health_percent = creature.health_percent;
+              m_known_creatures.back().direction = creature.direction;
+              m_known_creatures.back().outfit = creature.outfit;
+              m_known_creatures.back().speed = creature.speed;
+            }
 
-          // Let's see if we should add creature data as well
-          const auto it = std::find_if(m_creatures.begin(),
-                                       m_creatures.end(),
-                                       [creature_id = creature.creature.id](const Creature& creature)
-          {
-            return creature_id == creature.id;
-          });
-          const auto has_creature = it != m_creatures.end();
-          if (!has_creature && creature.creature.known)
-          {
-            LOG_ERROR("%s: we don't have creature data but the server thinks that we do");
+            tile.things.emplace_back(creature.id);
           }
-          else if (has_creature && !creature.creature.known)
+          else  // Item
           {
-            LOG_ERROR("%s: we have creature data but the server thinks that we don't");
-          }
-          else if (!has_creature)  // && !creature.creature.known
-          {
-            // Add creature data
-            Creature creature_data;
-            creature_data.id             = creature.creature.id;
-            creature_data.name           = creature.creature.name;
-            creature_data.health_percent = creature.creature.health_percent;
-            creature_data.direction      = creature.creature.direction;
-            creature_data.outfit         = creature.creature.outfit;
-            creature_data.speed          = creature.creature.speed;
-            m_creatures.push_back(creature_data);
-          }
-          else  // has_creature && creature.creature.known
-          {
-            // Update creature data
-            it->health_percent = creature.creature.health_percent;
-            it->direction      = creature.creature.direction;
-            it->outfit         = creature.creature.outfit;
-            it->speed          = creature.creature.speed;
+            const auto& item = std::get<protocol::Item>(thing);
+            const auto& itemtype = (*m_itemtypes)[item.item_type_id];
+            Item new_item;
+            new_item.type = &itemtype;
+            new_item.extra = item.extra;
+            Thing t = new_item;
+            tile.things.push_back(t);
           }
         }
       }
@@ -118,7 +108,11 @@ void Map::addCreature(const common::Position& position, common::CreatureId creat
   auto it = m_tiles[y][x].things.cbegin() + 1;
   while (it != m_tiles[y][x].things.cend())
   {
-    if (!it->is_item || !it->item.onTop)
+    if (std::holds_alternative<common::CreatureId>(*it))
+    {
+      break;
+    }
+    else if (!std::get<Item>(*it).type->always_on_top)
     {
       break;
     }
@@ -126,10 +120,10 @@ void Map::addCreature(const common::Position& position, common::CreatureId creat
   }
 
   // Add creature here
-  Tile::Thing thing;
-  thing.is_item = false;
-  thing.creature_id = creature_id;
-  it = m_tiles[y][x].things.insert(it, thing);
+//  Tile::Thing thing;
+//  thing.is_item = false;
+//  thing.creature_id = creature_id;
+//  it = m_tiles[y][x].things.insert(it, thing);
 
   LOG_INFO("%s: added creature_id=%d on position=%s stackpos=%d",
            __func__,
@@ -138,45 +132,9 @@ void Map::addCreature(const common::Position& position, common::CreatureId creat
            std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
-void Map::addCreature(const common::Position& position, const protocol::client::Creature& creature)
+void Map::addCreature(const common::Position& position, const protocol::Creature& creature)
 {
   addCreature(position, creature.id);
-
-  const auto it = std::find_if(m_creatures.begin(),
-                               m_creatures.end(),
-                               [creature_id = creature.id](const Creature& creature)
-  {
-    return creature_id == creature.id;
-  });
-  const auto has_creature = it != m_creatures.end();
-  if (!has_creature && creature.known)
-  {
-    LOG_ERROR("%s: we don't have creature data but the server thinks that we do");
-  }
-  else if (has_creature && !creature.known)
-  {
-    LOG_ERROR("%s: we have creature data but the server thinks that we don't");
-  }
-  else if (!has_creature)  // && !creature.creature.known
-  {
-    // Add creature data
-    Creature creature_data;
-    creature_data.id             = creature.id;
-    creature_data.name           = creature.name;
-    creature_data.health_percent = creature.health_percent;
-    creature_data.direction      = creature.direction;
-    creature_data.outfit         = creature.outfit;
-    creature_data.speed          = creature.speed;
-    m_creatures.push_back(creature_data);
-  }
-  else  // has_creature && creature.creature.known
-  {
-    // Update creature data
-    it->health_percent = creature.health_percent;
-    it->direction      = creature.direction;
-    it->outfit         = creature.outfit;
-    it->speed          = creature.speed;
-  }
 }
 
 void Map::addItem(const common::Position& position,
@@ -199,7 +157,7 @@ void Map::addItem(const common::Position& position,
     auto it = m_tiles[y][x].things.cbegin();
     while (it != m_tiles[y][x].things.cend())
     {
-      if (it->is_item && !it->item.onTop)
+      if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
       {
         break;
       }
@@ -207,13 +165,13 @@ void Map::addItem(const common::Position& position,
     }
   }
 
-  // Add item here
-  Tile::Thing thing;
-  thing.is_item = true;
-  thing.item.item_type_id = item_type_id;
-  thing.item.extra = extra;
-  thing.item.onTop = onTop;
-  it = m_tiles[y][x].things.insert(it, thing);
+//  // Add item here
+//  Tile::Thing thing;
+//  thing.is_item = true;
+//  thing.item.item_type_id = item_type_id;
+//  thing.item.extra = extra;
+//  thing.item.onTop = onTop;
+//  it = m_tiles[y][x].things.insert(it, thing);
 
   LOG_INFO("%s: added item_type_id=%d on position=%s stackpos=%d",
            __func__,
@@ -245,19 +203,24 @@ const Map::Tile& Map::getTile(const common::Position& position) const
 
 const Map::Creature* Map::getCreature(common::CreatureId creature_id) const
 {
-  const auto it = std::find_if(m_creatures.begin(),
-                               m_creatures.end(),
-                               [creature_id](const Creature& creature)
+  auto it = std::find_if(m_known_creatures.cbegin(),
+                         m_known_creatures.cend(),
+                         [creature_id](const Creature& creature)
   {
     return creature_id == creature.id;
   });
-
-  if (it == m_creatures.end())
+  if (it == m_known_creatures.cend())
   {
     return nullptr;
   }
-
   return &(*it);
+}
+
+Map::Creature* Map::getCreature(common::CreatureId creature_id)
+{
+  // According to https://stackoverflow.com/a/123995/969365
+  const auto* creature = static_cast<const Map*>(this)->getCreature(creature_id);
+  return const_cast<Creature*>(creature);
 }
 
 }  // namespace wsclient::wsworld

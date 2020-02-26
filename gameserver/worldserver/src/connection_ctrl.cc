@@ -52,8 +52,8 @@
 #include "account.h"
 
 // protocol
-#include "protocol.h"
-#include "protocol_types.h"
+#include "protocol_common.h"
+#include "protocol_server.h"
 
 using namespace protocol::server;  // NOLINT yes we want it all
 

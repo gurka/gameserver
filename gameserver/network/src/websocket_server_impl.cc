@@ -66,15 +66,19 @@ WebsocketServerImpl::WebsocketServerImpl(asio::io_context* io_context,
                                          std::function<void(std::unique_ptr<Connection>&&)> on_client_connected)
     : m_on_client_connected(std::move(on_client_connected))
 {
+
   websocketpp::lib::error_code ec;
   m_server.init_asio(io_context, ec);
-  m_server.set_reuse_addr(true);
   if (ec)
   {
     LOG_ERROR("%s: could not initialize WebsocketServer: %s", __func__, ec.message().c_str());
     return;
   }
 
+  // Disable all websocketpp logging for now
+  m_server.set_access_channels(websocketpp::log::alevel::none);
+
+  m_server.set_reuse_addr(true);
   m_server.set_open_handler([this](const websocketpp::connection_hdl& hdl)
   {
     LOG_DEBUG("%s: new connection", __func__);

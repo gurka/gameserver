@@ -33,7 +33,7 @@
 namespace wsclient::graphics
 {
 
-bool init(const std::string& data_filename, const std::string& sprite_filename);
+bool init(const io::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
 void draw(const wsworld::Map& map, const common::Position& position);
 
 }  // namespace wsclient::graphics

@@ -302,13 +302,17 @@ ReturnCode World::creatureMove(common::CreatureId creature_id, const common::Pos
         continue;
       }
 
-      tile->visitCreatures([this, &from_position, &from_stackpos, &to_position](const common::Creature* creature)
+      for (const auto& thing : tile->getThings())
       {
-        getCreatureCtrl(creature->getCreatureId()).onCreatureMove(*creature,
-                                                                  from_position,
-                                                                  from_stackpos,
-                                                                  to_position);
-      });
+        if (thing.hasCreature())
+        {
+          const auto creature_id = thing.creature()->getCreatureId();
+          getCreatureCtrl(creature_id).onCreatureMove(*creature,
+                                                      from_position,
+                                                      from_stackpos,
+                                                      to_position);
+        }
+      }
     }
   }
 
@@ -664,10 +668,13 @@ std::vector<common::CreatureId> World::getCreatureIdsThatCanSeePosition(const co
         continue;
       }
 
-      tile->visitCreatures([&creature_ids](const common::Creature* creature)
+      for (const auto& thing : tile->getThings())
       {
-        creature_ids.push_back(creature->getCreatureId());
-      });
+        if (thing.hasCreature())
+        {
+          creature_ids.push_back(thing.creature()->getCreatureId());
+        }
+      }
     }
   }
 

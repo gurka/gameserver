@@ -66,12 +66,6 @@ class Tile
   bool isBlocking() const;
   int getCreatureStackpos(common::CreatureId creature_id) const;
 
-  // Visitor pattern stuff
-  void visitThings(const std::function<void(const common::Creature*)>& creature_func,
-                   const std::function<void(const common::Item*)>& item_func) const;
-  void visitCreatures(const std::function<void(const common::Creature*)>& func) const;
-  void visitItems(const std::function<void(const common::Item*)>& func) const;
-
  private:
   // First ground
   // Then onTop items

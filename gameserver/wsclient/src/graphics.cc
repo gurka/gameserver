@@ -45,7 +45,7 @@ constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
-io::data_loader::ItemTypes itemtypes;
+const io::data_loader::ItemTypes* itemtypes = nullptr;
 io::SpriteLoader sprite_loader;
 std::vector<wsclient::Texture> item_textures;
 
@@ -61,7 +61,7 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
   // Create textures if not found
   if (it == item_textures.end())
   {
-    const auto& item_type = itemtypes[item_type_id];
+    const auto& item_type = (*itemtypes)[item_type_id];
     item_textures.push_back(wsclient::Texture::create(sdl_renderer,
                                                       sprite_loader,
                                                       item_type));
@@ -125,13 +125,9 @@ void drawCreature(int x, int y, const wsclient::wsworld::Map::Creature& creature
 namespace wsclient::graphics
 {
 
-bool init(const std::string& data_filename, const std::string& sprite_filename)
+bool init(const io::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename)
 {
-  if (!io::data_loader::load(data_filename, &itemtypes, nullptr, nullptr))
-  {
-    LOG_ERROR("Could not load \"%s\"", data_filename.c_str());
-    return false;
-  }
+  itemtypes = itemtypes_in;
 
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -180,25 +176,31 @@ void draw(const wsworld::Map& map, const common::Position& position)
                                                       position.getZ()));
 
       // Draw ground
-      const auto& ground_type = itemtypes[tile.things.front().item.item_type_id];
-      drawItem(x, y, ground_type, 0, anim_tick);
+      if (!std::holds_alternative<wsworld::Map::Item>(tile.things.front()))
+      {
+        LOG_ERROR("%s: first Thing on tile is not an Item!", __func__);
+        return;
+      }
+      const auto& ground_item = std::get<wsworld::Map::Item>(tile.things.front());
+      drawItem(x, y, *ground_item.type, 0, anim_tick);
 
       // Draw things in reverse order, except ground
-      auto offset = ground_type.offset;
+      auto offset = ground_item.type->offset;
       for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
         const auto& thing = *it;
-        if (thing.is_item)
+        if (std::holds_alternative<wsworld::Map::Item>(thing))
         {
           // TODO: probably need things like count later
-          const auto& item_type = itemtypes[thing.item.item_type_id];
-          drawItem(x, y, item_type, offset, anim_tick);
+          const auto& item = std::get<wsworld::Map::Item>(thing);
+          drawItem(x, y, *item.type, offset, anim_tick);
 
-          offset += item_type.offset;
+          offset += item.type->offset;
         }
-        else  // creature
+        else  // wsworld::Map::Creature
         {
-          const auto* creature = map.getCreature(thing.creature_id);
+          const auto& creature_id = std::get<common::CreatureId>(thing);
+          const auto* creature = map.getCreature(creature_id);
           if (creature)
           {
             drawCreature(x, y, *creature, offset);
@@ -207,7 +209,7 @@ void draw(const wsworld::Map& map, const common::Position& position)
           {
             LOG_ERROR("%s: cannot render creature with id %u, no creature data",
                       __func__,
-                      thing.creature_id);
+                      creature_id);
           }
         }
       }

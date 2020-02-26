@@ -30,7 +30,9 @@
 #include "position.h"
 #include "creature.h"
 #include "item.h"
-#include "protocol_types.h"
+#include "protocol_common.h"
+#include "protocol_client.h"
+#include "data_loader.h"
 
 #include "types.h"
 
@@ -40,29 +42,9 @@ namespace wsclient::wsworld
 class Map
 {
  public:
-  struct Tile
-  {
-    struct Thing
-    {
-      bool is_item;
-      union
-      {
-        common::CreatureId creature_id;
-        struct
-        {
-          common::ItemTypeId item_type_id;
-          std::uint8_t extra;
-          bool onTop;
-        } item;
-      };
-    };
-
-    std::vector<Thing> things;
-  };
-
   struct Creature
   {
-    std::uint32_t id;
+    common::CreatureId id;
     std::string name;
     std::uint8_t health_percent;
     common::Direction direction;
@@ -70,11 +52,25 @@ class Map
     std::uint16_t speed;
   };
 
-  void setMapData(const protocol::client::MapData& map_data);
+  struct Item
+  {
+    const common::ItemType* type;
+    std::uint8_t extra;
+  };
+
+  using Thing = std::variant<common::CreatureId, Item>;
+
+  struct Tile
+  {
+    std::vector<Thing> things;
+  };
+
+  void setItemTypes(const io::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
+  void setMapData(const protocol::client::Map& map_data);
   void setPlayerPosition(const common::Position& position) { m_player_position = position; }
 
   void addCreature(const common::Position& position, common::CreatureId creature_id);
-  void addCreature(const common::Position& position, const protocol::client::Creature& creature);
+  void addCreature(const common::Position& position, const protocol::Creature& creature);
   void addItem(const common::Position& position,
                common::ItemTypeId item_type_id,
                std::uint8_t extra,
@@ -82,16 +78,19 @@ class Map
   void removeThing(const common::Position& position, std::uint8_t stackpos);
 
   const Tile& getTile(const common::Position& position) const;
-  const Creature* getCreature(common::CreatureId creature_id) const;
 
   bool ready() const { return m_ready; }
 
+  const Creature* getCreature(common::CreatureId creature_id) const;
+
  private:
+  Creature* getCreature(common::CreatureId creature_id);
+
+  const io::data_loader::ItemTypes* m_itemtypes;
   common::Position m_player_position = { 0, 0, 0 };
   std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
   bool m_ready = false;
-
-  std::vector<Creature> m_creatures;
+  std::vector<Creature> m_known_creatures;
 };
 
 }  // namespace wsclient::wsworld

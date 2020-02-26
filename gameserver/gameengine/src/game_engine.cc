@@ -305,16 +305,17 @@ void GameEngine::say(common::CreatureId creature_id,
       std::ostringstream oss;
       oss << "Position: " << position.toString() << "\n";
 
-      tile->visitThings(
-        [&oss](const common::Creature* creature)
+      for (const auto& thing : tile->getThings())
+      {
+        if (thing.hasCreature())
         {
-          oss << "Creature: " << creature->getCreatureId() << "\n";
-        },
-        [&oss](const common::Item* item)
-        {
-          oss << "Item: " << item->getItemTypeId() << "\n";
+          oss << "Creature: " << thing.creature()->getCreatureId() << "\n";
         }
-      );
+        else  // Item
+        {
+          oss << "Item: " << thing.item()->getItemTypeId() << "\n";
+        }
+      }
 
       player_data.player_ctrl->sendTextMessage(0x13, oss.str());
     }

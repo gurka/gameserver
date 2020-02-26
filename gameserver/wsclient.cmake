@@ -4,7 +4,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1 -s USE_SDL=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -O0 -g --bind -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -s SAFE_HEAP=1 -s DEMANGLE_SUPPORT=1 -s USE_SDL=2")
 
 add_subdirectory(wsclient)
 
@@ -44,9 +44,10 @@ target_link_libraries(network PRIVATE
 )
 
 add_library(protocol
-  "protocol/export/protocol.h"
-  "protocol/export/protocol_types.h"
-  "protocol/src/protocol.cc"
+  "protocol/export/protocol_client.h"
+  "protocol/export/protocol_common.h"
+  "protocol/src/protocol_client.cc"
+  "protocol/src/protocol_common.cc"
 )
 target_include_directories(protocol PUBLIC "protocol/export")
 target_link_libraries(protocol PRIVATE

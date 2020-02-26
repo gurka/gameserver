@@ -22,64 +22,77 @@
  * SOFTWARE.
  */
 
-#ifndef PROTOCOL_EXPORT_PROTOCOL_HELPER_H_
-#define PROTOCOL_EXPORT_PROTOCOL_HELPER_H_
+#ifndef PROTOCOL_EXPORT_PROTOCOL_SERVER_H_
+#define PROTOCOL_EXPORT_PROTOCOL_SERVER_H_
 
 #include <cstdint>
-#include <array>
+#include <deque>
 #include <string>
 
-#include "game_position.h"
-#include "thing.h"
-#include "creature.h"
-#include "item.h"
-#include "container.h"
-#include "protocol_types.h"
+#include "protocol_common.h"
 
 namespace gameengine
 {
 
+struct Container;
 class Equipment;
 class Player;
 
-}
+}  // namespace gameengine
 
-namespace network
+namespace protocol::server
 {
 
-class IncomingPacket;
-class OutgoingPacket;
-
-}
-
-namespace common
+struct Login
 {
+  std::uint8_t unknown1;
+  std::uint8_t client_os;
+  std::uint16_t client_version;
+  std::uint8_t unknown2;
+  std::string character_name;
+  std::string password;
+};
 
-struct Outfit;
-class Position;
-
-}
-
-namespace world
+struct MoveClick
 {
+  std::deque<common::Direction> path;
+};
 
-class Tile;
-class World;
-
-}
-
-namespace protocol
+struct MoveItem  // or MoveThing?
 {
+  common::ItemPosition from_item_position;
+  common::GamePosition to_game_position;
+  std::uint8_t count;
+};
 
-// Common stuff
-common::Position getPosition(network::IncomingPacket* packet);
-common::Outfit getOutfit(network::IncomingPacket* packet);
-
-namespace server
+struct UseItem
 {
+  common::ItemPosition item_position;
+  std::uint8_t new_container_id;
+};
 
-using KnownCreatures = std::array<common::CreatureId, 64>;
-using KnownContainers = std::array<common::ItemUniqueId, 64>;
+struct CloseContainer
+{
+  std::uint8_t container_id;
+};
+
+struct OpenParentContainer
+{
+  std::uint8_t container_id;
+};
+
+struct LookAt
+{
+  common::ItemPosition item_position;
+};
+
+struct Say
+{
+  std::uint8_t type;
+  std::string receiver;
+  std::uint16_t channel_id;
+  std::string message;
+};
 
 // Writing packets
 
@@ -179,61 +192,32 @@ void addTextMessage(std::uint8_t type, const std::string& text, network::Outgoin
 // 0xB5
 void addCancelMove(network::OutgoingPacket* packet);
 
-// Writing helpers
-void addPosition(const common::Position& position, network::OutgoingPacket* packet);
-void addThing(const common::Thing& thing,
-              KnownCreatures* known_creatures,
-              network::OutgoingPacket* packet);
-void addCreature(const common::Creature* creature,
-                 KnownCreatures* known_creatures,
-                 network::OutgoingPacket* packet);
-void addItem(const common::Item* item, network::OutgoingPacket* packet);
-void addMapData(const world::World& world_interface,
-                const common::Position& position,
-                int width,
-                int height,
-                KnownCreatures* known_creatures,
-                network::OutgoingPacket* packet);
-void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
-void addOutfitData(const common::Outfit& outfit, network::OutgoingPacket* packet);
-
-
 // Reading packets
+
+// 0x0A
 Login getLogin(network::IncomingPacket* packet);
+
+// 0x64
 MoveClick getMoveClick(network::IncomingPacket* packet);
+
+// 0x78
 MoveItem getMoveItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x82
 UseItem getUseItem(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x87
 CloseContainer getCloseContainer(network::IncomingPacket* packet);
+
+// 0x88
 OpenParentContainer getOpenParentContainer(network::IncomingPacket* packet);
+
+// 0x8C
 LookAt getLookAt(KnownContainers* container_ids, network::IncomingPacket* packet);
+
+// 0x96
 Say getSay(network::IncomingPacket* packet);
 
-// Reading helpers
-common::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
-common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
+}  // namespace protocol::server
 
-}  // namespace server
-
-namespace client
-{
-
-client::Login getLogin(network::IncomingPacket* packet);
-client::LoginFailed getLoginFailed(network::IncomingPacket* packet);
-client::Creature getCreature(bool known, network::IncomingPacket* packet);
-client::Item getItem(network::IncomingPacket* packet);
-client::Equipment getEquipment(bool empty, network::IncomingPacket* packet);
-client::MagicEffect getMagicEffect(network::IncomingPacket* packet);
-client::PlayerStats getPlayerStats(network::IncomingPacket* packet);
-client::WorldLight getWorldLight(network::IncomingPacket* packet);
-client::PlayerSkills getPlayerSkills(network::IncomingPacket* packet);
-client::TextMessage getTextMessage(network::IncomingPacket* packet);
-client::MapData getMapData(int width, int height, network::IncomingPacket* packet);
-client::CreatureMove getCreatureMove(bool can_see_old_pos,
-                                     bool can_see_new_pos,
-                                     network::IncomingPacket* packet);
-
-}  // namespace client
-
-}  // namespace protocol
-
-#endif  // PROTOCOL_EXPORT_PROTOCOL_HELPER_H_
+#endif  // PROTOCOL_EXPORT_PROTOCOL_SERVER_H_
