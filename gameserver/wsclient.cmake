@@ -69,3 +69,10 @@ target_include_directories(world INTERFACE "world/export")
 
 add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
+
+# -- Docker targets --
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" COPYONLY)
+add_custom_target(docker
+  COMMAND docker build -t gameserver/wsclient -f "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}"
+)
+add_dependencies(docker wsclient)
