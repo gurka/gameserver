@@ -72,7 +72,8 @@ target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 
 # -- Docker targets --
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" COPYONLY)
-add_custom_target(docker
-  COMMAND docker build -t gameserver/wsclient -f "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}"
+add_custom_target(image
+  docker build -t gameserver/wsclient -f "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}"
 )
-add_dependencies(docker wsclient)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/run_wsclient.sh" "${CMAKE_BINARY_DIR}/run_wsclient.sh" COPYONLY)
+add_dependencies(image wsclient)

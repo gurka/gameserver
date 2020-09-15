@@ -186,7 +186,9 @@ int main()
   }
 
   const auto usp = emscripten::val::global("URLSearchParams").new_(emscripten::val::global("location")["search"]);
-  const auto uri = usp.call<std::string>("get", emscripten::val("uri"));
+  const auto uri = usp.call<bool>("has", emscripten::val("uri")) ?
+                   usp.call<std::string>("get", emscripten::val("uri")) :
+                   "ws://localhost:8172";
   LOG_INFO("%s: found uri: '%s'", __func__, uri.c_str());
   wsclient::network::start(uri, &wsclient::handle_packet);
 
