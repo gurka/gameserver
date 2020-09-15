@@ -134,7 +134,9 @@ ThingRemoved getThingRemoved(network::IncomingPacket* packet)
 ThingMoved getThingMoved(network::IncomingPacket* packet)
 {
   ThingMoved thing_moved;
-  (void)packet;
+  thing_moved.old_position = getPosition(packet);
+  packet->get(&thing_moved.old_stackpos);
+  thing_moved.new_position = getPosition(packet);
   return thing_moved;
 }
 

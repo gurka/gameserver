@@ -110,7 +110,9 @@ struct ThingRemoved
 
 struct ThingMoved
 {
-
+  common::Position old_position = { 0, 0, 0 };
+  std::uint8_t old_stackpos;
+  common::Position new_position = { 0, 0, 0 };
 };
 
 struct Map

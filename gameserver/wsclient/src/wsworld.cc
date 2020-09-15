@@ -101,39 +101,12 @@ void Map::setMapData(const protocol::client::Map& map_data)
 
 void Map::addCreature(const common::Position& position, common::CreatureId creature_id)
 {
-  const auto x = position.getX() + 8 - m_player_position.getX();
-  const auto y = position.getY() + 6 - m_player_position.getY();
-
-  // Find first creature, bottom item or end
-  auto it = m_tiles[y][x].things.cbegin() + 1;
-  while (it != m_tiles[y][x].things.cend())
-  {
-    if (std::holds_alternative<common::CreatureId>(*it))
-    {
-      break;
-    }
-    else if (!std::get<Item>(*it).type->always_on_top)
-    {
-      break;
-    }
-    ++it;
-  }
-
-  // Add creature here
-//  Tile::Thing thing;
-//  thing.is_item = false;
-//  thing.creature_id = creature_id;
-//  it = m_tiles[y][x].things.insert(it, thing);
-
-  LOG_INFO("%s: added creature_id=%d on position=%s stackpos=%d",
-           __func__,
-           creature_id,
-           position.toString().c_str(),
-           std::distance(m_tiles[y][x].things.cbegin(), it));
+  addThing(position, creature_id);
 }
 
 void Map::addCreature(const common::Position& position, const protocol::Creature& creature)
 {
+  // TODO: add to known creatures if needed?
   addCreature(position, creature.id);
 }
 
@@ -142,42 +115,13 @@ void Map::addItem(const common::Position& position,
                   std::uint8_t extra,
                   bool onTop)
 {
-  const auto x = position.getX() + 8 - m_player_position.getX();
-  const auto y = position.getY() + 6 - m_player_position.getY();
+  // TODO: why is onTop sent here?
+  (void)onTop;
 
-  auto it = m_tiles[y][x].things.cbegin() + 1;
-  if (onTop)
-  {
-    // Insert after ground item
-    ++it;
-  }
-  else
-  {
-    // Find first bottom item or end
-    auto it = m_tiles[y][x].things.cbegin();
-    while (it != m_tiles[y][x].things.cend())
-    {
-      if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
-      {
-        break;
-      }
-      ++it;
-    }
-  }
-
-//  // Add item here
-//  Tile::Thing thing;
-//  thing.is_item = true;
-//  thing.item.item_type_id = item_type_id;
-//  thing.item.extra = extra;
-//  thing.item.onTop = onTop;
-//  it = m_tiles[y][x].things.insert(it, thing);
-
-  LOG_INFO("%s: added item_type_id=%d on position=%s stackpos=%d",
-           __func__,
-           item_type_id,
-           position.toString().c_str(),
-           std::distance(m_tiles[y][x].things.cbegin(), it));
+  Item item;
+  item.type = &((*m_itemtypes)[item_type_id]);
+  item.extra = extra;
+  addThing(position, item);
 }
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
@@ -191,6 +135,15 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
            __func__,
            position.toString().c_str(),
            stackpos);
+}
+
+void Map::moveThing(const common::Position& from_position,
+                    std::uint8_t from_stackpos,
+                    const common::Position& to_position)
+{
+  const auto thing = getThing(from_position, from_stackpos);
+  removeThing(from_position, from_stackpos);
+  addThing(to_position, thing);
 }
 
 const Map::Tile& Map::getTile(const common::Position& position) const
@@ -221,6 +174,66 @@ Map::Creature* Map::getCreature(common::CreatureId creature_id)
   // According to https://stackoverflow.com/a/123995/969365
   const auto* creature = static_cast<const Map*>(this)->getCreature(creature_id);
   return const_cast<Creature*>(creature);
+}
+
+Map::Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
+{
+  const auto from_x = position.getX() + 8 - m_player_position.getX();
+  const auto from_y = position.getY() + 6 - m_player_position.getY();
+  return m_tiles[from_y][from_x].things[stackpos];
+}
+
+void Map::addThing(const common::Position& position, Thing thing)
+{
+  const auto x = position.getX() + 8 - m_player_position.getX();
+  const auto y = position.getY() + 6 - m_player_position.getY();
+
+  auto it = m_tiles[y][x].things.cbegin() + 1;
+  if (std::holds_alternative<Item>(thing))
+  {
+    const auto& item = std::get<Item>(thing);
+    if (item.type->always_on_top)
+    {
+      // Insert after ground item
+      ++it;
+    }
+    else
+    {
+      // Find first bottom item or end
+      auto it = m_tiles[y][x].things.cbegin();
+      while (it != m_tiles[y][x].things.cend())
+      {
+        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
+        {
+          break;
+        }
+        ++it;
+      }
+    }
+  }
+  else
+  {
+    // Find first creature, bottom item or end
+    while (it != m_tiles[y][x].things.cend())
+    {
+      if (std::holds_alternative<common::CreatureId>(*it))
+      {
+        break;
+      }
+      else if (!std::get<Item>(*it).type->always_on_top)
+      {
+        break;
+      }
+      ++it;
+    }
+  }
+
+  m_tiles[y][x].things.insert(it, thing);
+
+  LOG_INFO("%s: added Thing on position=%s stackpos=%d",
+           __func__,
+           position.toString().c_str(),
+           std::distance(m_tiles[y][x].things.cbegin(), it));
 }
 
 }  // namespace wsclient::wsworld

@@ -27,6 +27,7 @@
 
 #include <emscripten.h>
 #include <emscripten/val.h>
+#include <SDL.h>
 
 #include "logger.h"
 #include "outgoing_packet.h"
@@ -92,6 +93,11 @@ void handleTextMessage(const TextMessage& message)
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
+void handleThingMoved(const ThingMoved& thing_moved)
+{
+  map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
+}
+
 void handle_packet(network::IncomingPacket* packet)
 {
   while (!packet->isEmpty())
@@ -148,9 +154,9 @@ void handle_packet(network::IncomingPacket* packet)
 //        handleThingRemoved(getThingRemoved(packet));
 //        break;
 //
-//      case 0x6D:
-//        handleThingMoved(getThingMoved(packet));
-//        break;
+      case 0x6D:
+        handleThingMoved(getThingMoved(packet));
+        break;
 
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X", __func__, type);
@@ -159,10 +165,46 @@ void handle_packet(network::IncomingPacket* packet)
   }
 }
 
+void sendMoveCharacter(common::Direction direction)
+{
+  network::OutgoingPacket packet;
+  packet.addU8(static_cast<std::uint8_t>(direction) + 0x65);
+  network::sendPacket(std::move(packet));
+}
+
 }  // namespace wsclient
 
 extern "C" void main_loop()
 {
+  // Read input
+  SDL_Event event;
+  while (SDL_PollEvent(&event))
+  {
+    if (event.type == SDL_KEYDOWN)
+    {
+      LOG_DEBUG("%s: SDL_KEYDOWN, keycode = %d scancode = %d", __func__, event.key.keysym.sym, event.key.keysym.scancode);
+      switch (event.key.keysym.scancode)
+      {
+        case SDL_SCANCODE_LEFT:
+          wsclient::sendMoveCharacter(common::Direction::WEST);
+          break;
+
+        case SDL_SCANCODE_RIGHT:
+          wsclient::sendMoveCharacter(common::Direction::EAST);
+          break;
+
+        case SDL_SCANCODE_UP:
+          wsclient::sendMoveCharacter(common::Direction::NORTH);
+          break;
+
+        case SDL_SCANCODE_DOWN:
+          wsclient::sendMoveCharacter(common::Direction::SOUTH);
+          break;
+      }
+    }
+  }
+
+  // Render
   wsclient::graphics::draw(wsclient::map, wsclient::player_position);
 }
 

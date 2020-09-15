@@ -76,6 +76,9 @@ class Map
                std::uint8_t extra,
                bool onTop);
   void removeThing(const common::Position& position, std::uint8_t stackpos);
+  void moveThing(const common::Position& from_position,
+                 std::uint8_t from_stackpos,
+                 const common::Position& to_position);
 
   const Tile& getTile(const common::Position& position) const;
 
@@ -85,6 +88,8 @@ class Map
 
  private:
   Creature* getCreature(common::CreatureId creature_id);
+  Thing getThing(const common::Position& position, std::uint8_t stackpos);
+  void addThing(const common::Position& position, Thing thing);
 
   const io::data_loader::ItemTypes* m_itemtypes;
   common::Position m_player_position = { 0, 0, 0 };
