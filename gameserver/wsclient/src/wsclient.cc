@@ -47,14 +47,12 @@ namespace wsclient
 
 using namespace protocol::client;
 
-common::CreatureId player_id;
-common::Position player_position = { 0, 0, 0 };
 io::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 
 void handleLoginPacket(const Login& login)
 {
-  player_id = login.player_id;
+  map.setPlayerId(login.player_id);
 }
 
 void handleLoginFailedPacket(const LoginFailed& failed)
@@ -64,7 +62,6 @@ void handleLoginFailedPacket(const LoginFailed& failed)
 
 void handleFullMapPacket(const Map& map_data)
 {
-  player_position = map_data.position;
   map.setMapData(map_data);
 }
 
@@ -182,7 +179,6 @@ extern "C" void main_loop()
   {
     if (event.type == SDL_KEYDOWN)
     {
-      LOG_DEBUG("%s: SDL_KEYDOWN, keycode = %d scancode = %d", __func__, event.key.keysym.sym, event.key.keysym.scancode);
       switch (event.key.keysym.scancode)
       {
         case SDL_SCANCODE_LEFT:
@@ -200,12 +196,20 @@ extern "C" void main_loop()
         case SDL_SCANCODE_DOWN:
           wsclient::sendMoveCharacter(common::Direction::SOUTH);
           break;
+
+        case SDL_SCANCODE_ESCAPE:
+          LOG_INFO("%s: stopping client", __func__);
+          emscripten_cancel_main_loop();
+          return;
+
+        default:
+          break;
       }
     }
   }
 
   // Render
-  wsclient::graphics::draw(wsclient::map, wsclient::player_position);
+  wsclient::graphics::draw(wsclient::map);
 }
 
 int main()

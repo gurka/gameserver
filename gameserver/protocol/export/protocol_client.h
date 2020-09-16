@@ -117,6 +117,8 @@ struct ThingMoved
 
 struct Map
 {
+  int width;
+  int height;
   common::Position position = { 0, 0, 0 };
   std::vector<Tile> tiles;
 };

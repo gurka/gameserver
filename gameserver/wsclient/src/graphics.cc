@@ -97,7 +97,7 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
-void drawCreature(int x, int y, const wsclient::wsworld::Map::Creature& creature, std::uint16_t offset)
+void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std::uint16_t offset)
 {
   // TODO(simon): fix this
   //              io::DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
@@ -154,7 +154,7 @@ bool init(const io::data_loader::ItemTypes* itemtypes_in, const std::string& spr
   return true;
 }
 
-void draw(const wsworld::Map& map, const common::Position& position)
+void draw(const wsworld::Map& map)
 {
   const auto anim_tick = SDL_GetTicks() / 540;
 
@@ -167,21 +167,38 @@ void draw(const wsworld::Map& map, const common::Position& position)
     return;
   }
 
-  for (auto y = 0; y < consts::draw_tiles_y; y++)
+  // Get tiles
+  // Note that this is all known tiles - we only want to draw a subset
+  // Skip first row and column, also skip last two columns and last two rows
+  const auto& tiles = map.getTiles();
+  auto it = tiles.cbegin();
+
+  // Skip first row
+  it += consts::known_tiles_x;
+
+  for (auto y = 0u; y < consts::draw_tiles_y; y++)
   {
-    for (auto x = 0; x < consts::draw_tiles_x; x++)
+    // Skip first column
+    ++it;
+
+    for (auto x = 0u; x < consts::draw_tiles_x; x++)
     {
-      const auto& tile = map.getTile(common::Position(x - 7 + position.getX(),
-                                                      y - 5 + position.getY(),
-                                                      position.getZ()));
+      const auto& tile = *it;
+      ++it;
+
+      if (tile.things.empty())
+      {
+        LOG_ERROR("%s: tile is empty!", __func__);
+        return;
+      }
 
       // Draw ground
-      if (!std::holds_alternative<wsworld::Map::Item>(tile.things.front()))
+      if (!std::holds_alternative<wsworld::Item>(tile.things.front()))
       {
         LOG_ERROR("%s: first Thing on tile is not an Item!", __func__);
         return;
       }
-      const auto& ground_item = std::get<wsworld::Map::Item>(tile.things.front());
+      const auto& ground_item = std::get<wsworld::Item>(tile.things.front());
       drawItem(x, y, *ground_item.type, 0, anim_tick);
 
       // Draw things in reverse order, except ground
@@ -189,15 +206,15 @@ void draw(const wsworld::Map& map, const common::Position& position)
       for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
         const auto& thing = *it;
-        if (std::holds_alternative<wsworld::Map::Item>(thing))
+        if (std::holds_alternative<wsworld::Item>(thing))
         {
           // TODO: probably need things like count later
-          const auto& item = std::get<wsworld::Map::Item>(thing);
+          const auto& item = std::get<wsworld::Item>(thing);
           drawItem(x, y, *item.type, offset, anim_tick);
 
           offset += item.type->offset;
         }
-        else  // wsworld::Map::Creature
+        else if (std::holds_alternative<common::CreatureId>(thing))
         {
           const auto& creature_id = std::get<common::CreatureId>(thing);
           const auto* creature = map.getCreature(creature_id);
@@ -212,8 +229,16 @@ void draw(const wsworld::Map& map, const common::Position& position)
                       creature_id);
           }
         }
+        else
+        {
+          LOG_ERROR("%s: unknown Thing on local position: (%d, %d)", __func__, x, y);
+        }
       }
     }
+
+    // Skip the two extra columns to the right
+    ++it;
+    ++it;
   }
 
   SDL_RenderPresent(sdl_renderer);

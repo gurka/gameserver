@@ -30,13 +30,36 @@ namespace wsclient::wsworld
 
 void Map::setMapData(const protocol::client::Map& map_data)
 {
-  m_player_position = map_data.position;
+  // Full map data is width=18, height=14
+  // The position we received is the point X below
+  // This is the player position, and this gives us one
+  // extra column to the right and one extra row at the bottom
+  // . 0 1 2 3 4 5 6 7 8 9 a b c d e f g h
+  // 0
+  // 1
+  // 2
+  // 3
+  // 4
+  // 5
+  // 6                 X
+  // 7
+  // 8
+  // 9
+  // a
+  // b
+  // c
+  // d
+
+  // Assume that when we receive full map that we also reset player position
+  // to the received position
+  m_tiles.setMapPosition(map_data.position);
+
   auto it = map_data.tiles.begin();
-  for (auto x = 0; x < consts::known_tiles_x; x++)
+  for (auto x = map_data.position.getX() - 8; x < map_data.position.getX() + 10; x++)
   {
-    for (auto y = 0; y < consts::known_tiles_y; y++)
+    for (auto y = map_data.position.getY() - 6; y < map_data.position.getY() + 8; y++)
     {
-      auto& tile = m_tiles[y][x];
+      auto& tile = m_tiles.getTile(common::Position(x, y, 0));
       tile.things.clear();
 
       if (!it->skip)
@@ -76,6 +99,11 @@ void Map::setMapData(const protocol::client::Map& map_data)
               m_known_creatures.back().direction = creature.direction;
               m_known_creatures.back().outfit = creature.outfit;
               m_known_creatures.back().speed = creature.speed;
+
+              if (creature.id == m_player_id)
+              {
+                LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
+              }
             }
 
             tile.things.emplace_back(creature.id);
@@ -126,15 +154,17 @@ void Map::addItem(const common::Position& position,
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
-  const auto x = position.getX() + 8 - m_player_position.getX();
-  const auto y = position.getY() + 6 - m_player_position.getY();
+  const auto pre = m_tiles.getTile(position).things.size();
+  auto& things = m_tiles.getTile(position).things;
+  things.erase(things.cbegin() + stackpos);
+  const auto post = m_tiles.getTile(position).things.size();
 
-  m_tiles[y][x].things.erase(m_tiles[y][x].things.cbegin() + stackpos);
-
-  LOG_INFO("%s: removed thing from position=%s stackpos=%d",
+  LOG_INFO("%s: removed thing from position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
-           stackpos);
+           stackpos,
+           pre,
+           post);
 }
 
 void Map::moveThing(const common::Position& from_position,
@@ -146,15 +176,12 @@ void Map::moveThing(const common::Position& from_position,
   addThing(to_position, thing);
 }
 
-const Map::Tile& Map::getTile(const common::Position& position) const
+const Tile& Map::getTile(const common::Position& position) const
 {
-  const auto x = position.getX() + 8 - m_player_position.getX();
-  const auto y = position.getY() + 6 - m_player_position.getY();
-
-  return m_tiles[y][x];
+  return m_tiles.getTile(position);
 }
 
-const Map::Creature* Map::getCreature(common::CreatureId creature_id) const
+const Creature* Map::getCreature(common::CreatureId creature_id) const
 {
   auto it = std::find_if(m_known_creatures.cbegin(),
                          m_known_creatures.cend(),
@@ -169,26 +196,23 @@ const Map::Creature* Map::getCreature(common::CreatureId creature_id) const
   return &(*it);
 }
 
-Map::Creature* Map::getCreature(common::CreatureId creature_id)
+Creature* Map::getCreature(common::CreatureId creature_id)
 {
   // According to https://stackoverflow.com/a/123995/969365
   const auto* creature = static_cast<const Map*>(this)->getCreature(creature_id);
   return const_cast<Creature*>(creature);
 }
 
-Map::Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
+Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
 {
-  const auto from_x = position.getX() + 8 - m_player_position.getX();
-  const auto from_y = position.getY() + 6 - m_player_position.getY();
-  return m_tiles[from_y][from_x].things[stackpos];
+  return m_tiles.getTile(position).things[stackpos];
 }
 
 void Map::addThing(const common::Position& position, Thing thing)
 {
-  const auto x = position.getX() + 8 - m_player_position.getX();
-  const auto y = position.getY() + 6 - m_player_position.getY();
-
-  auto it = m_tiles[y][x].things.cbegin() + 1;
+  auto& things = m_tiles.getTile(position).things;
+  const auto pre = things.size();
+  auto it = things.cbegin() + 1;
   if (std::holds_alternative<Item>(thing))
   {
     const auto& item = std::get<Item>(thing);
@@ -200,8 +224,8 @@ void Map::addThing(const common::Position& position, Thing thing)
     else
     {
       // Find first bottom item or end
-      auto it = m_tiles[y][x].things.cbegin();
-      while (it != m_tiles[y][x].things.cend())
+      auto it = things.cbegin();
+      while (it != things.cend())
       {
         if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
         {
@@ -214,7 +238,7 @@ void Map::addThing(const common::Position& position, Thing thing)
   else
   {
     // Find first creature, bottom item or end
-    while (it != m_tiles[y][x].things.cend())
+    while (it != things.cend())
     {
       if (std::holds_alternative<common::CreatureId>(*it))
       {
@@ -228,12 +252,15 @@ void Map::addThing(const common::Position& position, Thing thing)
     }
   }
 
-  m_tiles[y][x].things.insert(it, thing);
+  it = things.insert(it, thing);
+  const auto post = things.size();
 
-  LOG_INFO("%s: added Thing on position=%s stackpos=%d",
+  LOG_INFO("%s: added Thing on position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
-           std::distance(m_tiles[y][x].things.cbegin(), it));
+           std::distance(things.cbegin(), it),
+           pre,
+           post);
 }
 
 }  // namespace wsclient::wsworld

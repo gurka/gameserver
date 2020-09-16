@@ -143,7 +143,8 @@ ThingMoved getThingMoved(network::IncomingPacket* packet)
 Map getMap(int width, int height, network::IncomingPacket* packet)
 {
   Map map = {};
-
+  map.width = width;
+  map.height = height;
   map.position = getPosition(packet);
 
   // Assume that we always are on z=7
