@@ -152,6 +152,28 @@ void Map::moveThing(const common::Position& from_position,
 {
   const auto thing = getThing(from_position, from_stackpos);
   removeThing(from_position, from_stackpos);
+  if (std::holds_alternative<common::CreatureId>(thing))
+  {
+    // Rotate Creature based on movement
+    // TODO: handle diagonal movement
+    auto* creature = getCreature(std::get<common::CreatureId>(thing));
+    if (from_position.getX() > to_position.getX())
+    {
+      creature->direction = common::Direction::WEST;
+    }
+    else if (from_position.getX() < to_position.getX())
+    {
+      creature->direction = common::Direction::EAST;
+    }
+    else if (from_position.getY() > to_position.getY())
+    {
+      creature->direction = common::Direction::NORTH;
+    }
+    else if (from_position.getY() < to_position.getY())
+    {
+      creature->direction = common::Direction::SOUTH;
+    }
+  }
   addThing(to_position, thing);
 }
 
