@@ -115,11 +115,15 @@ struct ThingMoved
   common::Position new_position = { 0, 0, 0 };
 };
 
-struct Map
+struct FullMap
 {
-  int width;
-  int height;
   common::Position position = { 0, 0, 0 };
+  std::vector<Tile> tiles;
+};
+
+struct PartialMap
+{
+  common::Direction direction;
   std::vector<Tile> tiles;
 };
 
@@ -132,7 +136,10 @@ Login getLogin(network::IncomingPacket* packet);
 LoginFailed getLoginFailed(network::IncomingPacket* packet);
 
 // 0x64
-Map getMap(int width, int height, network::IncomingPacket* packet);
+FullMap getFullMap(network::IncomingPacket* packet);
+
+// 0x65 0x66 0x67 0x68
+PartialMap getPartialMap(common::Direction direction, network::IncomingPacket* packet);
 
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);

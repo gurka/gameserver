@@ -28,103 +28,82 @@
 namespace wsclient::wsworld
 {
 
-void Map::setMapData(const protocol::client::Map& map_data)
+void Map::setFullMapData(const protocol::client::FullMap& map_data)
 {
   // Full map data is width=18, height=14
-  // The position we received is the point X below
-  // This is the player position, and this gives us one
-  // extra column to the right and one extra row at the bottom
-  // . 0 1 2 3 4 5 6 7 8 9 a b c d e f g h
-  // 0
-  // 1
-  // 2
-  // 3
-  // 4
-  // 5
-  // 6                 X
-  // 7
-  // 8
-  // 9
-  // a
-  // b
-  // c
-  // d
-
-  // Assume that when we receive full map that we also reset player position
-  // to the received position
   m_tiles.setMapPosition(map_data.position);
-
   auto it = map_data.tiles.begin();
-  for (auto x = map_data.position.getX() - 8; x < map_data.position.getX() + 10; x++)
+  for (auto x = 0; x < consts::known_tiles_x; x++)
   {
-    for (auto y = map_data.position.getY() - 6; y < map_data.position.getY() + 8; y++)
+    for (auto y = 0; y < consts::known_tiles_y; y++)
     {
-      auto& tile = m_tiles.getTile(common::Position(x, y, 0));
-      tile.things.clear();
-
-      if (!it->skip)
-      {
-        for (const auto& thing : it->things)
-        {
-          if (std::holds_alternative<protocol::Creature>(thing))
-          {
-            const auto& creature = std::get<protocol::Creature>(thing);
-            if (creature.known)
-            {
-              // Update known creature
-              auto* known_creature = getCreature(creature.id);
-              if (!known_creature)
-              {
-                LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
-                return;
-              }
-              known_creature->health_percent = creature.health_percent;
-              known_creature->direction = creature.direction;
-              known_creature->outfit = creature.outfit;
-              known_creature->speed = creature.speed;
-            }
-            else
-            {
-              // Remove known creature if set
-              if (creature.id_to_remove != 0U)
-              {
-                LOG_ERROR("%s: remove known creature not yet implemented", __func__);
-              }
-
-              // Add new creature
-              m_known_creatures.emplace_back();
-              m_known_creatures.back().id = creature.id;
-              m_known_creatures.back().name = creature.name;
-              m_known_creatures.back().health_percent = creature.health_percent;
-              m_known_creatures.back().direction = creature.direction;
-              m_known_creatures.back().outfit = creature.outfit;
-              m_known_creatures.back().speed = creature.speed;
-
-              if (creature.id == m_player_id)
-              {
-                LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
-              }
-            }
-
-            tile.things.emplace_back(creature.id);
-          }
-          else  // Item
-          {
-            const auto& item = std::get<protocol::Item>(thing);
-            const auto& itemtype = (*m_itemtypes)[item.item_type_id];
-            Item new_item;
-            new_item.type = &itemtype;
-            new_item.extra = item.extra;
-            Thing t = new_item;
-            tile.things.push_back(t);
-          }
-        }
-      }
+      auto& tile = m_tiles.getTileLocalPos(x, y);
+      setTile(*it, &tile);
       ++it;
     }
   }
 
   m_ready = true;
+}
+
+void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
+{
+  // Set new map position
+  const auto old_position = m_tiles.getMapPosition();
+  const auto x_diff = map_data.direction == common::Direction::EAST ? 1 : (map_data.direction == common::Direction::WEST ? -1 : 0);
+  const auto y_diff = map_data.direction == common::Direction::SOUTH ? 1 : (map_data.direction == common::Direction::NORTH ? -1 : 0);
+  const auto new_position = common::Position(old_position.getX() + x_diff,
+                                             old_position.getY() + y_diff,
+                                             old_position.getZ());
+  m_tiles.setMapPosition(new_position);
+  LOG_INFO("%s: updated map position from %s to %s",
+           __func__,
+           old_position.toString().c_str(),
+           new_position.toString().c_str());
+
+  // Shift Tiles
+  m_tiles.shiftTiles(map_data.direction);
+
+  // Add new Tiles
+  auto it = map_data.tiles.begin();
+  switch (map_data.direction)
+  {
+    case common::Direction::NORTH:
+      for (auto x = 0; x < consts::known_tiles_x; x++)
+      {
+        auto& tile = m_tiles.getTileLocalPos(x, 0);
+        setTile(*it, &tile);
+        ++it;
+      }
+      break;
+
+    case common::Direction::EAST:
+      for (auto y = 0; y < consts::known_tiles_y; y++)
+      {
+        auto& tile = m_tiles.getTileLocalPos(consts::known_tiles_x - 1, y);
+        setTile(*it, &tile);
+        ++it;
+      }
+      break;
+
+    case common::Direction::SOUTH:
+      for (auto x = 0; x < consts::known_tiles_x; x++)
+      {
+        auto& tile = m_tiles.getTileLocalPos(x, consts::known_tiles_y - 1);
+        setTile(*it, &tile);
+        ++it;
+      }
+      break;
+
+    case common::Direction::WEST:
+      for (auto y = 0; y < consts::known_tiles_y; y++)
+      {
+        auto& tile = m_tiles.getTileLocalPos(0, y);
+        setTile(*it, &tile);
+        ++it;
+      }
+      break;
+  }
 }
 
 void Map::addCreature(const common::Position& position, common::CreatureId creature_id)
@@ -194,6 +173,71 @@ const Creature* Map::getCreature(common::CreatureId creature_id) const
     return nullptr;
   }
   return &(*it);
+}
+
+void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
+{
+  world_tile->things.clear();
+  if (protocol_tile.skip)
+  {
+    return;
+  }
+
+  for (const auto& thing : protocol_tile.things)
+  {
+    if (std::holds_alternative<protocol::Creature>(thing))
+    {
+      const auto& creature = std::get<protocol::Creature>(thing);
+      if (creature.known)
+      {
+        // Update known creature
+        auto* known_creature = getCreature(creature.id);
+        if (!known_creature)
+        {
+          LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
+          return;
+        }
+        known_creature->health_percent = creature.health_percent;
+        known_creature->direction = creature.direction;
+        known_creature->outfit = creature.outfit;
+        known_creature->speed = creature.speed;
+      }
+      else
+      {
+        // Remove known creature if set
+        if (creature.id_to_remove != 0U)
+        {
+          LOG_ERROR("%s: remove known creature not yet implemented", __func__);
+        }
+
+        // Add new creature
+        m_known_creatures.emplace_back();
+        m_known_creatures.back().id = creature.id;
+        m_known_creatures.back().name = creature.name;
+        m_known_creatures.back().health_percent = creature.health_percent;
+        m_known_creatures.back().direction = creature.direction;
+        m_known_creatures.back().outfit = creature.outfit;
+        m_known_creatures.back().speed = creature.speed;
+
+        if (creature.id == m_player_id)
+        {
+          LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
+        }
+      }
+
+      world_tile->things.emplace_back(creature.id);
+    }
+    else  // Item
+    {
+      const auto& item = std::get<protocol::Item>(thing);
+      const auto& itemtype = (*m_itemtypes)[item.item_type_id];
+      Item new_item;
+      new_item.type = &itemtype;
+      new_item.extra = item.extra;
+      Thing t = new_item;
+      world_tile->things.push_back(t);
+    }
+  }
 }
 
 Creature* Map::getCreature(common::CreatureId creature_id)

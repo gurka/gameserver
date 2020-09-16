@@ -29,6 +29,65 @@
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
+namespace
+{
+
+std::vector<protocol::Tile> getMapData(int width, int height, network::IncomingPacket* packet)
+{
+  std::vector<protocol::Tile> tiles;
+
+  // Assume that we always are on z=7
+  auto skip = 0;
+  for (auto z = 7; z >= 0; z--)
+  {
+    for (auto x = 0; x < width; x++)
+    {
+      for (auto y = 0; y < height; y++)
+      {
+        protocol::Tile tile = {};
+        if (skip > 0)
+        {
+          skip -= 1;
+          tile.skip = true;
+          tiles.push_back(std::move(tile));
+          continue;
+        }
+
+        // Parse tile
+        tile.skip = false;
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+          }
+
+          if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
+          {
+            tile.things.emplace_back(protocol::getCreature(packet->getU16() == 0x0062, packet));
+          }
+          else
+          {
+            tile.things.emplace_back(protocol::getItem(packet));
+          }
+        }
+
+        tiles.push_back(std::move(tile));
+      }
+    }
+  }
+
+  return tiles;
+}
+
+}  // namespace
+
 namespace protocol::client
 {
 
@@ -140,60 +199,30 @@ ThingMoved getThingMoved(network::IncomingPacket* packet)
   return thing_moved;
 }
 
-Map getMap(int width, int height, network::IncomingPacket* packet)
+FullMap getFullMap(network::IncomingPacket* packet)
 {
-  Map map = {};
-  map.width = width;
-  map.height = height;
+  FullMap map = {};
   map.position = getPosition(packet);
+  map.tiles = getMapData(18, 14, packet);
+  return map;
+}
 
-  // Assume that we always are on z=7
-  auto skip = 0;
-  for (auto z = 7; z >= 0; z--)
+PartialMap getPartialMap(common::Direction direction, network::IncomingPacket* packet)
+{
+  PartialMap map = {};
+  map.direction = direction;
+  switch (direction)
   {
-    for (auto x = 0; x < width; x++)
-    {
-      for (auto y = 0; y < height; y++)
-      {
-        Tile tile = {};
-        if (skip > 0)
-        {
-          skip -= 1;
-          tile.skip = true;
-          map.tiles.push_back(std::move(tile));
-          continue;
-        }
+    case common::Direction::NORTH:
+    case common::Direction::SOUTH:
+      map.tiles = getMapData(18, 1, packet);
+      break;
 
-        // Parse tile
-        tile.skip = false;
-        for (auto stackpos = 0; true; stackpos++)
-        {
-          if (packet->peekU16() >= 0xFF00)
-          {
-            skip = packet->getU16() & 0xFF;
-            break;
-          }
-
-          if (stackpos > 10)
-          {
-            LOG_ERROR("%s: too many things on this tile", __func__);
-          }
-
-          if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
-          {
-            tile.things.emplace_back(getCreature(packet->getU16() == 0x0062, packet));
-          }
-          else
-          {
-            tile.things.emplace_back(getItem(packet));
-          }
-        }
-
-        map.tiles.push_back(std::move(tile));
-      }
-    }
+    case common::Direction::EAST:
+    case common::Direction::WEST:
+      map.tiles = getMapData(1, 14, packet);
+      break;
   }
-
   return map;
 }
 

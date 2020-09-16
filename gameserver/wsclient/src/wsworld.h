@@ -54,7 +54,8 @@ class Map
 {
  public:
   void setItemTypes(const io::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
-  void setMapData(const protocol::client::Map& map_data);
+  void setFullMapData(const protocol::client::FullMap& map_data);
+  void setPartialMapData(const protocol::client::PartialMap& map_data);
   void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
   void addCreature(const common::Position& position, common::CreatureId creature_id);
@@ -74,6 +75,8 @@ class Map
   bool ready() const { return m_ready; }
 
  private:
+  void setTile(const protocol::Tile& protocol_tile, Tile* world_tile);
+
   Creature* getCreature(common::CreatureId creature_id);
   Thing getThing(const common::Position& position, std::uint8_t stackpos);
   void addThing(const common::Position& position, Thing thing);

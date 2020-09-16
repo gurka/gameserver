@@ -60,9 +60,14 @@ void handleLoginFailedPacket(const LoginFailed& failed)
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const Map& map_data)
+void handleFullMapPacket(const FullMap& map_data)
 {
-  map.setMapData(map_data);
+  map.setFullMapData(map_data);
+}
+
+void handlePartialMapPacket(const PartialMap& map_data)
+{
+  map.setPartialMapData(map_data);
 }
 
 void handleMagicEffect(const MagicEffect& effect)
@@ -111,7 +116,14 @@ void handle_packet(network::IncomingPacket* packet)
         break;
 
       case 0x64:
-        handleFullMapPacket(getMap(18, 14, packet));
+        handleFullMapPacket(getFullMap(packet));
+        break;
+
+      case 0x65:
+      case 0x66:
+      case 0x67:
+      case 0x68:
+        handlePartialMapPacket(getPartialMap(static_cast<common::Direction>(type - 0x65), packet));
         break;
 
       case 0x83:
