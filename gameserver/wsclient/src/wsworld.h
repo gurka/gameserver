@@ -54,16 +54,15 @@ class Map
 {
  public:
   void setItemTypes(const io::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
-  void setFullMapData(const protocol::client::FullMap& map_data);
-  void setPartialMapData(const protocol::client::PartialMap& map_data);
   void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
-  void addCreature(const common::Position& position, common::CreatureId creature_id);
-  void addCreature(const common::Position& position, const protocol::Creature& creature);
-  void addItem(const common::Position& position,
-               common::ItemTypeId item_type_id,
-               std::uint8_t extra,
-               bool onTop);
+  // Methods that work with protocol objects
+  void setFullMapData(const protocol::client::FullMap& map_data);
+  void setPartialMapData(const protocol::client::PartialMap& map_data);
+  void addProtocolThing(const common::Position& position, protocol::Thing thing);
+
+  // Methods that does not work with protocol objects
+  void addThing(const common::Position& position, Thing thing);
   void removeThing(const common::Position& position, std::uint8_t stackpos);
   void moveThing(const common::Position& from_position,
                  std::uint8_t from_stackpos,
@@ -75,11 +74,13 @@ class Map
   bool ready() const { return m_ready; }
 
  private:
+  // Methods that work protocol objects
+  Thing parseThing(const protocol::Thing& thing);
   void setTile(const protocol::Tile& protocol_tile, Tile* world_tile);
 
+  // Methods that does not work with protocol objects
   Creature* getCreature(common::CreatureId creature_id);
   Thing getThing(const common::Position& position, std::uint8_t stackpos);
-  void addThing(const common::Position& position, Thing thing);
 
   Tiles m_tiles;
   const io::data_loader::ItemTypes* m_itemtypes;

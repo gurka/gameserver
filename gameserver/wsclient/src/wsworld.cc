@@ -106,29 +106,64 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
-void Map::addCreature(const common::Position& position, common::CreatureId creature_id)
+void Map::addProtocolThing(const common::Position& position, protocol::Thing thing)
 {
-  addThing(position, creature_id);
+  addThing(position, parseThing(thing));
 }
 
-void Map::addCreature(const common::Position& position, const protocol::Creature& creature)
+void Map::addThing(const common::Position& position, Thing thing)
 {
-  // TODO: add to known creatures if needed?
-  addCreature(position, creature.id);
-}
+  auto& things = m_tiles.getTile(position).things;
+  const auto pre = things.size();
+  auto it = things.cbegin() + 1;
+  if (std::holds_alternative<Item>(thing))
+  {
+    const auto& item = std::get<Item>(thing);
+    if (item.type->always_on_top)
+    {
+      // Insert after ground item
+      ++it;
+    }
+    else
+    {
+      // Find first bottom item or end
+      auto it = things.cbegin();
+      while (it != things.cend())
+      {
+        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
+        {
+          break;
+        }
+        ++it;
+      }
+    }
+  }
+  else
+  {
+    // Find first creature, bottom item or end
+    while (it != things.cend())
+    {
+      if (std::holds_alternative<common::CreatureId>(*it))
+      {
+        break;
+      }
+      else if (!std::get<Item>(*it).type->always_on_top)
+      {
+        break;
+      }
+      ++it;
+    }
+  }
 
-void Map::addItem(const common::Position& position,
-                  common::ItemTypeId item_type_id,
-                  std::uint8_t extra,
-                  bool onTop)
-{
-  // TODO: why is onTop sent here?
-  (void)onTop;
+  it = things.insert(it, thing);
+  const auto post = things.size();
 
-  Item item;
-  item.type = &((*m_itemtypes)[item_type_id]);
-  item.extra = extra;
-  addThing(position, item);
+  LOG_INFO("%s: added Thing on position=%s stackpos=%d (size=%d->%d)",
+           __func__,
+           position.toString().c_str(),
+           std::distance(things.cbegin(), it),
+           pre,
+           post);
 }
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
@@ -197,8 +232,64 @@ const Creature* Map::getCreature(common::CreatureId creature_id) const
   return &(*it);
 }
 
+Thing Map::parseThing(const protocol::Thing& thing)
+{
+  if (std::holds_alternative<protocol::Creature>(thing))
+  {
+    const auto& creature = std::get<protocol::Creature>(thing);
+    if (creature.known)
+    {
+      // Update known creature
+      auto* known_creature = getCreature(creature.id);
+      if (!known_creature)
+      {
+        LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
+        return Thing();
+      }
+      known_creature->health_percent = creature.health_percent;
+      known_creature->direction = creature.direction;
+      known_creature->outfit = creature.outfit;
+      known_creature->speed = creature.speed;
+    }
+    else
+    {
+      // Remove known creature if set
+      if (creature.id_to_remove != 0U)
+      {
+        LOG_ERROR("%s: remove known creature not yet implemented", __func__);
+      }
+
+      // Add new creature
+      m_known_creatures.emplace_back();
+      m_known_creatures.back().id = creature.id;
+      m_known_creatures.back().name = creature.name;
+      m_known_creatures.back().health_percent = creature.health_percent;
+      m_known_creatures.back().direction = creature.direction;
+      m_known_creatures.back().outfit = creature.outfit;
+      m_known_creatures.back().speed = creature.speed;
+
+      if (creature.id == m_player_id)
+      {
+        LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
+      }
+    }
+
+    return creature.id;
+  }
+  else  // Item
+  {
+    const auto& protocol_item = std::get<protocol::Item>(thing);
+    const auto& itemtype = (*m_itemtypes)[protocol_item.item_type_id];
+    Item item;
+    item.type = &itemtype;
+    item.extra = protocol_item.extra;
+    return item;
+  }
+}
+
 void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
 {
+  // Note: this not care about stackpos, just adds the Things are they are in protocol_tile
   world_tile->things.clear();
   if (protocol_tile.skip)
   {
@@ -207,58 +298,7 @@ void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
 
   for (const auto& thing : protocol_tile.things)
   {
-    if (std::holds_alternative<protocol::Creature>(thing))
-    {
-      const auto& creature = std::get<protocol::Creature>(thing);
-      if (creature.known)
-      {
-        // Update known creature
-        auto* known_creature = getCreature(creature.id);
-        if (!known_creature)
-        {
-          LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
-          return;
-        }
-        known_creature->health_percent = creature.health_percent;
-        known_creature->direction = creature.direction;
-        known_creature->outfit = creature.outfit;
-        known_creature->speed = creature.speed;
-      }
-      else
-      {
-        // Remove known creature if set
-        if (creature.id_to_remove != 0U)
-        {
-          LOG_ERROR("%s: remove known creature not yet implemented", __func__);
-        }
-
-        // Add new creature
-        m_known_creatures.emplace_back();
-        m_known_creatures.back().id = creature.id;
-        m_known_creatures.back().name = creature.name;
-        m_known_creatures.back().health_percent = creature.health_percent;
-        m_known_creatures.back().direction = creature.direction;
-        m_known_creatures.back().outfit = creature.outfit;
-        m_known_creatures.back().speed = creature.speed;
-
-        if (creature.id == m_player_id)
-        {
-          LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
-        }
-      }
-
-      world_tile->things.emplace_back(creature.id);
-    }
-    else  // Item
-    {
-      const auto& item = std::get<protocol::Item>(thing);
-      const auto& itemtype = (*m_itemtypes)[item.item_type_id];
-      Item new_item;
-      new_item.type = &itemtype;
-      new_item.extra = item.extra;
-      Thing t = new_item;
-      world_tile->things.push_back(t);
-    }
+    world_tile->things.emplace_back(parseThing(thing));
   }
 }
 
@@ -272,61 +312,6 @@ Creature* Map::getCreature(common::CreatureId creature_id)
 Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
 {
   return m_tiles.getTile(position).things[stackpos];
-}
-
-void Map::addThing(const common::Position& position, Thing thing)
-{
-  auto& things = m_tiles.getTile(position).things;
-  const auto pre = things.size();
-  auto it = things.cbegin() + 1;
-  if (std::holds_alternative<Item>(thing))
-  {
-    const auto& item = std::get<Item>(thing);
-    if (item.type->always_on_top)
-    {
-      // Insert after ground item
-      ++it;
-    }
-    else
-    {
-      // Find first bottom item or end
-      auto it = things.cbegin();
-      while (it != things.cend())
-      {
-        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
-        {
-          break;
-        }
-        ++it;
-      }
-    }
-  }
-  else
-  {
-    // Find first creature, bottom item or end
-    while (it != things.cend())
-    {
-      if (std::holds_alternative<common::CreatureId>(*it))
-      {
-        break;
-      }
-      else if (!std::get<Item>(*it).type->always_on_top)
-      {
-        break;
-      }
-      ++it;
-    }
-  }
-
-  it = things.insert(it, thing);
-  const auto post = things.size();
-
-  LOG_INFO("%s: added Thing on position=%s stackpos=%d (size=%d->%d)",
-           __func__,
-           position.toString().c_str(),
-           std::distance(things.cbegin(), it),
-           pre,
-           post);
 }
 
 }  // namespace wsclient::wsworld

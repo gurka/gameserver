@@ -95,6 +95,11 @@ void handleTextMessage(const TextMessage& message)
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
+void handleThingAdded(const ThingAdded& thing_added)
+{
+  map.addProtocolThing(thing_added.position, thing_added.thing);
+}
+
 void handleThingMoved(const ThingMoved& thing_moved)
 {
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
@@ -126,6 +131,14 @@ void handle_packet(network::IncomingPacket* packet)
         handlePartialMapPacket(getPartialMap(static_cast<common::Direction>(type - 0x65), packet));
         break;
 
+      case 0x6A:
+        handleThingAdded(getThingAdded(packet));
+        break;
+
+      case 0x6D:
+        handleThingMoved(getThingMoved(packet));
+        break;
+
       case 0x83:
         handleMagicEffect(getMagicEffect(packet));
         break;
@@ -149,22 +162,6 @@ void handle_packet(network::IncomingPacket* packet)
 
       case 0xB4:
         handleTextMessage(getTextMessage(packet));
-        break;
-
-//      case 0x6A:
-//        handleThingAdded(getThingAdded(packet));
-//        break;
-//
-//      case 0x6B:
-//        handleThingChanged(getThingChanged(packet));
-//        break;
-//
-//      case 0x6C:
-//        handleThingRemoved(getThingRemoved(packet));
-//        break;
-//
-      case 0x6D:
-        handleThingMoved(getThingMoved(packet));
         break;
 
       default:

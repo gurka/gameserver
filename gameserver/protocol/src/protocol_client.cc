@@ -68,14 +68,7 @@ std::vector<protocol::Tile> getMapData(int width, int height, network::IncomingP
             LOG_ERROR("%s: too many things on this tile", __func__);
           }
 
-          if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
-          {
-            tile.things.emplace_back(protocol::getCreature(packet->getU16() == 0x0062, packet));
-          }
-          else
-          {
-            tile.things.emplace_back(protocol::getItem(packet));
-          }
+          tile.things.emplace_back(protocol::getThing(packet));
         }
 
         tiles.push_back(std::move(tile));
@@ -172,7 +165,8 @@ TextMessage getTextMessage(network::IncomingPacket* packet)
 ThingAdded getThingAdded(network::IncomingPacket* packet)
 {
   ThingAdded thing_added;
-  (void)packet;
+  thing_added.position = getPosition(packet);
+  thing_added.thing = getThing(packet);
   return thing_added;
 }
 

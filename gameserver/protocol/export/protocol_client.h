@@ -94,8 +94,8 @@ struct TextMessage
 
 struct ThingAdded
 {
-  //common::Position position;
-  //Thing thing;
+  common::Position position = { 0, 0, 0 };
+  Thing thing;
 };
 
 struct ThingChanged

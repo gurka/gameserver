@@ -25,6 +25,8 @@
 
 #include <cstdint>
 
+#include <variant>
+
 #include <emscripten.h>
 #include <SDL.h>
 
@@ -32,6 +34,7 @@
 #include "data_loader.h"
 #include "sprite_loader.h"
 #include "texture.h"
+#include "tiles.h"
 
 namespace
 {
