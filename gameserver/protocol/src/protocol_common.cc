@@ -136,6 +136,15 @@ Item getItem(network::IncomingPacket* packet)
   return item;
 }
 
+Thing getThing(network::IncomingPacket* packet)
+{
+  if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
+  {
+    return protocol::getCreature(packet->getU16() == 0x0062, packet);
+  }
+  return protocol::getItem(packet);
+}
+
 void addPosition(const common::Position& position, network::OutgoingPacket* packet)
 {
   packet->add(position.getX());

@@ -96,6 +96,7 @@ common::GamePosition getGamePosition(KnownContainers* container_ids, network::In
 common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 Creature getCreature(bool known, network::IncomingPacket* packet);
 Item getItem(network::IncomingPacket* packet);
+Thing getThing(network::IncomingPacket* packet);
 
 void addPosition(const common::Position& position, network::OutgoingPacket* packet);
 void addThing(const common::Thing& thing,

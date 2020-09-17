@@ -27,6 +27,7 @@
 #include <array>
 #include <vector>
 
+#include "tiles.h"
 #include "position.h"
 #include "creature.h"
 #include "item.h"
@@ -39,56 +40,51 @@
 namespace wsclient::wsworld
 {
 
+struct Creature
+{
+  common::CreatureId id;
+  std::string name;
+  std::uint8_t health_percent;
+  common::Direction direction;
+  common::Outfit outfit;
+  std::uint16_t speed;
+};
+
 class Map
 {
  public:
-  struct Creature
-  {
-    common::CreatureId id;
-    std::string name;
-    std::uint8_t health_percent;
-    common::Direction direction;
-    common::Outfit outfit;
-    std::uint16_t speed;
-  };
-
-  struct Item
-  {
-    const common::ItemType* type;
-    std::uint8_t extra;
-  };
-
-  using Thing = std::variant<common::CreatureId, Item>;
-
-  struct Tile
-  {
-    std::vector<Thing> things;
-  };
-
   void setItemTypes(const io::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
-  void setMapData(const protocol::client::Map& map_data);
-  void setPlayerPosition(const common::Position& position) { m_player_position = position; }
+  void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
-  void addCreature(const common::Position& position, common::CreatureId creature_id);
-  void addCreature(const common::Position& position, const protocol::Creature& creature);
-  void addItem(const common::Position& position,
-               common::ItemTypeId item_type_id,
-               std::uint8_t extra,
-               bool onTop);
+  // Methods that work with protocol objects
+  void setFullMapData(const protocol::client::FullMap& map_data);
+  void setPartialMapData(const protocol::client::PartialMap& map_data);
+  void addProtocolThing(const common::Position& position, protocol::Thing thing);
+
+  // Methods that does not work with protocol objects
+  void addThing(const common::Position& position, Thing thing);
   void removeThing(const common::Position& position, std::uint8_t stackpos);
+  void moveThing(const common::Position& from_position,
+                 std::uint8_t from_stackpos,
+                 const common::Position& to_position);
 
+  const auto& getTiles() const { return m_tiles.getTiles(); }
   const Tile& getTile(const common::Position& position) const;
-
+  const Creature* getCreature(common::CreatureId creature_id) const;
   bool ready() const { return m_ready; }
 
-  const Creature* getCreature(common::CreatureId creature_id) const;
-
  private:
-  Creature* getCreature(common::CreatureId creature_id);
+  // Methods that work protocol objects
+  Thing parseThing(const protocol::Thing& thing);
+  void setTile(const protocol::Tile& protocol_tile, Tile* world_tile);
 
+  // Methods that does not work with protocol objects
+  Creature* getCreature(common::CreatureId creature_id);
+  Thing getThing(const common::Position& position, std::uint8_t stackpos);
+
+  Tiles m_tiles;
   const io::data_loader::ItemTypes* m_itemtypes;
-  common::Position m_player_position = { 0, 0, 0 };
-  std::array<std::array<Tile, consts::known_tiles_x>, consts::known_tiles_y> m_tiles;
+  common::CreatureId m_player_id = 0u;
   bool m_ready = false;
   std::vector<Creature> m_known_creatures;
 };

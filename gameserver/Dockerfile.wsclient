@@ -2,4 +2,7 @@ FROM nginx
 
 COPY bin/* /usr/share/nginx/html/
 
+RUN sed -i 's/^}$/application\/wasm wasm;/' /etc/nginx/mime.types && \
+    echo '}' >> /etc/nginx/mime.types
+
 EXPOSE 80

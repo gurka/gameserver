@@ -94,8 +94,8 @@ struct TextMessage
 
 struct ThingAdded
 {
-  //common::Position position;
-  //Thing thing;
+  common::Position position = { 0, 0, 0 };
+  Thing thing;
 };
 
 struct ThingChanged
@@ -110,12 +110,20 @@ struct ThingRemoved
 
 struct ThingMoved
 {
-
+  common::Position old_position = { 0, 0, 0 };
+  std::uint8_t old_stackpos;
+  common::Position new_position = { 0, 0, 0 };
 };
 
-struct Map
+struct FullMap
 {
   common::Position position = { 0, 0, 0 };
+  std::vector<Tile> tiles;
+};
+
+struct PartialMap
+{
+  common::Direction direction;
   std::vector<Tile> tiles;
 };
 
@@ -128,7 +136,10 @@ Login getLogin(network::IncomingPacket* packet);
 LoginFailed getLoginFailed(network::IncomingPacket* packet);
 
 // 0x64
-Map getMap(int width, int height, network::IncomingPacket* packet);
+FullMap getFullMap(network::IncomingPacket* packet);
+
+// 0x65 0x66 0x67 0x68
+PartialMap getPartialMap(common::Direction direction, network::IncomingPacket* packet);
 
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);

@@ -24,13 +24,17 @@
 #ifndef WSCLIENT_SRC_TYPES_H_
 #define WSCLIENT_SRC_TYPES_H_
 
+#include "position.h"
+
 namespace wsclient::consts
 {
 
-constexpr auto draw_tiles_x = 15;
-constexpr auto draw_tiles_y = 11;
-constexpr auto known_tiles_x = 18;
-constexpr auto known_tiles_y = 14;
+constexpr auto draw_tiles_x = 15u;
+constexpr auto draw_tiles_y = 11u;
+constexpr auto known_tiles_x = 18u;
+constexpr auto known_tiles_y = 14u;
+constexpr auto known_tiles_offset_x = (known_tiles_x / 2) - 1;
+constexpr auto known_tiles_offset_y = (known_tiles_y / 2) - 1;
 
 }  // namespace wsclient::consts
 

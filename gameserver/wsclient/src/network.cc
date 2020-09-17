@@ -47,7 +47,7 @@ namespace
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
   }
 
-  void send_packet(const network::OutgoingPacket& packet)
+  void send_packet(network::OutgoingPacket&& packet)
   {
     static std::uint8_t header[2];
     header[0] = packet.getLength();
@@ -66,7 +66,7 @@ namespace
     packet.skipBytes(5);
     packet.addString("Alice");
     packet.addString("1");
-    send_packet(packet);
+    send_packet(std::move(packet));
   }
 
   void onmessage(emscripten::val event)
@@ -124,6 +124,11 @@ void start(const std::string& uri, const std::function<void(IncomingPacket*)> ca
 {
   handle_packet = callback;
   connect(uri);
+}
+
+void sendPacket(OutgoingPacket&& packet)
+{
+  send_packet(std::move(packet));
 }
 
 }  // namespace wsclient::network
