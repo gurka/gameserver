@@ -142,10 +142,7 @@ Thing getThing(network::IncomingPacket* packet)
   {
     return protocol::getCreature(packet->getU16() == 0x0062, packet);
   }
-  else
-  {
-    return protocol::getItem(packet);
-  }
+  return protocol::getItem(packet);
 }
 
 void addPosition(const common::Position& position, network::OutgoingPacket* packet)
