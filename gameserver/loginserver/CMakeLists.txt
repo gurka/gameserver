@@ -6,7 +6,7 @@ add_executable(loginserver "src/loginserver.cc")
 
 target_link_libraries(loginserver PRIVATE
   account
-  network
+  network_server
   utils
   asio
 )

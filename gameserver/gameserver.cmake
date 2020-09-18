@@ -39,7 +39,6 @@ endif()
 
 # -- Modules --
 add_subdirectory("common")
-add_subdirectory("io")
 add_subdirectory("protocol")
 add_subdirectory("utils")
 add_subdirectory("world")

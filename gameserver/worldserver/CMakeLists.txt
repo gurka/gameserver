@@ -12,8 +12,8 @@ target_link_libraries(worldserver PRIVATE
   account
   common
   gameengine
-  network
-  protocol
+  network_server
+  protocol_server
   world
   utils
   asio

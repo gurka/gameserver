@@ -23,13 +23,13 @@
  */
 #include "protocol_common.h"
 
+#include <algorithm>
 #include <variant>
 
 #include "logger.h"
 #include "thing.h"
 #include "creature.h"
 #include "item.h"
-#include "world.h"
 #include "incoming_packet.h"
 #include "outgoing_packet.h"
 
@@ -217,112 +217,6 @@ void addItem(const common::Item* item, network::OutgoingPacket* packet)
   {
     // TODO(simon): getSubType???
     packet->addU8(0);
-  }
-}
-
-void addMapData(const world::World& world,
-                const common::Position& position,
-                int width,
-                int height,
-                KnownCreatures* known_creatures,
-                network::OutgoingPacket* packet)
-{
-  // Calculate how to iterate over z
-  // Valid z is 0..15, 0 is highest and 15 is lowest. 7 is sea level.
-  // If on ground or higher (z <= 7) then go over everything above ground (from 7 to 0)
-  // If underground (z > 7) then go from two below to two above, with cap on lowest level (from e.g. 8 to 12, if z = 10)
-  const auto z_start = position.getZ() > 7 ? (position.getZ() - 2) : 7;
-  const auto z_end = position.getZ() > 7 ? std::min(position.getZ() + 2, 15) : 0;
-  const auto z_dir = z_start > z_end ? -1 : 1;
-
-  // After sending each tile we should send 0xYY 0xFF where YY is the number of following tiles
-  // that are empty and should be skipped. If there are no empty following tiles then we need
-  // to send 0x00 0xFF which denotes that this tiles is done.
-  // We don't know if the next tile is empty until the next iteration, so we will never send
-  // the "this tile is done" bytes on the same iteration as the actual tile, but rather in a
-  // later iteration, which is a bit confusing. We start off with -1 so that we don't start the
-  // message with saying that a tile is done.
-  int skip = -1;
-
-  for (auto z = z_start; z != z_end + z_dir; z += z_dir)
-  {
-    // Currently we are always on z = 7, so we should send z=7, z=6, ..., z=0
-    // But we skip z=6, ..., z=0 as we only have ground
-    if (z != 7)
-    {
-      if (skip != -1)
-      {
-        // Send current skip value first
-        packet->addU8(skip);
-        packet->addU8(0xFF);
-      }
-
-      // Skip this level (skip width * height tiles)
-      packet->addU8(width * height);
-      packet->addU8(0xFF);
-      skip = -1;
-      continue;
-    }
-
-    for (auto x = position.getX(); x < position.getX() + width; x++)
-    {
-      for (auto y = position.getY(); y < position.getY() + height; y++)
-      {
-        const auto* tile = world.getTile(common::Position(x, y, position.getZ()));
-        if (!tile)
-        {
-          skip += 1;
-          if (skip == 0xFF)
-          {
-            packet->addU8(skip);
-            packet->addU8(0xFF);
-
-            // If there is a tile on the next iteration we don't want to send
-            // "tile is done", as we just sent one due to skip being max
-            skip = -1;
-          }
-        }
-        else
-        {
-          // Send "tile is done" with the number of tiles that were empty, unless this
-          // is the first tile (-1)
-          if (skip != -1)
-          {
-            packet->addU8(skip);
-            packet->addU8(0xFF);
-          }
-          else
-          {
-            // Don't let skip be -1 more than one iteration
-            skip = 0;
-          }
-
-          addTileData(*tile, known_creatures, packet);
-        }
-      }
-    }
-  }
-
-  // Send last skip value
-  if (skip != -1)
-  {
-    packet->addU8(skip);
-    packet->addU8(0xFF);
-  }
-}
-
-void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet)
-{
-  auto count = 0;
-  for (const auto& thing : tile.getThings())
-  {
-    if (count >= 10)
-    {
-      break;
-    }
-
-    addThing(thing, known_creatures, packet);
-    count += 1;
   }
 }
 

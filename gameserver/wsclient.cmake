@@ -14,13 +14,10 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat" "${CMAKE_BINARY_DI
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat" "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
 
 # -- Modules --
-add_subdirectory(common)
-add_subdirectory(gameengine)
-add_subdirectory(io)
-add_subdirectory(network)
-add_subdirectory(protocol)
-add_subdirectory(utils)
-add_subdirectory(world)
+add_subdirectory(common EXCLUDE_FROM_ALL)
+add_subdirectory(network EXCLUDE_FROM_ALL)
+add_subdirectory(protocol EXCLUDE_FROM_ALL)
+add_subdirectory(utils EXCLUDE_FROM_ALL)
 
 # -- External --
 add_library(rapidxml INTERFACE)
