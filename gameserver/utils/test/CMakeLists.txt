@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(utils_test)
+project(gameserver)
 
 add_executable(utils_test
   "src/configparser_test.cc"

@@ -26,6 +26,7 @@ WSClient:
   * Use global position for xdiv,ydiv
   * Add chat/message box and input field/button to send
   * Add arrow key handling to move creature
+  * Fix namespaces chaos
 
 Docker:
   * Troubleshoot emscripten cache issue (always downloading SDL lib)

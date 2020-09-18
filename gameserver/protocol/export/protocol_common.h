@@ -50,14 +50,6 @@ class Thing;
 
 }
 
-namespace world
-{
-
-class Tile;
-class World;
-
-}
-
 namespace protocol
 {
 
@@ -106,13 +98,6 @@ void addCreature(const common::Creature* creature,
                  KnownCreatures* known_creatures,
                  network::OutgoingPacket* packet);
 void addItem(const common::Item* item, network::OutgoingPacket* packet);
-void addMapData(const world::World& world_interface,
-                const common::Position& position,
-                int width,
-                int height,
-                KnownCreatures* known_creatures,
-                network::OutgoingPacket* packet);
-void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
 void addOutfitData(const common::Outfit& outfit, network::OutgoingPacket* packet);
 
 }  // namespace protocol

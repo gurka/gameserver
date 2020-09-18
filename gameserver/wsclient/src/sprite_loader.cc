@@ -31,11 +31,11 @@
 #include "logger.h"
 #include "file_reader.h"
 
-namespace io
+namespace wsclient
 {
 
 SpriteLoader::SpriteLoader()
-    : m_fr(new FileReader)
+    : m_fr(new utils::FileReader)
 {
 }
 
@@ -128,4 +128,4 @@ SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
   return sprite_pixels;
 }
 
-}  // namespace io
+}  // namespace wsclient

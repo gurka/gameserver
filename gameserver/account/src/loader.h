@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef IO_EXPORT_ACCOUNT_LOADER_H_
-#define IO_EXPORT_ACCOUNT_LOADER_H_
+#ifndef ACCOUNT_SRC_LOADER_H_
+#define ACCOUNT_SRC_LOADER_H_
 
 #include <string>
 
@@ -32,12 +32,12 @@ namespace account
 struct AccountData;
 }  // namespace account
 
-namespace io::account_loader
+namespace account::loader
 {
 
 bool load(const std::string& filename, account::AccountData* account_data);
 
-}  // namespace io::account_loader
+}  // namespace account::loader
 
-#endif  // IO_EXPORT_ACCOUNT_LOADER_H_
+#endif  // ACCOUNT_SRC_LOADER_H_
 

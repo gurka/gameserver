@@ -88,10 +88,12 @@ constexpr auto bmask = 0x00FF0000U;
 constexpr auto amask = 0xFF000000U;
 #endif
 
-io::SpritePixels blendSprites(const io::SpritePixels& bottom,
-                              const io::SpritePixels& top)
+using wsclient::SpritePixels;
+
+SpritePixels blendSprites(const SpritePixels& bottom,
+                          const SpritePixels& top)
 {
-  io::SpritePixels result = bottom;
+  SpritePixels result = bottom;
   for (auto i = 0U; i < result.size(); i += 4)
   {
     // Add pixel from top if it is not alpha
@@ -106,10 +108,10 @@ io::SpritePixels blendSprites(const io::SpritePixels& bottom,
   return result;
 }
 
-io::SpritePixels colorizeSprite(const io::SpritePixels& sprite_base,
-                                const io::SpritePixels& sprite_template)
+SpritePixels colorizeSprite(const SpritePixels& sprite_base,
+                            const SpritePixels& sprite_template)
 {
-  io::SpritePixels result = sprite_base;
+  SpritePixels result = sprite_base;
   for (auto j = 0U; j < result.size(); j += 4)
   {
     const auto alpha = sprite_template[j + 3];
@@ -167,7 +169,7 @@ io::SpritePixels colorizeSprite(const io::SpritePixels& sprite_base,
   return result;
 }
 SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
-                              const std::vector<io::SpritePixels>& sprite_data,
+                              const std::vector<SpritePixels>& sprite_data,
                               std::uint8_t width,
                               std::uint8_t height,
                               std::uint8_t extra,
@@ -272,7 +274,7 @@ namespace wsclient
 {
 
 Texture Texture::create(SDL_Renderer* renderer,
-                        const io::SpriteLoader& sprite_loader,
+                        const SpriteLoader& sprite_loader,
                         const common::ItemType& item_type)
 {
   Texture texture;
@@ -331,7 +333,7 @@ Texture Texture::create(SDL_Renderer* renderer,
                             item_type.sprite_num_anim;
   for (auto i = 0; i < num_textures; i++)
   {
-    std::vector<io::SpritePixels> sprite_data;
+    std::vector<SpritePixels> sprite_data;
     for (auto j = 0U; j < num_sprites_per_texture; j++)
     {
       const auto sprite_index = (i * num_sprites_per_texture) + j;

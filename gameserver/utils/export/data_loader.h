@@ -22,64 +22,31 @@
  * SOFTWARE.
  */
 
-#ifndef IO_SRC_FILE_READER_H_
-#define IO_SRC_FILE_READER_H_
+#ifndef UTILS_EXPORT_DATA_LOADER_H_
+#define UTILS_EXPORT_DATA_LOADER_H_
 
-#include <fstream>
+#include <array>
 #include <string>
 
-namespace io
+#include "item.h"
+
+namespace utils::data_loader
 {
 
-class FileReader
-{
- public:
-  bool load(const std::string& filename)
-  {
-    m_ifs = std::ifstream(filename, std::ios::binary);
-    return static_cast<bool>(m_ifs);
-  }
+constexpr auto MAX_ITEM_TYPES = 4096;
+using ItemTypes = std::array<common::ItemType, MAX_ITEM_TYPES>;
+bool load(const std::string& data_filename,
+          ItemTypes* item_types,
+          common::ItemTypeId* id_first,
+          common::ItemTypeId* id_last);
+bool loadXml(const std::string& items_filename,
+             ItemTypes* item_types,
+             common::ItemTypeId id_first,
+             common::ItemTypeId id_last);
+void dumpToJson(const ItemTypes& item_types,
+                common::ItemTypeId id_first,
+                common::ItemTypeId id_last);
 
-  int offset()
-  {
-    return m_ifs.tellg();
-  }
+}  // namespace utils::data_loader
 
-  void set(int offset)
-  {
-    m_ifs.seekg(offset);
-  }
-
-  void skip(int n)
-  {
-    m_ifs.seekg(n, std::ifstream::cur);
-  }
-
-  std::uint8_t readU8()
-  {
-    return m_ifs.get();
-  }
-
-  std::uint16_t readU16()
-  {
-    std::uint16_t val = readU8();
-    val |= (readU8() << 8);
-    return val;
-  }
-
-  std::uint32_t readU32()
-  {
-    std::uint32_t val = readU8();
-    val |= (readU8() << 8);
-    val |= (readU8() << 16);
-    val |= (readU8() << 24);
-    return val;
-  }
-
- private:
-  std::ifstream m_ifs;
-};
-
-}  // namespace io
-
-#endif  // IO_SRC_FILE_READER_H_
+#endif  // UTILS_EXPORT_DATA_LOADER_H_

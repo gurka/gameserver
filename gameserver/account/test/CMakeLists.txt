@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(account_test)
+project(gameserver)
 
 add_executable(account_test
   "src/account_test.cc"

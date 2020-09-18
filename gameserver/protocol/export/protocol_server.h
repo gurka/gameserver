@@ -40,6 +40,14 @@ class Player;
 
 }  // namespace gameengine
 
+namespace world
+{
+
+class Tile;
+class World;
+
+}  // namespace world
+
 namespace protocol::server
 {
 
@@ -191,6 +199,16 @@ void addTextMessage(std::uint8_t type, const std::string& text, network::Outgoin
 
 // 0xB5
 void addCancelMove(network::OutgoingPacket* packet);
+
+// Helpers
+void addMapData(const world::World& world_interface,
+                const common::Position& position,
+                int width,
+                int height,
+                KnownCreatures* known_creatures,
+                network::OutgoingPacket* packet);
+
+void addTileData(const world::Tile& tile, KnownCreatures* known_creatures, network::OutgoingPacket* packet);
 
 // Reading packets
 

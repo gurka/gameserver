@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(world)
+project(gameserver)
 
 add_library(world
   "export/creature_ctrl.h"

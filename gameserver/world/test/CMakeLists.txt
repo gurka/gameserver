@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(world_test)
+project(gameserver)
 
 add_executable(world_test
   "src/creaturectrl_mock.h"

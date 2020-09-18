@@ -21,32 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#ifndef IO_EXPORT_DATA_LOADER_H_
-#define IO_EXPORT_DATA_LOADER_H_
+#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
+#define WSCLIENT_SRC_SPRITE_LOADER_H_
 
 #include <array>
+#include <fstream>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include "item.h"
-
-namespace io::data_loader
+namespace utils
 {
 
-constexpr auto MAX_ITEM_TYPES = 4096;
-using ItemTypes = std::array<common::ItemType, MAX_ITEM_TYPES>;
-bool load(const std::string& data_filename,
-          ItemTypes* item_types,
-          common::ItemTypeId* id_first,
-          common::ItemTypeId* id_last);
-bool loadXml(const std::string& items_filename,
-             ItemTypes* item_types,
-             common::ItemTypeId id_first,
-             common::ItemTypeId id_last);
-void dumpToJson(const ItemTypes& item_types,
-                common::ItemTypeId id_first,
-                common::ItemTypeId id_last);
+class FileReader;
 
-}  // namespace io::data_loader
+}  // namespace utils
 
-#endif  // IO_EXPORT_DATA_LOADER_H_
+namespace wsclient
+{
+
+using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
+
+class SpriteLoader
+{
+ public:
+  SpriteLoader();
+  ~SpriteLoader();
+
+  bool load(const std::string& filename);
+  SpritePixels getSpritePixels(int sprite_id) const;
+
+ private:
+  std::unique_ptr<utils::FileReader> m_fr;
+  std::vector<std::uint32_t> m_offsets;
+};
+
+}  // namespace wsclient
+
+#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_

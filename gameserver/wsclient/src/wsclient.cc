@@ -47,7 +47,7 @@ namespace wsclient
 
 using namespace protocol::client;
 
-io::data_loader::ItemTypes itemtypes;
+utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 
 void handleLoginPacket(const Login& login)
@@ -226,7 +226,7 @@ int main()
   constexpr auto data_filename = "files/data.dat";
   constexpr auto sprite_filename = "files/sprite.dat";
 
-  if (!io::data_loader::load(data_filename, &wsclient::itemtypes, nullptr, nullptr))
+  if (!utils::data_loader::load(data_filename, &wsclient::itemtypes, nullptr, nullptr))
   {
     LOG_ERROR("%s: could not load data file: %s", __func__, data_filename);
     return 1;

@@ -48,8 +48,8 @@ constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
-const io::data_loader::ItemTypes* itemtypes = nullptr;
-io::SpriteLoader sprite_loader;
+const utils::data_loader::ItemTypes* itemtypes = nullptr;
+wsclient::SpriteLoader sprite_loader;
 std::vector<wsclient::Texture> item_textures;
 
 const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
@@ -103,7 +103,7 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
 void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std::uint16_t offset)
 {
   // TODO(simon): fix this
-  //              io::DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
+  //              DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
   //              since the ids are relative
   const auto itemTypeId = creature.outfit.type + 2282;
 
@@ -128,7 +128,7 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
 namespace wsclient::graphics
 {
 
-bool init(const io::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename)
+bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename)
 {
   itemtypes = itemtypes_in;
 

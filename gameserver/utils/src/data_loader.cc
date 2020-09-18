@@ -31,7 +31,7 @@
 #include "file_reader.h"
 #include "rapidxml.hpp"
 
-namespace io::data_loader
+namespace utils::data_loader
 {
 
 bool load(const std::string& data_filename,
@@ -491,4 +491,4 @@ void dumpToJson(const ItemTypes& item_types,
   LOG_INFO("%s: done", __func__);
 }
 
-}  // namespace io::data_loader
+}  // namespace utils::data_loader

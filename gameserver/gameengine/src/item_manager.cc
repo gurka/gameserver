@@ -30,14 +30,14 @@ namespace gameengine
 
 bool ItemManager::loadItemTypes(const std::string& data_filename, const std::string& items_filename)
 {
-  if (!io::data_loader::load(data_filename, &m_item_types, &m_item_types_id_first, &m_item_types_id_last))
+  if (!utils::data_loader::load(data_filename, &m_item_types, &m_item_types_id_first, &m_item_types_id_last))
   {
     LOG_ERROR("%s: could not load datafile: %s", __func__, data_filename.c_str());
     return false;
   }
 
 
-  if (!io::data_loader::loadXml(items_filename, &m_item_types, m_item_types_id_first, m_item_types_id_last))
+  if (!utils::data_loader::loadXml(items_filename, &m_item_types, m_item_types_id_first, m_item_types_id_last))
   {
     LOG_ERROR("%s: could not load itemsfile: %s", __func__, items_filename.c_str());
     return false;

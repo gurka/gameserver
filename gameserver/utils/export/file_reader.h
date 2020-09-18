@@ -22,33 +22,64 @@
  * SOFTWARE.
  */
 
-#ifndef IO_EXPORT_WORLD_LOADER_H_
-#define IO_EXPORT_WORLD_LOADER_H_
+#ifndef UTILS_EXPORT_FILE_READER_H_
+#define UTILS_EXPORT_FILE_READER_H_
 
-#include <functional>
-#include <memory>
+#include <fstream>
 #include <string>
 
-#include "tile.h"
-#include "item.h"
-
-namespace io::world_loader
+namespace utils
 {
 
-using CreateItem = std::function<common::ItemUniqueId(common::ItemTypeId)>;
-using GetItem = std::function<const common::Item*(common::ItemUniqueId)>;
-
-struct WorldData
+class FileReader
 {
-  int world_size_x;
-  int world_size_y;
-  std::vector<world::Tile> tiles;
+ public:
+  bool load(const std::string& filename)
+  {
+    m_ifs = std::ifstream(filename, std::ios::binary);
+    return static_cast<bool>(m_ifs);
+  }
+
+  int offset()
+  {
+    return m_ifs.tellg();
+  }
+
+  void set(int offset)
+  {
+    m_ifs.seekg(offset);
+  }
+
+  void skip(int n)
+  {
+    m_ifs.seekg(n, std::ifstream::cur);
+  }
+
+  std::uint8_t readU8()
+  {
+    return m_ifs.get();
+  }
+
+  std::uint16_t readU16()
+  {
+    std::uint16_t val = readU8();
+    val |= (readU8() << 8);
+    return val;
+  }
+
+  std::uint32_t readU32()
+  {
+    std::uint32_t val = readU8();
+    val |= (readU8() << 8);
+    val |= (readU8() << 16);
+    val |= (readU8() << 24);
+    return val;
+  }
+
+ private:
+  std::ifstream m_ifs;
 };
 
-WorldData load(const std::string& filename,
-               const CreateItem& create_item,
-               const GetItem& get_item);
+}  // namespace utils
 
-}  // namespace io::world_loader
-
-#endif  // IO_EXPORT_WORLD_LOADER_H_
+#endif  // UTILS_EXPORT_FILE_READER_H_

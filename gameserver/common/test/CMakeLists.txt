@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(common_test)
+project(gameserver)
 
 add_executable(common_test
   "src/position_test.cc"

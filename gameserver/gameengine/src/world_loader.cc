@@ -38,7 +38,7 @@
 
 #include "rapidxml.hpp"
 
-namespace io::world_loader
+namespace gameengine::world_loader
 {
 
 WorldData load(const std::string& filename,
@@ -175,5 +175,5 @@ WorldData load(const std::string& filename,
   return world_data;
 }
 
-}  // namespace io::world_loader
+}  // namespace gameengine::world_loader
 

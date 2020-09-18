@@ -21,36 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef IO_EXPORT_SPRITE_LOADER_H_
-#define IO_EXPORT_SPRITE_LOADER_H_
 
-#include <array>
-#include <fstream>
+#ifndef GAMEENGINE_SRC_WORLD_LOADER_H_
+#define GAMEENGINE_SRC_WORLD_LOADER_H_
+
+#include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
-namespace io
+#include "tile.h"
+#include "item.h"
+
+namespace gameengine::world_loader
 {
 
-class FileReader;
+using CreateItem = std::function<common::ItemUniqueId(common::ItemTypeId)>;
+using GetItem = std::function<const common::Item*(common::ItemUniqueId)>;
 
-using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
-
-class SpriteLoader
+struct WorldData
 {
- public:
-  SpriteLoader();
-  ~SpriteLoader();
-
-  bool load(const std::string& filename);
-  SpritePixels getSpritePixels(int sprite_id) const;
-
- private:
-  std::unique_ptr<FileReader> m_fr;
-  std::vector<std::uint32_t> m_offsets;
+  int world_size_x;
+  int world_size_y;
+  std::vector<world::Tile> tiles;
 };
 
-}  // namespace io
+WorldData load(const std::string& filename,
+               const CreateItem& create_item,
+               const GetItem& get_item);
 
-#endif  // IO_EXPORT_SPRITE_LOADER_H_
+}  // namespace gameengine::world_loader
+
+#endif  // GAMEENGINE_SRC_WORLD_LOADER_H_
