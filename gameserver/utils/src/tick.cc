@@ -24,10 +24,16 @@
 
 #include "tick.h"
 
+#ifndef __EMSCRIPTEN__
 #include <boost/date_time/posix_time/posix_time.hpp>
+#else
+#include <emscripten.h>
+#endif
 
 namespace utils
 {
+
+#ifndef __EMSCRIPTEN__
 
 using ms_clock = boost::posix_time::microsec_clock;
 static const decltype(ms_clock::universal_time()) START = ms_clock::universal_time();
@@ -38,5 +44,15 @@ std::int64_t Tick::now()
                 "boost::posix_time::microsec_clock::time_duration_type::tick_type needs to be 64 bits");
   return (ms_clock::universal_time() - START).total_milliseconds();
 }
+
+#else
+
+std::int64_t Tick::now()
+{
+  // TODO
+  return 0;
+}
+
+#endif
 
 }  // namespace utils

@@ -13,11 +13,6 @@ set(FILES
   "src/tick.cc"
 )
 
-# TODO: make Tick emscripten compatible
-if (CMAKE_C_COMPILER MATCHES ".*emcc")
-  list(FILTER FILES EXCLUDE REGEX ".*/tick.*")
-endif()
-
 add_library(utils ${FILES})
 
 target_link_libraries(utils PRIVATE
