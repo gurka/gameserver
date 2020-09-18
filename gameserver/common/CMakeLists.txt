@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(common)
+project(gameserver)
 
 add_library(common INTERFACE)
 

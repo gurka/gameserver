@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(gameengine)
+project(gameserver)
 
 add_library(gameengine
   "export/container.h"

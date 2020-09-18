@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(wsclient)
+project(gameserver)
 
 add_executable(wsclient
   "src/graphics.cc"

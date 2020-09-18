@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(network)
+project(gameserver)
 
 add_library(network_packet
   "export/incoming_packet.h"

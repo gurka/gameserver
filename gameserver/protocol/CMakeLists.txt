@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(protocol)
+project(gameserver)
 
 add_library(protocol_common
   "export/protocol_common.h"

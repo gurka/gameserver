@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(worldserver)
+project(gameserver)
 
 add_executable(worldserver
   "src/connection_ctrl.cc"

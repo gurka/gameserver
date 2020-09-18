@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(gameengine_test)
+project(gameserver)
 
 add_executable(gameengine_test
   "src/container_manager_test.cc"

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(network_test)
+project(gameserver)
 
 add_executable(network_test
   "src/acceptor_test.cc"

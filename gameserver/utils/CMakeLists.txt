@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(utils)
+project(gameserver)
 
 set(FILES
   "export/config_parser.h"
