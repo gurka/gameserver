@@ -85,18 +85,18 @@ add_custom_target(unittest DEPENDS
 
 # -- Docker targets --
 if (NOT EMSCRIPTEN)
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.login" "${CMAKE_BINARY_DIR}/Dockerfile.login" COPYONLY)
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.world" "${CMAKE_BINARY_DIR}/Dockerfile.world" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../Dockerfile.login" "${CMAKE_BINARY_DIR}/Dockerfile.login" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../Dockerfile.world" "${CMAKE_BINARY_DIR}/Dockerfile.world" COPYONLY)
   add_custom_target(docker
     COMMAND docker build -t gameserver/login -f "${CMAKE_BINARY_DIR}/Dockerfile.login" "${CMAKE_BINARY_DIR}"
     COMMAND docker build -t gameserver/world -f "${CMAKE_BINARY_DIR}/Dockerfile.world" "${CMAKE_BINARY_DIR}"
   )
   add_dependencies(docker loginserver worldserver)
 else()
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../Dockerfile.wsclient" "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" COPYONLY)
   add_custom_target(docker
     docker build -t gameserver/wsclient -f "${CMAKE_BINARY_DIR}/Dockerfile.wsclient" "${CMAKE_BINARY_DIR}"
   )
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/run_wsclient.sh" "${CMAKE_BINARY_DIR}/run_wsclient.sh" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../run_wsclient.sh" "${CMAKE_BINARY_DIR}/run_wsclient.sh" COPYONLY)
   add_dependencies(docker wsclient)
 endif()
