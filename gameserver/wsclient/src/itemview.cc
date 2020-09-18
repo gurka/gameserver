@@ -48,8 +48,8 @@ constexpr auto tile_size_scaled = tile_size * scale;
 
 SDL_Renderer* sdl_renderer = nullptr;
 
-io::SpriteLoader sprite_loader;
-io::data_loader::ItemTypes item_types;
+wsclient::SpriteLoader sprite_loader;
+utils::data_loader::ItemTypes item_types;
 common::ItemTypeId item_type_id_first;
 common::ItemTypeId item_type_id_last;
 common::ItemType item_type;
@@ -224,7 +224,7 @@ extern "C" void mainLoop()
 int main()
 {
   // Load data
-  if (!io::data_loader::load(data_filename, &item_types, &item_type_id_first, &item_type_id_last))
+  if (!utils::data_loader::load(data_filename, &item_types, &item_type_id_first, &item_type_id_last))
   {
     LOG_ERROR("Could not load data");
     return 1;

@@ -5,8 +5,8 @@ project(gameserver)
 add_library(account
   "export/account.h"
   "src/account.cc"
-  "src/account_loader.cc"
-  "src/account_loader.h"
+  "src/loader.cc"
+  "src/loader.h"
 )
 
 target_include_directories(account PUBLIC "export")

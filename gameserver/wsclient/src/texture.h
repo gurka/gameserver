@@ -41,7 +41,7 @@ class Texture
 {
  public:
   static Texture create(SDL_Renderer* renderer,
-                        const io::SpriteLoader& sprite_loader,
+                        const SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
 
   common::ItemTypeId getItemTypeId() const { return m_item_type.id; }

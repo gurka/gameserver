@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef IO_EXPORT_WORLD_LOADER_H_
-#define IO_EXPORT_WORLD_LOADER_H_
+#ifndef GAMEENGINE_SRC_WORLD_LOADER_H_
+#define GAMEENGINE_SRC_WORLD_LOADER_H_
 
 #include <functional>
 #include <memory>
@@ -32,7 +32,7 @@
 #include "tile.h"
 #include "item.h"
 
-namespace io::world_loader
+namespace gameengine::world_loader
 {
 
 using CreateItem = std::function<common::ItemUniqueId(common::ItemTypeId)>;
@@ -49,6 +49,6 @@ WorldData load(const std::string& filename,
                const CreateItem& create_item,
                const GetItem& get_item);
 
-}  // namespace io::world_loader
+}  // namespace gameengine::world_loader
 
-#endif  // IO_EXPORT_WORLD_LOADER_H_
+#endif  // GAMEENGINE_SRC_WORLD_LOADER_H_

@@ -29,14 +29,14 @@
 #include <utility>
 
 #include "logger.h"
-#include "account_loader.h"
+#include "loader.h"
 
 namespace account
 {
 
 bool AccountReader::load(const std::string& accounts_filename)
 {
-  return io::account_loader::load(accounts_filename, &m_account_data);
+  return loader::load(accounts_filename, &m_account_data);
 }
 
 bool AccountReader::accountExists(int account_number) const

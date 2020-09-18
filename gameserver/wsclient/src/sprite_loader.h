@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef IO_EXPORT_SPRITE_LOADER_H_
-#define IO_EXPORT_SPRITE_LOADER_H_
+#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
+#define WSCLIENT_SRC_SPRITE_LOADER_H_
 
 #include <array>
 #include <fstream>
@@ -30,10 +30,15 @@
 #include <string>
 #include <vector>
 
-namespace io
+namespace utils
 {
 
 class FileReader;
+
+}  // namespace utils
+
+namespace wsclient
+{
 
 using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
 
@@ -47,10 +52,10 @@ class SpriteLoader
   SpritePixels getSpritePixels(int sprite_id) const;
 
  private:
-  std::unique_ptr<FileReader> m_fr;
+  std::unique_ptr<utils::FileReader> m_fr;
   std::vector<std::uint32_t> m_offsets;
 };
 
-}  // namespace io
+}  // namespace wsclient
 
-#endif  // IO_EXPORT_SPRITE_LOADER_H_
+#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_

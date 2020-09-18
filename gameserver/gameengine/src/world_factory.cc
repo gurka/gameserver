@@ -54,7 +54,7 @@ std::unique_ptr<world::World> WorldFactory::createWorld(const std::string& world
     return item_manager->getItem(item_unique_id);
   };
 
-  auto world_data = io::world_loader::load(world_filename, create_item, get_item);
+  auto world_data = world_loader::load(world_filename, create_item, get_item);
   if (world_data.tiles.empty())
   {
     // io::world_loader::load should log error

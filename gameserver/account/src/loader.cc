@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "account_loader.h"
+#include "loader.h"
 
 #include <cstring>
 #include <fstream>
@@ -63,7 +63,7 @@ std::uint32_t ipAddressToUint32(const std::string& ip_address)
 
 }  // namespace
 
-namespace io::account_loader
+namespace account::loader
 {
 
 bool load(const std::string& filename, account::AccountData* account_data)
@@ -208,4 +208,4 @@ bool load(const std::string& filename, account::AccountData* account_data)
   return true;
 }
 
-}  // namespace io::account_loader
+}  // namespace account::loader

@@ -22,13 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef IO_SRC_FILE_READER_H_
-#define IO_SRC_FILE_READER_H_
+#ifndef UTILS_EXPORT_FILE_READER_H_
+#define UTILS_EXPORT_FILE_READER_H_
 
 #include <fstream>
 #include <string>
 
-namespace io
+namespace utils
 {
 
 class FileReader
@@ -80,6 +80,6 @@ class FileReader
   std::ifstream m_ifs;
 };
 
-}  // namespace io
+}  // namespace utils
 
-#endif  // IO_SRC_FILE_READER_H_
+#endif  // UTILS_EXPORT_FILE_READER_H_

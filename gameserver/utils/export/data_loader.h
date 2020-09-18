@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef IO_EXPORT_DATA_LOADER_H_
-#define IO_EXPORT_DATA_LOADER_H_
+#ifndef UTILS_EXPORT_DATA_LOADER_H_
+#define UTILS_EXPORT_DATA_LOADER_H_
 
 #include <array>
 #include <string>
 
 #include "item.h"
 
-namespace io::data_loader
+namespace utils::data_loader
 {
 
 constexpr auto MAX_ITEM_TYPES = 4096;
@@ -47,6 +47,6 @@ void dumpToJson(const ItemTypes& item_types,
                 common::ItemTypeId id_first,
                 common::ItemTypeId id_last);
 
-}  // namespace io::data_loader
+}  // namespace utils::data_loader
 
-#endif  // IO_EXPORT_DATA_LOADER_H_
+#endif  // UTILS_EXPORT_DATA_LOADER_H_

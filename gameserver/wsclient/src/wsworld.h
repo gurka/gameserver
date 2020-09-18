@@ -53,7 +53,7 @@ struct Creature
 class Map
 {
  public:
-  void setItemTypes(const io::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
+  void setItemTypes(const utils::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
   void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
   // Methods that work with protocol objects
@@ -83,7 +83,7 @@ class Map
   Thing getThing(const common::Position& position, std::uint8_t stackpos);
 
   Tiles m_tiles;
-  const io::data_loader::ItemTypes* m_itemtypes;
+  const utils::data_loader::ItemTypes* m_itemtypes;
   common::CreatureId m_player_id = 0u;
   bool m_ready = false;
   std::vector<Creature> m_known_creatures;

@@ -81,7 +81,7 @@ class ItemManager
   std::unordered_map<common::ItemUniqueId, ItemImpl> m_items;
   common::ItemUniqueId m_next_item_unique_id{1};
 
-  io::data_loader::ItemTypes  m_item_types;
+  utils::data_loader::ItemTypes  m_item_types;
   common::ItemTypeId m_item_types_id_first{0};
   common::ItemTypeId m_item_types_id_last{0};
 };
