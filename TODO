@@ -32,3 +32,10 @@ Docker:
   * Create docker image(s) with make target
   * (non-Docker): see if we can merge regular and wsclient cmake config
     and just skip wsclient if emscripten is not available
+
+Split:
+  * Update namespace in moved files
+  * Implement utils::Tick for emscripten
+  * Merge utils and common? data_loader does not fit in neither right now
+  * Update project() in all CMakeLists.txt?
+  * Fix unittests, own module?
