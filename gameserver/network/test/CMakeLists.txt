@@ -13,7 +13,8 @@ add_executable(network_test
 target_include_directories(network_test PRIVATE "../src")
 
 target_link_libraries(network_test PRIVATE
-  network
+  network_server
+  network_packet
   utils
   gtest_main
   gmock_main

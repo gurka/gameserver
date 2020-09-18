@@ -23,12 +23,10 @@ function debug-full {
 }
 
 # Use clang and clang++, unless specified by the caller
-CC="${CC:=clang}"
-CXX="${CXX:=clang++}"
-export CC
-export CXX
+export CC="${CC:=clang}"
+export CXX="${CXX:=clang++}"
 
-case $2 in
+case $1 in
   'server')
     CMAKE="cmake"
     ;;
@@ -38,16 +36,16 @@ case $2 in
     ;;
 
   *)
-    echo "Usage: $0 [all | release | debug | debug-full] [server | client]"
+    echo "Usage: $0 [server | client] [all | release | debug | debug-full]"
     exit 1
     ;;
 esac
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
-BUILD_DIR="$ROOT_DIR/build/$2"
+BUILD_DIR="$ROOT_DIR/build/$1"
 GAMESERVER_DIR="$ROOT_DIR/gameserver"
 
-case $1 in
+case $2 in
   'all')
     release
     debug
@@ -67,7 +65,7 @@ case $1 in
     ;;
 
   *)
-    echo "Usage: $0 [all | release | debug | debug-full] [server | client]"
+    echo "Usage: $0 [server | client] [all | release | debug | debug-full]"
     exit 1
     ;;
 esac

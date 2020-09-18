@@ -7,22 +7,19 @@ export CC=clang
 export CXX=clang++
 STATUS=0
 
-# Build debug
-tools/cmake.sh debug
-pushd build/debug
+# Server
+tools/cmake.sh server all
+pushd build/server/debug-full
+make || STATUS=1
+popd
+pushd build/server/debug
+make || STATUS=1
+popd
+pushd build/server/release
 make || STATUS=1
 popd
 
-# Build debug-full
-tools/cmake.sh debug-full
-pushd build/debug-full
-make || STATUS=1
-popd
-
-# Build release
-tools/cmake.sh release
-pushd build/release
-make || STATUS=1
-popd
+# Client
+# TODO - emscripten in travis, or docker?
 
 exit $STATUS
