@@ -24,7 +24,7 @@ target_link_libraries(wsclient PRIVATE
   utils
 )
 
-set_target_properties(wsclient PROPERTIES OUTPUT_NAME "index.html")
+set_target_properties(wsclient PROPERTIES SUFFIX ".html")
 
 target_link_options(wsclient PRIVATE --preload-file "../files/")
 
@@ -41,6 +41,6 @@ target_link_libraries(itemview PRIVATE
   utils
 )
 
-set_target_properties(itemview PROPERTIES OUTPUT_NAME "itemview.html")
+set_target_properties(itemview PROPERTIES SUFFIX ".html")
 
 target_link_options(itemview PRIVATE --preload-file "../files/")
