@@ -171,6 +171,11 @@ void GameEngine::move(common::CreatureId creature_id, common::Direction directio
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creature_id);
     const auto tick = getPlayerData(creature_id).player.getNextWalkTick() - utils::Tick::now();
+
+    // Remove all previous tasks for this player
+    // Not sure if this is correct, should be fine for now as there are only walk tasks at the moment
+    m_game_engine_queue->cancelAllTasks(creature_id);
+
     m_game_engine_queue->addTask(creature_id,
                                  tick,
                                  [this, creature_id, direction](GameEngine* game_engine)
