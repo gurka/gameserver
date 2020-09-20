@@ -37,6 +37,7 @@
 
 namespace
 {
+  bool connected = false;
   emscripten::val ws = emscripten::val::null();
   std::function<void(network::IncomingPacket*)> handle_packet;
 
@@ -45,6 +46,7 @@ namespace
     ws = emscripten::val::global("WebSocket").new_(emscripten::val(uri));
     ws.set("onopen", emscripten::val::module_property("onopen"));
     ws.set("onmessage", emscripten::val::module_property("onmessage"));
+    ws.set("onclose", emscripten::val::module_property("onclose"));
   }
 
   void send_packet(network::OutgoingPacket&& packet)
@@ -60,6 +62,9 @@ namespace
   {
     (void)event;
 
+    LOG_INFO("%s: connected", __func__);
+    connected = true;
+
     // Send login packet
     network::OutgoingPacket packet;
     packet.addU8(0x0A);
@@ -69,8 +74,20 @@ namespace
     send_packet(std::move(packet));
   }
 
+  void onclose(emscripten::val event)
+  {
+    (void)event;
+    LOG_INFO("%s: connection closed", __func__);
+    connected = false;
+  }
+
   void onmessage(emscripten::val event)
   {
+    if (!connected)
+    {
+      return;
+    }
+
     // Convert to Uint8Array
     auto reader = emscripten::val::global("FileReader").new_();
     reader.call<void>("readAsArrayBuffer", event["data"]);
@@ -111,10 +128,10 @@ namespace
   EMSCRIPTEN_BINDINGS(websocket_callbacks)
   {
     emscripten::function("onopen", &onopen);
+    emscripten::function("onclose", &onclose);
     emscripten::function("onmessage", &onmessage);
     emscripten::function("onmessage_buffer", &onmessage_buffer);
   }
-
 }
 
 namespace wsclient::network
@@ -122,13 +139,27 @@ namespace wsclient::network
 
 void start(const std::string& uri, const std::function<void(IncomingPacket*)> callback)
 {
-  handle_packet = callback;
-  connect(uri);
+  if (!connected)
+  {
+    handle_packet = callback;
+    connect(uri);
+  }
+}
+
+void stop()
+{
+  if (connected)
+  {
+    ws.call<void>("close");
+  }
 }
 
 void sendPacket(OutgoingPacket&& packet)
 {
-  send_packet(std::move(packet));
+  if (connected)
+  {
+    send_packet(std::move(packet));
+  }
 }
 
 }  // namespace wsclient::network

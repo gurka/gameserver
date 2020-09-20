@@ -380,6 +380,12 @@ SDL_Texture* Texture::getItemTexture(const common::Position& position, int anim_
 
 SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
 {
+  // Some creatures does not have different sprites based on direction (?)
+  if (m_textures.size() == 1U)
+  {
+    return m_textures[0].get();
+  }
+
   const auto texture_index = static_cast<int>(direction);
   if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
   {

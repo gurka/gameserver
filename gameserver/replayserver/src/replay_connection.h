@@ -22,33 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_EXPORT_CONNECTION_H_
-#define NETWORK_EXPORT_CONNECTION_H_
+#ifndef REPLAYSERVER_SRC_REPLAY_CONNECTION_H_
+#define REPLAYSERVER_SRC_REPLAY_CONNECTION_H_
 
 #include <functional>
+#include <memory>
 
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include <asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace network
-{
+#include "connection.h"
+#include "replay_reader.h"
 
-class Connection
+class ReplayConnection
 {
  public:
-  struct Callbacks
-  {
-    std::function<void(IncomingPacket*)> on_packet_received;
-    std::function<void(void)> on_disconnected;
-  };
+  ReplayConnection(asio::io_context* io_context,
+                   std::function<void(void)> on_close,
+                   std::unique_ptr<network::Connection>&& connection);
 
-  virtual ~Connection() = default;
+ private:
+  void sendNextPacket();
+  void closeConnection();
 
-  virtual void init(const Callbacks& callbacks, bool skip_send_packet_header) = 0;
-  virtual void close(bool force) = 0;
-  virtual void sendPacket(OutgoingPacket&& packet) = 0;
+  asio::deadline_timer m_timer;
+  bool m_timer_started;
+  std::function<void(void)> m_on_close;
+  std::unique_ptr<network::Connection> m_connection;
+  Replay m_replay;
+  boost::posix_time::ptime m_replay_start_time;
 };
 
-}  // namespace network
-
-#endif  // NETWORK_EXPORT_CONNECTION_H_
+#endif  // REPLAYSERVER_SRC_REPLAY_CONNECTION_H_

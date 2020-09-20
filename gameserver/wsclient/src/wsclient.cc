@@ -72,22 +72,27 @@ void handlePartialMapPacket(const PartialMap& map_data)
 
 void handleMagicEffect(const MagicEffect& effect)
 {
+  (void)effect;
 }
 
 void handlePlayerStats(const PlayerStats& stats)
 {
+  (void)stats;
 }
 
 void handleWorldLight(const WorldLight& light)
 {
+  (void)light;
 }
 
 void handlePlayerSkills(const PlayerSkills& skills)
 {
+  (void)skills;
 }
 
 void handleEquipmentUpdate(const Equipment& equipment)
 {
+  (void)equipment;
 }
 
 void handleTextMessage(const TextMessage& message)
@@ -110,6 +115,7 @@ void handle_packet(network::IncomingPacket* packet)
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
+    LOG_DEBUG("%s: type: 0x%02X", __func__, type);
     switch (type)
     {
       case 0x0A:
@@ -128,7 +134,9 @@ void handle_packet(network::IncomingPacket* packet)
       case 0x66:
       case 0x67:
       case 0x68:
-        handlePartialMapPacket(getPartialMap(static_cast<common::Direction>(type - 0x65), packet));
+        handlePartialMapPacket(getPartialMap(map.getPlayerPosition().getZ(),
+                                             static_cast<common::Direction>(type - 0x65),
+                                             packet));
         break;
 
       case 0x6A:
@@ -164,8 +172,77 @@ void handle_packet(network::IncomingPacket* packet)
         handleTextMessage(getTextMessage(packet));
         break;
 
+      case 0x8C:
+        // update creature health
+        packet->getU32();  // creature id
+        packet->getU8();  // health perc
+        break;
+
+      case 0x8D:
+        // creature light
+        packet->getU32();  // creature id
+        packet->getU8(); // light intensity
+        packet->getU8(); // light color
+        break;
+
+      case 0xD2:
+        // add name to VIP list
+        packet->getU32();  // id
+        packet->getString();  // name
+        packet->getU8();  // status
+        break;
+
+      case 0x6E:
+      {
+        // open container
+        packet->getU8();  // container id
+        protocol::getItem(packet);  // container item
+        packet->getString();  // container name
+        packet->getU8();  // capacity / slots
+        packet->getU8();  // 0 = no parent, else has parent
+        auto num_items = packet->getU8();
+        while (num_items-- > 0)
+        {
+          protocol::getItem(packet);
+        }
+        break;
+      }
+
+      case 0xAA:
+      {
+        // talk
+        packet->getString();  // talker
+        const auto type = packet->getU8();  // type
+        switch (type)
+        {
+          case 1:  // say
+          case 2:  // whisper
+          case 3:  // yell
+          case 16:  // monster?
+          case 17:  // monster?
+            protocol::getPosition(packet);
+            break;
+
+          case 5:   // channel
+          case 10:  // gm?
+          case 14:  // ??
+            packet->getU16();  // channel id?
+            break;
+
+          default:
+            LOG_ERROR("%s: unknown talk type: %u", __func__, type);
+            break;
+        }
+        packet->getString();  // text
+        break;
+      }
+
       default:
-        LOG_ERROR("%s: unknown packet type: 0x%X", __func__, type);
+        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header)",
+                  __func__,
+                  type,
+                  packet->getPosition() - 1,
+                  packet->getPosition() + 1);
         return;
     }
   }
@@ -207,6 +284,8 @@ extern "C" void main_loop()
           break;
 
         case SDL_SCANCODE_ESCAPE:
+          LOG_INFO("%s: closing connection", __func__);
+          wsclient::network::stop();
           LOG_INFO("%s: stopping client", __func__);
           emscripten_cancel_main_loop();
           return;
@@ -232,6 +311,7 @@ int main()
     return 1;
   }
 
+  protocol::setItemTypes(&wsclient::itemtypes);
   wsclient::map.setItemTypes(&wsclient::itemtypes);
 
   if (!wsclient::graphics::init(&wsclient::itemtypes, sprite_filename))

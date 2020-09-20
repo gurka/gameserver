@@ -64,9 +64,11 @@ struct PlayerStats
   std::uint16_t capacity;
   std::uint32_t exp;
   std::uint8_t level;
+  std::uint8_t level_perc;
   std::uint16_t mana;
   std::uint16_t max_mana;
   std::uint8_t magic_level;
+  std::uint8_t magic_level_perc;
 };
 
 struct WorldLight
@@ -78,12 +80,19 @@ struct WorldLight
 struct PlayerSkills
 {
   std::uint8_t fist;
+  std::uint8_t fist_perc;
   std::uint8_t club;
+  std::uint8_t club_perc;
   std::uint8_t sword;
+  std::uint8_t sword_perc;
   std::uint8_t axe;
+  std::uint8_t axe_perc;
   std::uint8_t dist;
+  std::uint8_t dist_perc;
   std::uint8_t shield;
+  std::uint8_t shield_perc;
   std::uint8_t fish;
+  std::uint8_t fish_perc;
 };
 
 struct TextMessage
@@ -139,7 +148,7 @@ LoginFailed getLoginFailed(network::IncomingPacket* packet);
 FullMap getFullMap(network::IncomingPacket* packet);
 
 // 0x65 0x66 0x67 0x68
-PartialMap getPartialMap(common::Direction direction, network::IncomingPacket* packet);
+PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPacket* packet);
 
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);

@@ -33,13 +33,16 @@ void Map::setFullMapData(const protocol::client::FullMap& map_data)
   // Full map data is width=18, height=14
   m_tiles.setMapPosition(map_data.position);
   auto it = map_data.tiles.begin();
-  for (auto x = 0; x < consts::known_tiles_x; x++)
+  for (auto z = 0; z < m_tiles.getNumFloors(); z++)
   {
-    for (auto y = 0; y < consts::known_tiles_y; y++)
+    for (auto x = 0; x < consts::known_tiles_x; x++)
     {
-      auto& tile = m_tiles.getTileLocalPos(x, y);
-      setTile(*it, &tile);
-      ++it;
+      for (auto y = 0; y < consts::known_tiles_y; y++)
+      {
+        auto* tile = m_tiles.getTileLocalPos(x, y, z);
+        setTile(*it, tile);
+        ++it;
+      }
     }
   }
 
@@ -66,43 +69,46 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
 
   // Add new Tiles
   auto it = map_data.tiles.begin();
-  switch (map_data.direction)
+  for (auto z = 0; z < m_tiles.getNumFloors(); z++)
   {
-    case common::Direction::NORTH:
-      for (auto x = 0; x < consts::known_tiles_x; x++)
-      {
-        auto& tile = m_tiles.getTileLocalPos(x, 0);
-        setTile(*it, &tile);
-        ++it;
-      }
-      break;
+    switch (map_data.direction)
+    {
+      case common::Direction::NORTH:
+        for (auto x = 0; x < consts::known_tiles_x; x++)
+        {
+          auto* tile = m_tiles.getTileLocalPos(x, 0, z);
+          setTile(*it, tile);
+          ++it;
+        }
+        break;
 
-    case common::Direction::EAST:
-      for (auto y = 0; y < consts::known_tiles_y; y++)
-      {
-        auto& tile = m_tiles.getTileLocalPos(consts::known_tiles_x - 1, y);
-        setTile(*it, &tile);
-        ++it;
-      }
-      break;
+      case common::Direction::EAST:
+        for (auto y = 0; y < consts::known_tiles_y; y++)
+        {
+          auto* tile = m_tiles.getTileLocalPos(consts::known_tiles_x - 1, y, z);
+          setTile(*it, tile);
+          ++it;
+        }
+        break;
 
-    case common::Direction::SOUTH:
-      for (auto x = 0; x < consts::known_tiles_x; x++)
-      {
-        auto& tile = m_tiles.getTileLocalPos(x, consts::known_tiles_y - 1);
-        setTile(*it, &tile);
-        ++it;
-      }
-      break;
+      case common::Direction::SOUTH:
+        for (auto x = 0; x < consts::known_tiles_x; x++)
+        {
+          auto* tile = m_tiles.getTileLocalPos(x, consts::known_tiles_y - 1, z);
+          setTile(*it, tile);
+          ++it;
+        }
+        break;
 
-    case common::Direction::WEST:
-      for (auto y = 0; y < consts::known_tiles_y; y++)
-      {
-        auto& tile = m_tiles.getTileLocalPos(0, y);
-        setTile(*it, &tile);
-        ++it;
-      }
-      break;
+      case common::Direction::WEST:
+        for (auto y = 0; y < consts::known_tiles_y; y++)
+        {
+          auto* tile = m_tiles.getTileLocalPos(0, y, z);
+          setTile(*it, tile);
+          ++it;
+        }
+        break;
+    }
   }
 }
 
@@ -113,7 +119,7 @@ void Map::addProtocolThing(const common::Position& position, protocol::Thing thi
 
 void Map::addThing(const common::Position& position, Thing thing)
 {
-  auto& things = m_tiles.getTile(position).things;
+  auto& things = m_tiles.getTile(position)->things;
   const auto pre = things.size();
   auto it = things.cbegin() + 1;
   if (std::holds_alternative<Item>(thing))
@@ -168,10 +174,10 @@ void Map::addThing(const common::Position& position, Thing thing)
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
-  const auto pre = m_tiles.getTile(position).things.size();
-  auto& things = m_tiles.getTile(position).things;
+  const auto pre = m_tiles.getTile(position)->things.size();
+  auto& things = m_tiles.getTile(position)->things;
   things.erase(things.cbegin() + stackpos);
-  const auto post = m_tiles.getTile(position).things.size();
+  const auto post = m_tiles.getTile(position)->things.size();
 
   LOG_INFO("%s: removed thing from position=%s stackpos=%d (size=%d->%d)",
            __func__,
@@ -212,7 +218,7 @@ void Map::moveThing(const common::Position& from_position,
   addThing(to_position, thing);
 }
 
-const Tile& Map::getTile(const common::Position& position) const
+const Tile* Map::getTile(const common::Position& position) const
 {
   return m_tiles.getTile(position);
 }
@@ -274,6 +280,8 @@ Thing Map::parseThing(const protocol::Thing& thing)
       }
     }
 
+    LOG_INFO("%s: parsed creature with id %u", __func__, creature.id);
+
     return creature.id;
   }
   else  // Item
@@ -311,7 +319,7 @@ Creature* Map::getCreature(common::CreatureId creature_id)
 
 Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
 {
-  return m_tiles.getTile(position).things[stackpos];
+  return m_tiles.getTile(position)->things[stackpos];
 }
 
 }  // namespace wsclient::wsworld

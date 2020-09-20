@@ -68,8 +68,10 @@ class Map
                  std::uint8_t from_stackpos,
                  const common::Position& to_position);
 
+  const common::Position getPlayerPosition() const { return m_tiles.getMapPosition(); }
   const auto& getTiles() const { return m_tiles.getTiles(); }
-  const Tile& getTile(const common::Position& position) const;
+  int getNumFloors() const { return m_tiles.getNumFloors(); }
+  const Tile* getTile(const common::Position& position) const;
   const Creature* getCreature(common::CreatureId creature_id) const;
   bool ready() const { return m_ready; }
 

@@ -19,6 +19,8 @@ General:
 
   * Find more good warning flags to enable
 
+  * Remove io from logger and config
+
 ContainerManager:
   * Add support for weight calculation
 
