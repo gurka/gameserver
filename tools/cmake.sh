@@ -27,16 +27,16 @@ export CC="${CC:=clang}"
 export CXX="${CXX:=clang++}"
 
 case $1 in
-  'server')
+  'linux')
     CMAKE="cmake"
     ;;
 
-  'client')
+  'emscripten')
     CMAKE="emcmake cmake"
     ;;
 
   *)
-    echo "Usage: $0 [server | client] [all | release | debug | debug-full]"
+    echo "Usage: $0 [linux | emscripten] [all | release | debug | debug-full]"
     exit 1
     ;;
 esac
@@ -65,7 +65,7 @@ case $2 in
     ;;
 
   *)
-    echo "Usage: $0 [server | client] [all | release | debug | debug-full]"
+    echo "Usage: $0 [linux | emscripten] [all | release | debug | debug-full]"
     exit 1
     ;;
 esac

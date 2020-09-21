@@ -88,7 +88,7 @@ ConnectionCtrl::ConnectionCtrl(std::function<void(void)> close_protocol,
       onDisconnected();
     }
   };
-  m_connection->init(callbacks);
+  m_connection->init(callbacks, false);
 }
 
 void ConnectionCtrl::onCreatureSpawn(const common::Creature& creature, const common::Position& position)
