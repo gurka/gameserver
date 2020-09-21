@@ -29,9 +29,8 @@ if (NOT EMSCRIPTEN)
   add_subdirectory("loginserver")
   add_subdirectory("worldserver")
   add_subdirectory("replayserver")
-else()
-  add_subdirectory("wsclient")
 endif()
+add_subdirectory("wsclient")
 
 # -- Data files --
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
@@ -43,10 +42,9 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"         "${CMAKE_BINARY_DIR}/data/data.dat"         COPYONLY)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/items.xml"        "${CMAKE_BINARY_DIR}/data/items.xml"        COPYONLY)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/world.xml"        "${CMAKE_BINARY_DIR}/data/world.xml"        COPYONLY)
-  else()
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"         "${CMAKE_BINARY_DIR}/files/data.dat"   COPYONLY)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat"       "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
   endif()
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"         "${CMAKE_BINARY_DIR}/files/data.dat"   COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat"       "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
 endif()
 
 # -- Modules --

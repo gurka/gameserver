@@ -23,8 +23,6 @@
  */
 #include "texture.h"
 
-#include <SDL.h>
-
 #include "logger.h"
 
 /*

@@ -25,6 +25,14 @@
 #define NETWORK_H_
 
 #include <functional>
+#include <string>
+
+#ifndef EMSCRIPTEN
+namespace asio
+{
+class io_context;
+}
+#endif
 
 namespace network
 {
@@ -38,7 +46,11 @@ namespace wsclient::network
 using ::network::IncomingPacket;
 using ::network::OutgoingPacket;
 
+#ifdef EMSCRIPTEN
 void start(const std::string& uri, const std::function<void(IncomingPacket*)> callback);
+#else
+void start(asio::io_context* io_context, const std::string& uri, const std::function<void(IncomingPacket*)> callback);
+#endif
 void stop();
 void sendPacket(OutgoingPacket&& packet);
 

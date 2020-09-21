@@ -25,11 +25,16 @@
 
 #include <cstdint>
 
+#include <algorithm>
 #include <iterator>
 #include <variant>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "logger.h"
 #include "data_loader.h"

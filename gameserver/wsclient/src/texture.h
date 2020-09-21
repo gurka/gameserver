@@ -27,7 +27,11 @@
 #include <memory>
 #include <vector>
 
+#ifdef EMSCRIPTEN
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "item.h"
 #include "sprite_loader.h"

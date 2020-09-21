@@ -23,6 +23,8 @@
  */
 #include "wsworld.h"
 
+#include <algorithm>
+
 #include "logger.h"
 
 namespace wsclient::wsworld

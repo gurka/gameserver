@@ -25,9 +25,15 @@
 #include <string>
 #include <vector>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #include <emscripten/val.h>
 #include <SDL.h>
+#else
+#include <asio.hpp>
+#include <SDL2/SDL.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#endif
 
 #include "logger.h"
 #include "outgoing_packet.h"
@@ -257,6 +263,54 @@ void sendMoveCharacter(common::Direction direction)
 
 }  // namespace wsclient
 
+#ifndef EMSCRIPTEN
+static asio::io_context io_context;
+static bool stop = false;
+static std::function<void(void)> main_loop_func;
+static std::unique_ptr<asio::deadline_timer> timer;
+
+void timer_callback(const asio::error_code& ec)
+{
+  if (ec)
+  {
+    LOG_ERROR("%s: ec: %s", __func__, ec.message().c_str());
+    stop = true;
+    return;
+  }
+
+  if (stop)
+  {
+    LOG_INFO("%s: stop=true", __func__);
+    return;
+  }
+
+  main_loop_func();
+  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->async_wait(&timer_callback);
+}
+
+void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)
+{
+  (void)fps;
+  (void)loop;
+
+  main_loop_func = func;
+  timer = std::make_unique<asio::deadline_timer>(io_context);
+  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->async_wait(&timer_callback);
+  io_context.run();
+}
+
+void emscripten_cancel_main_loop()
+{
+  if (!stop)
+  {
+    stop = true;
+    timer->cancel();
+  }
+}
+#endif
+
 extern "C" void main_loop()
 {
   // Read input
@@ -313,19 +367,23 @@ int main()
 
   protocol::setItemTypes(&wsclient::itemtypes);
   wsclient::map.setItemTypes(&wsclient::itemtypes);
-
   if (!wsclient::graphics::init(&wsclient::itemtypes, sprite_filename))
   {
     LOG_ERROR("%s: could not initialize graphics", __func__);
     return 1;
   }
 
+#ifdef EMSCRIPTEN
   const auto usp = emscripten::val::global("URLSearchParams").new_(emscripten::val::global("location")["search"]);
   const auto uri = usp.call<bool>("has", emscripten::val("uri")) ?
                    usp.call<std::string>("get", emscripten::val("uri")) :
                    "ws://localhost:8172";
   LOG_INFO("%s: found uri: '%s'", __func__, uri.c_str());
   wsclient::network::start(uri, &wsclient::handle_packet);
+#else
+  const auto uri = std::string("ws://localhost:8172");
+  wsclient::network::start(&io_context, uri, &wsclient::handle_packet);
+#endif
 
   LOG_INFO("%s: starting main loop", __func__);
   emscripten_set_main_loop(main_loop, 0, true);
