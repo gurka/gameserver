@@ -22,34 +22,40 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_EXPORT_CONNECTION_H_
-#define NETWORK_EXPORT_CONNECTION_H_
+#ifndef NETWORK_EXPORT_CLIENT_FACTORY_H_
+#define NETWORK_EXPORT_CLIENT_FACTORY_H_
 
 #include <functional>
+#include <memory>
 
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#ifndef EMSCRIPTEN
+namespace asio
+{
+class io_context;
+}
+#endif
 
 namespace network
 {
 
-class Connection
+class Connection;
+
+class ClientFactory
 {
  public:
   struct Callbacks
   {
-    std::function<void(IncomingPacket*)> on_packet_received;
-    std::function<void(void)> on_disconnected;
+    std::function<void(std::unique_ptr<Connection>&&)> on_connected;
+    std::function<void(void)> on_connect_failure;
   };
 
-  virtual ~Connection() = default;
-
-  virtual bool isConnected() const = 0;
-  virtual void init(const Callbacks& callbacks, bool skip_send_packet_header) = 0;
-  virtual void close(bool force) = 0;
-  virtual void sendPacket(OutgoingPacket&& packet) = 0;
+#ifndef EMSCRIPTEN
+  static bool createWebsocketClient(asio::io_context* io_context, const std::string& uri, const Callbacks& callbacks);
+#else
+  static bool createWebsocketClient(const std::string& uri, const Callbacks& callbacks);
+#endif
 };
 
 }  // namespace network
 
-#endif  // NETWORK_EXPORT_CONNECTION_H_
+#endif  // NETWORK_EXPORT_CLIENT_FACTORY_H_

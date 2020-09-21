@@ -23,8 +23,8 @@ add_library(network_server
   "src/connection_impl.h"
   "src/server_factory.cc"
   "src/server_impl.h"
-  "src/websocket_server_impl.cc"
-  "src/websocket_server_impl.h"
+  "src/websocketpp_server_backend.cc"
+  "src/websocketpp_server_backend.h"
 )
 
 target_link_libraries(network_server PRIVATE
@@ -35,3 +35,28 @@ target_link_libraries(network_server PRIVATE
 )
 
 target_include_directories(network_server PUBLIC "export")
+
+if(NOT EMSCRIPTEN)
+  add_library(network_client
+    "export/client_factory.h"
+    "src/websocketpp_client_backend.cc"
+    "src/websocketpp_client_backend.h"
+    "src/websocketpp_client_factory.cc"
+  )
+else()
+  add_library(network_client
+    "export/client_factory.h"
+    "src/emscripten_client_backend.cc"
+    "src/emscripten_client_backend.h"
+    "src/emscripten_client_factory.cc"
+  )
+endif()
+
+target_link_libraries(network_client PRIVATE
+  network_packet
+  utils
+  asio
+  websocketpp
+)
+
+target_include_directories(network_client PUBLIC "export")

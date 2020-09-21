@@ -21,39 +21,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef NETWORK_H_
-#define NETWORK_H_
 
-#include <functional>
+#ifndef NETWORK_SRC_ERROR_CODE_H_
+#define NETWORK_SRC_ERROR_CODE_H_
+
 #include <string>
-
-#ifndef EMSCRIPTEN
-namespace asio
-{
-class io_context;
-}
-#endif
 
 namespace network
 {
-class IncomingPacket;
-class OutgoingPacket;
-}
 
-namespace wsclient::network
+struct ErrorCode
 {
+  ErrorCode() : msg("") {}
+  explicit ErrorCode(std::string msg) : error(true), msg(std::move(msg)) {}
 
-using ::network::IncomingPacket;
-using ::network::OutgoingPacket;
+  explicit operator bool() const { return error; }
+  std::string message() const { return msg; }
 
-#ifdef EMSCRIPTEN
-void start(const std::string& uri, const std::function<void(IncomingPacket*)> callback);
-#else
-void start(asio::io_context* io_context, const std::string& uri, const std::function<void(IncomingPacket*)> callback);
-#endif
-void stop();
-void sendPacket(OutgoingPacket&& packet);
+  bool error = false;
+  std::string msg;
+};
 
-}  // namespace wsclient::network
+}  // namespace network
 
-#endif  // NETWORK_H_
+#endif  // NETWORK_SRC_ERROR_CODE_H_

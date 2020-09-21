@@ -2,41 +2,22 @@ cmake_minimum_required(VERSION 3.12)
 
 project(gameserver)
 
-if (EMSCRIPTEN)
-  add_executable(wsclient
-    "src/graphics.cc"
-    "src/graphics.h"
-    "src/network_emscripten.cc"
-    "src/network.h"
-    "src/sprite_loader.cc"
-    "src/sprite_loader.h"
-    "src/texture.cc"
-    "src/texture.h"
-    "src/types.h"
-    "src/wsclient.cc"
-    "src/wsworld.cc"
-    "src/wsworld.h"
-  )
-else()
-  add_executable(wsclient
-    "src/graphics.cc"
-    "src/graphics.h"
-    "src/network_linux.cc"
-    "src/network.h"
-    "src/sprite_loader.cc"
-    "src/sprite_loader.h"
-    "src/texture.cc"
-    "src/texture.h"
-    "src/types.h"
-    "src/wsclient.cc"
-    "src/wsworld.cc"
-    "src/wsworld.h"
-  )
-endif()
+add_executable(wsclient
+  "src/graphics.cc"
+  "src/graphics.h"
+  "src/sprite_loader.cc"
+  "src/sprite_loader.h"
+  "src/texture.cc"
+  "src/texture.h"
+  "src/types.h"
+  "src/wsclient.cc"
+  "src/wsworld.cc"
+  "src/wsworld.h"
+)
 
 target_link_libraries(wsclient PRIVATE
   common
-  network_packet
+  network_client
   protocol_client
   utils
 )

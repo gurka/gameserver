@@ -35,17 +35,26 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
-#include "logger.h"
+// network
+#include "client_factory.h"
+#include "connection.h"
 #include "outgoing_packet.h"
 #include "incoming_packet.h"
-#include "position.h"
+
+// protocol
 #include "protocol_common.h"
 #include "protocol_client.h"
-#include "data_loader.h"
 
+// utils
+#include "data_loader.h"
+#include "logger.h"
+
+// common
+#include "position.h"
+
+// wsclient
 #include "graphics.h"
 #include "wsworld.h"
-#include "network.h"
 #include "types.h"
 
 namespace wsclient
@@ -53,6 +62,7 @@ namespace wsclient
 
 using namespace protocol::client;
 
+std::unique_ptr<network::Connection> connection;
 utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 
@@ -121,7 +131,7 @@ void handle_packet(network::IncomingPacket* packet)
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
-    LOG_DEBUG("%s: type: 0x%02X", __func__, type);
+    //LOG_DEBUG("%s: type: 0x%02X", __func__, type);
     switch (type)
     {
       case 0x0A:
@@ -256,9 +266,12 @@ void handle_packet(network::IncomingPacket* packet)
 
 void sendMoveCharacter(common::Direction direction)
 {
-  network::OutgoingPacket packet;
-  packet.addU8(static_cast<std::uint8_t>(direction) + 0x65);
-  network::sendPacket(std::move(packet));
+  if (connection)
+  {
+    network::OutgoingPacket packet;
+    packet.addU8(static_cast<std::uint8_t>(direction) + 0x65);
+    connection->sendPacket(std::move(packet));
+  }
 }
 
 }  // namespace wsclient
@@ -338,8 +351,11 @@ extern "C" void main_loop()
           break;
 
         case SDL_SCANCODE_ESCAPE:
-          LOG_INFO("%s: closing connection", __func__);
-          wsclient::network::stop();
+          if (wsclient::connection)
+          {
+            LOG_INFO("%s: closing connection", __func__);
+            wsclient::connection->close(true);
+          }
           LOG_INFO("%s: stopping client", __func__);
           emscripten_cancel_main_loop();
           return;
@@ -379,11 +395,38 @@ int main()
                    usp.call<std::string>("get", emscripten::val("uri")) :
                    "ws://localhost:8172";
   LOG_INFO("%s: found uri: '%s'", __func__, uri.c_str());
-  wsclient::network::start(uri, &wsclient::handle_packet);
 #else
   const auto uri = std::string("ws://localhost:8172");
-  wsclient::network::start(&io_context, uri, &wsclient::handle_packet);
 #endif
+
+  network::ClientFactory::Callbacks callbacks =
+  {
+      [](std::unique_ptr<network::Connection>&& connection)
+      {
+        LOG_INFO("%s: connected", __func__);
+        wsclient::connection = std::move(connection);
+
+        network::Connection::Callbacks connection_callbacks =
+        {
+          &wsclient::handle_packet,
+          []()
+          {
+            LOG_INFO("%s: disconnected", __func__);
+            wsclient::connection.reset();
+          }
+        };
+        wsclient::connection->init(connection_callbacks, false);
+      },
+      []() { LOG_INFO("%s: could not connect", __func__); },
+  };
+#ifdef EMSCRIPTEN
+  if (!network::ClientFactory::createWebsocketClient(uri, callbacks))
+#else
+  if (!network::ClientFactory::createWebsocketClient(&io_context, uri, callbacks))
+#endif
+  {
+    LOG_ERROR("%s: could not create connection", __func__);
+  }
 
   LOG_INFO("%s: starting main loop", __func__);
   emscripten_set_main_loop(main_loop, 0, true);

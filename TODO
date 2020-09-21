@@ -1,4 +1,10 @@
 General:
+  * Improve shutdown
+    - When shutdown is detected (ctrl + c),
+      stop all servers/connections/gameenginequeue/timer and rerun io_service
+    - io_service should return eventually, then we can delete everything and exit
+    - Don't use io_service.stop()
+
   * Fix TODOs in the code
 
   * We have three things where Items can be located:

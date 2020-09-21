@@ -43,9 +43,9 @@ namespace network
  * class ConnectionImpl
  *
  * Callbacks:
- *   on_packet_received:   called when a packet has been received
+ *   on_packet_received: called when a packet has been received
  *
- *   on_disconnected:     called when the connection is closed and
+ *   on_disconnected:    called when the connection is closed and
  *                       this instance is ready for deletion
  *
  * There are three ways a connection can be closed:
@@ -102,7 +102,7 @@ class ConnectionImpl : public Connection
     {
       LOG_ERROR("%s: called with m_closing: %s, m_receive_in_progress: %s, m_send_in_progress: %s",
                 __func__,
-                (m_closing           ? "true" : "false"),
+                (m_closing             ? "true" : "false"),
                 (m_receive_in_progress ? "true" : "false"),
                 (m_send_in_progress    ? "true" : "false"));
     }
@@ -111,6 +111,12 @@ class ConnectionImpl : public Connection
   // Delete copy constructors
   ConnectionImpl(const ConnectionImpl&) = delete;
   ConnectionImpl& operator=(const ConnectionImpl&) = delete;
+
+  bool isConnected() const override
+  {
+    // TODO fix
+    return !m_closing;
+  }
 
   void init(const Callbacks& callbacks, bool skip_send_packet_header) override
   {

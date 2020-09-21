@@ -27,7 +27,7 @@
 #include <asio.hpp>
 
 #include "server_impl.h"
-#include "websocket_server_impl.h"
+#include "websocketpp_server_backend.h"
 
 namespace network
 {
