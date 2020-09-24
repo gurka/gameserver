@@ -400,6 +400,8 @@ extern "C" void main_loop()  // NOLINT
 
 int main()
 {
+  utils::Logger::setLevel("network", utils::Logger::Level::INFO);
+
   constexpr auto data_filename = "files/data.dat";
   constexpr auto sprite_filename = "files/sprite.dat";
 

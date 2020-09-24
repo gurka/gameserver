@@ -169,12 +169,16 @@ void Map::addThing(const common::Position& position, Thing thing)
   it = things.insert(it, thing);
   const auto post = things.size();
 
+  (void)pre;
+  (void)post;
+#if 0
   LOG_INFO("%s: added Thing on position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
            std::distance(things.cbegin(), it),
            pre,
            post);
+#endif
 }
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
@@ -184,12 +188,16 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
   things.erase(things.cbegin() + stackpos);
   const auto post = m_tiles.getTile(position)->things.size();
 
+  (void)pre;
+  (void)post;
+#if 0
   LOG_INFO("%s: removed thing from position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
            stackpos,
            pre,
            post);
+#endif
 }
 
 void Map::updateThing(const common::Position& position,
