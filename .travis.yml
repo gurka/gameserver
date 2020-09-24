@@ -3,7 +3,7 @@ language: cpp
 
 before_install:
   - sudo apt-get update -q
-  - sudo apt-get -y install clang clang-tidy libasio-dev libboost-date-time-dev valgrind
+  - sudo apt-get -y install cmake clang clang-tidy valgrind libboost-date-time-dev libsdl2-dev
 
 jobs:
   include:

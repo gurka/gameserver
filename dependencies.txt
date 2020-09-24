@@ -1,1 +1,2 @@
 libboost-date-time-dev
+libsdl2-dev
