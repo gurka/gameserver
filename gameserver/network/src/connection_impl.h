@@ -43,9 +43,9 @@ namespace network
  * class ConnectionImpl
  *
  * Callbacks:
- *   on_packet_received:   called when a packet has been received
+ *   on_packet_received: called when a packet has been received
  *
- *   on_disconnected:     called when the connection is closed and
+ *   on_disconnected:    called when the connection is closed and
  *                       this instance is ready for deletion
  *
  * There are three ways a connection can be closed:
@@ -102,7 +102,7 @@ class ConnectionImpl : public Connection
     {
       LOG_ERROR("%s: called with m_closing: %s, m_receive_in_progress: %s, m_send_in_progress: %s",
                 __func__,
-                (m_closing           ? "true" : "false"),
+                (m_closing             ? "true" : "false"),
                 (m_receive_in_progress ? "true" : "false"),
                 (m_send_in_progress    ? "true" : "false"));
     }
@@ -112,9 +112,10 @@ class ConnectionImpl : public Connection
   ConnectionImpl(const ConnectionImpl&) = delete;
   ConnectionImpl& operator=(const ConnectionImpl&) = delete;
 
-  void init(const Callbacks& callbacks) override
+  void init(const Callbacks& callbacks, bool skip_send_packet_header) override
   {
     m_callbacks = callbacks;
+    m_skip_send_packet_header = skip_send_packet_header;
     receivePacket();
   }
 
@@ -122,7 +123,7 @@ class ConnectionImpl : public Connection
   {
     if (m_closing)
     {
-      LOG_ERROR("%s: called with shutdown_: true", __func__);
+      LOG_ERROR("%s: called with m_closing: true", __func__);
       return;
     }
 
@@ -172,6 +173,12 @@ class ConnectionImpl : public Connection
     }
 
     m_send_in_progress = true;
+
+    if (m_skip_send_packet_header)
+    {
+      onPacketHeaderSent();
+      return;
+    }
 
     const auto& packet = m_outgoing_packets.front();
     auto packet_length = packet.getLength();
@@ -382,6 +389,7 @@ class ConnectionImpl : public Connection
   bool m_closing;
   bool m_receive_in_progress;
   bool m_send_in_progress;
+  bool m_skip_send_packet_header = false;
 
   // I/O Buffers
   std::array<std::uint8_t, 8192> m_read_buffer;

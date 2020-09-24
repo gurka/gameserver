@@ -8,8 +8,8 @@ export CXX=clang++
 STATUS=0
 
 # Build 'debug-full' and run tests
-tools/cmake.sh server debug-full
-pushd build/server/debug-full
+tools/cmake.sh linux debug-full
+pushd build/linux/debug-full
 make unittest || STATUS=1
 for test_bin in bin/*_test
 do
@@ -18,8 +18,8 @@ done
 popd
 
 # Build 'debug' and run tests with valgrind
-tools/cmake.sh server debug
-pushd build/server/debug
+tools/cmake.sh linux debug
+pushd build/linux/debug
 make unittest || STATUS=1
 for test_bin in bin/*_test
 do

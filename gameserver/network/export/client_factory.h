@@ -22,21 +22,40 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef NETWORK_EXPORT_CLIENT_FACTORY_H_
+#define NETWORK_EXPORT_CLIENT_FACTORY_H_
 
-#include <string>
+#include <functional>
+#include <memory>
 
-#include "wsworld.h"
-#include "position.h"
-#include "creature.h"
+#ifndef EMSCRIPTEN
+namespace asio
+{
+class io_context;
+}
+#endif
 
-namespace wsclient::graphics
+namespace network
 {
 
-bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
-void draw(const wsworld::Map& map);
+class Connection;
 
-}  // namespace wsclient::graphics
+class ClientFactory
+{
+ public:
+  struct Callbacks
+  {
+    std::function<void(std::unique_ptr<Connection>&&)> on_connected;
+    std::function<void(void)> on_connect_failure;
+  };
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+#ifndef EMSCRIPTEN
+  static bool createWebsocketClient(asio::io_context* io_context, const std::string& uri, const Callbacks& callbacks);
+#else
+  static bool createWebsocketClient(const std::string& uri, const Callbacks& callbacks);
+#endif
+};
+
+}  // namespace network
+
+#endif  // NETWORK_EXPORT_CLIENT_FACTORY_H_

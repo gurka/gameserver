@@ -117,10 +117,9 @@ bool load(const std::string& data_filename,
           break;
         }
 
-        case 0x01:
-        case 0x02:
+        case 0x01:  // alwaysOnTop
+        case 0x02:  // alwaysOnTop + canWalkThrough?
         {
-          // What's the diff ?
           item_type.always_on_top = true;
           break;
         }
@@ -148,8 +147,7 @@ bool load(const std::string& data_filename,
 
         case 0x0A:
         {
-          // Is multitype
-          item_type.is_multitype = true;
+          item_type.is_splash = true;
           break;
         }
 
@@ -181,32 +179,51 @@ bool load(const std::string& data_filename,
           break;
         }
 
-        case 0x06:
-        case 0x09:
-        case 0x0D:
-        case 0x0E:
-        case 0x11:
-        case 0x12:
-        case 0x14:
-        case 0x18:
-        case 0x19:
+        case 0x13:  // render position offset for e.g. boxes, tables, parcels
+        {
+          item_type.offset = fr.readU16();
+          break;
+        }
+
+        case 0x09:  // fluid container?
+        {
+          item_type.is_fluid_container = true;
+          break;
+        }
+
+        case 0x06:  // ladder up?
+        case 0x0D:  // blocks missiles
+        case 0x0E:  // blocks monsters
+        case 0x11:  // can see under (ladder holes, stair holes, etc)
+        case 0x12:  // no floor change
+        case 0x14:  // player color templates
+        case 0x18:  // non-decaying corpses
+        case 0x19:  // changed in 7.4?
+        case 0x1A:  // changed in 7.4? before: 2 extra bytes, after: 0 extra bytes?
         {
           item_type.unknown_properties.emplace_back(opt_byte);
           break;
         }
 
-        case 0x07:
-        case 0x08:
-        case 0x16:
-        case 0x1A:
+        case 0x07:  // read/writable objects (extra: num characters)
+        case 0x08:  // readable objects (extra: num characters)
+        case 0x16:  // minimap drawing
         {
           item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
           break;
         }
 
-        case 0x13:  // render position offset for e.g. boxes, tables, parcels
+        // new in 7.40
+        case 0x1D:  // line spot (?)
         {
-          item_type.offset = fr.readU16();
+          item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
+          break;
+        }
+        case 0x1B:  // "walls 2 types of the same material"?
+        case 0x17:  // some kind of decorables
+        case 0x1C:  // ???
+        {
+          item_type.unknown_properties.emplace_back(opt_byte);
           break;
         }
 
@@ -447,7 +464,8 @@ void dumpToJson(const ItemTypes& item_types,
     VALUE_BOOL(is_container);
     VALUE_BOOL(is_stackable);
     VALUE_BOOL(is_usable);
-    VALUE_BOOL(is_multitype);
+    VALUE_BOOL(is_splash);
+    VALUE_BOOL(is_fluid_container)
     VALUE_BOOL(is_not_movable);
     VALUE_BOOL(is_equipable);
 

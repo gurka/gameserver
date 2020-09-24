@@ -56,6 +56,7 @@ class OutgoingPacket
   void addU16(std::uint16_t val);
   void addU32(std::uint32_t val);
   void addString(const std::string& string);
+  void addRawData(const std::uint8_t* buffer, std::size_t length);
 
   // Generic functions
   void add(std::uint8_t val)       { addU8(val);     }

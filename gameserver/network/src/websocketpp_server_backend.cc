@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "websocket_server_impl.h"
+#include "websocketpp_server_backend.h"
 
 #include "logger.h"
 

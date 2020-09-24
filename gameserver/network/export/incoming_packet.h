@@ -40,6 +40,7 @@ class IncomingPacket
   IncomingPacket(const std::uint8_t* buffer, std::size_t length);
 
   std::size_t getLength() const { return m_length; }
+  std::size_t getPosition() const { return m_position; }
   bool isEmpty() const { return m_position >= m_length; }
   std::size_t bytesLeft() const { return m_length - m_position; }
 

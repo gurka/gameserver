@@ -171,6 +171,11 @@ void GameEngine::move(common::CreatureId creature_id, common::Direction directio
   {
     LOG_DEBUG("%s: player move delayed, creature id: %d", __func__, creature_id);
     const auto tick = getPlayerData(creature_id).player.getNextWalkTick() - utils::Tick::now();
+
+    // Remove all previous tasks for this player
+    // Not sure if this is correct, should be fine for now as there are only walk tasks at the moment
+    m_game_engine_queue->cancelAllTasks(creature_id);
+
     m_game_engine_queue->addTask(creature_id,
                                  tick,
                                  [this, creature_id, direction](GameEngine* game_engine)
@@ -486,9 +491,10 @@ void GameEngine::lookAt(common::CreatureId creature_id, const common::ItemPositi
   ss << (item_type.is_container ? " is_container" : "");
   ss << (item_type.is_stackable ? " is_stackable" : "");
   ss << (item_type.is_usable ? " is_usable" : "");
-  ss << (item_type.is_multitype ? " is_multitype" : "");
+  ss << (item_type.is_splash ? " is_splash" : "");
   ss << (item_type.is_not_movable ? " is_not_movable" : "");
   ss << (item_type.is_equipable ? " is_equipable" : "");
+  ss << (item_type.is_fluid_container ? " is_fluid_container" : "");
   player_data.player_ctrl->sendTextMessage(0x11, ss.str());
 
   ss.str("");

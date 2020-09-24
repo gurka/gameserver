@@ -36,6 +36,13 @@
 namespace protocol
 {
 
+static const utils::data_loader::ItemTypes* item_types = nullptr;
+
+void setItemTypes(const utils::data_loader::ItemTypes* item_types_in)
+{
+  item_types = item_types_in;
+}
+
 common::Position getPosition(network::IncomingPacket* packet)
 {
   const auto x  = packet->getU16();
@@ -131,13 +138,23 @@ Item getItem(network::IncomingPacket* packet)
 {
   Item item;
   packet->get(&item.item_type_id);
-  // Need to make ItemType available to be able to check if we should
-  // read extra or not. For now assume not to read it
+  const auto& item_type = (*item_types)[item.item_type_id];
+  if (item_type.is_stackable || item_type.is_fluid_container || item_type.is_splash)
+  {
+    packet->get(&item.extra);
+  }
   return item;
 }
 
 Thing getThing(network::IncomingPacket* packet)
 {
+  // 0x0061: unknown (new) creature
+  // 0x0062: outdated creature
+  // 0x0063: creature
+  if (packet->peekU16() == 0x0063)
+  {
+    LOG_ERROR("%s: thing 0x0063 not implemented", __func__);
+  }
   if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
   {
     return protocol::getCreature(packet->getU16() == 0x0062, packet);
@@ -213,7 +230,7 @@ void addItem(const common::Item* item, network::OutgoingPacket* packet)
   {
     packet->add(item->getCount());
   }
-  else if (item->getItemType().is_multitype)
+  else if (item->getItemType().is_splash)
   {
     // TODO(simon): getSubType???
     packet->addU8(0);

@@ -22,21 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef REPLAYSERVER_SRC_REPLAY_CONNECTION_H_
+#define REPLAYSERVER_SRC_REPLAY_CONNECTION_H_
 
-#include <string>
+#include <functional>
+#include <memory>
 
-#include "wsworld.h"
-#include "position.h"
-#include "creature.h"
+#include <asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace wsclient::graphics
+#include "connection.h"
+#include "replay_reader.h"
+
+class ReplayConnection
 {
+ public:
+  ReplayConnection(asio::io_context* io_context,
+                   std::function<void(void)> on_close,
+                   std::unique_ptr<network::Connection>&& connection);
 
-bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
-void draw(const wsworld::Map& map);
+ private:
+  void sendNextPacket();
+  void closeConnection();
 
-}  // namespace wsclient::graphics
+  asio::deadline_timer m_timer;
+  bool m_timer_started;
+  std::function<void(void)> m_on_close;
+  std::unique_ptr<network::Connection> m_connection;
+  Replay m_replay;
+  boost::posix_time::ptime m_replay_start_time;
+};
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+#endif  // REPLAYSERVER_SRC_REPLAY_CONNECTION_H_

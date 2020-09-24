@@ -166,7 +166,7 @@ void onClientConnected(std::unique_ptr<network::Connection> connection)
       connections.erase(connection_id);
     }
   };
-  connections.at(connection_id)->init(callbacks);
+  connections.at(connection_id)->init(callbacks, false);
 }
 
 int main()

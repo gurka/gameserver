@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef NETWORK_SRC_WEBSOCKET_SERVER_IMPL_H_
-#define NETWORK_SRC_WEBSOCKET_SERVER_IMPL_H_
+#ifndef NETWORK_SRC_WEBSOCKET_SERVER_BACKEND_H_
+#define NETWORK_SRC_WEBSOCKET_SERVER_BACKEND_H_
 
 #include "server.h"
 
@@ -33,10 +33,10 @@
 #include <vector>
 
 #define ASIO_STANDALONE 1
-
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
+#include "error_code.h"
 #include "connection_impl.h"
 #include "logger.h"
 
@@ -47,22 +47,12 @@ class WebsocketServerImpl;
 
 struct WebsocketBackend
 {
-  struct ErrorCode
-  {
-    ErrorCode() : msg("") {}
-    explicit ErrorCode(std::string msg) : error(true), msg(std::move(msg)) {}
-
-    explicit operator bool() const { return error; }
-    std::string message() const { return msg; }
-
-    bool error{false};
-    std::string msg;
-  };
-
   enum shutdown_type
   {
     shutdown_both
   };
+
+  using ErrorCode = ErrorCode;
 
   struct Socket
   {
@@ -155,4 +145,4 @@ class WebsocketServerImpl : public Server
 
 }  // namespace network
 
-#endif  // NETWORK_SRC_WEBSOCKET_SERVER_IMPL_H_
+#endif  // NETWORK_SRC_WEBSOCKET_SERVER_BACKEND_H_

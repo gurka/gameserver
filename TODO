@@ -1,4 +1,10 @@
 General:
+  * Improve shutdown
+    - When shutdown is detected (ctrl + c),
+      stop all servers/connections/gameenginequeue/timer and rerun io_service
+    - io_service should return eventually, then we can delete everything and exit
+    - Don't use io_service.stop()
+
   * Fix TODOs in the code
 
   * We have three things where Items can be located:
@@ -18,6 +24,12 @@ General:
     Actual Creature objects are owned and managed by... GameEngine?
 
   * Find more good warning flags to enable
+
+  * Remove io from logger and config
+
+  * Cleanup network module
+    - Separate server/client in namespaces
+    - Handle different backends better and easier
 
 ContainerManager:
   * Add support for weight calculation

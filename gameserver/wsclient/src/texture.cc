@@ -21,9 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "texture.h"
 
-#include <SDL.h>
+#include "texture.h"
 
 #include "logger.h"
 
@@ -77,15 +76,15 @@ namespace
 {
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-constexpr auto rmask = 0xFF000000U;
-constexpr auto gmask = 0x00FF0000U;
-constexpr auto bmask = 0x0000FF00U;
-constexpr auto amask = 0x000000FFU;
+constexpr auto RMASK = 0xFF000000U;
+constexpr auto GMASK = 0x00FF0000U;
+constexpr auto BMASK = 0x0000FF00U;
+constexpr auto AMASK = 0x000000FFU;
 #else
-constexpr auto rmask = 0x000000FFU;
-constexpr auto gmask = 0x0000FF00U;
-constexpr auto bmask = 0x00FF0000U;
-constexpr auto amask = 0xFF000000U;
+constexpr auto RMASK = 0x000000FFU;
+constexpr auto GMASK = 0x0000FF00U;
+constexpr auto BMASK = 0x00FF0000U;
+constexpr auto AMASK = 0xFF000000U;
 #endif
 
 using wsclient::SpritePixels;
@@ -247,10 +246,10 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                                            full_height,
                                            32,
                                            full_width * 4,
-                                           rmask,
-                                           gmask,
-                                           bmask,
-                                           amask);
+                                           RMASK,
+                                           GMASK,
+                                           BMASK,
+                                           AMASK);
   if (!surface)
   {
     LOG_ERROR("%s: could not create surface: %s", __func__, SDL_GetError());
@@ -380,6 +379,12 @@ SDL_Texture* Texture::getItemTexture(const common::Position& position, int anim_
 
 SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
 {
+  // Some creatures does not have different sprites based on direction (?)
+  if (m_textures.size() == 1U)
+  {
+    return m_textures[0].get();
+  }
+
   const auto texture_index = static_cast<int>(direction);
   if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
   {

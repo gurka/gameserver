@@ -21,14 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #include "graphics.h"
 
 #include <cstdint>
 
+#include <algorithm>
+#include <iterator>
 #include <variant>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "logger.h"
 #include "data_loader.h"
@@ -39,12 +46,12 @@
 namespace
 {
 
-constexpr auto tile_size = 32;
-constexpr auto scale = 2;
-constexpr auto tile_size_scaled = tile_size * scale;
+constexpr auto TILE_SIZE = 32;
+constexpr auto SCALE = 2;
+constexpr auto TILE_SIZE_SCALED = TILE_SIZE * SCALE;
 
-constexpr auto screen_width  = wsclient::consts::draw_tiles_x * tile_size_scaled;
-constexpr auto screen_height = wsclient::consts::draw_tiles_y * tile_size_scaled;
+constexpr auto SCREEN_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE_SCALED;
+constexpr auto SCREEN_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE_SCALED;
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
@@ -82,6 +89,11 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
     return;
   }
 
+  if (item_type.id == 0)
+  {
+    return;
+  }
+
   // TODO(simon): need to use world position, not local position
   auto* texture = getTexture(item_type.id).getItemTexture(common::Position(x, y, 0U), anim_tick);
   if (!texture)
@@ -92,10 +104,10 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
   {
-    (x * tile_size - offset - ((item_type.sprite_width - 1) * 32)) * scale,
-    (y * tile_size - offset - ((item_type.sprite_height - 1) * 32)) * scale,
-    item_type.sprite_width * tile_size_scaled,
-    item_type.sprite_height * tile_size_scaled
+    (x * TILE_SIZE - offset - ((item_type.sprite_width - 1) * 32)) * SCALE,
+    (y * TILE_SIZE - offset - ((item_type.sprite_height - 1) * 32)) * SCALE,
+    item_type.sprite_width * TILE_SIZE_SCALED,
+    item_type.sprite_height * TILE_SIZE_SCALED
   };
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
@@ -105,9 +117,9 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
   // TODO(simon): fix this
   //              DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
   //              since the ids are relative
-  const auto itemTypeId = creature.outfit.type + 2282;
+  const auto item_type_id = creature.outfit.type + 3034 + 100;
 
-  auto* texture = getTexture(itemTypeId).getCreatureStillTexture(creature.direction);
+  auto* texture = getTexture(item_type_id).getCreatureStillTexture(creature.direction);
   if (!texture)
   {
     return;
@@ -115,12 +127,85 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
 
   const SDL_Rect dest
   {
-    (x * tile_size - offset - 8) * scale,
-    (y * tile_size - offset - 8) * scale,
-    tile_size_scaled,
-    tile_size_scaled
+    (x * TILE_SIZE - offset - 8) * SCALE,
+    (y * TILE_SIZE - offset - 8) * SCALE,
+    TILE_SIZE_SCALED,
+    TILE_SIZE_SCALED
   };
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+}
+
+
+void drawFloor(const wsclient::wsworld::Map& map,
+               wsclient::wsworld::TileArray::const_iterator it,
+               std::uint32_t anim_tick)
+{
+  // Skip first row
+  it += wsclient::consts::KNOWN_TILES_X;
+
+  for (auto y = 0; y < wsclient::consts::DRAW_TILES_Y; y++)
+  {
+    // Skip first column
+    ++it;
+
+    for (auto x = 0; x < wsclient::consts::DRAW_TILES_X; x++)
+    {
+      const auto& tile = *it;
+      ++it;
+
+      if (tile.things.empty())
+      {
+        continue;
+      }
+
+      // Draw ground
+      if (!std::holds_alternative<wsclient::wsworld::Item>(tile.things.front()))
+      {
+        LOG_ERROR("%s: first Thing on tile is not an Item!", __func__);
+        return;
+      }
+      const auto& ground_item = std::get<wsclient::wsworld::Item>(tile.things.front());
+      drawItem(x, y, *ground_item.type, 0, anim_tick);
+
+      // Draw things in reverse order, except ground
+      auto offset = ground_item.type->offset;
+      for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
+      {
+        const auto& thing = *it;
+        if (std::holds_alternative<wsclient::wsworld::Item>(thing))
+        {
+          // TODO(simon): probably need things like count later
+          const auto& item = std::get<wsclient::wsworld::Item>(thing);
+          drawItem(x, y, *item.type, offset, anim_tick);
+
+          offset += item.type->offset;
+        }
+        else if (std::holds_alternative<common::CreatureId>(thing))
+        {
+          const auto& creature_id = std::get<common::CreatureId>(thing);
+          const auto* creature = map.getCreature(creature_id);
+          if (creature)
+          {
+            drawCreature(x, y, *creature, offset);
+          }
+          else
+          {
+            LOG_ERROR("%s: cannot render creature with id %u, no creature data",
+                      __func__,
+                      creature_id);
+          }
+        }
+        else
+        {
+          LOG_ERROR("%s: unknown Thing on local position: (%d, %d)", __func__, x, y);
+        }
+      }
+    }
+
+    // Skip the two extra columns to the right
+    ++it;
+    ++it;
+  }
 }
 
 }  // namespace
@@ -134,7 +219,7 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
 
   SDL_Init(SDL_INIT_VIDEO);
 
-  sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screen_width, screen_height, 0);
+  sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!sdl_window)
   {
     LOG_ERROR("%s: could not create window: %s", __func__, SDL_GetError());
@@ -170,78 +255,21 @@ void draw(const wsworld::Map& map)
     return;
   }
 
-  // Get tiles
-  // Note that this is all known tiles - we only want to draw a subset
-  // Skip first row and column, also skip last two columns and last two rows
   const auto& tiles = map.getTiles();
-  auto it = tiles.cbegin();
-
-  // Skip first row
-  it += consts::known_tiles_x;
-
-  for (auto y = 0u; y < consts::draw_tiles_y; y++)
+  if (map.getPlayerPosition().getZ() <= 7)
   {
-    // Skip first column
-    ++it;
-
-    for (auto x = 0u; x < consts::draw_tiles_x; x++)
+    // We have floors 7  6  5  4  3  2  1  0
+    // and we want to draw them in that order
+    for (auto z = 0; z <= 7; ++z)
     {
-      const auto& tile = *it;
-      ++it;
-
-      if (tile.things.empty())
-      {
-        LOG_ERROR("%s: tile is empty!", __func__);
-        return;
-      }
-
-      // Draw ground
-      if (!std::holds_alternative<wsworld::Item>(tile.things.front()))
-      {
-        LOG_ERROR("%s: first Thing on tile is not an Item!", __func__);
-        return;
-      }
-      const auto& ground_item = std::get<wsworld::Item>(tile.things.front());
-      drawItem(x, y, *ground_item.type, 0, anim_tick);
-
-      // Draw things in reverse order, except ground
-      auto offset = ground_item.type->offset;
-      for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
-      {
-        const auto& thing = *it;
-        if (std::holds_alternative<wsworld::Item>(thing))
-        {
-          // TODO: probably need things like count later
-          const auto& item = std::get<wsworld::Item>(thing);
-          drawItem(x, y, *item.type, offset, anim_tick);
-
-          offset += item.type->offset;
-        }
-        else if (std::holds_alternative<common::CreatureId>(thing))
-        {
-          const auto& creature_id = std::get<common::CreatureId>(thing);
-          const auto* creature = map.getCreature(creature_id);
-          if (creature)
-          {
-            drawCreature(x, y, *creature, offset);
-          }
-          else
-          {
-            LOG_ERROR("%s: cannot render creature with id %u, no creature data",
-                      __func__,
-                      creature_id);
-          }
-        }
-        else
-        {
-          LOG_ERROR("%s: unknown Thing on local position: (%d, %d)", __func__, x, y);
-        }
-      }
+      drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
     }
-
-    // Skip the two extra columns to the right
-    ++it;
-    ++it;
+  }
+  else
+  {
+    // Underground, just draw current floor
+    const auto z = map.getPlayerPosition().getZ();
+    drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
   }
 
   SDL_RenderPresent(sdl_renderer);

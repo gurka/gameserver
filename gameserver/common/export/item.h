@@ -48,16 +48,17 @@ struct ItemType
   } type = Type::ITEM;
 
   // Loaded from data file
-  bool ground         = false;
-  int  speed          = 0;
-  bool is_blocking    = false;
-  bool always_on_top  = false;
-  bool is_container   = false;
-  bool is_stackable   = false;
-  bool is_usable      = false;
-  bool is_multitype   = false;
-  bool is_not_movable = false;
-  bool is_equipable   = false;
+  bool ground             = false;
+  int  speed              = 0;
+  bool is_blocking        = false;
+  bool always_on_top      = false;
+  bool is_container       = false;
+  bool is_stackable       = false;
+  bool is_usable          = false;
+  bool is_splash          = false;
+  bool is_not_movable     = false;
+  bool is_equipable       = false;
+  bool is_fluid_container = false;
 
   std::uint16_t offset = 0U;
 

@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -74,9 +75,10 @@ void logItem(const common::ItemType& item_type)
   ss << (item_type.is_container ? " is_container" : "");
   ss << (item_type.is_stackable ? " is_stackable" : "");
   ss << (item_type.is_usable ? " is_usable" : "");
-  ss << (item_type.is_multitype ? " is_multitype" : "");
+  ss << (item_type.is_splash ? " is_splash" : "");
   ss << (item_type.is_not_movable ? " is_not_movable" : "");
   ss << (item_type.is_equipable ? " is_equipable" : "");
+  ss << (item_type.is_fluid_container ? "is_fluid_container" : "");
   LOG_INFO(ss.str().c_str());
 
   ss.str("");

@@ -94,4 +94,10 @@ void OutgoingPacket::addString(const std::string& string)
   }
 }
 
+void OutgoingPacket::addRawData(const std::uint8_t* buffer, std::size_t length)
+{
+  std::copy(buffer, buffer + length, m_buffer->data() + m_position);
+  m_position += length;
+}
+
 }  // namespace network

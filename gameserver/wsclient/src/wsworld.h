@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef WSCLIENT_SRC_WSWORLD_H_
 #define WSCLIENT_SRC_WSWORLD_H_
 
@@ -59,7 +60,7 @@ class Map
   // Methods that work with protocol objects
   void setFullMapData(const protocol::client::FullMap& map_data);
   void setPartialMapData(const protocol::client::PartialMap& map_data);
-  void addProtocolThing(const common::Position& position, protocol::Thing thing);
+  void addProtocolThing(const common::Position& position, const protocol::Thing& thing);
 
   // Methods that does not work with protocol objects
   void addThing(const common::Position& position, Thing thing);
@@ -68,8 +69,10 @@ class Map
                  std::uint8_t from_stackpos,
                  const common::Position& to_position);
 
+  const common::Position& getPlayerPosition() const { return m_tiles.getMapPosition(); }
   const auto& getTiles() const { return m_tiles.getTiles(); }
-  const Tile& getTile(const common::Position& position) const;
+  int getNumFloors() const { return m_tiles.getNumFloors(); }
+  const Tile* getTile(const common::Position& position) const;
   const Creature* getCreature(common::CreatureId creature_id) const;
   bool ready() const { return m_ready; }
 
@@ -84,7 +87,7 @@ class Map
 
   Tiles m_tiles;
   const utils::data_loader::ItemTypes* m_itemtypes;
-  common::CreatureId m_player_id = 0u;
+  common::CreatureId m_player_id = 0U;
   bool m_ready = false;
   std::vector<Creature> m_known_creatures;
 };

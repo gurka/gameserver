@@ -32,6 +32,7 @@
 #include "game_position.h"
 #include "creature.h"
 #include "item.h"
+#include "data_loader.h"
 
 namespace network
 {
@@ -81,6 +82,8 @@ struct Tile
 
 using KnownCreatures = std::array<common::CreatureId, 64>;
 using KnownContainers = std::array<common::ItemUniqueId, 64>;
+
+void setItemTypes(const utils::data_loader::ItemTypes* item_types_in);
 
 common::Position getPosition(network::IncomingPacket* packet);
 common::Outfit getOutfit(network::IncomingPacket* packet);

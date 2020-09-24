@@ -21,13 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef WSCLIENT_SRC_TEXTURE_H_
 #define WSCLIENT_SRC_TEXTURE_H_
 
 #include <memory>
 #include <vector>
 
+#ifdef EMSCRIPTEN
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 #include "item.h"
 #include "sprite_loader.h"
