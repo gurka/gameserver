@@ -91,7 +91,17 @@ void Logger::log(const char* file_full_path, int line, Level level, ...)
     vsnprintf(message.data(), message.size(), format, args);
     va_end(args);
 
+    // Assume that the output is a terminal which supports color, for now
+    if (level == Level::ERROR)
+    {
+      printf("\033[31m");
+    }
     printf("[%s][%s:%d] %s: %s\n", time_str.data(), filename.c_str(), line, levelToString(level).c_str(), message.data());
+    if (level == Level::ERROR)
+    {
+      printf("\033[00m");
+    }
+
     std::fflush(stdout);
   }
 }

@@ -44,7 +44,6 @@ WSClient-replay:
   * Click on tile to print info
   * Spacebar to pause replay
   * left/right to speed down/up
-  * Color log output, e.g. red on ERROR, if terminal supports it
   * lots of bugs xD
 
 Docker:
