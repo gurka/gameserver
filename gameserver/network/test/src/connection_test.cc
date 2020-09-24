@@ -113,7 +113,7 @@ TEST_F(ConnectionTest, InitClose)
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
 
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // Close the connection with force = false
   EXPECT_CALL(service_, socket_is_open()).WillOnce(Return(true));
@@ -130,7 +130,7 @@ TEST_F(ConnectionTest, InitClose)
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
 
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // Close the connection with force = true
   EXPECT_CALL(service_, socket_is_open()).WillOnce(Return(true));
@@ -152,7 +152,7 @@ TEST_F(ConnectionTest, ReceivePacket)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
   ASSERT_NE(nullptr, buffer);
 
   // Send packet header to connection (packet data is 4 bytes)
@@ -195,7 +195,7 @@ TEST_F(ConnectionTest, SendPacket)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // Create an OutgoingPacket
   OutgoingPacket outgoingPacket;
@@ -240,7 +240,7 @@ TEST_F(ConnectionTest, DisconnectInHeaderReadCall)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // As there is no send in progress the connection should close the socket
   // and call the onDisconnected callback directly when the read call fails
@@ -260,7 +260,7 @@ TEST_F(ConnectionTest, DisconnectInDataReadCall)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
   ASSERT_NE(nullptr, buffer);
 
   // Set packet length to 100
@@ -287,7 +287,7 @@ TEST_F(ConnectionTest, DisconnectInHeaderWriteCall)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // Send a packet (header will be sent first)
   OutgoingPacket outgoingPacket;
@@ -317,7 +317,7 @@ TEST_F(ConnectionTest, DisconnectInDataWriteCall)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, _, _)).WillOnce(SaveArg<3>(&readHandler));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
 
   // Send a packet (header will be sent first)
   OutgoingPacket outgoingPacket;
@@ -351,7 +351,7 @@ TEST_F(ConnectionTest, ReadsPacketLengthZero)
   // Create and initialize connection
   connection_ = std::make_unique<ConnectionImpl<Backend>>(Backend::Socket(service_));
   EXPECT_CALL(service_, async_read(_, _, 2, _)).WillOnce(DoAll(SaveArg<1>(&buffer), SaveArg<3>(&readHandler)));
-  connection_->init(callbacks_);
+  connection_->init(callbacks_, false);
   ASSERT_NE(nullptr, buffer);
 
   // Send packet header with packet length zero to connection

@@ -27,6 +27,10 @@ General:
 
   * Remove io from logger and config
 
+  * Cleanup network module
+    - Separate server/client in namespaces
+    - Handle different backends better and easier
+
 ContainerManager:
   * Add support for weight calculation
 
