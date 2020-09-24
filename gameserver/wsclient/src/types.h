@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef WSCLIENT_SRC_TYPES_H_
 #define WSCLIENT_SRC_TYPES_H_
 
@@ -29,12 +30,12 @@
 namespace wsclient::consts
 {
 
-constexpr auto draw_tiles_x = 15;
-constexpr auto draw_tiles_y = 11;
-constexpr auto known_tiles_x = 18;
-constexpr auto known_tiles_y = 14;
-constexpr auto known_tiles_offset_x = (known_tiles_x / 2) - 1;
-constexpr auto known_tiles_offset_y = (known_tiles_y / 2) - 1;
+constexpr auto DRAW_TILES_X = 15;
+constexpr auto DRAW_TILES_Y = 11;
+constexpr auto KNOWN_TILES_X = 18;
+constexpr auto KNOWN_TILES_Y = 14;
+constexpr auto KNOWN_TILES_OFFSET_X = (KNOWN_TILES_X / 2) - 1;
+constexpr auto KNOWN_TILES_OFFSET_Y = (KNOWN_TILES_Y / 2) - 1;
 
 }  // namespace wsclient::consts
 

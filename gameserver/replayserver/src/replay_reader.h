@@ -35,9 +35,9 @@
 class ReplayPacket
 {
  public:
-  ReplayPacket(network::OutgoingPacket&& packet, uint32_t packetTime)
+  ReplayPacket(network::OutgoingPacket&& packet, uint32_t packet_time)
     : m_packet(std::move(packet)),
-      m_packet_time(packetTime)
+      m_packet_time(packet_time)
   {
   }
 

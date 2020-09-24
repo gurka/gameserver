@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -60,73 +61,71 @@
 namespace wsclient
 {
 
-using namespace protocol::client;
-
 std::unique_ptr<network::Connection> connection;
 utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 
-void handleLoginPacket(const Login& login)
+void handleLoginPacket(const protocol::client::Login& login)
 {
   map.setPlayerId(login.player_id);
 }
 
-void handleLoginFailedPacket(const LoginFailed& failed)
+void handleLoginFailedPacket(const protocol::client::LoginFailed& failed)
 {
   LOG_ERROR("Could not login: %s", failed.reason.c_str());
 }
 
-void handleFullMapPacket(const FullMap& map_data)
+void handleFullMapPacket(const protocol::client::FullMap& map_data)
 {
   map.setFullMapData(map_data);
 }
 
-void handlePartialMapPacket(const PartialMap& map_data)
+void handlePartialMapPacket(const protocol::client::PartialMap& map_data)
 {
   map.setPartialMapData(map_data);
 }
 
-void handleMagicEffect(const MagicEffect& effect)
+void handleMagicEffect(const protocol::client::MagicEffect& effect)
 {
   (void)effect;
 }
 
-void handlePlayerStats(const PlayerStats& stats)
+void handlePlayerStats(const protocol::client::PlayerStats& stats)
 {
   (void)stats;
 }
 
-void handleWorldLight(const WorldLight& light)
+void handleWorldLight(const protocol::client::WorldLight& light)
 {
   (void)light;
 }
 
-void handlePlayerSkills(const PlayerSkills& skills)
+void handlePlayerSkills(const protocol::client::PlayerSkills& skills)
 {
   (void)skills;
 }
 
-void handleEquipmentUpdate(const Equipment& equipment)
+void handleEquipmentUpdate(const protocol::client::Equipment& equipment)
 {
   (void)equipment;
 }
 
-void handleTextMessage(const TextMessage& message)
+void handleTextMessage(const protocol::client::TextMessage& message)
 {
   LOG_INFO("%s: message: %s", __func__, message.message.c_str());
 }
 
-void handleThingAdded(const ThingAdded& thing_added)
+void handleThingAdded(const protocol::client::ThingAdded& thing_added)
 {
   map.addProtocolThing(thing_added.position, thing_added.thing);
 }
 
-void handleThingMoved(const ThingMoved& thing_moved)
+void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 {
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
 }
 
-void handle_packet(network::IncomingPacket* packet)
+void handlePacket(network::IncomingPacket* packet)
 {
   while (!packet->isEmpty())
   {
@@ -135,57 +134,57 @@ void handle_packet(network::IncomingPacket* packet)
     switch (type)
     {
       case 0x0A:
-        handleLoginPacket(getLogin(packet));
+        handleLoginPacket(protocol::client::getLogin(packet));
         break;
 
       case 0x14:
-        handleLoginFailedPacket(getLoginFailed(packet));
+        handleLoginFailedPacket(protocol::client::getLoginFailed(packet));
         break;
 
       case 0x64:
-        handleFullMapPacket(getFullMap(packet));
+        handleFullMapPacket(protocol::client::getFullMap(packet));
         break;
 
       case 0x65:
       case 0x66:
       case 0x67:
       case 0x68:
-        handlePartialMapPacket(getPartialMap(map.getPlayerPosition().getZ(),
-                                             static_cast<common::Direction>(type - 0x65),
-                                             packet));
+        handlePartialMapPacket(protocol::client::getPartialMap(map.getPlayerPosition().getZ(),
+                                                               static_cast<common::Direction>(type - 0x65),
+                                                               packet));
         break;
 
       case 0x6A:
-        handleThingAdded(getThingAdded(packet));
+        handleThingAdded(protocol::client::getThingAdded(packet));
         break;
 
       case 0x6D:
-        handleThingMoved(getThingMoved(packet));
+        handleThingMoved(protocol::client::getThingMoved(packet));
         break;
 
       case 0x83:
-        handleMagicEffect(getMagicEffect(packet));
+        handleMagicEffect(protocol::client::getMagicEffect(packet));
         break;
 
       case 0xA0:
-        handlePlayerStats(getPlayerStats(packet));
+        handlePlayerStats(protocol::client::getPlayerStats(packet));
         break;
 
       case 0x82:
-        handleWorldLight(getWorldLight(packet));
+        handleWorldLight(protocol::client::getWorldLight(packet));
         break;
 
       case 0xA1:
-        handlePlayerSkills(getPlayerSkills(packet));
+        handlePlayerSkills(protocol::client::getPlayerSkills(packet));
         break;
 
       case 0x78:
       case 0x79:
-        handleEquipmentUpdate(getEquipment(type == 0x78, packet));
+        handleEquipmentUpdate(protocol::client::getEquipment(type == 0x78, packet));
         break;
 
       case 0xB4:
-        handleTextMessage(getTextMessage(packet));
+        handleTextMessage(protocol::client::getTextMessage(packet));
         break;
 
       case 0x8C:
@@ -282,7 +281,7 @@ static bool stop = false;
 static std::function<void(void)> main_loop_func;
 static std::unique_ptr<asio::deadline_timer> timer;
 
-void timer_callback(const asio::error_code& ec)
+void timerCallback(const asio::error_code& ec)
 {
   if (ec)
   {
@@ -299,22 +298,22 @@ void timer_callback(const asio::error_code& ec)
 
   main_loop_func();
   timer->expires_from_now(boost::posix_time::millisec(16));
-  timer->async_wait(&timer_callback);
+  timer->async_wait(&timerCallback);
 }
 
-void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)
+void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)  // NOLINT
 {
   (void)fps;
   (void)loop;
 
-  main_loop_func = func;
+  main_loop_func = std::move(func);
   timer = std::make_unique<asio::deadline_timer>(io_context);
   timer->expires_from_now(boost::posix_time::millisec(16));
-  timer->async_wait(&timer_callback);
+  timer->async_wait(&timerCallback);
   io_context.run();
 }
 
-void emscripten_cancel_main_loop()
+void emscripten_cancel_main_loop()  // NOLINT
 {
   if (!stop)
   {
@@ -324,11 +323,11 @@ void emscripten_cancel_main_loop()
 }
 #endif
 
-extern "C" void main_loop()
+extern "C" void main_loop()  // NOLINT
 {
   // Read input
   SDL_Event event;
-  while (SDL_PollEvent(&event))
+  while (SDL_PollEvent(&event) != 0)
   {
     if (event.type == SDL_KEYDOWN)
     {
@@ -408,7 +407,7 @@ int main()
 
         network::Connection::Callbacks connection_callbacks =
         {
-          &wsclient::handle_packet,
+          &wsclient::handlePacket,
           []()
           {
             LOG_INFO("%s: disconnected", __func__);
@@ -429,5 +428,5 @@ int main()
   }
 
   LOG_INFO("%s: starting main loop", __func__);
-  emscripten_set_main_loop(main_loop, 0, true);
+  emscripten_set_main_loop(main_loop, 0, 1);
 }

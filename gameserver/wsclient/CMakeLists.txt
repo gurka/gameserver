@@ -9,6 +9,8 @@ add_executable(wsclient
   "src/sprite_loader.h"
   "src/texture.cc"
   "src/texture.h"
+  "src/tiles.cc"
+  "src/tiles.h"
   "src/types.h"
   "src/wsclient.cc"
   "src/wsworld.cc"

@@ -35,67 +35,67 @@ class FileReader
  public:
   bool load(const std::string& filename)
   {
-    // Clear fileBuffer_ in case a file has been opened previously
-    fileBuffer_.clear();
+    // Clear m_file_buffer in case a file has been opened previously
+    m_file_buffer.clear();
 
     // Open file
-    std::ifstream fileStream;
-    fileStream.open(filename, std::ifstream::in | std::ifstream::binary);
-    fileStream.unsetf(std::ios::skipws);
-    if (!fileStream.good())
+    std::ifstream file_stream;
+    file_stream.open(filename, std::ifstream::in | std::ifstream::binary);
+    file_stream.unsetf(std::ios::skipws);
+    if (!file_stream.good())
     {
       return false;
     }
 
     // Read file
-    fileBuffer_.insert(fileBuffer_.begin(),
-                       std::istream_iterator<uint8_t>(fileStream),
-                       std::istream_iterator<uint8_t>());
-    position_ = 0;
+    m_file_buffer.insert(m_file_buffer.begin(),
+                         std::istream_iterator<uint8_t>(file_stream),
+                         std::istream_iterator<uint8_t>());
+    m_position = 0;
 
     return true;
   }
 
-  std::size_t getFileLength() const { return fileBuffer_.size(); }
+  std::size_t getFileLength() const { return m_file_buffer.size(); }
 
   uint8_t getU8()
   {
-    auto value = fileBuffer_[position_];
-    position_ += 1;
+    auto value = m_file_buffer[m_position];
+    m_position += 1;
     return value;
   }
 
   uint16_t getU16()
   {
-    auto value =  fileBuffer_[position_] |
-                 (fileBuffer_[position_ + 1] << 8);
-    position_ += 2;
+    auto value =  m_file_buffer[m_position] |
+                 (m_file_buffer[m_position + 1] << 8);
+    m_position += 2;
     return value;
   }
 
   uint32_t getU32()
   {
-    auto value =  fileBuffer_[position_] |
-                 (fileBuffer_[position_ + 1] << 8) |
-                 (fileBuffer_[position_ + 2] << 16) |
-                 (fileBuffer_[position_ + 3] << 24);
-    position_ += 4;
+    auto value =  m_file_buffer[m_position] |
+                 (m_file_buffer[m_position + 1] << 8) |
+                 (m_file_buffer[m_position + 2] << 16) |
+                 (m_file_buffer[m_position + 3] << 24);
+    m_position += 4;
     return value;
   }
 
   const uint8_t* getBytes(std::size_t length)
   {
-    const auto* bytes = &fileBuffer_[position_];
-    position_ += length;
+    const auto* bytes = &m_file_buffer[m_position];
+    m_position += length;
     return bytes;
   }
 
  private:
-  std::vector<uint8_t> fileBuffer_;
-  std::size_t position_;
+  std::vector<uint8_t> m_file_buffer;
+  std::size_t m_position;
 };
 
-}
+}  // namespace
 
 bool Replay::load(const std::string& filename)
 {
@@ -105,9 +105,8 @@ bool Replay::load(const std::string& filename)
   m_packets.clear();
   m_next_packet_index = 0;
 
-  FileReader fr;
-
   // Load file
+  FileReader fr;
   if (!fr.load(filename))
   {
     m_load_error = "Could not open file";
@@ -115,7 +114,7 @@ bool Replay::load(const std::string& filename)
   }
 
   // Read magic number
-  auto magic = fr.getU16();
+  const auto magic = fr.getU16();
   if (magic != 0x1337)  // .trp
   {
     m_load_error = "Magic number is not correct";
@@ -126,18 +125,18 @@ bool Replay::load(const std::string& filename)
   m_length = fr.getU32();
 
   // Read number of replay packets
-  auto numberOfPackets = fr.getU32();
+  const auto num_packets = fr.getU32();
 
   // Read all replay packets
-  for (auto i = 0u; i < numberOfPackets; i++)
+  for (auto i = 0U; i < num_packets; i++)
   {
-    auto packetTime = fr.getU32();
-    auto packetDataLength = fr.getU16();
-    const auto* packetData = fr.getBytes(packetDataLength);
+    auto packet_time = fr.getU32();
+    auto packet_data_length = fr.getU16();
+    const auto* packet_data = fr.getBytes(packet_data_length);
 
     network::OutgoingPacket packet;
-    packet.addRawData(packetData, packetDataLength);
-    m_packets.emplace_back(std::move(packet), packetTime);
+    packet.addRawData(packet_data, packet_data_length);
+    m_packets.emplace_back(std::move(packet), packet_time);
   }
 
   return true;

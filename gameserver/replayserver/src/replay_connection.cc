@@ -29,7 +29,6 @@
 using boost::posix_time::millisec;
 using boost::posix_time::ptime;
 using boost::posix_time::microsec_clock;
-using boost::posix_time::time_duration;
 
 ReplayConnection::ReplayConnection(asio::io_context* io_context,
                                    std::function<void(void)> on_close,
@@ -37,15 +36,15 @@ ReplayConnection::ReplayConnection(asio::io_context* io_context,
     : m_timer(*io_context),
       m_timer_started(false),
       m_on_close(std::move(on_close)),
-      m_connection(std::move(connection)),
-      m_replay_start_time()
+      m_connection(std::move(connection))
 {
   // Setup network::Connection
   network::Connection::Callbacks callbacks =
   {
     // onPacketReceived
-    [](network::IncomingPacket*)
+    [](network::IncomingPacket* packet)
     {
+      (void)packet;
       LOG_DEBUG("onPacketReceived -> ignore");
     },
 
@@ -85,13 +84,13 @@ void ReplayConnection::sendNextPacket()
   // Send all packets that it is time for to send
   const auto now = ptime(microsec_clock::universal_time());
   const auto elapsed_ms = (now - m_replay_start_time).total_milliseconds();
-  while (m_replay.getNumberOfPacketsLeft() > 0u && m_replay.getNextPacketTime() < elapsed_ms)
+  while (m_replay.getNumberOfPacketsLeft() > 0U && m_replay.getNextPacketTime() < elapsed_ms)
   {
     LOG_INFO("%s: sending a packet!", __func__);
     m_connection->sendPacket(m_replay.getNextPacket());
   }
 
-  if (m_replay.getNumberOfPacketsLeft() == 0u)
+  if (m_replay.getNumberOfPacketsLeft() == 0U)
   {
     LOG_DEBUG("%s: replay done", __func__);
     closeConnection();  // instance might be deleted by this call

@@ -46,19 +46,18 @@ class WebsocketClient
  public:
   using AsyncHandler = std::function<void(const ErrorCode&, std::size_t)>;
 
-  WebsocketClient(websocketpp::client<websocketpp::config::asio_client>::connection_ptr websocketpp_connection);
+  explicit WebsocketClient(websocketpp::client<websocketpp::config::asio_client>::connection_ptr websocketpp_connection);
 
   // Used by ClientFactory
   websocketpp::client<websocketpp::config::asio_client>::connection_ptr getWebsocketppConnection() { return m_websocketpp_connection; }
 
   // Required from WebsocketBackend::Socket
   bool isConnected() const;
-  void shutdown(ErrorCode& ec) { ec = ErrorCode(); }
-  void close(ErrorCode& ec);
+  void close(ErrorCode* ec);
 
   // websocketpp connection handlers
   void handleClose();
-  void handleMessage(websocketpp::client<websocketpp::config::asio_client>::message_ptr msg);
+  void handleMessage(const websocketpp::client<websocketpp::config::asio_client>::message_ptr& msg);
 
   // Called from static functions in WebsocketppBackend
   void asyncWrite(const std::uint8_t* buffer,
@@ -87,24 +86,24 @@ struct WebsocketBackend
 
   struct Socket
   {
-    Socket(std::unique_ptr<WebsocketClient>&& client)
+    explicit Socket(std::unique_ptr<WebsocketClient>&& client)
         : client(std::move(client))
     {
     }
 
-    bool is_open() const { return client->isConnected(); }
-    void shutdown(shutdown_type, ErrorCode& ec) { client->shutdown(ec); }
-    void close(ErrorCode& ec) { client->close(ec); }
+    bool is_open() const { return client->isConnected(); }  // NOLINT
+    void shutdown(shutdown_type, ErrorCode&) {}  // NOLINT
+    void close(ErrorCode& ec) { client->close(&ec); }  // NOLINT
 
     std::unique_ptr<WebsocketClient> client;
   };
 
-  static void async_write(Socket& socket,
+  static void async_write(Socket& socket,  // NOLINT
                           const std::uint8_t* buffer,
                           std::size_t length,
                           const WebsocketClient::AsyncHandler& handler);
 
-  static void async_read(Socket& socket,
+  static void async_read(Socket& socket,  // NOLINT
                          std::uint8_t* buffer,
                          std::size_t length,
                          const WebsocketClient::AsyncHandler& handler);

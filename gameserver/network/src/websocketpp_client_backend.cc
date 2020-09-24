@@ -37,22 +37,25 @@
 namespace network
 {
 
+using connection_hdl = websocketpp::connection_hdl;
+using message_ptr = websocketpp::client<websocketpp::config::asio_client>::message_ptr;
+
 WebsocketClient::WebsocketClient(websocketpp::client<websocketpp::config::asio_client>::connection_ptr websocketpp_connection)
-    : m_websocketpp_connection(websocketpp_connection),
-      m_read_buffer(),
+    : m_websocketpp_connection(std::move(websocketpp_connection)),
       m_async_read_buffer(nullptr),
-      m_async_read_length(0U),
-      m_async_read_handler()
+      m_async_read_length(0U)
 {
   // Set handlers
-  m_websocketpp_connection->set_close_handler([this](websocketpp::connection_hdl)
+  m_websocketpp_connection->set_close_handler([this](const connection_hdl& hdl)
   {
+    (void)hdl;
     handleClose();
   });
 
-  m_websocketpp_connection->set_message_handler([this](websocketpp::connection_hdl,
-                                                       websocketpp::client<websocketpp::config::asio_client>::message_ptr msg)
+  m_websocketpp_connection->set_message_handler([this](const connection_hdl& hdl,
+                                                       const message_ptr& msg)
   {
+    (void)hdl;
     handleMessage(msg);
   });
 }
@@ -62,21 +65,29 @@ bool WebsocketClient::isConnected() const
   return m_websocketpp_connection->get_state() == websocketpp::session::state::open;
 }
 
-void WebsocketClient::close(ErrorCode&)
+void WebsocketClient::close(ErrorCode* ec)
 {
   if (!isConnected())
   {
     LOG_ERROR("%s: called but we are not connected", __func__);
+    if (ec)
+    {
+      *ec = ErrorCode("Not connected");
+    }
     return;
   }
 
   // Call close and wait for handleClose to be called before
   // aborting any async reads/writes
-  std::error_code ec;
-  m_websocketpp_connection->close(websocketpp::close::status::normal, "", ec);
-  if (ec)
+  std::error_code close_ec;
+  m_websocketpp_connection->close(websocketpp::close::status::normal, "", close_ec);
+  if (close_ec)
   {
-    LOG_ERROR("%s: closing connection error: %s", __func__, ec.message().c_str());
+    LOG_ERROR("%s: closing connection error: %s", __func__, close_ec.message().c_str());
+    if (ec)
+    {
+      *ec = ErrorCode(close_ec.message());
+    }
   }
 }
 
@@ -99,7 +110,7 @@ void WebsocketClient::handleClose()
   }
 }
 
-void WebsocketClient::handleMessage(websocketpp::client<websocketpp::config::asio_client>::message_ptr msg)
+void WebsocketClient::handleMessage(const message_ptr& msg)
 {
   if (!isConnected())
   {
@@ -114,10 +125,14 @@ void WebsocketClient::handleMessage(websocketpp::client<websocketpp::config::asi
   checkAsyncRead();
 }
 
-void WebsocketClient::asyncWrite(const std::uint8_t*,
-                                 std::size_t,
-                                 const AsyncHandler&)
+void WebsocketClient::asyncWrite(const std::uint8_t* buffer,
+                                 std::size_t length,
+                                 const AsyncHandler& handler)
 {
+  (void)this;
+  (void)buffer;
+  (void)length;
+  (void)handler;
   LOG_ERROR("%s: not yet implemented", __func__);
 }
 
@@ -162,7 +177,7 @@ void WebsocketClient::checkAsyncRead()
   }
 }
 
-void WebsocketBackend::async_write(Socket& socket,
+void WebsocketBackend::async_write(Socket& socket,  // NOLINT
                                    const std::uint8_t* buffer,
                                    std::size_t length,
                                    const WebsocketClient::AsyncHandler& handler)
@@ -170,7 +185,7 @@ void WebsocketBackend::async_write(Socket& socket,
   socket.client->asyncWrite(buffer, length, handler);
 }
 
-void WebsocketBackend::async_read(Socket& socket,
+void WebsocketBackend::async_read(Socket& socket,  // NOLINT
                                   std::uint8_t* buffer,
                                   std::size_t length,
                                   const WebsocketClient::AsyncHandler& handler)

@@ -45,7 +45,7 @@ struct PendingConnection
   PendingConnection(std::unique_ptr<network::WebsocketClient>&& client,
                     network::ClientFactory::Callbacks callbacks)
       : client(std::move(client)),
-        callbacks(callbacks)
+        callbacks(std::move(callbacks))
   {
   }
 
@@ -60,7 +60,7 @@ void handleOpen(websocketpp::connection_hdl hdl)
   LOG_DEBUG("%s", __func__);
 
   std::error_code ec;
-  auto connection = websocketpp_client->get_con_from_hdl(hdl, ec);
+  auto connection = websocketpp_client->get_con_from_hdl(std::move(hdl), ec);
   if (ec)
   {
     LOG_ERROR("%s: get_con_from_hdl failed: %s", __func__, ec.message().c_str());
@@ -80,7 +80,8 @@ void handleOpen(websocketpp::connection_hdl hdl)
   }
 
   // Create and send ConnectionImpl to user
-  it->callbacks.on_connected(std::make_unique<network::ConnectionImpl<network::WebsocketBackend>>(std::move(it->client)));
+  auto socket = network::WebsocketBackend::Socket(std::move(it->client));
+  it->callbacks.on_connected(std::make_unique<network::ConnectionImpl<network::WebsocketBackend>>(std::move(socket)));
 
   // Delete pending connection
   pending_connections.erase(it);
@@ -91,7 +92,7 @@ void handleFail(websocketpp::connection_hdl hdl)
   LOG_DEBUG("%s", __func__);
 
   std::error_code ec;
-  auto connection = websocketpp_client->get_con_from_hdl(hdl, ec);
+  auto connection = websocketpp_client->get_con_from_hdl(std::move(hdl), ec);
   if (ec)
   {
     LOG_ERROR("%s: get_con_from_hdl failed: %s", __func__, ec.message().c_str());
@@ -115,7 +116,7 @@ void handleFail(websocketpp::connection_hdl hdl)
   pending_connections.erase(it);
 }
 
-}
+}  // namespace
 
 namespace network
 {
