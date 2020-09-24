@@ -260,16 +260,22 @@ void draw(const wsworld::Map& map)
   {
     // We have floors 7  6  5  4  3  2  1  0
     // and we want to draw them in that order
+    // Skip floors above player z as we don't know when floor above blocks view of player yet
     for (auto z = 0; z <= 7; ++z)
     {
       drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+      if (7 - map.getPlayerPosition().getZ() == z)
+      {
+        break;
+      }
     }
   }
   else
   {
-    // Underground, just draw current floor
-    const auto z = map.getPlayerPosition().getZ();
-    drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+    // Underground, draw below floors up to player floor
+    drawFloor(map, tiles.cbegin() + (0 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+    drawFloor(map, tiles.cbegin() + (1 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+    drawFloor(map, tiles.cbegin() + (2 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
   }
 
   SDL_RenderPresent(sdl_renderer);

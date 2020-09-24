@@ -68,7 +68,7 @@ ReplayConnection::ReplayConnection(asio::io_context* io_context,
   m_connection->init(callbacks, true);
 
   // Open replay file
-  if (!m_replay.load("replays/amazonshield.trp"))
+  if (!m_replay.load("replay.trp"))
   {
     LOG_ERROR("%s: could not load replay file: %s", __func__, m_replay.getErrorStr().c_str());
     closeConnection();  // instance might be deleted by this call

@@ -112,25 +112,39 @@ common::ItemPosition getItemPosition(KnownContainers* container_ids, network::In
   return { game_position, item_id, stackpos };
 }
 
-Creature getCreature(bool known, network::IncomingPacket* packet)
+Creature getCreature(Creature::Update update, network::IncomingPacket* packet)
 {
   Creature creature;
-  creature.known = known;
-  if (creature.known)
+  creature.update = update;
+
+  if (update == Creature::Update::DIRECTION)
   {
     packet->get(&creature.id);
+    creature.direction = static_cast<common::Direction>(packet->getU8());
   }
   else
   {
-    packet->get(&creature.id_to_remove);
-    packet->get(&creature.id);
-    packet->get(&creature.name);
+    if (update == Creature::Update::FULL)
+    {
+      packet->get(&creature.id);
+    }
+    else  // NEW
+    {
+      packet->get(&creature.id_to_remove);
+      packet->get(&creature.id);
+      packet->get(&creature.name);
+    }
+
+    packet->get(&creature.health_percent);
+    creature.direction = static_cast<common::Direction>(packet->getU8());
+    creature.outfit = getOutfit(packet);
+    packet->getU16();  // light
+    packet->get(&creature.speed);
+
+    // skull, shield - when?
+    //packet->getU16();
   }
-  packet->get(&creature.health_percent);
-  creature.direction = static_cast<common::Direction>(packet->getU8());
-  creature.outfit = getOutfit(packet);
-  packet->getU16();  // unknown 0xDC00
-  packet->get(&creature.speed);
+
   return creature;
 }
 
@@ -148,17 +162,12 @@ Item getItem(network::IncomingPacket* packet)
 
 Thing getThing(network::IncomingPacket* packet)
 {
-  // 0x0061: unknown (new) creature
-  // 0x0062: outdated creature
-  // 0x0063: creature
-  if (packet->peekU16() == 0x0063)
+  const auto peek = packet->peekU16();
+  if (peek == 0x0061U || peek == 0x0062U || peek == 0x0063U)
   {
-    LOG_ERROR("%s: thing 0x0063 not implemented", __func__);
+    return protocol::getCreature(static_cast<Creature::Update>(packet->getU16()), packet);
   }
-  if (packet->peekU16() == 0x0061 || packet->peekU16() == 0x0062)
-  {
-    return protocol::getCreature(packet->getU16() == 0x0062, packet);
-  }
+
   return protocol::getItem(packet);
 }
 

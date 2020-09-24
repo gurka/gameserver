@@ -124,6 +124,7 @@ void Map::addThing(const common::Position& position, Thing thing)
 {
   auto& things = m_tiles.getTile(position)->things;
   const auto pre = things.size();
+
   auto it = things.cbegin() + 1;
   if (std::holds_alternative<Item>(thing))
   {
@@ -131,12 +132,11 @@ void Map::addThing(const common::Position& position, Thing thing)
     if (item.type->always_on_top)
     {
       // Insert after ground item
-      ++it;
+      // We start on 1, so no need to do anything
     }
     else
     {
       // Find first bottom item or end
-      auto it = things.cbegin();
       while (it != things.cend())
       {
         if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
@@ -190,6 +190,13 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
            stackpos,
            pre,
            post);
+}
+
+void Map::updateThing(const common::Position& position,
+                      std::uint8_t stackpos,
+                      const protocol::Thing& thing)
+{
+  m_tiles.getTile(position)->things[stackpos] = parseThing(thing);
 }
 
 void Map::moveThing(const common::Position& from_position,
@@ -248,19 +255,24 @@ Thing Map::parseThing(const protocol::Thing& thing)
   if (std::holds_alternative<protocol::Creature>(thing))
   {
     const auto& creature = std::get<protocol::Creature>(thing);
-    if (creature.known)
+    if (creature.update != protocol::Creature::Update::NEW)
     {
-      // Update known creature
+      // FULL or DIRECTION
       auto* known_creature = getCreature(creature.id);
       if (!known_creature)
       {
-        LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
+        LOG_ERROR("%s: received creature id %u that is not known", __func__, creature.id);
         return Thing();
       }
-      known_creature->health_percent = creature.health_percent;
+
       known_creature->direction = creature.direction;
-      known_creature->outfit = creature.outfit;
-      known_creature->speed = creature.speed;
+
+      if (creature.update == protocol::Creature::Update::FULL)
+      {
+        known_creature->health_percent = creature.health_percent;
+        known_creature->outfit = creature.outfit;
+        known_creature->speed = creature.speed;
+      }
     }
     else
     {

@@ -65,6 +65,9 @@ class Map
   // Methods that does not work with protocol objects
   void addThing(const common::Position& position, Thing thing);
   void removeThing(const common::Position& position, std::uint8_t stackpos);
+  void updateThing(const common::Position& position,
+                   std::uint8_t stackpos,
+                   const protocol::Thing& thing);
   void moveThing(const common::Position& from_position,
                  std::uint8_t from_stackpos,
                  const common::Position& to_position);

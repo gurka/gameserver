@@ -207,7 +207,9 @@ ThingAdded getThingAdded(network::IncomingPacket* packet)
 ThingChanged getThingChanged(network::IncomingPacket* packet)
 {
   ThingChanged thing_changed;
-  (void)packet;
+  thing_changed.position = getPosition(packet);
+  packet->get(&thing_changed.stackpos);
+  thing_changed.thing = getThing(packet);
   return thing_changed;
 }
 

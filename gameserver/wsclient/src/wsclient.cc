@@ -120,6 +120,11 @@ void handleThingAdded(const protocol::client::ThingAdded& thing_added)
   map.addProtocolThing(thing_added.position, thing_added.thing);
 }
 
+void handleThingChanged(const protocol::client::ThingChanged thing_changed)
+{
+  map.updateThing(thing_changed.position, thing_changed.stackpos, thing_changed.thing);
+}
+
 void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 {
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
@@ -130,12 +135,22 @@ void handlePacket(network::IncomingPacket* packet)
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
-    //LOG_DEBUG("%s: type: 0x%02X", __func__, type);
+    LOG_DEBUG("%s: type: 0x%02X", __func__, type);
     switch (type)
     {
       case 0x0A:
         handleLoginPacket(protocol::client::getLogin(packet));
         break;
+
+      case 0x0B:
+      {
+        // handleGMActions?
+        for (auto i = 0; i < 32; ++i)
+        {
+          packet->getU8();
+        }
+        break;
+      }
 
       case 0x14:
         handleLoginFailedPacket(protocol::client::getLoginFailed(packet));
@@ -158,6 +173,12 @@ void handlePacket(network::IncomingPacket* packet)
         handleThingAdded(protocol::client::getThingAdded(packet));
         break;
 
+      case 0x6B:
+      {
+        handleThingChanged(protocol::client::getThingChanged(packet));
+        break;
+      }
+
       case 0x6D:
         handleThingMoved(protocol::client::getThingMoved(packet));
         break;
@@ -166,6 +187,14 @@ void handlePacket(network::IncomingPacket* packet)
         handleMagicEffect(protocol::client::getMagicEffect(packet));
         break;
 
+      case 0x84:
+      {
+        // animatedText
+        protocol::getPosition(packet);
+        packet->getU8();  // color
+        packet->getString();  // text
+        break;
+      }
       case 0xA0:
         handlePlayerStats(protocol::client::getPlayerStats(packet));
         break;
