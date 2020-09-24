@@ -34,14 +34,6 @@
 #include "connection_impl.h"
 #include "logger.h"
 
-namespace
-{
-
-// TODO(simon): not sure if we can use one single client for multiple connections
-std::unique_ptr<websocketpp::client<websocketpp::config::asio_client>> websocketpp_client;
-
-}
-
 namespace network
 {
 

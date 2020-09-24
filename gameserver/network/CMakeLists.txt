@@ -43,6 +43,13 @@ if(NOT EMSCRIPTEN)
     "src/websocketpp_client_backend.h"
     "src/websocketpp_client_factory.cc"
   )
+  
+  target_link_libraries(network_client PRIVATE
+    network_packet
+    utils
+    asio
+    websocketpp
+  )
 else()
   add_library(network_client
     "export/client_factory.h"
@@ -50,13 +57,11 @@ else()
     "src/emscripten_client_backend.h"
     "src/emscripten_client_factory.cc"
   )
+  
+  target_link_libraries(network_client PRIVATE
+    network_packet
+    utils
+  )
 endif()
-
-target_link_libraries(network_client PRIVATE
-  network_packet
-  utils
-  asio
-  websocketpp
-)
 
 target_include_directories(network_client PUBLIC "export")

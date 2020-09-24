@@ -112,12 +112,6 @@ class ConnectionImpl : public Connection
   ConnectionImpl(const ConnectionImpl&) = delete;
   ConnectionImpl& operator=(const ConnectionImpl&) = delete;
 
-  bool isConnected() const override
-  {
-    // TODO fix
-    return !m_closing;
-  }
-
   void init(const Callbacks& callbacks, bool skip_send_packet_header) override
   {
     m_callbacks = callbacks;

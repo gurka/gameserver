@@ -44,7 +44,6 @@ class Connection
 
   virtual ~Connection() = default;
 
-  virtual bool isConnected() const = 0;
   virtual void init(const Callbacks& callbacks, bool skip_send_packet_header) = 0;
   virtual void close(bool force) = 0;
   virtual void sendPacket(OutgoingPacket&& packet) = 0;
