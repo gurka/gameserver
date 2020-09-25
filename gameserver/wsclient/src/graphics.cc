@@ -81,7 +81,7 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
   return *it;
 }
 
-void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t offset, int anim_tick)
+void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t elevation, int anim_tick)
 {
   if (item_type.type != common::ItemType::Type::ITEM)
   {
@@ -107,8 +107,8 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
   {
-    (x * TILE_SIZE - offset - ((item_type.sprite_width - 1) * 32)) * SCALE,
-    (y * TILE_SIZE - offset - ((item_type.sprite_height - 1) * 32)) * SCALE,
+    (x * TILE_SIZE - elevation - (item_type.is_displaced ? 8 : 0) - ((item_type.sprite_width - 1) * 32)) * SCALE,
+    (y * TILE_SIZE - elevation - (item_type.is_displaced ? 8 : 0) - ((item_type.sprite_height - 1) * 32)) * SCALE,
     item_type.sprite_width * TILE_SIZE_SCALED,
     item_type.sprite_height * TILE_SIZE_SCALED
   };
@@ -169,35 +169,59 @@ void drawFloor(const wsclient::wsworld::Map& map,
         continue;
       }
 
-      // Draw ground
-      if (!std::holds_alternative<wsclient::wsworld::Item>(tile.things.front()))
-      {
-        LOG_ERROR("%s: first Thing on tile is not an Item!", __func__);
-        return;
-      }
-      const auto& ground_item = std::get<wsclient::wsworld::Item>(tile.things.front());
-      drawItem(x, y, *ground_item.type, 0, anim_tick);
+      // Order:
+      // 1. Bottom items (ground, on_bottom)
+      // 2. Common items in reverse order (neither creature, on_bottom nor on_top)
+      // 3. Creatures (reverse order?)
+      // 4. (Effects)
+      // 5. Top items (on_top)
 
-      // Draw things in reverse order, except ground
-      // TODO: something is wrong here, or when adding items to tile
-      auto elevation = ground_item.type->elevation;
-      for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
+      // Keep track of elevation
+      auto elevation = 0;
+
+      // Draw ground and on_bottom items
+      for (const auto& thing : tile.things)
       {
-        const auto& thing = *it;
         if (std::holds_alternative<wsclient::wsworld::Item>(thing))
         {
-          // TODO(simon): probably need things like count later
           const auto& item = std::get<wsclient::wsworld::Item>(thing);
-
-          // Total offset depends both on the elevation from items below, plus this item's displacement
-          const auto total_offset = elevation + (item.type->is_displaced ? 8 : 0);
-          drawItem(x, y, *item.type, total_offset, anim_tick);
-
-          elevation += item.type->elevation;
+          if (item.type->is_ground || item.type->is_on_bottom)
+          {
+            drawItem(x, y, *item.type, elevation, anim_tick);
+            elevation += item.type->elevation;
+            continue;
+          }
         }
-        else if (std::holds_alternative<common::CreatureId>(thing))
+        break;
+      }
+
+      // Draw items, neither on_bottom nor on_top, in reverse order
+      for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
+      {
+        if (std::holds_alternative<wsclient::wsworld::Item>(*it))
         {
-          const auto& creature_id = std::get<common::CreatureId>(thing);
+          const auto& item = std::get<wsclient::wsworld::Item>(*it);
+          if (!item.type->is_ground && !item.type->is_on_top && !item.type->is_on_bottom)
+          {
+            drawItem(x, y, *item.type, elevation, anim_tick);
+            elevation += item.type->elevation;
+            continue;
+          }
+          else if (item.type->is_on_top)
+          {
+            continue;  // to not hit the break below
+                       // as there can be items left to draw here
+          }
+        }
+        break;
+      }
+
+      // Draw creatures, in reverse order
+      for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
+      {
+        if (std::holds_alternative<common::CreatureId>(*it))
+        {
+          const auto creature_id = std::get<common::CreatureId>(*it);
           const auto* creature = map.getCreature(creature_id);
           if (creature)
           {
@@ -210,10 +234,22 @@ void drawFloor(const wsclient::wsworld::Map& map,
                       creature_id);
           }
         }
-        else
+      }
+
+      // Draw on_top items
+      for (const auto& thing : tile.things)
+      {
+        if (std::holds_alternative<wsclient::wsworld::Item>(thing))
         {
-          LOG_ERROR("%s: unknown Thing on local position: (%d, %d)", __func__, x, y);
+          const auto& item = std::get<wsclient::wsworld::Item>(thing);
+          if (item.type->is_on_top)
+          {
+            drawItem(x, y, *item.type, elevation, anim_tick);
+            elevation += item.type->elevation;
+            continue;
+          }
         }
+        break;
       }
     }
 
