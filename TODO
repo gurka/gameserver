@@ -41,7 +41,6 @@ WSClient:
   * Fix namespaces chaos
 
 WSClient-replay:
-  * Click on tile to print info
   * Spacebar to pause replay
   * left/right to speed down/up
   * lots of bugs xD

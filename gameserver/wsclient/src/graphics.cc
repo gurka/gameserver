@@ -179,6 +179,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
       drawItem(x, y, *ground_item.type, 0, anim_tick);
 
       // Draw things in reverse order, except ground
+      // TODO: something is wrong here, or when adding items to tile
       auto offset = ground_item.type->offset;
       for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
@@ -292,6 +293,15 @@ void draw(const wsworld::Map& map)
   }
 
   SDL_RenderPresent(sdl_renderer);
+}
+
+common::Position screenToMapPosition(int x, int y)
+{
+  return {
+    static_cast<std::uint16_t>((x / TILE_SIZE_SCALED) + 1),  // adjust for draw tiles vs. known tiles
+    static_cast<std::uint16_t>((y / TILE_SIZE_SCALED) + 1),  // adjust for draw tiles vs. known tiles
+    0  // only map knows
+  };
 }
 
 }  // namespace wsclient::graphics
