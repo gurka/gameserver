@@ -55,10 +55,17 @@ common::Outfit getOutfit(network::IncomingPacket* packet)
 {
   common::Outfit outfit;
   packet->get(&outfit.type);
-  packet->get(&outfit.head);
-  packet->get(&outfit.body);
-  packet->get(&outfit.legs);
-  packet->get(&outfit.feet);
+  if (outfit.type == 0U)
+  {
+    packet->get(&outfit.item_id);
+  }
+  else
+  {
+    packet->get(&outfit.head);
+    packet->get(&outfit.body);
+    packet->get(&outfit.legs);
+    packet->get(&outfit.feet);
+  }
   return outfit;
 }
 
@@ -141,8 +148,9 @@ Creature getCreature(Creature::Update update, network::IncomingPacket* packet)
     packet->getU16();  // light
     packet->get(&creature.speed);
 
-    // skull, shield - when?
-    //packet->getU16();
+    // TODO: skull and flag
+    packet->getU8();
+    packet->getU8();
   }
 
   return creature;
@@ -152,6 +160,10 @@ Item getItem(network::IncomingPacket* packet)
 {
   Item item;
   packet->get(&item.item_type_id);
+  if (item.item_type_id == 0U)
+  {
+    LOG_ERROR("%s: parsed item with id 0", __func__);
+  }
   const auto& item_type = (*item_types)[item.item_type_id];
   if (item_type.is_stackable || item_type.is_fluid_container || item_type.is_splash)
   {

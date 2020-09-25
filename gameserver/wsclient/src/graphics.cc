@@ -95,6 +95,9 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
   }
 
   // TODO(simon): need to use world position, not local position
+  //              need to figure out how to use position, anim_tick and count/extra to determine sprite
+  //              some items have count (select sprite based on if 1, 2, 3, 4, 5 or 10 (?)
+  //              some items (fluid container) select sprite based on the content (extra?)
   auto* texture = getTexture(item_type.id).getItemTexture(common::Position(x, y, 0U), anim_tick);
   if (!texture)
   {
@@ -114,6 +117,14 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t off
 
 void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std::uint16_t offset)
 {
+  if (creature.outfit.type == 0U && creature.outfit.item_id != 0U)
+  {
+    // note: if both are zero then creature is invis
+    const auto& item_type = (*itemtypes)[creature.outfit.item_id];
+    drawItem(x, y, item_type, 0, 0);
+    return;
+  }
+
   // TODO(simon): fix this
   //              DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
   //              since the ids are relative
@@ -219,6 +230,8 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
 
   SDL_Init(SDL_INIT_VIDEO);
 
+  // TODO: create multiple surfaces to draw on (draw game in one, chat in one, sidebar in one) and then render them together on the screen
+  //       also make game surface "known tiles" large and then draw a sub-window of it ("draw tiles") to the screen
   sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!sdl_window)
   {

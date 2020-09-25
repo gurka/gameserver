@@ -64,6 +64,7 @@ namespace wsclient
 std::unique_ptr<network::Connection> connection;
 utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
+int num_received_packets = 0;
 
 void handleLoginPacket(const protocol::client::Login& login)
 {
@@ -132,6 +133,8 @@ void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 
 void handlePacket(network::IncomingPacket* packet)
 {
+  ++num_received_packets;
+
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
@@ -206,6 +209,23 @@ void handlePacket(network::IncomingPacket* packet)
       case 0xA1:
         handlePlayerSkills(protocol::client::getPlayerSkills(packet));
         break;
+
+      case 0xAC:
+      {
+        // open channel
+        const auto id = packet->getU16();
+        const auto name = packet->getString();
+        LOG_INFO("%s: open channel %u -> %s", __func__, id, name.c_str());
+        break;
+      }
+
+      case 0x70:
+      {
+        // container add item
+        packet->getU8();  // cid
+        protocol::getItem(packet);  // item (container item?)
+        break;
+      }
 
       case 0x78:
       case 0x79:
@@ -282,11 +302,12 @@ void handlePacket(network::IncomingPacket* packet)
       }
 
       default:
-        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header)",
+        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
                   type,
                   packet->getPosition() - 1,
-                  packet->getPosition() + 1);
+                  packet->getPosition() + 1,
+                  num_received_packets);
         return;
     }
   }

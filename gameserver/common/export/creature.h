@@ -38,7 +38,7 @@ using CreatureId = std::uint32_t;
 struct Outfit
 {
   std::uint8_t type;
-  std::uint8_t ext;  // ???
+  std::uint16_t item_id;  // set if type is zero, if both are zero then invis
   std::uint8_t head;
   std::uint8_t body;
   std::uint8_t legs;
