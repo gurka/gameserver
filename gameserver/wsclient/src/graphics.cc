@@ -180,7 +180,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
 
       // Draw things in reverse order, except ground
       // TODO: something is wrong here, or when adding items to tile
-      auto offset = ground_item.type->offset;
+      auto elevation = ground_item.type->elevation;
       for (auto it = tile.things.rbegin(); it != tile.things.rend() - 1; ++it)
       {
         const auto& thing = *it;
@@ -188,9 +188,12 @@ void drawFloor(const wsclient::wsworld::Map& map,
         {
           // TODO(simon): probably need things like count later
           const auto& item = std::get<wsclient::wsworld::Item>(thing);
-          drawItem(x, y, *item.type, offset, anim_tick);
 
-          offset += item.type->offset;
+          // Total offset depends both on the elevation from items below, plus this item's displacement
+          const auto total_offset = elevation + (item.type->is_displaced ? 8 : 0);
+          drawItem(x, y, *item.type, total_offset, anim_tick);
+
+          elevation += item.type->elevation;
         }
         else if (std::holds_alternative<common::CreatureId>(thing))
         {
@@ -198,7 +201,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
           const auto* creature = map.getCreature(creature_id);
           if (creature)
           {
-            drawCreature(x, y, *creature, offset);
+            drawCreature(x, y, *creature, elevation);
           }
           else
           {

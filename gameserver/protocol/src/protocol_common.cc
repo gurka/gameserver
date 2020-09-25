@@ -160,10 +160,6 @@ Item getItem(network::IncomingPacket* packet)
 {
   Item item;
   packet->get(&item.item_type_id);
-  if (item.item_type_id == 0U)
-  {
-    LOG_ERROR("%s: parsed item with id 0", __func__);
-  }
   const auto& item_type = (*item_types)[item.item_type_id];
   if (item_type.is_stackable || item_type.is_fluid_container || item_type.is_splash)
   {

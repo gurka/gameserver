@@ -426,19 +426,18 @@ extern "C" void main_loop()  // NOLINT
       const auto* tile = wsclient::map.getTile(globalPosition);
       if (tile)
       {
-        std::ostringstream oss;
-        oss << "Tile at " << globalPosition.toString() << "\n";
+        LOG_INFO("Tile at %s", globalPosition.toString().c_str());
         int stackpos = 0;
         for (const auto& thing : tile->things)
         {
           if (std::holds_alternative<wsclient::wsworld::Item>(thing))
           {
             const auto& item = std::get<wsclient::wsworld::Item>(thing);
-            oss << "  stackpos=" << stackpos << " Item [id=" << item.type->id
-                                                  << ", ground=" << item.type->ground
-                                                  << ", is_blocking=" << item.type->is_blocking
-                                                  << ", always_on_top=" << item.type->always_on_top
-                                                  << ", offset=" << item.type->offset << "]\n";
+            std::ostringstream oss;
+            oss << "  stackpos=" << stackpos << " ";
+            item.type->dump(&oss, false);
+            oss << "\n";
+            LOG_INFO(oss.str().c_str());
           }
           else if (std::holds_alternative<common::CreatureId>(thing))
           {
@@ -446,21 +445,20 @@ extern "C" void main_loop()  // NOLINT
             const auto* creature = static_cast<const wsclient::wsworld::Map*>(&wsclient::map)->getCreature(creature_id);
             if (creature)
             {
-              oss << "  stackpos=" << stackpos << " Creature [id=" << creature_id << ", name=" << creature->name << "]\n";
+              LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
             }
             else
             {
-              oss << "  stackpos=" << stackpos << " ERROR: creature with id=" << creature_id << " is nullptr\n";
+              LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
             }
           }
           else
           {
-            oss << "  stackpos=" << stackpos << " ERROR: invalid Thing on Tile\n";
+            LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
           }
 
           ++stackpos;
         }
-        LOG_INFO("\n%s", oss.str().c_str());
       }
       else
       {

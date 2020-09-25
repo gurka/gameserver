@@ -76,7 +76,7 @@ struct Creature
 struct Item
 {
   std::uint16_t item_type_id;
-  std::uint8_t extra;  // only if type is stackable or multitype
+  std::uint8_t extra;  // only if is_stackable, is_fluid_container or is_splash
 };
 
 using Thing = std::variant<Creature, Item>;

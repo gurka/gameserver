@@ -129,17 +129,38 @@ void Map::addThing(const common::Position& position, Thing thing)
   if (std::holds_alternative<Item>(thing))
   {
     const auto& item = std::get<Item>(thing);
-    if (item.type->always_on_top)
+    if (item.type->is_on_bottom)
     {
-      // Insert after ground item
-      // We start on 1, so no need to do anything
+      // Insert before first on_top item or first creature
+      while (it != things.cend())
+      {
+        if ((std::holds_alternative<Item>(*it) && std::get<Item>(*it).type->is_on_top) ||
+            std::holds_alternative<common::CreatureId>(*it))
+        {
+          break;
+        }
+        ++it;
+      }
+    }
+    else if (item.type->is_on_top)
+    {
+      // Insert before first creature or first item with neither is_on_bottom nor is_on_top
+      while (it != things.cend())
+      {
+        if (std::holds_alternative<common::CreatureId>(*it) ||
+            (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom))
+        {
+          break;
+        }
+        ++it;
+      }
     }
     else
     {
-      // Find first bottom item or end
+      // Insert before first item with neither is_on_bottom nor is_on_top
       while (it != things.cend())
       {
-        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
+        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom)
         {
           break;
         }
@@ -149,19 +170,14 @@ void Map::addThing(const common::Position& position, Thing thing)
   }
   else
   {
-    // Find first creature, bottom item or end
+    // Insert before first creature or first item with neither is_on_bottom nor is_on_top
     while (it != things.cend())
     {
-      if (std::holds_alternative<common::CreatureId>(*it))
+      if (std::holds_alternative<common::CreatureId>(*it) ||
+          (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom))
       {
         break;
       }
-
-      if (!std::get<Item>(*it).type->always_on_top)
-      {
-        break;
-      }
-
       ++it;
     }
   }
