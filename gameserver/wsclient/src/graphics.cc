@@ -207,10 +207,11 @@ void drawFloor(const wsclient::wsworld::Map& map,
             elevation += item.type->elevation;
             continue;
           }
-          else if (item.type->is_on_top)
+
+          if (item.type->is_on_top)
           {
-            continue;  // to not hit the break below
-                       // as there can be items left to draw here
+            // to not hit the break below as there can be items left to draw here
+            continue;
           }
         }
         break;
@@ -269,8 +270,8 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
 
   SDL_Init(SDL_INIT_VIDEO);
 
-  // TODO: create multiple surfaces to draw on (draw game in one, chat in one, sidebar in one) and then render them together on the screen
-  //       also make game surface "known tiles" large and then draw a sub-window of it ("draw tiles") to the screen
+  // TODO(simon): create multiple surfaces to draw on (draw game in one, chat in one, sidebar in one) and then render them together on the screen
+  //              also make game surface "known tiles" large and then draw a sub-window of it ("draw tiles") to the screen
   sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!sdl_window)
   {

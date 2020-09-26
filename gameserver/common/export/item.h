@@ -189,7 +189,7 @@ struct ItemType
 
     if (include_server_data)
     {
-      // TODO
+      // TODO(simon): implement
     }
   }
 };

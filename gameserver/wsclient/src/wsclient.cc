@@ -121,7 +121,7 @@ void handleThingAdded(const protocol::client::ThingAdded& thing_added)
   map.addProtocolThing(thing_added.position, thing_added.thing);
 }
 
-void handleThingChanged(const protocol::client::ThingChanged thing_changed)
+void handleThingChanged(const protocol::client::ThingChanged& thing_changed)
 {
   map.updateThing(thing_changed.position, thing_changed.stackpos, thing_changed.thing);
 }
@@ -416,17 +416,17 @@ extern "C" void main_loop()  // NOLINT
     else if (event.type == SDL_MOUSEBUTTONDOWN)
     {
       // note: z is not set by screenToMapPosition
-      const auto mapPosition = wsclient::graphics::screenToMapPosition(event.button.x, event.button.y);
+      const auto map_position = wsclient::graphics::screenToMapPosition(event.button.x, event.button.y);
 
       // Convert to global position
-      const auto& playerPosition = wsclient::map.getPlayerPosition();
-      const auto globalPosition = common::Position(playerPosition.getX() - 8 + mapPosition.getX(),
-                                                   playerPosition.getY() - 6 + mapPosition.getY(),
-                                                   playerPosition.getZ());
-      const auto* tile = wsclient::map.getTile(globalPosition);
+      const auto& player_position = wsclient::map.getPlayerPosition();
+      const auto global_position = common::Position(player_position.getX() - 8 + map_position.getX(),
+                                                    player_position.getY() - 6 + map_position.getY(),
+                                                    player_position.getZ());
+      const auto* tile = wsclient::map.getTile(global_position);
       if (tile)
       {
-        LOG_INFO("Tile at %s", globalPosition.toString().c_str());
+        LOG_INFO("Tile at %s", global_position.toString().c_str());
         int stackpos = 0;
         for (const auto& thing : tile->things)
         {

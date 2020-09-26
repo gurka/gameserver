@@ -148,7 +148,7 @@ Creature getCreature(Creature::Update update, network::IncomingPacket* packet)
     packet->getU16();  // light
     packet->get(&creature.speed);
 
-    // TODO: skull and flag
+    // TODO(simon): skull and flag
     packet->getU8();
     packet->getU8();
   }
