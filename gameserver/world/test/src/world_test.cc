@@ -61,7 +61,7 @@ class WorldTest : public ::testing::Test
     }
 
     // Have all ground items be non-blocking
-    itemType_.ground = true;
+    itemType_.is_ground = true;
     itemType_.speed = 0;
     itemType_.is_blocking = false;
     EXPECT_CALL(itemMock_, getItemType()).WillRepeatedly(ReturnRef(itemType_));

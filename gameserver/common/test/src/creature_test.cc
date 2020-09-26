@@ -92,7 +92,7 @@ TEST(CreatureTest, GettersSetters)
 
   Outfit outfitSet;
   outfitSet.type = 11;
-  outfitSet.ext = 22;
+  outfitSet.item_id = 22;
   outfitSet.head = 33;
   outfitSet.body = 44;
   outfitSet.legs = 55;
@@ -100,7 +100,7 @@ TEST(CreatureTest, GettersSetters)
   creature.setOutfit(outfitSet);
   const auto& outfitGet = creature.getOutfit();
   ASSERT_EQ(outfitGet.type, 11);
-  ASSERT_EQ(outfitGet.ext, 22);
+  ASSERT_EQ(outfitGet.item_id, 22);
   ASSERT_EQ(outfitGet.head, 33);
   ASSERT_EQ(outfitGet.body, 44);
   ASSERT_EQ(outfitGet.legs, 55);
