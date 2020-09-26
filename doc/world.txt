@@ -1,0 +1,57 @@
+World/Map/Tiles client perspective:
+
+known tiles: 18x14
+number of floors and the order they are received/structured depend on what floor the player is on:
+
+ z=0 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=1 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=2 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=3 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=4 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=5 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=6 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=7 -> 8 floors;  7  6  5  4  3  2  1  0
+ z=8 -> 5 floors:  6  7  8  9 10
+ z=9 -> 5 floors:  7  8  9 10 11
+z=10 -> 5 floors:  8  9 10 11 12
+z=11 -> 5 floors:  9 10 11 12 13
+z=12 -> 5 floors: 10 11 12 13 14
+z=13 -> 5 floors: 11 12 13 14 15
+z=14 -> 4 floors: 12 13 14 15
+z=15 -> 3 floors: 13 14 15
+
+z=0 is highest and z=15 is lowest, z=7 is sea level and everything above (z>7) is underground
+
+player position, which is received when we receive map data, locally is 8,6 (z depends on the table above)
+
+each floor that we receive has an offset (on x,y) based on the difference of the floor and the floor that the player is on
+  lower level (higher z) decreases xy with 1
+  higher level (lower z) increases xy with 1
+
+example: full map data with player position 100, 200, 4
+  we receive 8 floors, 18x14x8 tiles in total
+  xy_offset = floor z - player z
+  z=7, top left tile pos 100-8-3, 200-6-3, 7 = 89, 191, 7   bottom right tile pos 100+9-3, 200+7-3, 7 = 106, 204, 7
+  z=6, top left tile pos 100-8-2, 200-6-2, 6 = 90, 192, 6   bottom right tile pos 100+9-2, 200+7-2, 6 = 107, 205, 6
+  z=5, top left tile pos 100-8-1, 200-6-1, 5 = 91, 193, 5   bottom right tile pos 100+9-1, 200+7-1, 5 = 108, 206, 5
+  z=4, top left tile pos 100-8+0, 200-6+0, 4 = 92, 194, 4   bottom right tile pos 100+9+0, 200+7+0, 4 = 109, 207, 4
+  z=3, top left tile pos 100-8+1, 200-6+1, 3 = 93, 195, 3   bottom right tile pos 100+9+1, 200+7+1, 3 = 110, 208, 3
+  z=2, top left tile pos 100-8+2, 200-6+2, 2 = 94, 196, 2   bottom right tile pos 100+9+2, 200+7+2, 2 = 111, 209, 2
+  z=1, top left tile pos 100-8+3, 200-6+3, 1 = 95, 197, 1   bottom right tile pos 100+9+3, 200+7+3, 1 = 112, 210, 1
+  z=0, top left tile pos 100-8+4, 200-6+4, 0 = 96, 198, 0   bottom right tile pos 100+9+4, 200+7+4, 0 = 113, 211, 0
+
+example: full map data with player position 10, 10, 14
+  we receive 4 floors, 18x14x4 tiles in total
+  xy_offset = floor z - player z
+  z=12, top left tile pos 10-8+2, 10-6+2, 12 = 4, 6, 12   bottom right tile pos 10+9+2, 10+7+2, 12 = 21, 19, 12
+  z=13, top left tile pos 10-8+1, 10-6+1, 13 = 3, 5, 13   bottom right tile pos 10+9+1, 10+7+1, 13 = 20, 18, 13
+  z=14, top left tile pos 10-8+0, 10-6+0, 14 = 2, 4, 14   bottom right tile pos 10+9+0, 10+7+0, 14 = 19, 17, 14
+  z=15, top left tile pos 10-8-1, 10-6-1, 15 = 1, 3, 15   bottom right tile pos 10+9-1, 10+7-1, 15 = 18, 16, 15
+
+
+tiles to render: 15x11
+render offset: 1x1
+column  0 and row  0 is not rendered at all
+column 16 and row 12 is rendered outside screen, only sprites larger than a tile is visible
+column 17 and row 13 is not rendered at all
+

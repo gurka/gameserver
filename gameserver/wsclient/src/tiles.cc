@@ -134,12 +134,14 @@ Tile* Tiles::getTile(const common::Position& position)
 
 const Tile* Tiles::getTile(const common::Position& position) const
 {
-  // z mapping depends on what floor the player is on
-  // see getMapData in protocol_client.cc
-  const auto local_z = (m_position.getZ() <= 7) ? (7 - position.getZ()) : (position.getZ() - m_position.getZ() + 2);
-  const auto local_x = position.getX() + consts::KNOWN_TILES_OFFSET_X - m_position.getX();
-  const auto local_y = position.getY() + consts::KNOWN_TILES_OFFSET_Y - m_position.getY();
-  return getTileLocalPos(local_x, local_y, local_z);
+  if (!positionIsKnown(position))
+  {
+    LOG_ERROR("%s: we don't know position: %s", __func__, position.toString().c_str());
+    return nullptr;
+  }
+
+  const auto local_pos = globalToLocalPosition(position);
+  return getTileLocalPos(local_pos.getX(), local_pos.getY(), local_pos.getZ());
 }
 
 }  // namespace wsclient::wsworld

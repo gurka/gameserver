@@ -43,24 +43,6 @@ std::vector<protocol::Tile> getMapData(int z, int width, int height, network::In
   const auto z_end   = z > 7 ? std::min(z + 2, 15) :  0;
   const auto z_step  = z > 7 ? 1                   : -1;
 
-  // How many floors do we receive?
-  //  z=0 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=1 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=2 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=3 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=4 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=5 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=6 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=7 -> 8 floors;  7  6  5  4  3  2  1  0
-  //  z=8 -> 5 floors:  6  7  8  9 10
-  //  z=9 -> 5 floors:  7  8  9 10 11
-  // z=10 -> 5 floors:  8  9 10 11 12
-  // z=11 -> 5 floors:  9 10 11 12 13
-  // z=12 -> 5 floors: 10 11 12 13 14
-  // z=13 -> 5 floors: 11 12 13 14 15
-  // z=14 -> 4 floors: 12 13 14 15
-  // z=15 -> 3 floors: 13 14 15
-
   auto skip = 0;
   for (auto z = z_start; z != (z_end + z_step); z += z_step)
   {

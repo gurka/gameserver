@@ -135,6 +135,8 @@ void handlePacket(network::IncomingPacket* packet)
 {
   ++num_received_packets;
 
+  LOG_INFO("%s: handling packet number %d", __func__, num_received_packets);
+
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
@@ -227,6 +229,14 @@ void handlePacket(network::IncomingPacket* packet)
         break;
       }
 
+      case 0x72:
+      {
+        // container remove item
+        packet->getU8();  // cid
+        packet->getU8();  // slot
+        break;
+      }
+
       case 0x78:
       case 0x79:
         handleEquipmentUpdate(protocol::client::getEquipment(type == 0x78, packet));
@@ -275,7 +285,7 @@ void handlePacket(network::IncomingPacket* packet)
       case 0xAA:
       {
         // talk
-        packet->getString();  // talker
+        const auto talker = packet->getString();  // talker
         const auto type = packet->getU8();  // type
         switch (type)
         {
@@ -293,13 +303,40 @@ void handlePacket(network::IncomingPacket* packet)
             packet->getU16();  // channel id?
             break;
 
+          case 4:  // whisper?
+            break;
+
           default:
             LOG_ERROR("%s: unknown talk type: %u", __func__, type);
             break;
         }
-        packet->getString();  // text
+        const auto text = packet->getString();  // text
+
+        LOG_INFO("%s: %s said \"%s\"", __func__, talker.c_str(), text.c_str());
+
         break;
       }
+
+      case 0xAD:
+        // Open private channel
+        packet->getString();
+        break;
+
+      case 0xB5:
+        // cancel walk
+        packet->getU8();  // dir -> change player to this dir
+        break;
+
+      case 0xA2:
+        // player state
+        packet->getU8();
+        break;
+
+      case 0x8F:
+        // creature speed
+        packet->getU32();  // creature id
+        packet->getU16();  // new speed
+        break;
 
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",

@@ -200,6 +200,7 @@ void Map::addThing(const common::Position& position, Thing thing)
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
   const auto pre = m_tiles.getTile(position)->things.size();
+
   auto& things = m_tiles.getTile(position)->things;
   things.erase(things.cbegin() + stackpos);
   const auto post = m_tiles.getTile(position)->things.size();
@@ -228,30 +229,69 @@ void Map::moveThing(const common::Position& from_position,
                     const common::Position& to_position)
 {
   const auto thing = getThing(from_position, from_stackpos);
-  removeThing(from_position, from_stackpos);
-  if (std::holds_alternative<common::CreatureId>(thing))
+  if (!std::holds_alternative<common::CreatureId>(thing))
   {
-    // Rotate Creature based on movement
-    // TODO(simon): handle diagonal movement
-    auto* creature = getCreature(std::get<common::CreatureId>(thing));
-    if (from_position.getX() > to_position.getX())
+    LOG_ERROR("%s: Thing is not Creature, from_pos=%s from_stackpos=%d to_pos=%s",
+              __func__,
+              from_position.toString().c_str(),
+              from_stackpos,
+              to_position.toString().c_str());
+
+#if 0
+    // Print all positions that have Creature(s) to debug what went wrong
+    for (auto z = 0; z < m_tiles.getNumFloors(); z++)
     {
-      creature->direction = common::Direction::WEST;
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; y++)
+      {
+        for (auto x = 0; x < consts::KNOWN_TILES_X; x++)
+        {
+          const auto* tile = m_tiles.getTileLocalPos(x, y, z);
+          for (const auto& thing : tile->things)
+          {
+            if (std::holds_alternative<common::CreatureId>(thing))
+            {
+              const auto local_pos = common::Position(x, y, z);
+              LOG_ERROR("%s: found Creature (%d) at local pos %s global pos %s",
+                        __func__,
+                        std::get<common::CreatureId>(thing),
+                        local_pos.toString().c_str(),
+                        m_tiles.localToGlobalPosition(local_pos).toString().c_str());
+            }
+          }
+        }
+      }
     }
-    else if (from_position.getX() < to_position.getX())
-    {
-      creature->direction = common::Direction::EAST;
-    }
-    else if (from_position.getY() > to_position.getY())
-    {
-      creature->direction = common::Direction::NORTH;
-    }
-    else if (from_position.getY() < to_position.getY())
-    {
-      creature->direction = common::Direction::SOUTH;
-    }
+#endif
+
+
+    return;
   }
+
+  removeThing(from_position, from_stackpos);
+
+  // Rotate Creature based on movement
+  // TODO(simon): handle diagonal movement
+  auto* creature = getCreature(std::get<common::CreatureId>(thing));
+  if (from_position.getX() > to_position.getX())
+  {
+    creature->direction = common::Direction::WEST;
+  }
+  else if (from_position.getX() < to_position.getX())
+  {
+    creature->direction = common::Direction::EAST;
+  }
+  else if (from_position.getY() > to_position.getY())
+  {
+    creature->direction = common::Direction::NORTH;
+  }
+  else if (from_position.getY() < to_position.getY())
+  {
+    creature->direction = common::Direction::SOUTH;
+  }
+
   addThing(to_position, thing);
+
+  LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
 }
 
 const Tile* Map::getTile(const common::Position& position) const
@@ -346,7 +386,8 @@ void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
 
   for (const auto& thing : protocol_tile.things)
   {
-    world_tile->things.emplace_back(parseThing(thing));
+    auto foo = parseThing(thing);
+    world_tile->things.emplace_back(std::move(foo));
   }
 }
 
