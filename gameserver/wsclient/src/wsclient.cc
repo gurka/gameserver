@@ -64,6 +64,7 @@ namespace wsclient
 std::unique_ptr<network::Connection> connection;
 utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
+int num_received_packets = 0;
 
 void handleLoginPacket(const protocol::client::Login& login)
 {
@@ -120,6 +121,11 @@ void handleThingAdded(const protocol::client::ThingAdded& thing_added)
   map.addProtocolThing(thing_added.position, thing_added.thing);
 }
 
+void handleThingChanged(const protocol::client::ThingChanged& thing_changed)
+{
+  map.updateThing(thing_changed.position, thing_changed.stackpos, thing_changed.thing);
+}
+
 void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 {
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
@@ -127,15 +133,27 @@ void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 
 void handlePacket(network::IncomingPacket* packet)
 {
+  ++num_received_packets;
+
   while (!packet->isEmpty())
   {
     const auto type = packet->getU8();
-    //LOG_DEBUG("%s: type: 0x%02X", __func__, type);
+    LOG_DEBUG("%s: type: 0x%02X", __func__, type);
     switch (type)
     {
       case 0x0A:
         handleLoginPacket(protocol::client::getLogin(packet));
         break;
+
+      case 0x0B:
+      {
+        // handleGMActions?
+        for (auto i = 0; i < 32; ++i)
+        {
+          packet->getU8();
+        }
+        break;
+      }
 
       case 0x14:
         handleLoginFailedPacket(protocol::client::getLoginFailed(packet));
@@ -158,6 +176,12 @@ void handlePacket(network::IncomingPacket* packet)
         handleThingAdded(protocol::client::getThingAdded(packet));
         break;
 
+      case 0x6B:
+      {
+        handleThingChanged(protocol::client::getThingChanged(packet));
+        break;
+      }
+
       case 0x6D:
         handleThingMoved(protocol::client::getThingMoved(packet));
         break;
@@ -166,6 +190,14 @@ void handlePacket(network::IncomingPacket* packet)
         handleMagicEffect(protocol::client::getMagicEffect(packet));
         break;
 
+      case 0x84:
+      {
+        // animatedText
+        protocol::getPosition(packet);
+        packet->getU8();  // color
+        packet->getString();  // text
+        break;
+      }
       case 0xA0:
         handlePlayerStats(protocol::client::getPlayerStats(packet));
         break;
@@ -177,6 +209,23 @@ void handlePacket(network::IncomingPacket* packet)
       case 0xA1:
         handlePlayerSkills(protocol::client::getPlayerSkills(packet));
         break;
+
+      case 0xAC:
+      {
+        // open channel
+        const auto id = packet->getU16();
+        const auto name = packet->getString();
+        LOG_INFO("%s: open channel %u -> %s", __func__, id, name.c_str());
+        break;
+      }
+
+      case 0x70:
+      {
+        // container add item
+        packet->getU8();  // cid
+        protocol::getItem(packet);  // item (container item?)
+        break;
+      }
 
       case 0x78:
       case 0x79:
@@ -253,11 +302,12 @@ void handlePacket(network::IncomingPacket* packet)
       }
 
       default:
-        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header)",
+        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
                   type,
                   packet->getPosition() - 1,
-                  packet->getPosition() + 1);
+                  packet->getPosition() + 1,
+                  num_received_packets);
         return;
     }
   }
@@ -363,6 +413,58 @@ extern "C" void main_loop()  // NOLINT
           break;
       }
     }
+    else if (event.type == SDL_MOUSEBUTTONDOWN)
+    {
+      // note: z is not set by screenToMapPosition
+      const auto map_position = wsclient::graphics::screenToMapPosition(event.button.x, event.button.y);
+
+      // Convert to global position
+      const auto& player_position = wsclient::map.getPlayerPosition();
+      const auto global_position = common::Position(player_position.getX() - 8 + map_position.getX(),
+                                                    player_position.getY() - 6 + map_position.getY(),
+                                                    player_position.getZ());
+      const auto* tile = wsclient::map.getTile(global_position);
+      if (tile)
+      {
+        LOG_INFO("Tile at %s", global_position.toString().c_str());
+        int stackpos = 0;
+        for (const auto& thing : tile->things)
+        {
+          if (std::holds_alternative<wsclient::wsworld::Item>(thing))
+          {
+            const auto& item = std::get<wsclient::wsworld::Item>(thing);
+            std::ostringstream oss;
+            oss << "  stackpos=" << stackpos << " ";
+            item.type->dump(&oss, false);
+            oss << "\n";
+            LOG_INFO(oss.str().c_str());
+          }
+          else if (std::holds_alternative<common::CreatureId>(thing))
+          {
+            const auto creature_id = std::get<common::CreatureId>(thing);
+            const auto* creature = static_cast<const wsclient::wsworld::Map*>(&wsclient::map)->getCreature(creature_id);
+            if (creature)
+            {
+              LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
+            }
+            else
+            {
+              LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
+            }
+          }
+          else
+          {
+            LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
+          }
+
+          ++stackpos;
+        }
+      }
+      else
+      {
+        LOG_ERROR("%s: clicked on invalid tile", __func__);
+      }
+    }
   }
 
   // Render
@@ -371,6 +473,8 @@ extern "C" void main_loop()  // NOLINT
 
 int main()
 {
+  utils::Logger::setLevel("network", utils::Logger::Level::INFO);
+
   constexpr auto data_filename = "files/data.dat";
   constexpr auto sprite_filename = "files/sprite.dat";
 

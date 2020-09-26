@@ -56,20 +56,27 @@ namespace protocol
 
 struct Creature
 {
-  bool known;
-  std::uint32_t id_to_remove;  // only if known = false
-  std::uint32_t id;
-  std::string name;  // only if known = false
-  std::uint8_t health_percent;
-  common::Direction direction;
-  common::Outfit outfit;
-  std::uint16_t speed;
+  enum class Update : std::uint16_t
+  {
+    NEW       = 0x0061,
+    FULL      = 0x0062,
+    DIRECTION = 0x0063,
+  };
+
+  Update update;
+  std::uint32_t id_to_remove;   // only if NEW
+  std::uint32_t id;             // always
+  std::string name;             // only if NEW
+  std::uint8_t health_percent;  // only if NEW or FULL
+  common::Direction direction;  // always
+  common::Outfit outfit;        // only if NEW or FULL
+  std::uint16_t speed;          // only if NEW or FULL
 };
 
 struct Item
 {
   std::uint16_t item_type_id;
-  std::uint8_t extra;  // only if type is stackable or multitype
+  std::uint8_t extra;  // only if is_stackable, is_fluid_container or is_splash
 };
 
 using Thing = std::variant<Creature, Item>;
@@ -89,7 +96,7 @@ common::Position getPosition(network::IncomingPacket* packet);
 common::Outfit getOutfit(network::IncomingPacket* packet);
 common::GamePosition getGamePosition(KnownContainers* container_ids, network::IncomingPacket* packet);
 common::ItemPosition getItemPosition(KnownContainers* container_ids, network::IncomingPacket* packet);
-Creature getCreature(bool known, network::IncomingPacket* packet);
+Creature getCreature(Creature::Update update, network::IncomingPacket* packet);
 Item getItem(network::IncomingPacket* packet);
 Thing getThing(network::IncomingPacket* packet);
 

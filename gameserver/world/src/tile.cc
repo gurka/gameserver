@@ -38,11 +38,12 @@ void Tile::addThing(const common::Thing& thing)
   // 0 = item top
   // 1 = creature
   // 2 = item bottom
-  const auto thing_prio = thing.item() ? (thing.item()->getItemType().always_on_top ? 1 : 3) : 2;
+  // TODO(simon): not correct anymore? see wsclient/graphics.cc
+  const auto thing_prio = thing.item() ? (thing.item()->getItemType().is_on_top ? 1 : 3) : 2;
   auto it = m_things.cbegin() + 1;
   while (it != m_things.cend())
   {
-    const auto it_prio = it->item() ? (it->item()->getItemType().always_on_top ? 1 : 3) : 2;
+    const auto it_prio = it->item() ? (it->item()->getItemType().is_on_top ? 1 : 3) : 2;
     if (it_prio >= thing_prio)
     {
       break;

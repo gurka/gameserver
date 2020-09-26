@@ -124,22 +124,43 @@ void Map::addThing(const common::Position& position, Thing thing)
 {
   auto& things = m_tiles.getTile(position)->things;
   const auto pre = things.size();
+
   auto it = things.cbegin() + 1;
   if (std::holds_alternative<Item>(thing))
   {
     const auto& item = std::get<Item>(thing);
-    if (item.type->always_on_top)
+    if (item.type->is_on_bottom)
     {
-      // Insert after ground item
-      ++it;
+      // Insert before first on_top item or first creature
+      while (it != things.cend())
+      {
+        if ((std::holds_alternative<Item>(*it) && std::get<Item>(*it).type->is_on_top) ||
+            std::holds_alternative<common::CreatureId>(*it))
+        {
+          break;
+        }
+        ++it;
+      }
+    }
+    else if (item.type->is_on_top)
+    {
+      // Insert before first creature or first item with neither is_on_bottom nor is_on_top
+      while (it != things.cend())
+      {
+        if (std::holds_alternative<common::CreatureId>(*it) ||
+            (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom))
+        {
+          break;
+        }
+        ++it;
+      }
     }
     else
     {
-      // Find first bottom item or end
-      auto it = things.cbegin();
+      // Insert before first item with neither is_on_bottom nor is_on_top
       while (it != things.cend())
       {
-        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->always_on_top)
+        if (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom)
         {
           break;
         }
@@ -149,19 +170,14 @@ void Map::addThing(const common::Position& position, Thing thing)
   }
   else
   {
-    // Find first creature, bottom item or end
+    // Insert before first creature or first item with neither is_on_bottom nor is_on_top
     while (it != things.cend())
     {
-      if (std::holds_alternative<common::CreatureId>(*it))
+      if (std::holds_alternative<common::CreatureId>(*it) ||
+          (std::holds_alternative<Item>(*it) && !std::get<Item>(*it).type->is_on_top && !std::get<Item>(*it).type->is_on_bottom))
       {
         break;
       }
-
-      if (!std::get<Item>(*it).type->always_on_top)
-      {
-        break;
-      }
-
       ++it;
     }
   }
@@ -169,12 +185,16 @@ void Map::addThing(const common::Position& position, Thing thing)
   it = things.insert(it, thing);
   const auto post = things.size();
 
+  (void)pre;
+  (void)post;
+#if 0
   LOG_INFO("%s: added Thing on position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
            std::distance(things.cbegin(), it),
            pre,
            post);
+#endif
 }
 
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
@@ -184,12 +204,23 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
   things.erase(things.cbegin() + stackpos);
   const auto post = m_tiles.getTile(position)->things.size();
 
+  (void)pre;
+  (void)post;
+#if 0
   LOG_INFO("%s: removed thing from position=%s stackpos=%d (size=%d->%d)",
            __func__,
            position.toString().c_str(),
            stackpos,
            pre,
            post);
+#endif
+}
+
+void Map::updateThing(const common::Position& position,
+                      std::uint8_t stackpos,
+                      const protocol::Thing& thing)
+{
+  m_tiles.getTile(position)->things[stackpos] = parseThing(thing);
 }
 
 void Map::moveThing(const common::Position& from_position,
@@ -248,19 +279,24 @@ Thing Map::parseThing(const protocol::Thing& thing)
   if (std::holds_alternative<protocol::Creature>(thing))
   {
     const auto& creature = std::get<protocol::Creature>(thing);
-    if (creature.known)
+    if (creature.update != protocol::Creature::Update::NEW)
     {
-      // Update known creature
+      // FULL or DIRECTION
       auto* known_creature = getCreature(creature.id);
       if (!known_creature)
       {
-        LOG_ERROR("%s: received known creature %u that is not known", __func__, creature.id);
+        LOG_ERROR("%s: received creature id %u that is not known", __func__, creature.id);
         return Thing();
       }
-      known_creature->health_percent = creature.health_percent;
+
       known_creature->direction = creature.direction;
-      known_creature->outfit = creature.outfit;
-      known_creature->speed = creature.speed;
+
+      if (creature.update == protocol::Creature::Update::FULL)
+      {
+        known_creature->health_percent = creature.health_percent;
+        known_creature->outfit = creature.outfit;
+        known_creature->speed = creature.speed;
+      }
     }
     else
     {

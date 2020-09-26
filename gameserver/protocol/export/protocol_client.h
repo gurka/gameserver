@@ -109,7 +109,9 @@ struct ThingAdded
 
 struct ThingChanged
 {
-
+  common::Position position = { 0, 0, 0 };
+  std::uint8_t stackpos;
+  Thing thing;
 };
 
 struct ThingRemoved

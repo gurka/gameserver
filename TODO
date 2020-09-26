@@ -40,6 +40,11 @@ WSClient:
   * Add arrow key handling to move creature
   * Fix namespaces chaos
 
+WSClient-replay:
+  * Spacebar to pause replay
+  * left/right to speed down/up
+  * lots of bugs xD
+
 Docker:
   * Troubleshoot emscripten cache issue (always downloading SDL lib)
   * Create docker image(s) with make target

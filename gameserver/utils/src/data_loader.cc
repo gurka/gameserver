@@ -105,127 +105,128 @@ bool load(const std::string& data_filename,
       switch (opt_byte)
       {
         case 0x00:
-        {
-          // Ground item
-          item_type.ground = true;
-          item_type.speed = fr.readU8();
-          if (item_type.speed == 0)
-          {
-            item_type.is_blocking = true;
-          }
-          fr.skip(1);  // TODO(simon): ??
+          item_type.is_ground = true;
+          item_type.speed = fr.readU16();
           break;
-        }
 
-        case 0x01:  // alwaysOnTop
-        case 0x02:  // alwaysOnTop + canWalkThrough?
-        {
-          item_type.always_on_top = true;
+        case 0x01:
+          item_type.is_on_bottom = true;
           break;
-        }
+
+        case 0x02:
+          item_type.is_on_top = true;
+          break;
 
         case 0x03:
-        {
-          // Container
           item_type.is_container = true;
           break;
-        }
 
         case 0x04:
-        {
-          // Stackable
           item_type.is_stackable = true;
           break;
-        }
 
         case 0x05:
-        {
-          // Usable
-          item_type.is_usable = true;
+          item_type.is_multi_use = true;
           break;
-        }
 
-        case 0x0A:
-        {
-          item_type.is_splash = true;
+        case 0x06:
+          item_type.is_force_use = true;
           break;
-        }
 
-        case 0x0B:
-        {
-          // Blocks
-          item_type.is_blocking = true;
+        case 0x07:
+          item_type.is_writable = true;
+          item_type.writable_length = fr.readU16();
           break;
-        }
 
-        case 0x0C:
-        {
-          // Movable
-          item_type.is_not_movable = true;
+        case 0x08:
+          item_type.is_writable_once = true;
+          item_type.writable_length = fr.readU16();
           break;
-        }
 
-        case 0x0F:
-        {
-          // Equipable
-          item_type.is_equipable = true;
-          break;
-        }
-
-        case 0x10:
-        {
-          // Makes light (skip 4 bytes)
-          fr.skip(4);
-          break;
-        }
-
-        case 0x13:  // render position offset for e.g. boxes, tables, parcels
-        {
-          item_type.offset = fr.readU16();
-          break;
-        }
-
-        case 0x09:  // fluid container?
-        {
+        case 0x09:
           item_type.is_fluid_container = true;
           break;
-        }
 
-        case 0x06:  // ladder up?
-        case 0x0D:  // blocks missiles
-        case 0x0E:  // blocks monsters
-        case 0x11:  // can see under (ladder holes, stair holes, etc)
-        case 0x12:  // no floor change
-        case 0x14:  // player color templates
-        case 0x18:  // non-decaying corpses
-        case 0x19:  // changed in 7.4?
-        case 0x1A:  // changed in 7.4? before: 2 extra bytes, after: 0 extra bytes?
-        {
-          item_type.unknown_properties.emplace_back(opt_byte);
+        case 0x0A:
+          item_type.is_splash = true;
           break;
-        }
 
-        case 0x07:  // read/writable objects (extra: num characters)
-        case 0x08:  // readable objects (extra: num characters)
-        case 0x16:  // minimap drawing
-        {
-          item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
+        case 0x0B:
+          item_type.is_blocking = true;
           break;
-        }
 
-        // new in 7.40
-        case 0x1D:  // line spot (?)
-        {
-          item_type.unknown_properties.emplace_back(opt_byte, fr.readU16());
+        case 0x0C:
+          item_type.is_immovable = true;
           break;
-        }
-        case 0x1B:  // "walls 2 types of the same material"?
-        case 0x17:  // some kind of decorables
-        case 0x1C:  // ???
-        {
-          item_type.unknown_properties.emplace_back(opt_byte);
+
+        case 0x0D:
+          item_type.is_missile_block = true;
           break;
-        }
+
+        case 0x0E:
+          item_type.is_not_pathable = true;
+          break;
+
+        case 0x0F:
+          item_type.is_equipable = true;
+          break;
+
+        case 0x10:
+          item_type.light_size = fr.readU8();
+          item_type.light_data[0] = fr.readU8();
+          item_type.light_data[1] = fr.readU8();
+          item_type.light_data[2] = fr.readU8();
+          break;
+
+        case 0x11:
+          item_type.is_floor_change = true;
+          break;
+
+        case 0x12:
+          item_type.is_full_ground = true;
+          break;
+
+        case 0x13:
+          item_type.elevation = fr.readU16();
+          break;
+
+        case 0x14:
+          item_type.is_displaced = true;
+          break;
+
+        // no 0x15?
+
+        case 0x16:
+          item_type.minimap_color = fr.readU16();
+          break;
+
+        case 0x17:
+          item_type.is_rotateable = true;
+          break;
+
+        case 0x18:
+          item_type.is_corpse = true;
+          break;
+
+        case 0x19:
+          item_type.is_hangable = true;
+          break;
+
+        case 0x1A:
+          item_type.is_hook_south = true;
+          break;
+
+        case 0x1B:
+          item_type.is_hook_east = true;
+          break;
+
+        case 0x1C:
+          item_type.is_animate_always = true;
+          break;
+
+        case 0x1D:
+          fr.readU16();  // lens help -> ignore
+          break;
 
         default:
         {
@@ -457,17 +458,41 @@ void dumpToJson(const ItemTypes& item_types,
                            ofs << "\"" << #NAME << "\": " << (item_type.NAME ? "true" : "false") << ", ";
 
     VALUE_INT(id);
-    VALUE_BOOL(ground);
-    VALUE_INT(speed);
-    VALUE_BOOL(is_blocking);
-    VALUE_BOOL(always_on_top);
+
+    VALUE_BOOL(is_ground);
+    VALUE_BOOL(is_on_bottom);
+    VALUE_BOOL(is_on_top);
     VALUE_BOOL(is_container);
     VALUE_BOOL(is_stackable);
-    VALUE_BOOL(is_usable);
-    VALUE_BOOL(is_splash);
+    VALUE_BOOL(is_multi_use);
+    VALUE_BOOL(is_force_use);
+    VALUE_BOOL(is_writable);
+    VALUE_BOOL(is_writable_once);
     VALUE_BOOL(is_fluid_container)
-    VALUE_BOOL(is_not_movable);
+    VALUE_BOOL(is_splash);
+    VALUE_BOOL(is_blocking);
+    VALUE_BOOL(is_immovable);
+    VALUE_BOOL(is_missile_block);
+    VALUE_BOOL(is_not_pathable);
     VALUE_BOOL(is_equipable);
+    VALUE_BOOL(is_floor_change);
+    VALUE_BOOL(is_full_ground);
+    VALUE_BOOL(is_displaced);
+    VALUE_BOOL(is_rotateable);
+    VALUE_BOOL(is_corpse);
+    VALUE_BOOL(is_hangable);
+    VALUE_BOOL(is_hook_south);
+    VALUE_BOOL(is_hook_east);
+    VALUE_BOOL(is_animate_always);
+
+    VALUE_INT(speed);
+    VALUE_INT(writable_length);
+    VALUE_INT(light_size);
+    VALUE_INT(light_data[0]);
+    VALUE_INT(light_data[1]);
+    VALUE_INT(light_data[2]);
+    VALUE_INT(elevation);
+    VALUE_INT(minimap_color);
 
     VALUE_STR(name);
     VALUE_INT(weight);
