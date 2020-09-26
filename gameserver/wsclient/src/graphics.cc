@@ -154,12 +154,12 @@ void drawFloor(const wsclient::wsworld::Map& map,
   // Skip first row
   it += wsclient::consts::KNOWN_TILES_X;
 
-  for (auto y = 0; y < wsclient::consts::DRAW_TILES_Y; y++)
+  for (auto y = 0; y < wsclient::consts::DRAW_TILES_Y + 1; y++)
   {
     // Skip first column
     ++it;
 
-    for (auto x = 0; x < wsclient::consts::DRAW_TILES_X; x++)
+    for (auto x = 0; x < wsclient::consts::DRAW_TILES_X + 1; x++)
     {
       const auto& tile = *it;
       ++it;
@@ -253,8 +253,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
       }
     }
 
-    // Skip the two extra columns to the right
-    ++it;
+    // Skip the 2nd extra column to the right
     ++it;
   }
 }
