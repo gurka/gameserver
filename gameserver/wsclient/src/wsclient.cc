@@ -86,6 +86,11 @@ void handlePartialMapPacket(const protocol::client::PartialMap& map_data)
   map.setPartialMapData(map_data);
 }
 
+void handleFloorChange(bool up, const protocol::client::FloorChangeMap& map_data)
+{
+  map.handleFloorChange(up, map_data);
+}
+
 void handleMagicEffect(const protocol::client::MagicEffect& effect)
 {
   (void)effect;
@@ -129,6 +134,11 @@ void handleThingChanged(const protocol::client::ThingChanged& thing_changed)
 void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
 {
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
+}
+
+void handleThingRemoved(const protocol::client::ThingRemoved& thing_removed)
+{
+  map.removeThing(thing_removed.position, thing_removed.stackpos);
 }
 
 void handlePacket(network::IncomingPacket* packet)
@@ -179,13 +189,15 @@ void handlePacket(network::IncomingPacket* packet)
         break;
 
       case 0x6B:
-      {
         handleThingChanged(protocol::client::getThingChanged(packet));
         break;
-      }
 
       case 0x6D:
         handleThingMoved(protocol::client::getThingMoved(packet));
+        break;
+
+      case 0x6C:
+        handleThingRemoved(protocol::client::getThingRemoved(packet));
         break;
 
       case 0x83:
@@ -221,11 +233,27 @@ void handlePacket(network::IncomingPacket* packet)
         break;
       }
 
+      case 0x6F:
+      {
+        // close container
+        packet->getU8();  // cid
+        break;
+      }
+
       case 0x70:
       {
         // container add item
         packet->getU8();  // cid
         protocol::getItem(packet);  // item (container item?)
+        break;
+      }
+
+      case 0x71:
+      {
+        // container update item
+        packet->getU8();  // cid
+        packet->getU8();  // slot
+        protocol::getItem(packet);
         break;
       }
 
@@ -337,6 +365,27 @@ void handlePacket(network::IncomingPacket* packet)
         packet->getU32();  // creature id
         packet->getU16();  // new speed
         break;
+
+      case 0xBE:
+      case 0xBF:
+      {
+        if ((type == 0xBE && map.getPlayerPosition().getZ() == 8) ||
+            (type == 0xBF && map.getPlayerPosition().getZ() == 7))
+        {
+          // From underground to sea level or
+          // from sea level to underground
+          // -> read tiles
+          handleFloorChange(type == 0xBE, protocol::client::getFloor(consts::KNOWN_TILES_X,
+                                                                     consts::KNOWN_TILES_Y,
+                                                                     packet));
+        }
+        else
+        {
+          // No tiles
+          handleFloorChange(type == 0xBE, protocol::client::FloorChangeMap());
+        }
+        break;
+      }
 
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",

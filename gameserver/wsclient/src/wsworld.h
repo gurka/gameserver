@@ -60,6 +60,7 @@ class Map
   // Methods that work with protocol objects
   void setFullMapData(const protocol::client::FullMap& map_data);
   void setPartialMapData(const protocol::client::PartialMap& map_data);
+  void handleFloorChange(bool up, const protocol::client::FloorChangeMap& map_data);
   void addProtocolThing(const common::Position& position, const protocol::Thing& thing);
 
   // Methods that does not work with protocol objects

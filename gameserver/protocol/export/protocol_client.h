@@ -116,7 +116,8 @@ struct ThingChanged
 
 struct ThingRemoved
 {
-
+  common::Position position = { 0, 0, 0 };
+  std::uint8_t stackpos;
 };
 
 struct ThingMoved
@@ -138,6 +139,11 @@ struct PartialMap
   std::vector<Tile> tiles;
 };
 
+struct FloorChangeMap
+{
+  std::vector<Tile> tiles;
+};
+
 // Reading packets
 
 // 0x0A
@@ -151,6 +157,9 @@ FullMap getFullMap(network::IncomingPacket* packet);
 
 // 0x65 0x66 0x67 0x68
 PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPacket* packet);
+
+// 0xBE 0xBF
+FloorChangeMap getFloor(int width, int height, network::IncomingPacket* packet);
 
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);

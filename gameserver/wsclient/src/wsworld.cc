@@ -115,6 +115,27 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
+void Map::handleFloorChange(bool up, const protocol::client::FloorChangeMap& map_data)
+{
+  (void)map_data;
+
+  const auto currentPosition = m_tiles.getMapPosition();
+  m_tiles.setMapPosition(common::Position(currentPosition.getX() + (up ? 1 : -1),
+                                          currentPosition.getY() + (up ? 1 : -1),
+                                          currentPosition.getZ() + (up ? -1 : 1)));
+
+  if (up && m_tiles.getMapPosition().getZ() == 7)
+  {
+    // We went from underground to sea level
+    LOG_ERROR("%s: went from underground to sea level, not yet implemented", __func__);
+  }
+  else if (!up && m_tiles.getMapPosition().getZ() == 8)
+  {
+    // We went from sea level to underground
+    LOG_ERROR("%s: went from sea level to underground, not yet implemented", __func__);
+  }
+}
+
 void Map::addProtocolThing(const common::Position& position, const protocol::Thing& thing)
 {
   addThing(position, parseThing(thing));

@@ -32,6 +32,50 @@
 namespace
 {
 
+void parseFloorTiles(int width, int height, network::IncomingPacket* packet, std::vector<protocol::Tile>* tiles, int* skip)
+{
+  auto skip_internal = 0;
+  if (!skip)
+  {
+    // If skip variable is not provided then we need to use our internal one
+    skip = &skip_internal;
+  }
+  for (auto x = 0; x < width; x++)
+  {
+    for (auto y = 0; y < height; y++)
+    {
+      protocol::Tile tile = {};
+      if (*skip > 0)
+      {
+        *skip -= 1;
+        tile.skip = true;
+        tiles->push_back(std::move(tile));
+        continue;
+      }
+
+      // Parse tile
+      tile.skip = false;
+      for (auto stackpos = 0; true; stackpos++)
+      {
+        if (packet->peekU16() >= 0xFF00)
+        {
+          *skip = packet->getU16() & 0xFF;
+          break;
+        }
+
+        if (stackpos > 10)
+        {
+          LOG_ERROR("%s: too many things on this tile", __func__);
+        }
+
+        tile.things.emplace_back(protocol::getThing(packet));
+      }
+
+      tiles->push_back(std::move(tile));
+    }
+  }
+}
+
 std::vector<protocol::Tile> getMapData(int z, int width, int height, network::IncomingPacket* packet)
 {
   std::vector<protocol::Tile> tiles;
@@ -46,40 +90,7 @@ std::vector<protocol::Tile> getMapData(int z, int width, int height, network::In
   auto skip = 0;
   for (auto z = z_start; z != (z_end + z_step); z += z_step)
   {
-    for (auto x = 0; x < width; x++)
-    {
-      for (auto y = 0; y < height; y++)
-      {
-        protocol::Tile tile = {};
-        if (skip > 0)
-        {
-          skip -= 1;
-          tile.skip = true;
-          tiles.push_back(std::move(tile));
-          continue;
-        }
-
-        // Parse tile
-        tile.skip = false;
-        for (auto stackpos = 0; true; stackpos++)
-        {
-          if (packet->peekU16() >= 0xFF00)
-          {
-            skip = packet->getU16() & 0xFF;
-            break;
-          }
-
-          if (stackpos > 10)
-          {
-            LOG_ERROR("%s: too many things on this tile", __func__);
-          }
-
-          tile.things.emplace_back(protocol::getThing(packet));
-        }
-
-        tiles.push_back(std::move(tile));
-      }
-    }
+    parseFloorTiles(width, height, packet, &tiles, &skip);
   }
 
   return tiles;
@@ -198,7 +209,8 @@ ThingChanged getThingChanged(network::IncomingPacket* packet)
 ThingRemoved getThingRemoved(network::IncomingPacket* packet)
 {
   ThingRemoved thing_removed;
-  (void)packet;
+  thing_removed.position = getPosition(packet);
+  packet->get(&thing_removed.stackpos);
   return thing_removed;
 }
 
@@ -234,6 +246,18 @@ PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPa
     case common::Direction::WEST:
       map.tiles = getMapData(z, 1, 14, packet);
       break;
+  }
+  return map;
+}
+
+FloorChangeMap getFloor(int width, int height, network::IncomingPacket* packet)
+{
+  FloorChangeMap map = {};
+  auto skip = 0;
+  parseFloorTiles(width, height, packet, &map.tiles, &skip);
+  if (skip != 0)
+  {
+    LOG_ERROR("%s: skip is not zero after parseFloorTiles", __func__);
   }
   return map;
 }
