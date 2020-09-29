@@ -32,46 +32,44 @@
 namespace
 {
 
-void parseFloorTiles(int width, int height, network::IncomingPacket* packet, std::vector<protocol::Tile>* tiles, int* skip)
+void parseFloorTiles(int num_floors, int width, int height, network::IncomingPacket* packet, std::vector<protocol::Tile>* tiles)
 {
-  auto skip_internal = 0;
-  if (!skip)
+  auto skip = 0;
+  for (auto z = 0; z < num_floors; ++z)
   {
-    // If skip variable is not provided then we need to use our internal one
-    skip = &skip_internal;
-  }
-  for (auto x = 0; x < width; x++)
-  {
-    for (auto y = 0; y < height; y++)
+    for (auto x = 0; x < width; ++x)
     {
-      protocol::Tile tile = {};
-      if (*skip > 0)
+      for (auto y = 0; y < height; ++y)
       {
-        *skip -= 1;
-        tile.skip = true;
+        protocol::Tile tile = {};
+        if (skip > 0)
+        {
+          skip -= 1;
+          tile.skip = true;
+          tiles->push_back(std::move(tile));
+          continue;
+        }
+
+        // Parse tile
+        tile.skip = false;
+        for (auto stackpos = 0; true; stackpos++)
+        {
+          if (packet->peekU16() >= 0xFF00)
+          {
+            skip = packet->getU16() & 0xFF;
+            break;
+          }
+
+          if (stackpos > 10)
+          {
+            LOG_ERROR("%s: too many things on this tile", __func__);
+          }
+
+          tile.things.emplace_back(protocol::getThing(packet));
+        }
+
         tiles->push_back(std::move(tile));
-        continue;
       }
-
-      // Parse tile
-      tile.skip = false;
-      for (auto stackpos = 0; true; stackpos++)
-      {
-        if (packet->peekU16() >= 0xFF00)
-        {
-          *skip = packet->getU16() & 0xFF;
-          break;
-        }
-
-        if (stackpos > 10)
-        {
-          LOG_ERROR("%s: too many things on this tile", __func__);
-        }
-
-        tile.things.emplace_back(protocol::getThing(packet));
-      }
-
-      tiles->push_back(std::move(tile));
     }
   }
 }
@@ -80,18 +78,9 @@ std::vector<protocol::Tile> getMapData(int z, int width, int height, network::In
 {
   std::vector<protocol::Tile> tiles;
 
-  // Valid z is 0..15, 0 is highest and 15 is lowest. 7 is sea level.
-  // If on ground or higher (z <= 7) then go over everything above ground (from 7 to 0)
-  // If underground (z > 7) then go from two below to two above, with cap on lowest level (from e.g. 8 to 12, if z = 10)
-  const auto z_start = z > 7 ? (z - 2)             :  7;
-  const auto z_end   = z > 7 ? std::min(z + 2, 15) :  0;
-  const auto z_step  = z > 7 ? 1                   : -1;
-
-  auto skip = 0;
-  for (auto z = z_start; z != (z_end + z_step); z += z_step)
-  {
-    parseFloorTiles(width, height, packet, &tiles, &skip);
-  }
+  // see doc/world.txt
+  const auto num_floors = z <= 7 ? 8 : (z <= 13 ? 5 : (z == 14 ? 4 : 3));
+  parseFloorTiles(num_floors, width, height, packet, &tiles);
 
   return tiles;
 }
@@ -250,15 +239,10 @@ PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPa
   return map;
 }
 
-FloorChangeMap getFloor(int width, int height, network::IncomingPacket* packet)
+FloorChange getFloorChange(int num_floors, int width, int height, network::IncomingPacket* packet)
 {
-  FloorChangeMap map = {};
-  auto skip = 0;
-  parseFloorTiles(width, height, packet, &map.tiles, &skip);
-  if (skip != 0)
-  {
-    LOG_ERROR("%s: skip is not zero after parseFloorTiles", __func__);
-  }
+  FloorChange map = {};
+  parseFloorTiles(num_floors, width, height, packet, &map.tiles);
   return map;
 }
 

@@ -115,24 +115,99 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
-void Map::handleFloorChange(bool up, const protocol::client::FloorChangeMap& map_data)
+void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
-  (void)map_data;
+  (void)floor_change;
 
-  const auto currentPosition = m_tiles.getMapPosition();
-  m_tiles.setMapPosition(common::Position(currentPosition.getX() + (up ? 1 : -1),
-                                          currentPosition.getY() + (up ? 1 : -1),
-                                          currentPosition.getZ() + (up ? -1 : 1)));
+  // Save number of floors _before_ changing map position
+  const auto num_floors = m_tiles.getNumFloors();
+
+  const auto current_position = m_tiles.getMapPosition();
+  m_tiles.setMapPosition(common::Position(current_position.getX() + (up ? 1 : -1),
+                                          current_position.getY() + (up ? 1 : -1),
+                                          current_position.getZ() + (up ? -1 : 1)));
 
   if (up && m_tiles.getMapPosition().getZ() == 7)
   {
-    // We went from underground to sea level
-    LOG_ERROR("%s: went from underground to sea level, not yet implemented", __func__);
+    // Moved up from underground to sea level
+    // We have floors: 6 7 8 9 10
+    // and received floors: 5 4 3 2 1 0
+    // End result should be: 7 6 5 4 3 2 1 0
+    // Swap floor[0] and floor[1], then insert new tiles at floor[2]
+    m_tiles.swapFloors(0, 1);
+    auto it = floor_change.tiles.cbegin();
+    for (auto z = 2; z < 8; ++z)
+    {
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      {
+        for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+        {
+          setTile(*it, m_tiles.getTileLocalPos(x, y, z));
+          ++it;
+        }
+      }
+    }
+  }
+  else if (up && m_tiles.getMapPosition().getZ() == 7)
+  {
+    // Move up from underground to underground
+    // We have 5 to 3 floors (depending on old z)
+    // and received one floor
+    // Shift all floors forward one step (but max 5 floors)
+    // and insert the new floor at [0]
+    // e.g. from 12 13 14 15 to 11 12 13 14 15
+    // or from 7 8 9 10 11 to 6 7 8 9 10
+    m_tiles.shiftFloorForwards(num_floors);
+    auto it = floor_change.tiles.cbegin();
+    for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+    {
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      {
+        setTile(*it, m_tiles.getTileLocalPos(x, y, 0));
+        ++it;
+      }
+    }
   }
   else if (!up && m_tiles.getMapPosition().getZ() == 8)
   {
-    // We went from sea level to underground
-    LOG_ERROR("%s: went from sea level to underground, not yet implemented", __func__);
+    // Moved down from sea level to underground
+    // We have floors: 7 6 5 4 3 2 1 0
+    // and received floors: 8 9 10 (order?)
+    // End result should be: 6 7 8 9 10
+    // Swap floor[0] and floor[1], then insert new tiles at floor[2]
+    m_tiles.swapFloors(0, 1);
+    auto it = floor_change.tiles.cbegin();
+    for (auto z = 2; z < 5; ++z)
+    {
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      {
+        for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+        {
+          setTile(*it, m_tiles.getTileLocalPos(x, y, z));
+          ++it;
+        }
+      }
+    }
+  }
+  else if (!up && m_tiles.getMapPosition().getZ() == 1)
+  {
+    // Moved down from underground to underground
+    // We have 5 to 3 floors (depending on old z)
+    // and received one or zero floors
+    // Shift all floors backwards one step
+    // and insert the new floor at the end (index depend on new z)
+    // e.g. from 7 8 9 10 11 to 8 9 10 11 12
+    // or 12 13 14 15 to 13 14 15
+    m_tiles.shiftFloorBackwards(num_floors);
+    auto it = floor_change.tiles.cbegin();
+    for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+    {
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      {
+        setTile(*it, m_tiles.getTileLocalPos(x, y, num_floors - 1));
+        ++it;
+      }
+    }
   }
 }
 

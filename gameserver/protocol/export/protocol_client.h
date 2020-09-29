@@ -139,7 +139,7 @@ struct PartialMap
   std::vector<Tile> tiles;
 };
 
-struct FloorChangeMap
+struct FloorChange
 {
   std::vector<Tile> tiles;
 };
@@ -159,7 +159,7 @@ FullMap getFullMap(network::IncomingPacket* packet);
 PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPacket* packet);
 
 // 0xBE 0xBF
-FloorChangeMap getFloor(int width, int height, network::IncomingPacket* packet);
+FloorChange getFloorChange(int num_floors, int width, int height, network::IncomingPacket* packet);
 
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);

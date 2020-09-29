@@ -59,6 +59,9 @@ class Tiles
   void setMapPosition(const common::Position& position) { m_position = position; }
 
   void shiftTiles(common::Direction direction);
+  void swapFloors(int z1, int z2);
+  void shiftFloorForwards(int num_floors);
+  void shiftFloorBackwards(int num_floors);
 
   Tile* getTileLocalPos(int local_x, int local_y, int local_z);
   const Tile* getTileLocalPos(int local_x, int local_y, int local_z) const;

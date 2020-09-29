@@ -86,9 +86,9 @@ void handlePartialMapPacket(const protocol::client::PartialMap& map_data)
   map.setPartialMapData(map_data);
 }
 
-void handleFloorChange(bool up, const protocol::client::FloorChangeMap& map_data)
+void handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
-  map.handleFloorChange(up, map_data);
+  map.handleFloorChange(up, floor_change);
 }
 
 void handleMagicEffect(const protocol::client::MagicEffect& effect)
@@ -369,21 +369,20 @@ void handlePacket(network::IncomingPacket* packet)
       case 0xBE:
       case 0xBF:
       {
-        if ((type == 0xBE && map.getPlayerPosition().getZ() == 8) ||
-            (type == 0xBF && map.getPlayerPosition().getZ() == 7))
-        {
-          // From underground to sea level or
-          // from sea level to underground
-          // -> read tiles
-          handleFloorChange(type == 0xBE, protocol::client::getFloor(consts::KNOWN_TILES_X,
-                                                                     consts::KNOWN_TILES_Y,
-                                                                     packet));
-        }
-        else
-        {
-          // No tiles
-          handleFloorChange(type == 0xBE, protocol::client::FloorChangeMap());
-        }
+        const auto up = type == 0xBE;
+        // Moved up from underground to sea level:     read 6 floors
+        // Moved up from underground to underground:   read 1 floor
+        // Moved down from sea level to underground:   read 3 floors
+        // Moved down from underground to underground: read 1 floor, unless we are on z=14 or z=15 then read 0 floors
+        // Moved up/down from sea level to sea level:  read 0 floors
+        const auto num_floors = (( up && map.getPlayerPosition().getZ() == 8) ? 6 :
+                                (( up && map.getPlayerPosition().getZ()  > 8) ? 1 :
+                                ((!up && map.getPlayerPosition().getZ() == 7) ? 3 :
+                                ((!up && map.getPlayerPosition().getZ()  > 7 && map.getPlayerPosition().getZ() < 13) ? 1 : (0)))));
+        handleFloorChange(up, protocol::client::getFloorChange(num_floors,
+                                                               consts::KNOWN_TILES_X,
+                                                               consts::KNOWN_TILES_Y,
+                                                               packet));
         break;
       }
 
