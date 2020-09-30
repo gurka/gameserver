@@ -122,6 +122,14 @@ Equipment getEquipment(bool empty, network::IncomingPacket* packet)
   return equipment;
 }
 
+CreatureSkull getCreatureSkull(network::IncomingPacket* packet)
+{
+  CreatureSkull creature_skull;
+  packet->get(&creature_skull.creature_id);
+  packet->get(&creature_skull.skull);
+  return creature_skull;
+}
+
 MagicEffect getMagicEffect(network::IncomingPacket* packet)
 {
   MagicEffect effect;

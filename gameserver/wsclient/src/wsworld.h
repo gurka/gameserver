@@ -61,7 +61,7 @@ class Map
   void setFullMapData(const protocol::client::FullMap& map_data);
   void setPartialMapData(const protocol::client::PartialMap& map_data);
   void updateTile(const protocol::client::TileUpdate& tile_update);
-  void handleFloorChange(bool up, const protocol::client::FloorChange& map_data);
+  void handleFloorChange(bool up, const protocol::client::FloorChange& floor_change);
   void addProtocolThing(const common::Position& position, const protocol::Thing& thing);
 
   // Methods that does not work with protocol objects
@@ -73,6 +73,8 @@ class Map
   void moveThing(const common::Position& from_position,
                  std::uint8_t from_stackpos,
                  const common::Position& to_position);
+
+  void setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull);
 
   const common::Position& getPlayerPosition() const { return m_tiles.getMapPosition(); }
   const auto& getTiles() const { return m_tiles.getTiles(); }

@@ -51,6 +51,12 @@ struct Equipment
   Item item;  // only if empty = false
 };
 
+struct CreatureSkull
+{
+  common::CreatureId creature_id;
+  std::uint8_t skull;
+};
+
 struct MagicEffect
 {
   common::Position position = { 0, 0, 0 };
@@ -175,6 +181,9 @@ MagicEffect getMagicEffect(network::IncomingPacket* packet);
 
 // 0x78 0x79
 Equipment getEquipment(bool empty, network::IncomingPacket* packet);
+
+// 0x90
+CreatureSkull getCreatureSkull(network::IncomingPacket* packet);
 
 // 0x0A
 PlayerStats getPlayerStats(network::IncomingPacket* packet);

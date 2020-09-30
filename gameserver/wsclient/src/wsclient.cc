@@ -146,6 +146,11 @@ void handleThingRemoved(const protocol::client::ThingRemoved& thing_removed)
   map.removeThing(thing_removed.position, thing_removed.stackpos);
 }
 
+void handleCreatureSkull(const protocol::client::CreatureSkull& creature_skull)
+{
+  map.setCreatureSkull(creature_skull.creature_id, creature_skull.skull);
+}
+
 void handlePacket(network::IncomingPacket* packet)
 {
   ++num_received_packets;
@@ -395,6 +400,33 @@ void handlePacket(network::IncomingPacket* packet)
         break;
       }
 
+      case 0xA3:
+        // cancel attack
+        break;
+
+      case 0x85:
+        // missile
+        protocol::getPosition(packet);  // from
+        protocol::getPosition(packet);  // to
+        packet->getU8();  // missile id
+        break;
+
+      case 0x90:
+        handleCreatureSkull(protocol::client::getCreatureSkull(packet));
+        break;
+
+      case 0x86:
+        // mark creature
+        packet->getU32();  // creature id
+        packet->getU8();  // color
+        // show for 1000ms?
+        break;
+
+      case 0xD4:
+        // vip logout
+        packet->getU32();  // vip id
+        break;
+
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
@@ -402,6 +434,7 @@ void handlePacket(network::IncomingPacket* packet)
                   packet->getPosition() - 1,
                   packet->getPosition() + 1,
                   num_received_packets);
+        abort();
         return;
     }
   }

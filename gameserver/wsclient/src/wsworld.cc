@@ -396,6 +396,18 @@ void Map::moveThing(const common::Position& from_position,
   LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
 }
 
+void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
+{
+  auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: could not find known Creature with id %u", __func__, creature_id);
+  }
+
+  (void)skull;
+  // TODO: it->skull = skull;
+}
+
 const Tile* Map::getTile(const common::Position& position) const
 {
   return m_tiles.getTile(position);
