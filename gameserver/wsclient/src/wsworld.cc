@@ -445,7 +445,23 @@ Thing Map::parseThing(const protocol::Thing& thing)
       // Remove known creature if set
       if (creature.id_to_remove != 0U)
       {
-        LOG_ERROR("%s: remove known creature not yet implemented", __func__);
+        auto it = std::find_if(m_known_creatures.begin(),
+                               m_known_creatures.end(),
+                               [id_to_remove = creature.id_to_remove](const Creature& creature)
+        {
+          return id_to_remove == creature.id;
+        });
+        if (it == m_known_creatures.end())
+        {
+          LOG_ERROR("%s: received CreatureId to remove %u but we do not know a Creature with that id",
+                    __func__,
+                    creature.id_to_remove);
+        }
+        else
+        {
+          LOG_DEBUG("%s: removing known Creature with id %u", __func__, creature.id_to_remove);
+          m_known_creatures.erase(it);
+        }
       }
 
       // Add new creature
