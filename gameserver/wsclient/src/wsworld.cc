@@ -115,6 +115,12 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
+void Map::updateTile(const protocol::client::TileUpdate& tile_update)
+{
+  auto* world_tile = m_tiles.getTile(tile_update.position);
+  setTile(tile_update.tile, world_tile);
+}
+
 void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
   // Save number of floors _before_ changing map position

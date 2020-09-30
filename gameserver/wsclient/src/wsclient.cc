@@ -86,6 +86,11 @@ void handlePartialMapPacket(const protocol::client::PartialMap& map_data)
   map.setPartialMapData(map_data);
 }
 
+void handleTileUpdatePacket(const protocol::client::TileUpdate& tile_update)
+{
+  map.updateTile(tile_update);
+}
+
 void handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
   map.handleFloorChange(up, floor_change);
@@ -182,6 +187,10 @@ void handlePacket(network::IncomingPacket* packet)
         handlePartialMapPacket(protocol::client::getPartialMap(map.getPlayerPosition().getZ(),
                                                                static_cast<common::Direction>(type - 0x65),
                                                                packet));
+        break;
+
+      case 0x69:
+        handleTileUpdatePacket(protocol::client::getTileUpdate(packet));
         break;
 
       case 0x6A:

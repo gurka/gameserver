@@ -32,6 +32,27 @@
 namespace
 {
 
+int parseTile(protocol::Tile* tile, network::IncomingPacket* packet)
+{
+  // Parse tile
+  tile->skip = false;
+  tile->things.clear();
+
+  auto stackpos = 0;
+  while (packet->peekU16() < 0xFF00)
+  {
+    if (stackpos > 10)
+    {
+      LOG_ERROR("%s: too many things on this tile", __func__);
+      abort();
+    }
+
+    tile->things.emplace_back(protocol::getThing(packet));
+  }
+
+  return packet->getU16() & 0xFF;
+}
+
 void parseFloorTiles(int num_floors, int width, int height, network::IncomingPacket* packet, std::vector<protocol::Tile>* tiles)
 {
   auto skip = 0;
@@ -50,24 +71,7 @@ void parseFloorTiles(int num_floors, int width, int height, network::IncomingPac
           continue;
         }
 
-        // Parse tile
-        tile.skip = false;
-        for (auto stackpos = 0; true; stackpos++)
-        {
-          if (packet->peekU16() >= 0xFF00)
-          {
-            skip = packet->getU16() & 0xFF;
-            break;
-          }
-
-          if (stackpos > 10)
-          {
-            LOG_ERROR("%s: too many things on this tile", __func__);
-          }
-
-          tile.things.emplace_back(protocol::getThing(packet));
-        }
-
+        skip = parseTile(&tile, packet);
         tiles->push_back(std::move(tile));
       }
     }
@@ -237,6 +241,14 @@ PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPa
       break;
   }
   return map;
+}
+
+TileUpdate getTileUpdate(network::IncomingPacket* packet)
+{
+  TileUpdate tile_update;
+  tile_update.position = getPosition(packet);
+  parseTile(&tile_update.tile, packet);
+  return tile_update;
 }
 
 FloorChange getFloorChange(int num_floors, int width, int height, network::IncomingPacket* packet)

@@ -139,6 +139,12 @@ struct PartialMap
   std::vector<Tile> tiles;
 };
 
+struct TileUpdate
+{
+  common::Position position = { 0, 0, 0 };
+  Tile tile;
+};
+
 struct FloorChange
 {
   std::vector<Tile> tiles;
@@ -157,6 +163,9 @@ FullMap getFullMap(network::IncomingPacket* packet);
 
 // 0x65 0x66 0x67 0x68
 PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPacket* packet);
+
+// 0x69
+TileUpdate getTileUpdate(network::IncomingPacket* packet);
 
 // 0xBE 0xBF
 FloorChange getFloorChange(int num_floors, int width, int height, network::IncomingPacket* packet);
