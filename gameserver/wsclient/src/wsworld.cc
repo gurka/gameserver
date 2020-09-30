@@ -117,8 +117,6 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
 
 void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
-  (void)floor_change;
-
   // Save number of floors _before_ changing map position
   const auto num_floors = m_tiles.getNumFloors();
 
@@ -126,6 +124,7 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
   m_tiles.setMapPosition(common::Position(current_position.getX() + (up ? 1 : -1),
                                           current_position.getY() + (up ? 1 : -1),
                                           current_position.getZ() + (up ? -1 : 1)));
+
 
   if (up && m_tiles.getMapPosition().getZ() == 7)
   {
@@ -138,9 +137,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     auto it = floor_change.tiles.cbegin();
     for (auto z = 2; z < 8; ++z)
     {
-      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
       {
-        for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
         {
           setTile(*it, m_tiles.getTileLocalPos(x, y, z));
           ++it;
@@ -159,9 +158,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     // or from 7 8 9 10 11 to 6 7 8 9 10
     m_tiles.shiftFloorForwards(num_floors);
     auto it = floor_change.tiles.cbegin();
-    for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
     {
-      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
       {
         setTile(*it, m_tiles.getTileLocalPos(x, y, 0));
         ++it;
@@ -179,9 +178,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     auto it = floor_change.tiles.cbegin();
     for (auto z = 2; z < 5; ++z)
     {
-      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
       {
-        for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
         {
           setTile(*it, m_tiles.getTileLocalPos(x, y, z));
           ++it;
@@ -200,9 +199,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     // or 12 13 14 15 to 13 14 15
     m_tiles.shiftFloorBackwards(num_floors);
     auto it = floor_change.tiles.cbegin();
-    for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
     {
-      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
       {
         setTile(*it, m_tiles.getTileLocalPos(x, y, num_floors - 1));
         ++it;
@@ -219,6 +218,7 @@ void Map::addProtocolThing(const common::Position& position, const protocol::Thi
 void Map::addThing(const common::Position& position, Thing thing)
 {
   auto& things = m_tiles.getTile(position)->things;
+
   const auto pre = things.size();
 
   auto it = things.cbegin() + 1;

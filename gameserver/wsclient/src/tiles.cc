@@ -119,7 +119,7 @@ void Tiles::swapFloors(int z1, int z2)
   const auto tiles_per_floor = consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y;
   for (auto i = 0; i < tiles_per_floor; ++i)
   {
-    std::swap(m_tiles[start_z1 + i], m_tiles[start_z2 + 1]);
+    std::swap(m_tiles[start_z1 + i], m_tiles[start_z2 + i]);
   }
 }
 

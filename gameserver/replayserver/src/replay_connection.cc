@@ -51,7 +51,7 @@ std::uint32_t getFakeTime(int speed)
   return fake_time_ms;
 }
 
-}
+}  // namespace
 
 ReplayConnection::ReplayConnection(asio::io_context* io_context,
                                    std::function<void(void)> on_close,
@@ -72,10 +72,22 @@ ReplayConnection::ReplayConnection(asio::io_context* io_context,
       {
         switch (packet->getU8())
         {
+          // NORTH - up arrow -> normal speed
+          case 0x65:
+            m_playback_speed = 1;
+            break;
+
+          // EAST -> right arrow -> increase speed
           case 0x66:
             m_playback_speed += 1;
             break;
 
+          // SOUTH -> down arrow -> pause
+          case 0x67:
+            m_playback_speed = 0;
+            break;
+
+          // WEST -> left arrow -> decrease speed
           case 0x68:
             m_playback_speed -= 1;
             break;
