@@ -285,6 +285,11 @@ void Map::addThing(const common::Position& position, Thing thing)
   }
 
   it = things.insert(it, thing);
+  if (things.size() > 10)
+  {
+    LOG_DEBUG("%s: Tile has more than 10 Things -> removing Thing at stackpos=10", __func__);
+    things.erase(things.begin() + 10);
+  }
   const auto post = things.size();
 
   (void)pre;
@@ -304,6 +309,13 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
   const auto pre = m_tiles.getTile(position)->things.size();
 
   auto& things = m_tiles.getTile(position)->things;
+  if (things.size() <= stackpos)
+  {
+    // This might not be an error
+    // It seems that the original server could send packets like this to the client
+    LOG_ERROR("%s: no Thing at stackpos=%d, number of Things: %u", __func__, stackpos, things.size());
+    return;
+  }
   things.erase(things.cbegin() + stackpos);
   const auto post = m_tiles.getTile(position)->things.size();
 
@@ -393,7 +405,7 @@ void Map::moveThing(const common::Position& from_position,
 
   addThing(to_position, thing);
 
-  LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
+  //LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
 }
 
 void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
@@ -405,7 +417,7 @@ void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
   }
 
   (void)skull;
-  // TODO: it->skull = skull;
+  // TODO(simon): it->skull = skull;
 }
 
 const Tile* Map::getTile(const common::Position& position) const
@@ -516,8 +528,7 @@ void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
 
   for (const auto& thing : protocol_tile.things)
   {
-    auto foo = parseThing(thing);
-    world_tile->things.emplace_back(std::move(foo));
+    world_tile->things.emplace_back(parseThing(thing));
   }
 }
 

@@ -458,6 +458,8 @@ static bool stop = false;
 static std::function<void(void)> main_loop_func;
 static std::unique_ptr<asio::deadline_timer> timer;
 
+static const int TARGET_FPS = 60;
+
 void timerCallback(const asio::error_code& ec)
 {
   if (ec)
@@ -474,7 +476,7 @@ void timerCallback(const asio::error_code& ec)
   }
 
   main_loop_func();
-  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
   timer->async_wait(&timerCallback);
 }
 
@@ -485,7 +487,7 @@ void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)
 
   main_loop_func = std::move(func);
   timer = std::make_unique<asio::deadline_timer>(io_context);
-  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
   timer->async_wait(&timerCallback);
   io_context.run();
 }
