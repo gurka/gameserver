@@ -35,20 +35,25 @@ else()
   )
 endif()
 
+add_executable(itemview
+  "src/itemview.cc"
+  "src/sprite_loader.cc"
+  "src/sprite_loader.h"
+  "src/texture.cc"
+  "src/texture.h"
+)
+
+target_link_libraries(itemview PRIVATE
+  common
+  utils
+)
+
 if (EMSCRIPTEN)
-  add_executable(itemview
-    "src/itemview.cc"
-    "src/sprite_loader.cc"
-    "src/sprite_loader.h"
-    "src/texture.cc"
-    "src/texture.h"
-  )
-
-  target_link_libraries(itemview PRIVATE
-    common
-    utils
-  )
-
   set_target_properties(itemview PROPERTIES SUFFIX ".html")
   target_link_options(itemview PRIVATE --preload-file "../files/")
+else()
+  target_link_libraries(itemview PRIVATE
+    SDL2
+    asio
+  )
 endif()

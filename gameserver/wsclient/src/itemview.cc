@@ -27,8 +27,14 @@
 #include <string>
 #include <vector>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #include <SDL.h>
+#else
+#include <asio.hpp>
+#include <SDL2/SDL.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#endif
 
 #include "logger.h"
 #include "data_loader.h"
@@ -59,53 +65,7 @@ wsclient::Texture texture;
 void logItem(const common::ItemType& item_type)
 {
   std::ostringstream ss;
-  ss << "ItemTypeId=" << item_type.id << " type=";
-  switch (item_type.type)
-  {
-    case common::ItemType::Type::ITEM:     ss << "ITEM";     break;
-    case common::ItemType::Type::CREATURE: ss << "CREATURE"; break;
-    case common::ItemType::Type::EFFECT:   ss << "EFFECT";   break;
-    case common::ItemType::Type::MISSILE:  ss << "MISSILE";  break;
-    default:                               ss << "INVALID";  break;
-  }
-  ss << (item_type.ground ? " ground" : "");
-  ss << " speed=" << item_type.speed;
-  ss << (item_type.is_blocking ? " is_blocking" : "");
-  ss << (item_type.always_on_top ? " always_on_top" : "");
-  ss << (item_type.is_container ? " is_container" : "");
-  ss << (item_type.is_stackable ? " is_stackable" : "");
-  ss << (item_type.is_usable ? " is_usable" : "");
-  ss << (item_type.is_splash ? " is_splash" : "");
-  ss << (item_type.is_not_movable ? " is_not_movable" : "");
-  ss << (item_type.is_equipable ? " is_equipable" : "");
-  ss << (item_type.is_fluid_container ? "is_fluid_container" : "");
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Sprite:";
-  ss << " width="    << static_cast<int>(item_type.sprite_width)
-     << " height="   << static_cast<int>(item_type.sprite_height)
-     << " extra="    << static_cast<int>(item_type.sprite_extra)
-     << " blend="    << static_cast<int>(item_type.sprite_blend_frames)
-     << " xdiv="     << static_cast<int>(item_type.sprite_xdiv)
-     << " ydiv="     << static_cast<int>(item_type.sprite_ydiv)
-     << " num_anim=" << static_cast<int>(item_type.sprite_num_anim);
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Sprite IDs:";
-  for (const auto& sprite_id : item_type.sprites)
-  {
-    ss << " " << sprite_id;
-  }
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Unknowns:";
-  for (const auto& unknown : item_type.unknown_properties)
-  {
-    ss << " id=" << static_cast<int>(unknown.id) << ",extra=" << unknown.extra;
-  }
+  item_type.dump(&ss, false);
   LOG_INFO(ss.str().c_str());
 }
 
@@ -198,6 +158,56 @@ void render()
   SDL_RenderPresent(sdl_renderer);
 }
 
+#ifndef EMSCRIPTEN
+static asio::io_context io_context;
+static bool stop = false;
+static std::function<void(void)> main_loop_func;
+static std::unique_ptr<asio::deadline_timer> timer;
+
+static const int TARGET_FPS = 60;
+
+void timerCallback(const asio::error_code& ec)
+{
+  if (ec)
+  {
+    LOG_ERROR("%s: ec: %s", __func__, ec.message().c_str());
+    stop = true;
+    return;
+  }
+
+  if (stop)
+  {
+    LOG_INFO("%s: stop=true", __func__);
+    return;
+  }
+
+  main_loop_func();
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
+  timer->async_wait(&timerCallback);
+}
+
+void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)  // NOLINT
+{
+  (void)fps;
+  (void)loop;
+
+  main_loop_func = std::move(func);
+  timer = std::make_unique<asio::deadline_timer>(io_context);
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
+  timer->async_wait(&timerCallback);
+  io_context.run();
+}
+
+void emscripten_cancel_main_loop()  // NOLINT
+{
+  if (!stop)
+  {
+    stop = true;
+    timer->cancel();
+  }
+}
+#endif
+
 void handleEvents()
 {
   SDL_Event event;
@@ -213,6 +223,14 @@ void handleEvents()
       {
         setItemType(item_type.id - 1);
       }
+      else if (event.key.keysym.sym == SDLK_ESCAPE)
+      {
+        stop = true;
+      }
+    }
+    else if (event.type == SDL_QUIT)
+    {
+      stop = true;
     }
   }
 }
@@ -263,7 +281,7 @@ int main()
   // Load initial item type
   // First creature (monster): 2284
   // First creature (outfit): 2410
-  setItemType(2410);
+  setItemType(3134);
 
   LOG_INFO("itemview started");
 
