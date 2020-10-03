@@ -41,17 +41,17 @@
 #include "sprite_loader.h"
 #include "texture.h"
 
-constexpr auto data_filename = "files/data.dat";
-constexpr auto sprite_filename = "files/sprite.dat";
+constexpr auto DATA_FILENAME = "files/data.dat";
+constexpr auto SPRITE_FILENAME = "files/sprite.dat";
 
-constexpr auto screen_width = 320;
-constexpr auto screen_height = 320;
-constexpr auto tile_size = 32;
+constexpr auto SCREEN_WIDTH = 320;
+constexpr auto SCREEN_HEIGHT = 320;
+constexpr auto TILE_SIZE = 32;
 
-constexpr auto scale = 2;
-constexpr auto screen_width_scaled = screen_width * scale;
-constexpr auto screen_height_scaled = screen_height * scale;
-constexpr auto tile_size_scaled = tile_size * scale;
+constexpr auto SCALE = 2;
+constexpr auto SCREEN_WIDTH_SCALED = SCREEN_WIDTH * SCALE;
+constexpr auto SCREEN_HEIGHT_SCALED = SCREEN_HEIGHT * SCALE;
+constexpr auto TILE_SIZE_SCALED = TILE_SIZE * SCALE;
 
 SDL_Renderer* sdl_renderer = nullptr;
 
@@ -100,10 +100,10 @@ void render()
       }
       const SDL_Rect dest
       {
-        dir * item_type.sprite_width * tile_size_scaled,
-        0 * item_type.sprite_height * tile_size_scaled,
-        item_type.sprite_width * tile_size_scaled,
-        item_type.sprite_height * tile_size_scaled
+        dir * item_type.sprite_width * TILE_SIZE_SCALED,
+        0 * item_type.sprite_height * TILE_SIZE_SCALED,
+        item_type.sprite_width * TILE_SIZE_SCALED,
+        item_type.sprite_height * TILE_SIZE_SCALED
       };
       SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
     }
@@ -121,10 +121,10 @@ void render()
         }
         const SDL_Rect dest
         {
-          dir * item_type.sprite_width * tile_size_scaled,
-          1 * item_type.sprite_height * tile_size_scaled,
-          item_type.sprite_width * tile_size_scaled,
-          item_type.sprite_height * tile_size_scaled
+          dir * item_type.sprite_width * TILE_SIZE_SCALED,
+          1 * item_type.sprite_height * TILE_SIZE_SCALED,
+          item_type.sprite_width * TILE_SIZE_SCALED,
+          item_type.sprite_height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
@@ -145,10 +145,10 @@ void render()
 
         const SDL_Rect dest
         {
-          x * item_type.sprite_width * tile_size_scaled,
-          y * item_type.sprite_height * tile_size_scaled,
-          item_type.sprite_width * tile_size_scaled,
-          item_type.sprite_height * tile_size_scaled
+          x * item_type.sprite_width * TILE_SIZE_SCALED,
+          y * item_type.sprite_height * TILE_SIZE_SCALED,
+          item_type.sprite_width * TILE_SIZE_SCALED,
+          item_type.sprite_height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
@@ -244,14 +244,14 @@ extern "C" void mainLoop()
 int main()
 {
   // Load data
-  if (!utils::data_loader::load(data_filename, &item_types, &item_type_id_first, &item_type_id_last))
+  if (!utils::data_loader::load(DATA_FILENAME, &item_types, &item_type_id_first, &item_type_id_last))
   {
     LOG_ERROR("Could not load data");
     return 1;
   }
 
   // Load sprites
-  if (!sprite_loader.load(sprite_filename))
+  if (!sprite_loader.load(SPRITE_FILENAME))
   {
     LOG_ERROR("Could not load sprites");
     return 1;
@@ -262,8 +262,8 @@ int main()
   auto* sdl_window = SDL_CreateWindow("itemview",
                                       SDL_WINDOWPOS_UNDEFINED,
                                       SDL_WINDOWPOS_UNDEFINED,
-                                      screen_width_scaled,
-                                      screen_height_scaled,
+                                      SCREEN_WIDTH_SCALED,
+                                      SCREEN_HEIGHT_SCALED,
                                       0);
   if (!sdl_window)
   {
@@ -285,6 +285,6 @@ int main()
 
   LOG_INFO("itemview started");
 
-  emscripten_set_main_loop(mainLoop, 0, true);
+  emscripten_set_main_loop(mainLoop, 0, 1);
 }
 
