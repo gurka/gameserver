@@ -427,6 +427,12 @@ void handlePacket(network::IncomingPacket* packet)
         packet->getU32();  // vip id
         break;
 
+      case 0x91:
+        // player shield icon
+        packet->getU32();  // creature id
+        packet->getU8();  // shield icon
+        break;
+
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
