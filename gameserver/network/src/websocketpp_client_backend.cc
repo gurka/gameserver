@@ -129,11 +129,18 @@ void WebsocketClient::asyncWrite(const std::uint8_t* buffer,
                                  std::size_t length,
                                  const AsyncHandler& handler)
 {
-  (void)this;
-  (void)buffer;
-  (void)length;
-  (void)handler;
-  LOG_ERROR("%s: not yet implemented", __func__);
+  const auto error_code = m_websocketpp_connection->send(buffer, length, websocketpp::frame::opcode::BINARY);
+
+  // Make sure that the handler is not called in this context
+  m_websocketpp_connection->get_socket().get_io_service().post([error_code, length, handler]()
+  {
+    if (error_code)
+    {
+      handler(ErrorCode(error_code.message()), 0U);
+      return;
+    }
+    handler(ErrorCode(), length);
+  });
 }
 
 void WebsocketClient::asyncRead(std::uint8_t* buffer,

@@ -51,6 +51,12 @@ struct Equipment
   Item item;  // only if empty = false
 };
 
+struct CreatureSkull
+{
+  common::CreatureId creature_id;
+  std::uint8_t skull;
+};
+
 struct MagicEffect
 {
   common::Position position = { 0, 0, 0 };
@@ -116,7 +122,8 @@ struct ThingChanged
 
 struct ThingRemoved
 {
-
+  common::Position position = { 0, 0, 0 };
+  std::uint8_t stackpos;
 };
 
 struct ThingMoved
@@ -138,6 +145,17 @@ struct PartialMap
   std::vector<Tile> tiles;
 };
 
+struct TileUpdate
+{
+  common::Position position = { 0, 0, 0 };
+  Tile tile;
+};
+
+struct FloorChange
+{
+  std::vector<Tile> tiles;
+};
+
 // Reading packets
 
 // 0x0A
@@ -152,11 +170,20 @@ FullMap getFullMap(network::IncomingPacket* packet);
 // 0x65 0x66 0x67 0x68
 PartialMap getPartialMap(int z, common::Direction direction, network::IncomingPacket* packet);
 
+// 0x69
+TileUpdate getTileUpdate(network::IncomingPacket* packet);
+
+// 0xBE 0xBF
+FloorChange getFloorChange(int num_floors, int width, int height, network::IncomingPacket* packet);
+
 // 0x83
 MagicEffect getMagicEffect(network::IncomingPacket* packet);
 
 // 0x78 0x79
 Equipment getEquipment(bool empty, network::IncomingPacket* packet);
+
+// 0x90
+CreatureSkull getCreatureSkull(network::IncomingPacket* packet);
 
 // 0x0A
 PlayerStats getPlayerStats(network::IncomingPacket* packet);

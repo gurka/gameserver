@@ -50,7 +50,9 @@ class ReplayConnection
   std::function<void(void)> m_on_close;
   std::unique_ptr<network::Connection> m_connection;
   Replay m_replay;
-  boost::posix_time::ptime m_replay_start_time;
+
+  std::uint32_t m_replay_start_ms;
+  int m_playback_speed;
 };
 
 #endif  // REPLAYSERVER_SRC_REPLAY_CONNECTION_H_

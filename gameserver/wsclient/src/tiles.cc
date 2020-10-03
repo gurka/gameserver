@@ -107,6 +107,48 @@ void Tiles::shiftTiles(common::Direction direction)
   }
 }
 
+void Tiles::swapFloors(int z1, int z2)
+{
+  if (z1 == z2)
+  {
+    return;
+  }
+
+  const auto start_z1 = index(0, 0, z1);
+  const auto start_z2 = index(0, 0, z2);
+  const auto tiles_per_floor = consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y;
+  for (auto i = 0; i < tiles_per_floor; ++i)
+  {
+    std::swap(m_tiles[start_z1 + i], m_tiles[start_z2 + i]);
+  }
+}
+
+void Tiles::shiftFloorForwards(int num_floors)
+{
+  for (auto z = num_floors; z > 0; --z)
+  {
+    const auto a = index(0, 0, z);
+    const auto b = index(0, 0, z - 1);
+    for (auto i = 0; i < consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y; ++i)
+    {
+      std::swap(m_tiles[a + i], m_tiles[b + i]);
+    }
+  }
+}
+
+void Tiles::shiftFloorBackwards(int num_floors)
+{
+  for (auto z = 0; z < num_floors; ++z)
+  {
+    const auto a = index(0, 0, z);
+    const auto b = index(0, 0, z + 1);
+    for (auto i = 0; i < consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y; ++i)
+    {
+      std::swap(m_tiles[a + i], m_tiles[b + i]);
+    }
+  }
+}
+
 Tile* Tiles::getTileLocalPos(int local_x, int local_y, int local_z)
 {
   // According to https://stackoverflow.com/a/123995/969365
@@ -134,12 +176,14 @@ Tile* Tiles::getTile(const common::Position& position)
 
 const Tile* Tiles::getTile(const common::Position& position) const
 {
-  // z mapping depends on what floor the player is on
-  // see getMapData in protocol_client.cc
-  const auto local_z = (m_position.getZ() <= 7) ? (7 - position.getZ()) : (position.getZ() - m_position.getZ() + 2);
-  const auto local_x = position.getX() + consts::KNOWN_TILES_OFFSET_X - m_position.getX();
-  const auto local_y = position.getY() + consts::KNOWN_TILES_OFFSET_Y - m_position.getY();
-  return getTileLocalPos(local_x, local_y, local_z);
+  if (!positionIsKnown(position))
+  {
+    LOG_ERROR("%s: we don't know position: %s", __func__, position.toString().c_str());
+    return nullptr;
+  }
+
+  const auto local_pos = globalToLocalPosition(position);
+  return getTileLocalPos(local_pos.getX(), local_pos.getY(), local_pos.getZ());
 }
 
 }  // namespace wsclient::wsworld

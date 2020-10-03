@@ -115,6 +115,107 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
+void Map::updateTile(const protocol::client::TileUpdate& tile_update)
+{
+  auto* world_tile = m_tiles.getTile(tile_update.position);
+  setTile(tile_update.tile, world_tile);
+}
+
+void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
+{
+  // Save number of floors _before_ changing map position
+  const auto num_floors = m_tiles.getNumFloors();
+
+  const auto current_position = m_tiles.getMapPosition();
+  m_tiles.setMapPosition(common::Position(current_position.getX() + (up ? 1 : -1),
+                                          current_position.getY() + (up ? 1 : -1),
+                                          current_position.getZ() + (up ? -1 : 1)));
+
+
+  if (up && m_tiles.getMapPosition().getZ() == 7)
+  {
+    // Moved up from underground to sea level
+    // We have floors: 6 7 8 9 10
+    // and received floors: 5 4 3 2 1 0
+    // End result should be: 7 6 5 4 3 2 1 0
+    // Swap floor[0] and floor[1], then insert new tiles at floor[2]
+    m_tiles.swapFloors(0, 1);
+    auto it = floor_change.tiles.cbegin();
+    for (auto z = 2; z < 8; ++z)
+    {
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      {
+        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+        {
+          setTile(*it, m_tiles.getTileLocalPos(x, y, z));
+          ++it;
+        }
+      }
+    }
+  }
+  else if (up && m_tiles.getMapPosition().getZ() == 7)
+  {
+    // Move up from underground to underground
+    // We have 5 to 3 floors (depending on old z)
+    // and received one floor
+    // Shift all floors forward one step (but max 5 floors)
+    // and insert the new floor at [0]
+    // e.g. from 12 13 14 15 to 11 12 13 14 15
+    // or from 7 8 9 10 11 to 6 7 8 9 10
+    m_tiles.shiftFloorForwards(num_floors);
+    auto it = floor_change.tiles.cbegin();
+    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+    {
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      {
+        setTile(*it, m_tiles.getTileLocalPos(x, y, 0));
+        ++it;
+      }
+    }
+  }
+  else if (!up && m_tiles.getMapPosition().getZ() == 8)
+  {
+    // Moved down from sea level to underground
+    // We have floors: 7 6 5 4 3 2 1 0
+    // and received floors: 8 9 10 (order?)
+    // End result should be: 6 7 8 9 10
+    // Swap floor[0] and floor[1], then insert new tiles at floor[2]
+    m_tiles.swapFloors(0, 1);
+    auto it = floor_change.tiles.cbegin();
+    for (auto z = 2; z < 5; ++z)
+    {
+      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      {
+        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+        {
+          setTile(*it, m_tiles.getTileLocalPos(x, y, z));
+          ++it;
+        }
+      }
+    }
+  }
+  else if (!up && m_tiles.getMapPosition().getZ() == 1)
+  {
+    // Moved down from underground to underground
+    // We have 5 to 3 floors (depending on old z)
+    // and received one or zero floors
+    // Shift all floors backwards one step
+    // and insert the new floor at the end (index depend on new z)
+    // e.g. from 7 8 9 10 11 to 8 9 10 11 12
+    // or 12 13 14 15 to 13 14 15
+    m_tiles.shiftFloorBackwards(num_floors);
+    auto it = floor_change.tiles.cbegin();
+    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+    {
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      {
+        setTile(*it, m_tiles.getTileLocalPos(x, y, num_floors - 1));
+        ++it;
+      }
+    }
+  }
+}
+
 void Map::addProtocolThing(const common::Position& position, const protocol::Thing& thing)
 {
   addThing(position, parseThing(thing));
@@ -123,6 +224,7 @@ void Map::addProtocolThing(const common::Position& position, const protocol::Thi
 void Map::addThing(const common::Position& position, Thing thing)
 {
   auto& things = m_tiles.getTile(position)->things;
+
   const auto pre = things.size();
 
   auto it = things.cbegin() + 1;
@@ -183,6 +285,11 @@ void Map::addThing(const common::Position& position, Thing thing)
   }
 
   it = things.insert(it, thing);
+  if (things.size() > 10)
+  {
+    LOG_DEBUG("%s: Tile has more than 10 Things -> removing Thing at stackpos=10", __func__);
+    things.erase(things.begin() + 10);
+  }
   const auto post = things.size();
 
   (void)pre;
@@ -200,7 +307,15 @@ void Map::addThing(const common::Position& position, Thing thing)
 void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
   const auto pre = m_tiles.getTile(position)->things.size();
+
   auto& things = m_tiles.getTile(position)->things;
+  if (things.size() <= stackpos)
+  {
+    // This might not be an error
+    // It seems that the original server could send packets like this to the client
+    LOG_ERROR("%s: no Thing at stackpos=%d, number of Things: %u", __func__, stackpos, things.size());
+    return;
+  }
   things.erase(things.cbegin() + stackpos);
   const auto post = m_tiles.getTile(position)->things.size();
 
@@ -228,30 +343,81 @@ void Map::moveThing(const common::Position& from_position,
                     const common::Position& to_position)
 {
   const auto thing = getThing(from_position, from_stackpos);
-  removeThing(from_position, from_stackpos);
-  if (std::holds_alternative<common::CreatureId>(thing))
+  if (!std::holds_alternative<common::CreatureId>(thing))
   {
-    // Rotate Creature based on movement
-    // TODO(simon): handle diagonal movement
-    auto* creature = getCreature(std::get<common::CreatureId>(thing));
-    if (from_position.getX() > to_position.getX())
+    LOG_ERROR("%s: Thing is not Creature, from_pos=%s from_stackpos=%d to_pos=%s",
+              __func__,
+              from_position.toString().c_str(),
+              from_stackpos,
+              to_position.toString().c_str());
+
+#if 0
+    // Print all positions that have Creature(s) to debug what went wrong
+    for (auto z = 0; z < m_tiles.getNumFloors(); z++)
     {
-      creature->direction = common::Direction::WEST;
+      for (auto y = 0; y < consts::KNOWN_TILES_Y; y++)
+      {
+        for (auto x = 0; x < consts::KNOWN_TILES_X; x++)
+        {
+          const auto* tile = m_tiles.getTileLocalPos(x, y, z);
+          for (const auto& thing : tile->things)
+          {
+            if (std::holds_alternative<common::CreatureId>(thing))
+            {
+              const auto local_pos = common::Position(x, y, z);
+              LOG_ERROR("%s: found Creature (%d) at local pos %s global pos %s",
+                        __func__,
+                        std::get<common::CreatureId>(thing),
+                        local_pos.toString().c_str(),
+                        m_tiles.localToGlobalPosition(local_pos).toString().c_str());
+            }
+          }
+        }
+      }
     }
-    else if (from_position.getX() < to_position.getX())
-    {
-      creature->direction = common::Direction::EAST;
-    }
-    else if (from_position.getY() > to_position.getY())
-    {
-      creature->direction = common::Direction::NORTH;
-    }
-    else if (from_position.getY() < to_position.getY())
-    {
-      creature->direction = common::Direction::SOUTH;
-    }
+#endif
+
+
+    return;
   }
+
+  removeThing(from_position, from_stackpos);
+
+  // Rotate Creature based on movement
+  // TODO(simon): handle diagonal movement
+  auto* creature = getCreature(std::get<common::CreatureId>(thing));
+  if (from_position.getX() > to_position.getX())
+  {
+    creature->direction = common::Direction::WEST;
+  }
+  else if (from_position.getX() < to_position.getX())
+  {
+    creature->direction = common::Direction::EAST;
+  }
+  else if (from_position.getY() > to_position.getY())
+  {
+    creature->direction = common::Direction::NORTH;
+  }
+  else if (from_position.getY() < to_position.getY())
+  {
+    creature->direction = common::Direction::SOUTH;
+  }
+
   addThing(to_position, thing);
+
+  //LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
+}
+
+void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
+{
+  auto* creature = getCreature(creature_id);
+  if (!creature)
+  {
+    LOG_ERROR("%s: could not find known Creature with id %u", __func__, creature_id);
+  }
+
+  (void)skull;
+  // TODO(simon): it->skull = skull;
 }
 
 const Tile* Map::getTile(const common::Position& position) const
@@ -303,7 +469,23 @@ Thing Map::parseThing(const protocol::Thing& thing)
       // Remove known creature if set
       if (creature.id_to_remove != 0U)
       {
-        LOG_ERROR("%s: remove known creature not yet implemented", __func__);
+        auto it = std::find_if(m_known_creatures.begin(),
+                               m_known_creatures.end(),
+                               [id_to_remove = creature.id_to_remove](const Creature& creature)
+        {
+          return id_to_remove == creature.id;
+        });
+        if (it == m_known_creatures.end())
+        {
+          LOG_ERROR("%s: received CreatureId to remove %u but we do not know a Creature with that id",
+                    __func__,
+                    creature.id_to_remove);
+        }
+        else
+        {
+          LOG_DEBUG("%s: removing known Creature with id %u", __func__, creature.id_to_remove);
+          m_known_creatures.erase(it);
+        }
       }
 
       // Add new creature

@@ -34,8 +34,6 @@ constexpr auto DRAW_TILES_X = 15;
 constexpr auto DRAW_TILES_Y = 11;
 constexpr auto KNOWN_TILES_X = 18;
 constexpr auto KNOWN_TILES_Y = 14;
-constexpr auto KNOWN_TILES_OFFSET_X = (KNOWN_TILES_X / 2) - 1;
-constexpr auto KNOWN_TILES_OFFSET_Y = (KNOWN_TILES_Y / 2) - 1;
 
 }  // namespace wsclient::consts
 

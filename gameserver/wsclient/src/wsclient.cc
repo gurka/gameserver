@@ -86,6 +86,16 @@ void handlePartialMapPacket(const protocol::client::PartialMap& map_data)
   map.setPartialMapData(map_data);
 }
 
+void handleTileUpdatePacket(const protocol::client::TileUpdate& tile_update)
+{
+  map.updateTile(tile_update);
+}
+
+void handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
+{
+  map.handleFloorChange(up, floor_change);
+}
+
 void handleMagicEffect(const protocol::client::MagicEffect& effect)
 {
   (void)effect;
@@ -131,9 +141,21 @@ void handleThingMoved(const protocol::client::ThingMoved& thing_moved)
   map.moveThing(thing_moved.old_position, thing_moved.old_stackpos, thing_moved.new_position);
 }
 
+void handleThingRemoved(const protocol::client::ThingRemoved& thing_removed)
+{
+  map.removeThing(thing_removed.position, thing_removed.stackpos);
+}
+
+void handleCreatureSkull(const protocol::client::CreatureSkull& creature_skull)
+{
+  map.setCreatureSkull(creature_skull.creature_id, creature_skull.skull);
+}
+
 void handlePacket(network::IncomingPacket* packet)
 {
   ++num_received_packets;
+
+  LOG_INFO("%s: handling packet number %d", __func__, num_received_packets);
 
   while (!packet->isEmpty())
   {
@@ -172,18 +194,24 @@ void handlePacket(network::IncomingPacket* packet)
                                                                packet));
         break;
 
+      case 0x69:
+        handleTileUpdatePacket(protocol::client::getTileUpdate(packet));
+        break;
+
       case 0x6A:
         handleThingAdded(protocol::client::getThingAdded(packet));
         break;
 
       case 0x6B:
-      {
         handleThingChanged(protocol::client::getThingChanged(packet));
         break;
-      }
 
       case 0x6D:
         handleThingMoved(protocol::client::getThingMoved(packet));
+        break;
+
+      case 0x6C:
+        handleThingRemoved(protocol::client::getThingRemoved(packet));
         break;
 
       case 0x83:
@@ -219,11 +247,35 @@ void handlePacket(network::IncomingPacket* packet)
         break;
       }
 
+      case 0x6F:
+      {
+        // close container
+        packet->getU8();  // cid
+        break;
+      }
+
       case 0x70:
       {
         // container add item
         packet->getU8();  // cid
         protocol::getItem(packet);  // item (container item?)
+        break;
+      }
+
+      case 0x71:
+      {
+        // container update item
+        packet->getU8();  // cid
+        packet->getU8();  // slot
+        protocol::getItem(packet);
+        break;
+      }
+
+      case 0x72:
+      {
+        // container remove item
+        packet->getU8();  // cid
+        packet->getU8();  // slot
         break;
       }
 
@@ -275,7 +327,7 @@ void handlePacket(network::IncomingPacket* packet)
       case 0xAA:
       {
         // talk
-        packet->getString();  // talker
+        const auto talker = packet->getString();  // talker
         const auto type = packet->getU8();  // type
         switch (type)
         {
@@ -293,13 +345,93 @@ void handlePacket(network::IncomingPacket* packet)
             packet->getU16();  // channel id?
             break;
 
+          case 4:  // whisper?
+            break;
+
           default:
             LOG_ERROR("%s: unknown talk type: %u", __func__, type);
             break;
         }
-        packet->getString();  // text
+        const auto text = packet->getString();  // text
+
+        LOG_INFO("%s: %s said \"%s\"", __func__, talker.c_str(), text.c_str());
+
         break;
       }
+
+      case 0xAD:
+        // Open private channel
+        packet->getString();
+        break;
+
+      case 0xB5:
+        // cancel walk
+        packet->getU8();  // dir -> change player to this dir
+        break;
+
+      case 0xA2:
+        // player state
+        packet->getU8();
+        break;
+
+      case 0x8F:
+        // creature speed
+        packet->getU32();  // creature id
+        packet->getU16();  // new speed
+        break;
+
+      case 0xBE:
+      case 0xBF:
+      {
+        const auto up = type == 0xBE;
+        // Moved up from underground to sea level:     read 6 floors
+        // Moved up from underground to underground:   read 1 floor
+        // Moved down from sea level to underground:   read 3 floors
+        // Moved down from underground to underground: read 1 floor, unless we are on z=14 or z=15 then read 0 floors
+        // Moved up/down from sea level to sea level:  read 0 floors
+        const auto num_floors = (( up && map.getPlayerPosition().getZ() == 8) ? 6 :
+                                (( up && map.getPlayerPosition().getZ()  > 8) ? 1 :
+                                ((!up && map.getPlayerPosition().getZ() == 7) ? 3 :
+                                ((!up && map.getPlayerPosition().getZ()  > 7 && map.getPlayerPosition().getZ() < 13) ? 1 : (0)))));
+        handleFloorChange(up, protocol::client::getFloorChange(num_floors,
+                                                               consts::KNOWN_TILES_X,
+                                                               consts::KNOWN_TILES_Y,
+                                                               packet));
+        break;
+      }
+
+      case 0xA3:
+        // cancel attack
+        break;
+
+      case 0x85:
+        // missile
+        protocol::getPosition(packet);  // from
+        protocol::getPosition(packet);  // to
+        packet->getU8();  // missile id
+        break;
+
+      case 0x90:
+        handleCreatureSkull(protocol::client::getCreatureSkull(packet));
+        break;
+
+      case 0x86:
+        // mark creature
+        packet->getU32();  // creature id
+        packet->getU8();  // color
+        // show for 1000ms?
+        break;
+
+      case 0xD4:
+        // vip logout
+        packet->getU32();  // vip id
+        break;
+
+      case 0x91:
+        // player shield icon
+        packet->getU32();  // creature id
+        packet->getU8();  // shield icon
+        break;
 
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
@@ -308,6 +440,7 @@ void handlePacket(network::IncomingPacket* packet)
                   packet->getPosition() - 1,
                   packet->getPosition() + 1,
                   num_received_packets);
+        abort();
         return;
     }
   }
@@ -331,6 +464,8 @@ static bool stop = false;
 static std::function<void(void)> main_loop_func;
 static std::unique_ptr<asio::deadline_timer> timer;
 
+static const int TARGET_FPS = 60;
+
 void timerCallback(const asio::error_code& ec)
 {
   if (ec)
@@ -347,7 +482,7 @@ void timerCallback(const asio::error_code& ec)
   }
 
   main_loop_func();
-  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
   timer->async_wait(&timerCallback);
 }
 
@@ -358,7 +493,7 @@ void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)
 
   main_loop_func = std::move(func);
   timer = std::make_unique<asio::deadline_timer>(io_context);
-  timer->expires_from_now(boost::posix_time::millisec(16));
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
   timer->async_wait(&timerCallback);
   io_context.run();
 }

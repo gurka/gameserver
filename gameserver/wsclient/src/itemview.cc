@@ -27,25 +27,31 @@
 #include <string>
 #include <vector>
 
+#ifdef EMSCRIPTEN
 #include <emscripten.h>
 #include <SDL.h>
+#else
+#include <asio.hpp>
+#include <SDL2/SDL.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#endif
 
 #include "logger.h"
 #include "data_loader.h"
 #include "sprite_loader.h"
 #include "texture.h"
 
-constexpr auto data_filename = "files/data.dat";
-constexpr auto sprite_filename = "files/sprite.dat";
+constexpr auto DATA_FILENAME = "files/data.dat";
+constexpr auto SPRITE_FILENAME = "files/sprite.dat";
 
-constexpr auto screen_width = 320;
-constexpr auto screen_height = 320;
-constexpr auto tile_size = 32;
+constexpr auto SCREEN_WIDTH = 320;
+constexpr auto SCREEN_HEIGHT = 320;
+constexpr auto TILE_SIZE = 32;
 
-constexpr auto scale = 2;
-constexpr auto screen_width_scaled = screen_width * scale;
-constexpr auto screen_height_scaled = screen_height * scale;
-constexpr auto tile_size_scaled = tile_size * scale;
+constexpr auto SCALE = 2;
+constexpr auto SCREEN_WIDTH_SCALED = SCREEN_WIDTH * SCALE;
+constexpr auto SCREEN_HEIGHT_SCALED = SCREEN_HEIGHT * SCALE;
+constexpr auto TILE_SIZE_SCALED = TILE_SIZE * SCALE;
 
 SDL_Renderer* sdl_renderer = nullptr;
 
@@ -59,53 +65,7 @@ wsclient::Texture texture;
 void logItem(const common::ItemType& item_type)
 {
   std::ostringstream ss;
-  ss << "ItemTypeId=" << item_type.id << " type=";
-  switch (item_type.type)
-  {
-    case common::ItemType::Type::ITEM:     ss << "ITEM";     break;
-    case common::ItemType::Type::CREATURE: ss << "CREATURE"; break;
-    case common::ItemType::Type::EFFECT:   ss << "EFFECT";   break;
-    case common::ItemType::Type::MISSILE:  ss << "MISSILE";  break;
-    default:                               ss << "INVALID";  break;
-  }
-  ss << (item_type.ground ? " ground" : "");
-  ss << " speed=" << item_type.speed;
-  ss << (item_type.is_blocking ? " is_blocking" : "");
-  ss << (item_type.always_on_top ? " always_on_top" : "");
-  ss << (item_type.is_container ? " is_container" : "");
-  ss << (item_type.is_stackable ? " is_stackable" : "");
-  ss << (item_type.is_usable ? " is_usable" : "");
-  ss << (item_type.is_splash ? " is_splash" : "");
-  ss << (item_type.is_not_movable ? " is_not_movable" : "");
-  ss << (item_type.is_equipable ? " is_equipable" : "");
-  ss << (item_type.is_fluid_container ? "is_fluid_container" : "");
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Sprite:";
-  ss << " width="    << static_cast<int>(item_type.sprite_width)
-     << " height="   << static_cast<int>(item_type.sprite_height)
-     << " extra="    << static_cast<int>(item_type.sprite_extra)
-     << " blend="    << static_cast<int>(item_type.sprite_blend_frames)
-     << " xdiv="     << static_cast<int>(item_type.sprite_xdiv)
-     << " ydiv="     << static_cast<int>(item_type.sprite_ydiv)
-     << " num_anim=" << static_cast<int>(item_type.sprite_num_anim);
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Sprite IDs:";
-  for (const auto& sprite_id : item_type.sprites)
-  {
-    ss << " " << sprite_id;
-  }
-  LOG_INFO(ss.str().c_str());
-
-  ss.str("");
-  ss << "Unknowns:";
-  for (const auto& unknown : item_type.unknown_properties)
-  {
-    ss << " id=" << static_cast<int>(unknown.id) << ",extra=" << unknown.extra;
-  }
+  item_type.dump(&ss, false);
   LOG_INFO(ss.str().c_str());
 }
 
@@ -140,10 +100,10 @@ void render()
       }
       const SDL_Rect dest
       {
-        dir * item_type.sprite_width * tile_size_scaled,
-        0 * item_type.sprite_height * tile_size_scaled,
-        item_type.sprite_width * tile_size_scaled,
-        item_type.sprite_height * tile_size_scaled
+        dir * item_type.sprite_width * TILE_SIZE_SCALED,
+        0 * item_type.sprite_height * TILE_SIZE_SCALED,
+        item_type.sprite_width * TILE_SIZE_SCALED,
+        item_type.sprite_height * TILE_SIZE_SCALED
       };
       SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
     }
@@ -161,10 +121,10 @@ void render()
         }
         const SDL_Rect dest
         {
-          dir * item_type.sprite_width * tile_size_scaled,
-          1 * item_type.sprite_height * tile_size_scaled,
-          item_type.sprite_width * tile_size_scaled,
-          item_type.sprite_height * tile_size_scaled
+          dir * item_type.sprite_width * TILE_SIZE_SCALED,
+          1 * item_type.sprite_height * TILE_SIZE_SCALED,
+          item_type.sprite_width * TILE_SIZE_SCALED,
+          item_type.sprite_height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
@@ -185,10 +145,10 @@ void render()
 
         const SDL_Rect dest
         {
-          x * item_type.sprite_width * tile_size_scaled,
-          y * item_type.sprite_height * tile_size_scaled,
-          item_type.sprite_width * tile_size_scaled,
-          item_type.sprite_height * tile_size_scaled
+          x * item_type.sprite_width * TILE_SIZE_SCALED,
+          y * item_type.sprite_height * TILE_SIZE_SCALED,
+          item_type.sprite_width * TILE_SIZE_SCALED,
+          item_type.sprite_height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
@@ -197,6 +157,56 @@ void render()
 
   SDL_RenderPresent(sdl_renderer);
 }
+
+#ifndef EMSCRIPTEN
+static asio::io_context io_context;
+static bool stop = false;
+static std::function<void(void)> main_loop_func;
+static std::unique_ptr<asio::deadline_timer> timer;
+
+static const int TARGET_FPS = 60;
+
+void timerCallback(const asio::error_code& ec)
+{
+  if (ec)
+  {
+    LOG_ERROR("%s: ec: %s", __func__, ec.message().c_str());
+    stop = true;
+    return;
+  }
+
+  if (stop)
+  {
+    LOG_INFO("%s: stop=true", __func__);
+    return;
+  }
+
+  main_loop_func();
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
+  timer->async_wait(&timerCallback);
+}
+
+void emscripten_set_main_loop(std::function<void(void)> func, int fps, int loop)  // NOLINT
+{
+  (void)fps;
+  (void)loop;
+
+  main_loop_func = std::move(func);
+  timer = std::make_unique<asio::deadline_timer>(io_context);
+  timer->expires_from_now(boost::posix_time::millisec(1000 / TARGET_FPS));
+  timer->async_wait(&timerCallback);
+  io_context.run();
+}
+
+void emscripten_cancel_main_loop()  // NOLINT
+{
+  if (!stop)
+  {
+    stop = true;
+    timer->cancel();
+  }
+}
+#endif
 
 void handleEvents()
 {
@@ -213,6 +223,14 @@ void handleEvents()
       {
         setItemType(item_type.id - 1);
       }
+      else if (event.key.keysym.sym == SDLK_ESCAPE)
+      {
+        stop = true;
+      }
+    }
+    else if (event.type == SDL_QUIT)
+    {
+      stop = true;
     }
   }
 }
@@ -226,14 +244,14 @@ extern "C" void mainLoop()
 int main()
 {
   // Load data
-  if (!utils::data_loader::load(data_filename, &item_types, &item_type_id_first, &item_type_id_last))
+  if (!utils::data_loader::load(DATA_FILENAME, &item_types, &item_type_id_first, &item_type_id_last))
   {
     LOG_ERROR("Could not load data");
     return 1;
   }
 
   // Load sprites
-  if (!sprite_loader.load(sprite_filename))
+  if (!sprite_loader.load(SPRITE_FILENAME))
   {
     LOG_ERROR("Could not load sprites");
     return 1;
@@ -244,8 +262,8 @@ int main()
   auto* sdl_window = SDL_CreateWindow("itemview",
                                       SDL_WINDOWPOS_UNDEFINED,
                                       SDL_WINDOWPOS_UNDEFINED,
-                                      screen_width_scaled,
-                                      screen_height_scaled,
+                                      SCREEN_WIDTH_SCALED,
+                                      SCREEN_HEIGHT_SCALED,
                                       0);
   if (!sdl_window)
   {
@@ -263,10 +281,10 @@ int main()
   // Load initial item type
   // First creature (monster): 2284
   // First creature (outfit): 2410
-  setItemType(2410);
+  setItemType(3134);
 
   LOG_INFO("itemview started");
 
-  emscripten_set_main_loop(mainLoop, 0, true);
+  emscripten_set_main_loop(mainLoop, 0, 1);
 }
 

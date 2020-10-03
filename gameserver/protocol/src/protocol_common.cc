@@ -45,6 +45,10 @@ void setItemTypes(const utils::data_loader::ItemTypes* item_types_in)
 
 common::Position getPosition(network::IncomingPacket* packet)
 {
+  if (packet->peekU16() == 0xFFFFU)
+  {
+    LOG_ERROR("%s: x=0xFFFF, next 4 bytes might be a CreatureId so we need to implement getKnownThing", __func__);
+  }
   const auto x  = packet->getU16();
   const auto y  = packet->getU16();
   const auto z  = packet->getU8();

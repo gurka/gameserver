@@ -27,8 +27,31 @@
 #include "logger.h"
 
 using boost::posix_time::millisec;
-using boost::posix_time::ptime;
-using boost::posix_time::microsec_clock;
+
+namespace
+{
+
+std::uint32_t getFakeTime(int speed)
+{
+  using boost::posix_time::ptime;
+  using boost::posix_time::microsec_clock;
+
+  static auto last_current_time = microsec_clock::universal_time();
+  static auto last_fake_ms = 0U;
+
+  const auto current_time = microsec_clock::universal_time();
+  const auto elapsed_ms = (current_time - last_current_time).total_milliseconds();
+
+  // Add an extra fake ms in case this function gets called too fast
+  const auto fake_time_ms = last_fake_ms + (elapsed_ms * speed) + (elapsed_ms == 0 ? 1 : 0);
+
+  last_current_time = current_time;
+  last_fake_ms = fake_time_ms;
+
+  return fake_time_ms;
+}
+
+}  // namespace
 
 ReplayConnection::ReplayConnection(asio::io_context* io_context,
                                    std::function<void(void)> on_close,
@@ -36,16 +59,42 @@ ReplayConnection::ReplayConnection(asio::io_context* io_context,
     : m_timer(*io_context),
       m_timer_started(false),
       m_on_close(std::move(on_close)),
-      m_connection(std::move(connection))
+      m_connection(std::move(connection)),
+      m_playback_speed(1)
 {
   // Setup network::Connection
   network::Connection::Callbacks callbacks =
   {
     // onPacketReceived
-    [](network::IncomingPacket* packet)
+    [this](network::IncomingPacket* packet)
     {
-      (void)packet;
-      LOG_DEBUG("onPacketReceived -> ignore");
+      if (packet->bytesLeft() == 1)
+      {
+        switch (packet->getU8())
+        {
+          // NORTH - up arrow -> normal speed
+          case 0x65:
+            m_playback_speed = 1;
+            break;
+
+          // EAST -> right arrow -> increase speed
+          case 0x66:
+            m_playback_speed += 1;
+            break;
+
+          // SOUTH -> down arrow -> pause
+          case 0x67:
+            m_playback_speed = 0;
+            break;
+
+          // WEST -> left arrow -> decrease speed
+          case 0x68:
+            m_playback_speed -= 1;
+            break;
+        }
+
+        LOG_ERROR("%s: changed playback speed to %d", __func__, m_playback_speed);
+      }
     },
 
     // onDisconnected
@@ -75,16 +124,15 @@ ReplayConnection::ReplayConnection(asio::io_context* io_context,
     return;
   }
 
-  m_replay_start_time = microsec_clock::universal_time();
+  m_replay_start_ms = getFakeTime(m_playback_speed);
   sendNextPacket();
 }
 
 void ReplayConnection::sendNextPacket()
 {
   // Send all packets that it is time for to send
-  const auto now = ptime(microsec_clock::universal_time());
-  const auto elapsed_ms = (now - m_replay_start_time).total_milliseconds();
-  while (m_replay.getNumberOfPacketsLeft() > 0U && m_replay.getNextPacketTime() < elapsed_ms)
+  const auto elapsed_ms = getFakeTime(m_playback_speed) - m_replay_start_ms;
+  while (m_replay.getNumberOfPacketsLeft() > 0U && m_replay.getNextPacketTime() <= elapsed_ms)
   {
     LOG_INFO("%s: sending a packet!", __func__);
     m_connection->sendPacket(m_replay.getNextPacket());
