@@ -60,7 +60,7 @@ bool load(const std::string& data_filename,
   }
 
   fr.skip(4);  // skip checksum
-  const auto num_items = fr.readU16() - 100;  // since 100 is the first item id
+  const auto num_items = fr.readU16() - 99; // id 0..99 is invalid
   const auto num_outfits = fr.readU16();
   const auto num_effects = fr.readU16();
   const auto num_missiles = fr.readU16();
