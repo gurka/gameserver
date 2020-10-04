@@ -137,10 +137,8 @@ void render()
     {
       for (auto x = 0; x < item_type.sprite_xdiv; x++)
       {
-        const auto texture_index = (x % item_type.sprite_xdiv) +
-                                   ((y % item_type.sprite_ydiv) * item_type.sprite_xdiv) +
-                                   (anim_tick % item_type.sprite_num_anim);
-        auto* sdl_texture = texture.getItemTexture(texture_index);
+        const auto version = (y * item_type.sprite_xdiv) + x;
+        auto* sdl_texture = texture.getItemTexture(version, anim_tick);
         if (!sdl_texture)
         {
           continue;
@@ -284,7 +282,7 @@ int main()
   // Load initial item type
   // First creature (monster): 2284
   // First creature (outfit): 2410
-  setItemType(2000);
+  setItemType(2667);
 
   LOG_INFO("itemview started");
 

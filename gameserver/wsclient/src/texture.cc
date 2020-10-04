@@ -30,6 +30,7 @@
  * Item -> ItemType -> Sprites -> Texture
  *
  * Item has an ItemType (ItemTypeId)
+ *
  * ItemType has sprite information:
  *  width:     >1 if the full sprite has more than 1 sprite in width
  *  height:    >1 if the full sprite has more than 1 sprite in height
@@ -38,20 +39,20 @@
  *             if ITEM   and blend=2: blend two sprites together
  *             if OUTFIT and blend=2: sprite is colored based on outfit info
  *             if OTHER  and blend=2: invalid?
- *  xdiv:      if ITEM and not countable: different sprites for different (global) position in x
- *             if ITEM and     countable: 8 sets of sprites for when count is: 1, 2, 3, 4, 5 ... ?
- *             if OUTFIT and 4: 4 sets of sprites, one per direction
+ *  xdiv:      different sprites for different (global) position in x
+ *             or different sprites for certain items, e.g. countable, hangable, and so on
  *  ydiv:      different sprites for different (global) position in y
  *  num_anims: number of animations
  *             note: for creatures first anim is standing still, and the rest is walking
  *
  * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
  *
- * Texture is a "full" sprite, e.g. full width and height
+ * Texture is a "full" sprite, e.g. full width and height, ready to be rendered
  *
- * Total number of textures: xdiv * ydiv * num_anim
+ * Total number of versions: xdiv * ydiv
+ * Total number of animations: num_anims
  *
- * Select texture based on global position or creature direction and animation tick
+ * Total number of textures: xdiv * ydiv * num_anims
  *
  *  Combinations:
  *
@@ -359,19 +360,31 @@ Texture Texture::create(SDL_Renderer* renderer,
   return texture;
 }
 
-SDL_Texture* Texture::getItemTexture(int texture_index) const
+SDL_Texture* Texture::getItemTexture(int version, int anim_tick) const
 {
-  if (texture_index < 0 || texture_index >= getNumTextures())
+  if (version >= getNumVersions())
   {
-    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d) (item type id: %d)",
+    LOG_ERROR("%s: version: %d is invalid (getNumVersions(): %d) (item type id: %d)",
               __func__,
-              texture_index,
-              static_cast<int>(m_textures.size()),
+              version,
+              getNumVersions(),
               m_item_type.id);
     return nullptr;
   }
 
-  return m_textures[texture_index].get();
+  const auto index = version + ((anim_tick % getNumAnimations()) * getNumVersions());
+  if (index >= static_cast<int>(m_textures.size()))
+  {
+    LOG_ERROR("%s: calculated index out of bounds (%d >= %d), index = %d + (%d * %d)",
+              __func__,
+              index,
+              m_textures.size(),
+              version,
+              (anim_tick % getNumAnimations()),
+              getNumVersions());
+    return nullptr;
+  }
+  return m_textures[index].get();
 }
 
 SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const

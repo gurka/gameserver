@@ -103,10 +103,10 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
 
   const auto& texture = getTexture(item.type->id);
 
-  auto texture_index = 0;
-  if (item.type->is_fluid_container)
+  auto version = 0;
+  if (item.type->is_fluid_container && item.extra < texture.getNumVersions())
   {
-    texture_index = item.extra;
+    version = item.extra;
   }
   else if (item.type->is_stackable)
   {
@@ -118,64 +118,50 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
     // index 5 -> count 6..10 (?)
     // index 6 -> count 11..25 (?)
     // index 7 -> count 25..100 (?)
-    if (texture.getNumTextures() == 1)
+    if (item.extra <= 5U)
     {
-      // Some stackable items only have one sprite
-      texture_index = 0;
-    }
-    else if (item.extra <= 5U)
-    {
-      texture_index = item.extra - 1;
+      version = item.extra - 1;
     }
     else if (item.extra <= 10U)
     {
-      texture_index = 5;
+      version = 5;
     }
     else if (item.extra <= 25U)
     {
-      texture_index = 6;
+      version = 6;
     }
     else
     {
-      texture_index = 7;
+      version = 7;
     }
+
+    // Some item have less than 8 sprites for different stack/count
+    version = std::min(version, texture.getNumVersions() - 1);
   }
-  else if (item.type->is_hangable)
+  else if (item.type->is_hangable && texture.getNumVersions() == 3)
   {
-    if (texture.getNumTextures() == 1)
+    switch (hook_side)
     {
-      texture_index = 0;
-    }
-    else
-    {
-      switch (hook_side)
-      {
-        case HangableHookSide::NONE:
-          texture_index = 0;
-          break;
+      case HangableHookSide::NONE:
+        version = 0;
+        break;
 
-        case HangableHookSide::SOUTH:
-          texture_index = 1;
-          break;
+      case HangableHookSide::SOUTH:
+        version = 1;
+        break;
 
-        case HangableHookSide::EAST:
-          texture_index = 2;
-          break;
-      }
+      case HangableHookSide::EAST:
+        version = 2;
+        break;
     }
   }
   else
   {
     // TODO(simon): need to use world position, not local position
-    //              need to figure out how to use position, anim_tick and count/extra to determine sprite
-    //              some items have count (select sprite based on if 1, 2, 3, 4, 5 or 10 (?)
-    //              some items (fluid container) select sprite based on the content (extra?)
-    texture_index = (x % item.type->sprite_xdiv) +
-                    ((y % item.type->sprite_ydiv) * item.type->sprite_xdiv) +
-                    (anim_tick % item.type->sprite_num_anim);
+    version = ((y % item.type->sprite_ydiv) * item.type->sprite_xdiv) + (x % item.type->sprite_xdiv);
   }
 
-  auto* sdl_texture = texture.getItemTexture(texture_index);
+  auto* sdl_texture = texture.getItemTexture(version, anim_tick);
   if (!sdl_texture)
   {
     return;

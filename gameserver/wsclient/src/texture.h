@@ -49,10 +49,13 @@ class Texture
                         const common::ItemType& item_type);
 
   common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
-  int getNumTextures() const { return static_cast<int>(m_textures.size()); }
+
+  int getNumVersions()   const { return getNumTextures() / getNumAnimations(); }
+  int getNumAnimations() const { return m_item_type.sprite_num_anim; }
+  int getNumTextures()   const { return m_textures.size(); }
 
   // Items
-  SDL_Texture* getItemTexture(int texture_index) const;
+  SDL_Texture* getItemTexture(int version, int anim_tick) const;
 
   // Creature
   SDL_Texture* getCreatureStillTexture(common::Direction direction) const;
