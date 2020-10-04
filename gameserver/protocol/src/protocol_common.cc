@@ -162,7 +162,7 @@ Creature getCreature(Creature::Update update, network::IncomingPacket* packet)
 
 Item getItem(network::IncomingPacket* packet)
 {
-  Item item;
+  Item item = { 0, 0 };
   packet->get(&item.item_type_id);
   const auto& item_type = (*item_types)[item.item_type_id];
   if (item_type.is_stackable || item_type.is_fluid_container || item_type.is_splash)

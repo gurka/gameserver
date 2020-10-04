@@ -59,6 +59,13 @@ const utils::data_loader::ItemTypes* itemtypes = nullptr;
 wsclient::SpriteLoader sprite_loader;
 std::vector<wsclient::Texture> item_textures;
 
+enum class HangableHookSide
+{
+  NONE,
+  SOUTH,
+  EAST,
+};
+
 const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
 {
   auto it = std::find_if(item_textures.cbegin(),
@@ -81,7 +88,7 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
   return *it;
 }
 
-void drawItem(int x, int y, const wsclient::wsworld::Item& item, std::uint16_t elevation, int anim_tick)
+void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSide hook_side, std::uint16_t elevation, int anim_tick)
 {
   if (item.type->type != common::ItemType::Type::ITEM)
   {
@@ -133,6 +140,30 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, std::uint16_t e
       texture_index = 7;
     }
   }
+  else if (item.type->is_hangable)
+  {
+    if (texture.getNumTextures() == 1)
+    {
+      texture_index = 0;
+    }
+    else
+    {
+      switch (hook_side)
+      {
+        case HangableHookSide::NONE:
+          texture_index = 0;
+          break;
+
+        case HangableHookSide::SOUTH:
+          texture_index = 1;
+          break;
+
+        case HangableHookSide::EAST:
+          texture_index = 2;
+          break;
+      }
+    }
+  }
   else
   {
     // TODO(simon): need to use world position, not local position
@@ -168,7 +199,7 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
     // note: if both are zero then creature is invis
     const auto& item_type = (*itemtypes)[creature.outfit.item_id];
     wsclient::wsworld::Item item = { &item_type, 0U };
-    drawItem(x, y, item, 0, 0);
+    drawItem(x, y, item, HangableHookSide::NONE, 0, 0);
     return;
   }
 
@@ -193,6 +224,123 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
   SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
 }
 
+void drawTile(int x,
+              int y,
+              const wsclient::wsworld::Map& map,
+              const wsclient::wsworld::Tile& tile,
+              std::uint32_t anim_tick)
+{
+  if (tile.things.empty())
+  {
+    return;
+  }
+
+  // Set hangable hook side
+  auto hook_side = HangableHookSide::NONE;
+  for (const auto& thing : tile.things)
+  {
+    if (std::holds_alternative<wsclient::wsworld::Item>(thing))
+    {
+      const auto& item = std::get<wsclient::wsworld::Item>(thing);
+      if (item.type->is_hook_east)
+      {
+        hook_side = HangableHookSide::EAST;
+        break;
+      }
+
+      if (item.type->is_hook_south)
+      {
+        hook_side = HangableHookSide::SOUTH;
+        break;
+      }
+    }
+  }
+
+  // Order:
+  // 1. Bottom items (ground, on_bottom)
+  // 2. Common items in reverse order (neither creature, on_bottom nor on_top)
+  // 3. Creatures (reverse order?)
+  // 4. (Effects)
+  // 5. Top items (on_top)
+
+  // Keep track of elevation
+  auto elevation = 0;
+
+  // Draw ground and on_bottom items
+  for (const auto& thing : tile.things)
+  {
+    if (std::holds_alternative<wsclient::wsworld::Item>(thing))
+    {
+      const auto& item = std::get<wsclient::wsworld::Item>(thing);
+      if (item.type->is_ground || item.type->is_on_bottom)
+      {
+        drawItem(x, y, item, hook_side, elevation, anim_tick);
+        elevation += item.type->elevation;
+        continue;
+      }
+    }
+    break;
+  }
+
+  // Draw items, neither on_bottom nor on_top, in reverse order
+  for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
+  {
+    if (std::holds_alternative<wsclient::wsworld::Item>(*it))
+    {
+      const auto& item = std::get<wsclient::wsworld::Item>(*it);
+      if (!item.type->is_ground && !item.type->is_on_top && !item.type->is_on_bottom)
+      {
+        drawItem(x, y, item, hook_side, elevation, anim_tick);
+        elevation += item.type->elevation;
+        continue;
+      }
+
+      if (item.type->is_on_top)
+      {
+        // to not hit the break below as there can be items left to draw here
+        continue;
+      }
+    }
+    break;
+  }
+
+  // Draw creatures, in reverse order
+  for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
+  {
+    if (std::holds_alternative<common::CreatureId>(*it))
+    {
+      const auto creature_id = std::get<common::CreatureId>(*it);
+      const auto* creature = map.getCreature(creature_id);
+      if (creature)
+      {
+        drawCreature(x, y, *creature, elevation);
+      }
+      else
+      {
+        LOG_ERROR("%s: cannot render creature with id %u, no creature data",
+                  __func__,
+                  creature_id);
+      }
+    }
+  }
+
+  // Draw on_top items
+  for (const auto& thing : tile.things)
+  {
+    if (std::holds_alternative<wsclient::wsworld::Item>(thing))
+    {
+      const auto& item = std::get<wsclient::wsworld::Item>(thing);
+      if (item.type->is_on_top)
+      {
+        drawItem(x, y, item, hook_side, elevation, anim_tick);
+        elevation += item.type->elevation;
+        continue;
+      }
+    }
+    break;
+  }
+}
+
 
 void drawFloor(const wsclient::wsworld::Map& map,
                wsclient::wsworld::TileArray::const_iterator it,
@@ -208,97 +356,8 @@ void drawFloor(const wsclient::wsworld::Map& map,
 
     for (auto x = 0; x < wsclient::consts::DRAW_TILES_X + 1; x++)
     {
-      const auto& tile = *it;
+      drawTile(x, y, map, *it, anim_tick);
       ++it;
-
-      if (tile.things.empty())
-      {
-        continue;
-      }
-
-      // Order:
-      // 1. Bottom items (ground, on_bottom)
-      // 2. Common items in reverse order (neither creature, on_bottom nor on_top)
-      // 3. Creatures (reverse order?)
-      // 4. (Effects)
-      // 5. Top items (on_top)
-
-      // Keep track of elevation
-      auto elevation = 0;
-
-      // Draw ground and on_bottom items
-      for (const auto& thing : tile.things)
-      {
-        if (std::holds_alternative<wsclient::wsworld::Item>(thing))
-        {
-          const auto& item = std::get<wsclient::wsworld::Item>(thing);
-          if (item.type->is_ground || item.type->is_on_bottom)
-          {
-            drawItem(x, y, item, elevation, anim_tick);
-            elevation += item.type->elevation;
-            continue;
-          }
-        }
-        break;
-      }
-
-      // Draw items, neither on_bottom nor on_top, in reverse order
-      for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
-      {
-        if (std::holds_alternative<wsclient::wsworld::Item>(*it))
-        {
-          const auto& item = std::get<wsclient::wsworld::Item>(*it);
-          if (!item.type->is_ground && !item.type->is_on_top && !item.type->is_on_bottom)
-          {
-            drawItem(x, y, item, elevation, anim_tick);
-            elevation += item.type->elevation;
-            continue;
-          }
-
-          if (item.type->is_on_top)
-          {
-            // to not hit the break below as there can be items left to draw here
-            continue;
-          }
-        }
-        break;
-      }
-
-      // Draw creatures, in reverse order
-      for (auto it = tile.things.rbegin(); it != tile.things.rend(); ++it)
-      {
-        if (std::holds_alternative<common::CreatureId>(*it))
-        {
-          const auto creature_id = std::get<common::CreatureId>(*it);
-          const auto* creature = map.getCreature(creature_id);
-          if (creature)
-          {
-            drawCreature(x, y, *creature, elevation);
-          }
-          else
-          {
-            LOG_ERROR("%s: cannot render creature with id %u, no creature data",
-                      __func__,
-                      creature_id);
-          }
-        }
-      }
-
-      // Draw on_top items
-      for (const auto& thing : tile.things)
-      {
-        if (std::holds_alternative<wsclient::wsworld::Item>(thing))
-        {
-          const auto& item = std::get<wsclient::wsworld::Item>(thing);
-          if (item.type->is_on_top)
-          {
-            drawItem(x, y, item, elevation, anim_tick);
-            elevation += item.type->elevation;
-            continue;
-          }
-        }
-        break;
-      }
     }
 
     // Skip the 2nd extra column to the right

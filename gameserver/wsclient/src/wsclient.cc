@@ -571,7 +571,7 @@ extern "C" void main_loop()  // NOLINT
             std::ostringstream oss;
             oss << "  stackpos=" << stackpos << " ";
             item.type->dump(&oss, false);
-            oss << "\n";
+            oss << " [extra=" << static_cast<int>(item.extra) << "]\n";
             LOG_INFO(oss.str().c_str());
           }
           else if (std::holds_alternative<common::CreatureId>(thing))
