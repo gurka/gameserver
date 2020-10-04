@@ -36,7 +36,6 @@
 
 #include "item.h"
 #include "sprite_loader.h"
-#include "position.h"
 #include "direction.h"
 
 namespace wsclient
@@ -50,9 +49,10 @@ class Texture
                         const common::ItemType& item_type);
 
   common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
+  int getNumTextures() const { return static_cast<int>(m_textures.size()); }
 
   // Items
-  SDL_Texture* getItemTexture(const common::Position& position, int anim_tick) const;
+  SDL_Texture* getItemTexture(int texture_index) const;
 
   // Creature
   SDL_Texture* getCreatureStillTexture(common::Direction direction) const;

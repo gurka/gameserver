@@ -359,18 +359,15 @@ Texture Texture::create(SDL_Renderer* renderer,
   return texture;
 }
 
-SDL_Texture* Texture::getItemTexture(const common::Position& position, int anim_tick) const
+SDL_Texture* Texture::getItemTexture(int texture_index) const
 {
-  // TODO(simon): this isn't correct, x or anim_tick need a multiplier as well
-  const auto texture_index = (position.getX() % m_item_type.sprite_xdiv) +
-                             ((position.getY() % m_item_type.sprite_ydiv) * m_item_type.sprite_xdiv) +
-                             (anim_tick % m_item_type.sprite_num_anim);
-  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  if (texture_index < 0 || texture_index >= getNumTextures())
   {
-    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
+    LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d) (item type id: %d)",
               __func__,
               texture_index,
-              static_cast<int>(m_textures.size()));
+              static_cast<int>(m_textures.size()),
+              m_item_type.id);
     return nullptr;
   }
 
@@ -386,7 +383,7 @@ SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
   }
 
   const auto texture_index = static_cast<int>(direction);
-  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  if (texture_index < 0 || texture_index >= getNumTextures())
   {
     LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
               __func__,
@@ -401,7 +398,7 @@ SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
 SDL_Texture* Texture::getCreatureWalkTexture(common::Direction direction, int walk_tick) const
 {
   const auto texture_index = static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_num_anim - 1)) + 1) * 4);
-  if (texture_index < 0 || texture_index >= static_cast<int>(m_textures.size()))
+  if (texture_index < 0 || texture_index >= getNumTextures())
   {
     LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
               __func__,

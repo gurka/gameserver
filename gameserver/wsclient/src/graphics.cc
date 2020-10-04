@@ -81,25 +81,71 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
   return *it;
 }
 
-void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t elevation, int anim_tick)
+void drawItem(int x, int y, const wsclient::wsworld::Item& item, std::uint16_t elevation, int anim_tick)
 {
-  if (item_type.type != common::ItemType::Type::ITEM)
+  if (item.type->type != common::ItemType::Type::ITEM)
   {
-    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item_type.id);
+    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item.type->id);
     return;
   }
 
-  if (item_type.id == 0)
+  if (item.type->id == 0)
   {
     return;
   }
 
-  // TODO(simon): need to use world position, not local position
-  //              need to figure out how to use position, anim_tick and count/extra to determine sprite
-  //              some items have count (select sprite based on if 1, 2, 3, 4, 5 or 10 (?)
-  //              some items (fluid container) select sprite based on the content (extra?)
-  auto* texture = getTexture(item_type.id).getItemTexture(common::Position(x, y, 0U), anim_tick);
-  if (!texture)
+  const auto& texture = getTexture(item.type->id);
+
+  auto texture_index = 0;
+  if (item.type->is_fluid_container)
+  {
+    texture_index = item.extra;
+  }
+  else if (item.type->is_stackable)
+  {
+    // index 0 -> count 1
+    // index 1 -> count 2
+    // index 2 -> count 3
+    // index 3 -> count 4
+    // index 4 -> count 5
+    // index 5 -> count 6..10 (?)
+    // index 6 -> count 11..25 (?)
+    // index 7 -> count 25..100 (?)
+    if (texture.getNumTextures() == 1)
+    {
+      // Some stackable items only have one sprite
+      texture_index = 0;
+    }
+    else if (item.extra <= 5U)
+    {
+      texture_index = item.extra - 1;
+    }
+    else if (item.extra <= 10U)
+    {
+      texture_index = 5;
+    }
+    else if (item.extra <= 25U)
+    {
+      texture_index = 6;
+    }
+    else
+    {
+      texture_index = 7;
+    }
+  }
+  else
+  {
+    // TODO(simon): need to use world position, not local position
+    //              need to figure out how to use position, anim_tick and count/extra to determine sprite
+    //              some items have count (select sprite based on if 1, 2, 3, 4, 5 or 10 (?)
+    //              some items (fluid container) select sprite based on the content (extra?)
+    texture_index = (x % item.type->sprite_xdiv) +
+                    ((y % item.type->sprite_ydiv) * item.type->sprite_xdiv) +
+                    (anim_tick % item.type->sprite_num_anim);
+  }
+
+  auto* sdl_texture = texture.getItemTexture(texture_index);
+  if (!sdl_texture)
   {
     return;
   }
@@ -107,12 +153,12 @@ void drawItem(int x, int y, const common::ItemType& item_type, std::uint16_t ele
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
   {
-    (x * TILE_SIZE - elevation - (item_type.is_displaced ? 8 : 0) - ((item_type.sprite_width - 1) * 32)) * SCALE,
-    (y * TILE_SIZE - elevation - (item_type.is_displaced ? 8 : 0) - ((item_type.sprite_height - 1) * 32)) * SCALE,
-    item_type.sprite_width * TILE_SIZE_SCALED,
-    item_type.sprite_height * TILE_SIZE_SCALED
+    (x * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_width - 1) * 32)) * SCALE,
+    (y * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_height - 1) * 32)) * SCALE,
+    item.type->sprite_width * TILE_SIZE_SCALED,
+    item.type->sprite_height * TILE_SIZE_SCALED
   };
-  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+  SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
 }
 
 void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std::uint16_t offset)
@@ -121,7 +167,8 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
   {
     // note: if both are zero then creature is invis
     const auto& item_type = (*itemtypes)[creature.outfit.item_id];
-    drawItem(x, y, item_type, 0, 0);
+    wsclient::wsworld::Item item = { &item_type, 0U };
+    drawItem(x, y, item, 0, 0);
     return;
   }
 
@@ -187,7 +234,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
           const auto& item = std::get<wsclient::wsworld::Item>(thing);
           if (item.type->is_ground || item.type->is_on_bottom)
           {
-            drawItem(x, y, *item.type, elevation, anim_tick);
+            drawItem(x, y, item, elevation, anim_tick);
             elevation += item.type->elevation;
             continue;
           }
@@ -203,7 +250,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
           const auto& item = std::get<wsclient::wsworld::Item>(*it);
           if (!item.type->is_ground && !item.type->is_on_top && !item.type->is_on_bottom)
           {
-            drawItem(x, y, *item.type, elevation, anim_tick);
+            drawItem(x, y, item, elevation, anim_tick);
             elevation += item.type->elevation;
             continue;
           }
@@ -245,7 +292,7 @@ void drawFloor(const wsclient::wsworld::Map& map,
           const auto& item = std::get<wsclient::wsworld::Item>(thing);
           if (item.type->is_on_top)
           {
-            drawItem(x, y, *item.type, elevation, anim_tick);
+            drawItem(x, y, item, elevation, anim_tick);
             elevation += item.type->elevation;
             continue;
           }
