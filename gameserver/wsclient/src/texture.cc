@@ -318,8 +318,6 @@ Texture Texture::create(SDL_Renderer* renderer,
     return texture;
   }
 
-  // validate that item that are countable have xdiv=4,ydiv=2?
-
   const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
                      item_type.sprite_blend_frames == 2U;
   const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
@@ -358,6 +356,14 @@ Texture Texture::create(SDL_Renderer* renderer,
   }
 
   return texture;
+}
+
+Texture Texture::create(SDL_Renderer* renderer,
+                        const SpriteLoader& sprite_loader,
+                        const common::Outfit& outfit)
+{
+  Texture t;
+  return t;
 }
 
 SDL_Texture* Texture::getItemTexture(int version, int anim_tick) const

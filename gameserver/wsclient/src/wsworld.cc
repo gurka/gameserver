@@ -221,6 +221,13 @@ void Map::addProtocolThing(const common::Position& position, const protocol::Thi
   addThing(position, parseThing(thing));
 }
 
+void Map::updateThing(const common::Position& position,
+                      std::uint8_t stackpos,
+                      const protocol::Thing& thing)
+{
+  m_tiles.getTile(position)->things[stackpos] = parseThing(thing);
+}
+
 void Map::addThing(const common::Position& position, Thing thing)
 {
   auto& things = m_tiles.getTile(position)->things;
@@ -329,13 +336,6 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
            pre,
            post);
 #endif
-}
-
-void Map::updateThing(const common::Position& position,
-                      std::uint8_t stackpos,
-                      const protocol::Thing& thing)
-{
-  m_tiles.getTile(position)->things[stackpos] = parseThing(thing);
 }
 
 void Map::moveThing(const common::Position& from_position,
@@ -484,6 +484,7 @@ Thing Map::parseThing(const protocol::Thing& thing)
         else
         {
           LOG_DEBUG("%s: removing known Creature with id %u", __func__, creature.id_to_remove);
+          m_callbacks.known_creature_removed(*it);
           m_known_creatures.erase(it);
         }
       }
@@ -496,6 +497,7 @@ Thing Map::parseThing(const protocol::Thing& thing)
       m_known_creatures.back().direction = creature.direction;
       m_known_creatures.back().outfit = creature.outfit;
       m_known_creatures.back().speed = creature.speed;
+      m_callbacks.known_creature_added(m_known_creatures.back());
 
       if (creature.id == m_player_id)
       {

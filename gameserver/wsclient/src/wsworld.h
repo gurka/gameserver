@@ -26,6 +26,7 @@
 #define WSCLIENT_SRC_WSWORLD_H_
 
 #include <array>
+#include <functional>
 #include <vector>
 
 #include "tiles.h"
@@ -54,6 +55,13 @@ struct Creature
 class Map
 {
  public:
+  struct Callbacks
+  {
+    std::function<void(const Creature&)> known_creature_added;
+    std::function<void(const Creature&)> known_creature_removed;
+  };
+
+  void setCallbacks(const Callbacks& callbacks) { m_callbacks = callbacks; }
   void setItemTypes(const utils::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
   void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
@@ -63,13 +71,13 @@ class Map
   void updateTile(const protocol::client::TileUpdate& tile_update);
   void handleFloorChange(bool up, const protocol::client::FloorChange& floor_change);
   void addProtocolThing(const common::Position& position, const protocol::Thing& thing);
+  void updateThing(const common::Position& position,
+                   std::uint8_t stackpos,
+                   const protocol::Thing& thing);
 
   // Methods that does not work with protocol objects
   void addThing(const common::Position& position, Thing thing);
   void removeThing(const common::Position& position, std::uint8_t stackpos);
-  void updateThing(const common::Position& position,
-                   std::uint8_t stackpos,
-                   const protocol::Thing& thing);
   void moveThing(const common::Position& from_position,
                  std::uint8_t from_stackpos,
                  const common::Position& to_position);
@@ -93,6 +101,7 @@ class Map
   Thing getThing(const common::Position& position, std::uint8_t stackpos);
 
   Tiles m_tiles;
+  Callbacks m_callbacks;
   const utils::data_loader::ItemTypes* m_itemtypes;
   common::CreatureId m_player_id = 0U;
   bool m_ready = false;

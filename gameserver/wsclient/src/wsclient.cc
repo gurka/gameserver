@@ -456,6 +456,16 @@ void sendMoveCharacter(common::Direction direction)
   }
 }
 
+void knownCreatureAdded(const wsworld::Creature& creature)
+{
+  graphics::createCreatureTexture(creature);
+}
+
+void knownCreatureRemoved(const wsworld::Creature& creature)
+{
+  graphics::removeCreatureTexture(creature);
+}
+
 }  // namespace wsclient
 
 #ifndef EMSCRIPTEN
@@ -620,6 +630,10 @@ int main()
   }
 
   protocol::setItemTypes(&wsclient::itemtypes);
+  wsclient::map.setCallbacks({
+    &wsclient::knownCreatureAdded,
+    &wsclient::knownCreatureRemoved
+  });
   wsclient::map.setItemTypes(&wsclient::itemtypes);
   if (!wsclient::graphics::init(&wsclient::itemtypes, sprite_filename))
   {

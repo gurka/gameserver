@@ -36,6 +36,8 @@ namespace wsclient::graphics
 
 bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
 void draw(const wsworld::Map& map);
+void createCreatureTexture(const wsworld::Creature& creature);
+void removeCreatureTexture(const wsworld::Creature& creature);
 common::Position screenToMapPosition(int x, int y);
 
 }  // namespace wsclient::graphics

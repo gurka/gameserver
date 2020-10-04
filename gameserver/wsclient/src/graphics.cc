@@ -59,6 +59,13 @@ const utils::data_loader::ItemTypes* itemtypes = nullptr;
 wsclient::SpriteLoader sprite_loader;
 std::vector<wsclient::Texture> item_textures;
 
+struct CreatureTexture
+{
+  common::CreatureId creature_id;
+  wsclient::Texture texture;
+};
+std::vector<CreatureTexture> creature_textures;
+
 enum class HangableHookSide
 {
   NONE,
@@ -424,6 +431,30 @@ void draw(const wsworld::Map& map)
   }
 
   SDL_RenderPresent(sdl_renderer);
+}
+
+void createCreatureTexture(const wsworld::Creature& creature)
+{
+  CreatureTexture creature_texture;
+  creature_texture.creature_id = creature.id;
+  creature_texture.texture = Texture::create(sdl_renderer, sprite_loader, creature.outfit);
+  creature_textures.emplace_back(creature_texture);
+}
+
+void removeCreatureTexture(const wsworld::Creature& creature)
+{
+  auto it = std::find_if(creature_textures.begin(),
+                         creature_textures.end(),
+                         [creature_id = creature.id](const wsworld::Creature& creature)
+  {
+    return creature_id == creature.id;
+  });
+  if (it == creature_textures.end())
+  {
+    LOG_ERROR("%s: could not find Creature Texture to remove", __func__);
+    return;
+  }
+  creature_textures.erase(it);
 }
 
 common::Position screenToMapPosition(int x, int y)

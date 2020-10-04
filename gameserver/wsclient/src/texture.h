@@ -34,6 +34,7 @@
 #include <SDL2/SDL.h>
 #endif
 
+#include "creature.h"
 #include "item.h"
 #include "sprite_loader.h"
 #include "direction.h"
@@ -47,6 +48,10 @@ class Texture
   static Texture create(SDL_Renderer* renderer,
                         const SpriteLoader& sprite_loader,
                         const common::ItemType& item_type);
+
+  static Texture create(SDL_Renderer* renderer,
+                        const SpriteLoader& sprite_loader,
+                        const common::Outfit& outfit);
 
   common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
 
