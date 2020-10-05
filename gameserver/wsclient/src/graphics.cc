@@ -435,19 +435,18 @@ void draw(const wsworld::Map& map)
 
 void createCreatureTexture(const wsworld::Creature& creature)
 {
-  CreatureTexture creature_texture;
-  creature_texture.creature_id = creature.id;
-  creature_texture.texture = Texture::create(sdl_renderer, sprite_loader, creature.outfit);
-  creature_textures.emplace_back(creature_texture);
+  creature_textures.emplace_back();
+  creature_textures.back().creature_id = creature.id;
+  creature_textures.back().texture = Texture::create(sdl_renderer, sprite_loader, creature.outfit);
 }
 
 void removeCreatureTexture(const wsworld::Creature& creature)
 {
   auto it = std::find_if(creature_textures.begin(),
                          creature_textures.end(),
-                         [creature_id = creature.id](const wsworld::Creature& creature)
+                         [creature_id = creature.id](const CreatureTexture& creature_texture)
   {
-    return creature_id == creature.id;
+    return creature_id == creature_texture.creature_id;
   });
   if (it == creature_textures.end())
   {

@@ -263,6 +263,44 @@ bool load(const std::string& data_filename,
       item_type.sprites.push_back(fr.readU16());
     }
 
+    // Validate stuff here instead of where the data will be used
+    // so that we can abort early
+
+    // Valid blend values are 1 and 2
+    if (item_type.sprite_blend_frames != 1U &&
+        item_type.sprite_blend_frames != 2U)
+    {
+      LOG_ERROR("%s: invalid blend value: %u in item type: %u",
+                __func__,
+                item_type.sprite_blend_frames,
+                item_type.id);
+      return false;
+    }
+
+    // blend=2 is only valid for item (blend) and creature (colorize)
+    if (item_type.sprite_blend_frames == 2U &&
+        item_type.type != common::ItemType::Type::ITEM &&
+        item_type.type != common::ItemType::Type::CREATURE)
+    {
+      LOG_ERROR("%s invalid combination of blend value: 2 and type: %d in item type: %u",
+                __func__,
+                static_cast<int>(item_type.type),
+                item_type.id);
+      return false;
+    }
+
+    // creature with xdiv=4 means 4 directions, ydiv should be 1
+    if (item_type.type == common::ItemType::Type::CREATURE &&
+        item_type.sprite_xdiv == 4U &&
+        item_type.sprite_ydiv != 1U)
+    {
+      LOG_ERROR("%s: invalid combination of CREATURE, xdiv=%u and ydiv=%u (direction)",
+                __func__,
+                item_type.sprite_xdiv,
+                item_type.sprite_ydiv);
+      return false;
+    }
+
     // Add ItemData and increase next item id
     (*item_types)[next_id] = item_type;
     ++next_id;

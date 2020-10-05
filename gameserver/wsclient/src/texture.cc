@@ -280,46 +280,9 @@ Texture Texture::create(SDL_Renderer* renderer,
   Texture texture;
   texture.m_item_type = item_type;
 
-  // Validate stuff
-  // This should probably be validated when the data file is read instead
-
-  // Valid blend value is 1 or 2
-  if (item_type.sprite_blend_frames != 1U &&
-      item_type.sprite_blend_frames != 2U)
-  {
-    LOG_ERROR("%s: invalid blend value: %u in item type: %u",
-              __func__,
-              item_type.sprite_blend_frames,
-              item_type.id);
-    return texture;
-  }
-
-  // blend=2 is only valid for item (blend) and creature (colorize)
-  if (item_type.sprite_blend_frames == 2U &&
-      item_type.type != common::ItemType::Type::ITEM &&
-      item_type.type != common::ItemType::Type::CREATURE)
-  {
-    LOG_ERROR("%s invalid combination of blend value: 2 and type: %d in item type: %u",
-              __func__,
-              static_cast<int>(item_type.type),
-              item_type.id);
-    return texture;
-  }
-
-  // creature with xdiv=4 means 4 directions, ydiv should be 1
-  if (item_type.type == common::ItemType::Type::CREATURE &&
-      item_type.sprite_xdiv == 4U &&
-      item_type.sprite_ydiv != 1U)
-  {
-    LOG_ERROR("%s: invalid combination of CREATURE, xdiv=%u and ydiv=%u (direction)",
-              __func__,
-              item_type.sprite_xdiv,
-              item_type.sprite_ydiv);
-    return texture;
-  }
-
   const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
                      item_type.sprite_blend_frames == 2U;
+
   const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
                         item_type.sprite_blend_frames == 2U;
 
@@ -363,6 +326,9 @@ Texture Texture::create(SDL_Renderer* renderer,
                         const common::Outfit& outfit)
 {
   Texture t;
+  (void)renderer;
+  (void)sprite_loader;
+  (void)outfit;
   return t;
 }
 
