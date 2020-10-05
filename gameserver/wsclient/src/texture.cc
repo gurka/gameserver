@@ -45,15 +45,6 @@
  *  num_anims: number of animations
  *             note: for creatures first anim is standing still, and the rest is walking
  *
- * Total number of sprites: width * height * blend * xdiv * ydiv * num_anim
- *
- * Texture is a "full" sprite, e.g. full width and height, ready to be rendered
- *
- * Total number of versions: xdiv * ydiv
- * Total number of animations: num_anims
- *
- * Total number of textures: xdiv * ydiv * num_anims
- *
  *  Combinations:
  *
  *  width == 1 && height == 1 (32 x 32):
@@ -109,8 +100,39 @@ SpritePixels blendSprites(const SpritePixels& bottom,
 }
 
 SpritePixels colorizeSprite(const SpritePixels& sprite_base,
-                            const SpritePixels& sprite_template)
+                            const SpritePixels& sprite_template,
+                            const common::Outfit& outfit)
 {
+  static const std::array<std::uint32_t, 133> lookup_table =
+  {
+    0xFFFFFF, 0xFFD4BF, 0xFFE9BF, 0xFFFFBF, 0xE9FFBF, 0xD4FFBF, 0xBFFFBF, 0xBFFFD4, 0xBFFFE9, 0xBFFFFF, 0xBFE9FF, 0xBFD4FF, 0xBFBFFF, 0xD4BFFF, 0xE9BFFF, 0xFFBFFF, 0xFFBFE9, 0xFFBFD4, 0xFFBFBF,
+    0xDADADA, 0xBF9F8F, 0xBFAF8F, 0xBFBF8F, 0xAFBF8F, 0x9FBF8F, 0x8FBF8F, 0x8FBF9F, 0x8FBFAF, 0x8FBFBF, 0x8FAFBF, 0x8F9FBF, 0x8F8FBF, 0x9F8FBF, 0xAF8FBF, 0xBF8FBF, 0xBF8FAF, 0xBF8F9F, 0xBF8F8F,
+    0xB6B6B6, 0xBF7F5F, 0xBFAF8F, 0xBFBF5F, 0x9FBF5F, 0x7FBF5F, 0x5FBF5F, 0x5FBF7F, 0x5FBF9F, 0x5FBFBF, 0x5F9FBF, 0x5F7FBF, 0x5F5FBF, 0x7F5FBF, 0x9F5FBF, 0xBF5FBF, 0xBF5F9F, 0xBF5F7F, 0xBF5F5F,
+    0x919191, 0xBF6A3F, 0xBF943F, 0xBFBF3F, 0x94BF3F, 0x6ABF3F, 0x3FBF3F, 0x3FBF6A, 0x3FBF94, 0x3FBFBF, 0x3F94BF, 0x3F6ABF, 0x3F3FBF, 0x6A3FBF, 0x943FBF, 0xBF3FBF, 0xBF3F94, 0xBF3F6A, 0xBF3F3F,
+    0x6D6D6D, 0xFF5500, 0xFFAA00, 0xFFFF00, 0xAAFF00, 0x54FF00, 0x00FF00, 0x00FF54, 0x00FFAA, 0x00FFFF, 0x00A9FF, 0x0055FF, 0x0000FF, 0x5500FF, 0xA900FF, 0xFE00FF, 0xFF00AA, 0xFF0055, 0xFF0000,
+    0x484848, 0xBF3F00, 0xBF7F00, 0xBFBF00, 0x7FBF00, 0x3FBF00, 0x00BF00, 0x00BF3F, 0x00BF7F, 0x00BFBF, 0x007FBF, 0x003FBF, 0x0000BF, 0x3F00BF, 0x7F00BF, 0xBF00BF, 0xBF007F, 0xBF003F, 0xBF0000,
+    0x242424, 0x7F2A00, 0x7F5500, 0x7F7F00, 0x557F00, 0x2A7F00, 0x007F00, 0x007F2A, 0x007F55, 0x007F7F, 0x00547F, 0x002A7F, 0x00007F, 0x2A007F, 0x54007F, 0x7F007F, 0x7F0055, 0x7F002A, 0x7F0000,
+  };
+
+  if (outfit.head >= lookup_table.size() ||
+      outfit.body >= lookup_table.size() ||
+      outfit.legs >= lookup_table.size() ||
+      outfit.feet >= lookup_table.size())
+  {
+    LOG_ERROR("%s: outfit out of bounds for lookup table (head=%u, body=%u, legs=%u, feet=%u)",
+              __func__,
+              outfit.head,
+              outfit.body,
+              outfit.legs,
+              outfit.feet);
+    return sprite_base;
+  }
+
+  const auto head_color = lookup_table[outfit.head];
+  const auto body_color = lookup_table[outfit.body];
+  const auto legs_color = lookup_table[outfit.legs];
+  const auto feet_color = lookup_table[outfit.feet];
+
   SpritePixels result = sprite_base;
   for (auto j = 0U; j < result.size(); j += 4)
   {
@@ -127,33 +149,33 @@ SpritePixels colorizeSprite(const SpritePixels& sprite_base,
     if (red == 0xFFU && green == 0xFFU && blue == 0x00U)
     {
       // Yellow is head
-      result[j + 0] = (result[j + 0] + 120U) / 2U;
-      result[j + 1] = (result[j + 1] + 61U) / 2U;
-      result[j + 2] = (result[j + 2] + 10U) / 2U;
+      result[j + 0] *= ((head_color >> 16) & 0xFFU) / 255.f;
+      result[j + 1] *= ((head_color >> 8) & 0xFFU) / 255.f;
+      result[j + 2] *= ((head_color >> 0) & 0xFFU) / 255.f;
       result[j + 3] = 0xFFU;
     }
     else if (red == 0xFFU && green == 0x00U && blue == 0x00U)
     {
       // Red is body
-      result[j + 0] = (result[j + 0] + 255U) / 2U;
-      result[j + 1] = (result[j + 1] + 135U) / 2U;
-      result[j + 2] = (result[j + 2] + 221U) / 2U;
+      result[j + 0] *= ((body_color >> 16) & 0xFFU) / 255.f;
+      result[j + 1] *= ((body_color >> 8) & 0xFFU) / 255.f;
+      result[j + 2] *= ((body_color >> 0) & 0xFFU) / 255.f;
       result[j + 3] = 0xFFU;
     }
     else if (red == 0x00U && green == 0xFFU && blue == 0x00U)
     {
       // Green is legs
-      result[j + 0] = (result[j + 0] + 23U) / 2U;
-      result[j + 1] = (result[j + 1] + 60U) / 2U;
-      result[j + 2] = (result[j + 2] + 128U) / 2U;
+      result[j + 0] *= ((legs_color >> 16) & 0xFFU) / 255.f;
+      result[j + 1] *= ((legs_color >> 8) & 0xFFU) / 255.f;
+      result[j + 2] *= ((legs_color >> 0) & 0xFFU) / 255.f;
       result[j + 3] = 0xFFU;
     }
     else if (red == 0x00U && green == 0x00U && blue == 0xFFU)
     {
       // Blue is feet
-      result[j + 0] = (result[j + 0] + 99U) / 2U;
-      result[j + 1] = (result[j + 1] + 99U) / 2U;
-      result[j + 2] = (result[j + 2] + 99U) / 2U;
+      result[j + 0] *= ((feet_color >> 16) & 0xFFU) / 255.f;
+      result[j + 1] *= ((feet_color >> 8) & 0xFFU) / 255.f;
+      result[j + 2] *= ((feet_color >> 0) & 0xFFU) / 255.f;
       result[j + 3] = 0xFFU;
     }
     else
@@ -169,38 +191,22 @@ SpritePixels colorizeSprite(const SpritePixels& sprite_base,
   return result;
 }
 SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
+                              const common::ItemType::SpriteInfo& sprite_info,
                               const std::vector<SpritePixels>& sprite_data,
-                              std::uint8_t width,
-                              std::uint8_t height,
-                              std::uint8_t extra,
-                              bool blend,
-                              bool colorize)
+                              const common::Outfit& outfit)
 {
+  const auto blend = sprite_info.shouldBlend();
+  const auto colorize = sprite_info.shouldColorize();
   if (blend && colorize)
   {
-    LOG_ERROR("%s: both blend and colorize can be true", __func__);
+    LOG_ERROR("%s: both blend and colorize cannot be true", __func__);
     return nullptr;
   }
 
   // For now, ignore extra and always create the texture either
   // 32x32, 64x32, 32x64 or 64x64
-  extra = 64U;
-
-  const auto full_width = width == 1U ? 32U : extra;
-  const auto full_height = height == 1U ? 32U : extra;
-
-  // Validate number of sprites
-  if (width * height * ((blend || colorize) ? 2 : 1) != sprite_data.size())
-  {
-    LOG_ERROR("%s: unexpected num sprites: %u with width: %u height: %u blend: %d colorize: %d",
-              __func__,
-              sprite_data.size(),
-              width,
-              height,
-              blend,
-              colorize);
-    return nullptr;
-  }
+  const auto full_width = sprite_info.width == 1U ? 32U : 64U;
+  const auto full_height = sprite_info.height == 1U ? 32U : 64U;
 
   std::vector<std::uint8_t> texture_pixels(full_width * full_height * 4);
   // If neither blend nor colorize then iterate over all sprites
@@ -211,21 +217,21 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
     // If neither blend nor colorize then just take sprite data directly
     // If blend then call blendSprites with correct sprite datas
     // If colorize then call colorizeSprite with correct sprite datas
-    const auto sprite_pixels = blend ? blendSprites(sprite_data[i],
-                                                    sprite_data[i + (width * height)])
-                                     : (colorize ? colorizeSprite(sprite_data[i],
-                                                                  sprite_data[i + 1])
-                                                 : sprite_data[i]);
+    const auto sprite_pixels = blend ?
+                                 blendSprites(sprite_data[i], sprite_data[i + (sprite_info.width * sprite_info.height)]) :
+                                 (colorize ?
+                                   colorizeSprite(sprite_data[i], sprite_data[i + 1], outfit) :
+                                   sprite_data[i]);
 
     // Hack to treat the two sprites as A and C when width == 1 and height == 2
-    if (i == 1 && width == 1 && height == 2)
+    if (i == 1 && sprite_info.width == 1 && sprite_info.height == 2)
     {
       i = 2;
     }
 
     // Where to start writing the pixels on texture_pixels
-    const auto start_x = (i == 0 || i == 2) && width == 2 ? 32U : 0U;
-    const auto start_y = (i == 0 || i == 1) && height == 2 ? 32U : 0U;
+    const auto start_x = (i == 0 || i == 2) && sprite_info.width == 2 ? 32U : 0U;
+    const auto start_y = (i == 0 || i == 1) && sprite_info.height == 2 ? 32U : 0U;
 
     // Copy sprite pixels to texture pixels one row at a time
     auto it_source = sprite_pixels.begin();
@@ -273,42 +279,26 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 namespace wsclient
 {
 
-Texture Texture::create(SDL_Renderer* renderer,
-                        const SpriteLoader& sprite_loader,
-                        const common::ItemType& item_type)
+Texture Texture::createOutfitTexture(SDL_Renderer* renderer,
+                                     const SpriteLoader& sprite_loader,
+                                     const common::ItemType& item_type,
+                                     const common::Outfit& outfit)
 {
   Texture texture;
   texture.m_item_type = item_type;
 
-  const auto blend = item_type.type != common::ItemType::Type::CREATURE &&
-                     item_type.sprite_blend_frames == 2U;
-
-  const auto colorize = item_type.type == common::ItemType::Type::CREATURE &&
-                        item_type.sprite_blend_frames == 2U;
-
-  const auto num_sprites_per_texture = item_type.sprite_width *
-                                       item_type.sprite_height *
-                                       (blend || colorize ? 2U : 1U);
-  const auto num_textures = item_type.sprite_xdiv *
-                            item_type.sprite_ydiv *
-                            item_type.sprite_num_anim;
-  for (auto i = 0; i < num_textures; i++)
+  const auto num_sprites_per_texture = item_type.sprite_info.getNumSpritesPerTexture();
+  for (auto i = 0; i < item_type.sprite_info.getNumTextures(); i++)
   {
     std::vector<SpritePixels> sprite_data;
-    for (auto j = 0U; j < num_sprites_per_texture; j++)
+    for (auto j = 0; j < num_sprites_per_texture; j++)
     {
       const auto sprite_index = (i * num_sprites_per_texture) + j;
-      const auto sprite_id = item_type.sprites[sprite_index];
+      const auto sprite_id = item_type.sprite_info.sprite_ids[sprite_index];
       sprite_data.push_back(sprite_loader.getSpritePixels(sprite_id));
     }
 
-    auto* sdl_texture = createSDLTexture(renderer,
-                                         sprite_data,
-                                         item_type.sprite_width,
-                                         item_type.sprite_height,
-                                         item_type.sprite_extra,
-                                         blend,
-                                         colorize);
+    auto* sdl_texture = createSDLTexture(renderer, item_type.sprite_info, sprite_data, outfit);
     if (!sdl_texture)
     {
       LOG_ERROR("%s: could not create texture for item type id: %u", __func__, item_type.id);
@@ -321,15 +311,11 @@ Texture Texture::create(SDL_Renderer* renderer,
   return texture;
 }
 
-Texture Texture::create(SDL_Renderer* renderer,
-                        const SpriteLoader& sprite_loader,
-                        const common::Outfit& outfit)
+Texture Texture::createItemTexture(SDL_Renderer* renderer,
+                                   const SpriteLoader& sprite_loader,
+                                   const common::ItemType& item_type)
 {
-  Texture t;
-  (void)renderer;
-  (void)sprite_loader;
-  (void)outfit;
-  return t;
+  return createOutfitTexture(renderer, sprite_loader, item_type, common::Outfit());
 }
 
 SDL_Texture* Texture::getItemTexture(int version, int anim_tick) const
@@ -382,7 +368,7 @@ SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
 
 SDL_Texture* Texture::getCreatureWalkTexture(common::Direction direction, int walk_tick) const
 {
-  const auto texture_index = static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_num_anim - 1)) + 1) * 4);
+  const auto texture_index = static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_info.getNumAnimations() - 1)) + 1) * 4);
   if (texture_index < 0 || texture_index >= getNumTextures())
   {
     LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",

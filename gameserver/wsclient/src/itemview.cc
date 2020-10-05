@@ -72,7 +72,7 @@ void logItem(const common::ItemType& item_type)
 void setItemType(common::ItemTypeId item_type_id)
 {
   item_type = item_types[item_type_id];
-  texture = wsclient::Texture::create(sdl_renderer, sprite_loader, item_type);
+  texture = wsclient::Texture::createItemTexture(sdl_renderer, sprite_loader, item_type);
   logItem(item_type);
 }
 
@@ -84,7 +84,7 @@ void render()
   SDL_RenderClear(sdl_renderer);
 
   const auto direction = item_type.type == common::ItemType::Type::CREATURE &&
-                         item_type.sprite_xdiv == 4;
+                         item_type.sprite_info.xdiv == 4;
 
   if (direction)
   {
@@ -100,15 +100,15 @@ void render()
       }
       const SDL_Rect dest
       {
-        dir * item_type.sprite_width * TILE_SIZE_SCALED,
-        0 * item_type.sprite_height * TILE_SIZE_SCALED,
-        item_type.sprite_width * TILE_SIZE_SCALED,
-        item_type.sprite_height * TILE_SIZE_SCALED
+        dir * item_type.sprite_info.width * TILE_SIZE_SCALED,
+        0 * item_type.sprite_info.height * TILE_SIZE_SCALED,
+        item_type.sprite_info.width * TILE_SIZE_SCALED,
+        item_type.sprite_info.height * TILE_SIZE_SCALED
       };
       SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
     }
 
-    if (item_type.sprite_num_anim > 1)
+    if (item_type.sprite_info.getNumAnimations() > 1)
     {
       // Second row is walking (animation index 1..n)
       for (auto dir = 0; dir < 4; dir++)
@@ -121,10 +121,10 @@ void render()
         }
         const SDL_Rect dest
         {
-          dir * item_type.sprite_width * TILE_SIZE_SCALED,
-          1 * item_type.sprite_height * TILE_SIZE_SCALED,
-          item_type.sprite_width * TILE_SIZE_SCALED,
-          item_type.sprite_height * TILE_SIZE_SCALED
+          dir * item_type.sprite_info.width * TILE_SIZE_SCALED,
+          1 * item_type.sprite_info.height * TILE_SIZE_SCALED,
+          item_type.sprite_info.width * TILE_SIZE_SCALED,
+          item_type.sprite_info.height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }
@@ -133,11 +133,11 @@ void render()
   else
   {
     // Normal item: render all blends, xdivs and ydivs
-    for (auto y = 0; y < item_type.sprite_ydiv; y++)
+    for (auto y = 0; y < item_type.sprite_info.ydiv; y++)
     {
-      for (auto x = 0; x < item_type.sprite_xdiv; x++)
+      for (auto x = 0; x < item_type.sprite_info.xdiv; x++)
       {
-        const auto version = (y * item_type.sprite_xdiv) + x;
+        const auto version = (y * item_type.sprite_info.xdiv) + x;
         auto* sdl_texture = texture.getItemTexture(version, anim_tick);
         if (!sdl_texture)
         {
@@ -146,10 +146,10 @@ void render()
 
         const SDL_Rect dest
         {
-          x * item_type.sprite_width * TILE_SIZE_SCALED,
-          y * item_type.sprite_height * TILE_SIZE_SCALED,
-          item_type.sprite_width * TILE_SIZE_SCALED,
-          item_type.sprite_height * TILE_SIZE_SCALED
+          x * item_type.sprite_info.width * TILE_SIZE_SCALED,
+          y * item_type.sprite_info.height * TILE_SIZE_SCALED,
+          item_type.sprite_info.width * TILE_SIZE_SCALED,
+          item_type.sprite_info.height * TILE_SIZE_SCALED
         };
         SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
       }

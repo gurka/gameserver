@@ -240,68 +240,36 @@ bool load(const std::string& data_filename,
     }
 
     // Size and sprite data
-    item_type.sprite_width = fr.readU8();
-    item_type.sprite_height = fr.readU8();
-    if (item_type.sprite_width > 1 || item_type.sprite_height > 1)
+    item_type.sprite_info.type = item_type.type;
+    item_type.sprite_info.width = fr.readU8();
+    item_type.sprite_info.height = fr.readU8();
+    if (item_type.sprite_info.width > 1 || item_type.sprite_info.height > 1)
     {
-      item_type.sprite_extra = fr.readU8();;
+      item_type.sprite_info.extra = fr.readU8();;
     }
 
-    item_type.sprite_blend_frames = fr.readU8();
-    item_type.sprite_xdiv = fr.readU8();
-    item_type.sprite_ydiv = fr.readU8();
-    item_type.sprite_num_anim = fr.readU8();
+    item_type.sprite_info.blend_frames = fr.readU8();
+    item_type.sprite_info.xdiv = fr.readU8();
+    item_type.sprite_info.ydiv = fr.readU8();
+    item_type.sprite_info.num_anim = fr.readU8();
 
-    const auto num_sprites = item_type.sprite_width  *
-                             item_type.sprite_height *
-                             item_type.sprite_blend_frames *
-                             item_type.sprite_xdiv *
-                             item_type.sprite_ydiv *
-                             item_type.sprite_num_anim;
+    if (!item_type.sprite_info.isValid())
+    {
+      LOG_ERROR("%s: item type: %u has invalid sprite information: width=%u height=%u blend_frames=%u",
+                __func__,
+                item_type.id,
+                item_type.sprite_info.width,
+                item_type.sprite_info.height,
+                item_type.sprite_info.blend_frames);
+      return false;
+    }
+
+    const auto num_sprites = item_type.sprite_info.getNumSprites();
     for (auto i = 0; i < num_sprites; i++)
     {
-      item_type.sprites.push_back(fr.readU16());
+      item_type.sprite_info.sprite_ids.push_back(fr.readU16());
     }
 
-    // Validate stuff here instead of where the data will be used
-    // so that we can abort early
-
-    // Valid blend values are 1 and 2
-    if (item_type.sprite_blend_frames != 1U &&
-        item_type.sprite_blend_frames != 2U)
-    {
-      LOG_ERROR("%s: invalid blend value: %u in item type: %u",
-                __func__,
-                item_type.sprite_blend_frames,
-                item_type.id);
-      return false;
-    }
-
-    // blend=2 is only valid for item (blend) and creature (colorize)
-    if (item_type.sprite_blend_frames == 2U &&
-        item_type.type != common::ItemType::Type::ITEM &&
-        item_type.type != common::ItemType::Type::CREATURE)
-    {
-      LOG_ERROR("%s invalid combination of blend value: 2 and type: %d in item type: %u",
-                __func__,
-                static_cast<int>(item_type.type),
-                item_type.id);
-      return false;
-    }
-
-    // creature with xdiv=4 means 4 directions, ydiv should be 1
-    if (item_type.type == common::ItemType::Type::CREATURE &&
-        item_type.sprite_xdiv == 4U &&
-        item_type.sprite_ydiv != 1U)
-    {
-      LOG_ERROR("%s: invalid combination of CREATURE, xdiv=%u and ydiv=%u (direction)",
-                __func__,
-                item_type.sprite_xdiv,
-                item_type.sprite_ydiv);
-      return false;
-    }
-
-    // Add ItemData and increase next item id
     (*item_types)[next_id] = item_type;
     ++next_id;
   }

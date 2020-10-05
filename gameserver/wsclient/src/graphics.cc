@@ -57,7 +57,6 @@ SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
 const utils::data_loader::ItemTypes* itemtypes = nullptr;
 wsclient::SpriteLoader sprite_loader;
-std::vector<wsclient::Texture> item_textures;
 
 struct CreatureTexture
 {
@@ -65,6 +64,7 @@ struct CreatureTexture
   wsclient::Texture texture;
 };
 std::vector<CreatureTexture> creature_textures;
+std::vector<wsclient::Texture> item_textures;
 
 enum class HangableHookSide
 {
@@ -73,7 +73,23 @@ enum class HangableHookSide
   EAST,
 };
 
-const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
+const wsclient::Texture* getCreatureTexture(common::CreatureId creature_id)
+{
+  auto it = std::find_if(creature_textures.cbegin(),
+                         creature_textures.cend(),
+                         [&creature_id](const CreatureTexture& creature_texture)
+  {
+    return creature_texture.creature_id == creature_id;
+  });
+  if (it == creature_textures.cend())
+  {
+    LOG_ERROR("%s: could not find CreatureTexture for CreatureId: %u", __func__, creature_id);
+    return nullptr;
+  }
+  return &(it->texture);
+}
+
+const wsclient::Texture& getItemTexture(common::ItemTypeId item_type_id)
 {
   auto it = std::find_if(item_textures.cbegin(),
                          item_textures.cend(),
@@ -83,12 +99,12 @@ const wsclient::Texture& getTexture(common::ItemTypeId item_type_id)
   });
 
   // Create textures if not found
-  if (it == item_textures.end())
+  if (it == item_textures.cend())
   {
     const auto& item_type = (*itemtypes)[item_type_id];
-    item_textures.push_back(wsclient::Texture::create(sdl_renderer,
-                                                      sprite_loader,
-                                                      item_type));
+    item_textures.push_back(wsclient::Texture::createItemTexture(sdl_renderer,
+                                                                 sprite_loader,
+                                                                 item_type));
     it = item_textures.end() - 1;
   }
 
@@ -108,7 +124,7 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
     return;
   }
 
-  const auto& texture = getTexture(item.type->id);
+  const auto& texture = getItemTexture(item.type->id);
 
   auto version = 0;
   if (item.type->is_fluid_container && item.extra < texture.getNumVersions())
@@ -165,7 +181,7 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
   else
   {
     // TODO(simon): need to use world position, not local position
-    version = ((y % item.type->sprite_ydiv) * item.type->sprite_xdiv) + (x % item.type->sprite_xdiv);
+    version = ((y % item.type->sprite_info.ydiv) * item.type->sprite_info.xdiv) + (x % item.type->sprite_info.xdiv);
   }
 
   auto* sdl_texture = texture.getItemTexture(version, anim_tick);
@@ -177,32 +193,35 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
   {
-    (x * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_width - 1) * 32)) * SCALE,
-    (y * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_height - 1) * 32)) * SCALE,
-    item.type->sprite_width * TILE_SIZE_SCALED,
-    item.type->sprite_height * TILE_SIZE_SCALED
+    (x * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.width - 1) * 32)) * SCALE,
+    (y * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.height - 1) * 32)) * SCALE,
+    item.type->sprite_info.width * TILE_SIZE_SCALED,
+    item.type->sprite_info.height * TILE_SIZE_SCALED
   };
   SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
 }
 
 void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std::uint16_t offset)
 {
-  if (creature.outfit.type == 0U && creature.outfit.item_id != 0U)
+  if (creature.outfit.type == 0U)
   {
     // note: if both are zero then creature is invis
-    const auto& item_type = (*itemtypes)[creature.outfit.item_id];
-    wsclient::wsworld::Item item = { &item_type, 0U };
-    drawItem(x, y, item, HangableHookSide::NONE, 0, 0);
+    if (creature.outfit.item_id != 0U)
+    {
+      const auto& item_type = (*itemtypes)[creature.outfit.item_id];
+      wsclient::wsworld::Item item = { &item_type, 0U };
+      drawItem(x, y, item, HangableHookSide::NONE, 0, 0);
+    }
     return;
   }
 
-  // TODO(simon): fix this
-  //              DataLoader need to separate what it loads into Items, Outfits, Effects and Missiles
-  //              since the ids are relative
-  const auto item_type_id = creature.outfit.type + 3034 + 100;
-
-  auto* texture = getTexture(item_type_id).getCreatureStillTexture(creature.direction);
+  const auto* texture = getCreatureTexture(creature.id);
   if (!texture)
+  {
+    return;
+  }
+  auto* sdl_texture = texture->getCreatureStillTexture(creature.direction);
+  if (!sdl_texture)
   {
     return;
   }
@@ -214,7 +233,7 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
     TILE_SIZE_SCALED,
     TILE_SIZE_SCALED
   };
-  SDL_RenderCopy(sdl_renderer, texture, nullptr, &dest);
+  SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
 }
 
 void drawTile(int x,
@@ -435,9 +454,11 @@ void draw(const wsworld::Map& map)
 
 void createCreatureTexture(const wsworld::Creature& creature)
 {
+  // TODO(simon): fix hardcoded value
+  const auto& item_type = (*itemtypes)[3134 + creature.outfit.type];
   creature_textures.emplace_back();
   creature_textures.back().creature_id = creature.id;
-  creature_textures.back().texture = Texture::create(sdl_renderer, sprite_loader, creature.outfit);
+  creature_textures.back().texture = Texture::createOutfitTexture(sdl_renderer, sprite_loader, item_type, creature.outfit);
 }
 
 void removeCreatureTexture(const wsworld::Creature& creature)

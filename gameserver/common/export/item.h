@@ -84,14 +84,70 @@ struct ItemType
   int elevation       = 0;
   int minimap_color   = 0;
 
-  std::uint8_t sprite_width         = 0U;
-  std::uint8_t sprite_height        = 0U;
-  std::uint8_t sprite_extra         = 0U;
-  std::uint8_t sprite_blend_frames  = 0U;
-  std::uint8_t sprite_xdiv          = 0U;
-  std::uint8_t sprite_ydiv          = 0U;
-  std::uint8_t sprite_num_anim      = 0U;
-  std::vector<std::uint16_t> sprites;
+  struct SpriteInfo
+  {
+    bool isValid() const
+    {
+      // width, height must be 1 or 2
+      // blend_frames must be 1 or 2, if 2 then type must be CREATURE or ITEM
+      return (width == 1U || width == 2U) &&
+             (height == 1U || height == 2U) &&
+             (blend_frames == 1U || (blend_frames == 2U && (type == Type::CREATURE || type == Type::ITEM)));
+    }
+
+    // Number of sprites, should be same as sprite_ids.size()
+    int getNumSprites() const
+    {
+      return getNumSpritesPerTexture() * getNumTextures();
+    }
+
+    // Number of sprites that makes up one texture (i.e. what we render)
+    int getNumSpritesPerTexture() const
+    {
+      return width * height * blend_frames;
+    }
+
+    // Number of textures
+    int getNumTextures() const
+    {
+      return getNumVersions() * getNumAnimations();
+    }
+
+    // Number of different versions
+    // Can be creature facing different directions, fluid containers with different content (color),
+    // stackable items showing different amounts, and so on
+    int getNumVersions() const
+    {
+      return xdiv * ydiv;
+    }
+
+    // Number of different textures, if animated
+    int getNumAnimations() const
+    {
+      return num_anim;
+    }
+
+    bool shouldBlend() const
+    {
+      return type == Type::ITEM && blend_frames == 2U;
+    }
+
+    bool shouldColorize() const
+    {
+      return type == Type::CREATURE && blend_frames == 2U;
+    }
+
+    Type type                  = Type::ITEM;
+    std::uint8_t width         = 0U;
+    std::uint8_t height        = 0U;
+    std::uint8_t extra         = 0U;
+    std::uint8_t blend_frames  = 0U;
+    std::uint8_t xdiv          = 0U;
+    std::uint8_t ydiv          = 0U;
+    std::uint8_t num_anim      = 0U;
+
+    std::vector<std::uint16_t> sprite_ids;
+  } sprite_info;
 
   // Loaded from xml file (server only)
   std::string name      = "";
@@ -171,17 +227,17 @@ struct ItemType
     }
 
     os << "Sprite [";
-    os << "width="    << static_cast<int>(sprite_width) << " ";
-    os << "height="   << static_cast<int>(sprite_height) << " ";
-    os << "extra="    << static_cast<int>(sprite_extra) << " ";
-    os << "blend="    << static_cast<int>(sprite_blend_frames) << " ";
-    os << "xdiv="     << static_cast<int>(sprite_xdiv) << " ";
-    os << "ydiv="     << static_cast<int>(sprite_ydiv) << " ";
-    os << "num_anim=" << static_cast<int>(sprite_num_anim);
+    os << "width="    << static_cast<int>(sprite_info.width) << " ";
+    os << "height="   << static_cast<int>(sprite_info.height) << " ";
+    os << "extra="    << static_cast<int>(sprite_info.extra) << " ";
+    os << "blend="    << static_cast<int>(sprite_info.blend_frames) << " ";
+    os << "xdiv="     << static_cast<int>(sprite_info.xdiv) << " ";
+    os << "ydiv="     << static_cast<int>(sprite_info.ydiv) << " ";
+    os << "num_anim=" << static_cast<int>(sprite_info.num_anim);
     os << "] ";
 
     os << "Sprite IDs [ ";
-    for (const auto& sprite_id : sprites)
+    for (const auto& sprite_id : sprite_info.sprite_ids)
     {
       os << sprite_id << " ";
     }

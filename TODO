@@ -41,9 +41,8 @@ WSClient:
   * Fix namespaces chaos
 
 WSClient-replay:
-  * Spacebar to pause replay
-  * left/right to speed down/up
   * lots of bugs xD
+  * Texture class is a bit of a mess
 
 Docker:
   * Troubleshoot emscripten cache issue (always downloading SDL lib)

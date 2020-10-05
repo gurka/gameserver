@@ -45,19 +45,20 @@ namespace wsclient
 class Texture
 {
  public:
-  static Texture create(SDL_Renderer* renderer,
-                        const SpriteLoader& sprite_loader,
-                        const common::ItemType& item_type);
+  static Texture createOutfitTexture(SDL_Renderer* renderer,
+                                     const SpriteLoader& sprite_loader,
+                                     const common::ItemType& item_type,
+                                     const common::Outfit& outfit);
 
-  static Texture create(SDL_Renderer* renderer,
-                        const SpriteLoader& sprite_loader,
-                        const common::Outfit& outfit);
+  static Texture createItemTexture(SDL_Renderer* renderer,
+                                   const SpriteLoader& sprite_loader,
+                                   const common::ItemType& item_type);
 
   common::ItemTypeId getItemTypeId() const { return m_item_type.id; }
 
-  int getNumVersions()   const { return getNumTextures() / getNumAnimations(); }
-  int getNumAnimations() const { return m_item_type.sprite_num_anim; }
-  int getNumTextures()   const { return m_textures.size(); }
+  int getNumVersions()   const { return m_item_type.sprite_info.getNumVersions(); }
+  int getNumAnimations() const { return m_item_type.sprite_info.getNumAnimations(); }
+  int getNumTextures()   const { return m_item_type.sprite_info.getNumTextures(); }
 
   // Items
   SDL_Texture* getItemTexture(int version, int anim_tick) const;
