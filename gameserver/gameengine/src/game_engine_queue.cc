@@ -24,6 +24,8 @@
 
 #include "game_engine_queue.h"
 
+#include "logger.h"
+
 namespace gameengine
 {
 
@@ -116,7 +118,7 @@ void GameEngineQueue::onTimeout(const std::error_code& ec)
   if (ec)
   {
     // TODO(simon): abort() isn't good.
-    abort();
+    LOG_ABORT("%s: unexpected error: %s", __func__, ec.message().c_str());
   }
 
   // Call all tasks that have expired

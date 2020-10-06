@@ -43,8 +43,7 @@ int parseTile(protocol::Tile* tile, network::IncomingPacket* packet)
   {
     if (stackpos > 10)
     {
-      LOG_ERROR("%s: too many things on this tile", __func__);
-      abort();
+      LOG_ABORT("%s: too many things on this tile", __func__);
     }
 
     tile->things.emplace_back(protocol::getThing(packet));

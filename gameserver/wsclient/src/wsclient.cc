@@ -438,14 +438,12 @@ void handlePacket(network::IncomingPacket* packet)
         break;
 
       default:
-        LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
+        LOG_ABORT("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
                   type,
                   packet->getPosition() - 1,
                   packet->getPosition() + 1,
                   num_received_packets);
-        abort();
-        return;
     }
   }
 }

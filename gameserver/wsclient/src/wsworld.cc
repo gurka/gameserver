@@ -233,22 +233,20 @@ void Map::addThing(const common::Position& position, Thing thing)
   auto* tile = m_tiles.getTile(position);
   if (!tile)
   {
-    LOG_ERROR("%s: no Tile found at %s player position: %s known floors: %d",
+    LOG_ABORT("%s: no Tile found at %s player position: %s known floors: %d",
               __func__,
               position.toString().c_str(),
               getPlayerPosition().toString().c_str(),
               getNumFloors());
-    abort();
   }
   auto& things = tile->things;
   if (things.empty())
   {
-    LOG_ERROR("%s: cannot add Thing to empty Tile at position: %s player position: %s known floors: %d",
+    LOG_ABORT("%s: cannot add Thing to empty Tile at position: %s player position: %s known floors: %d",
               __func__,
               position.toString().c_str(),
               getPlayerPosition().toString().c_str(),
               getNumFloors());
-    abort();
   }
 
   const auto pre = things.size();

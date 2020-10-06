@@ -26,6 +26,7 @@
 #define UTILS_EXPORT_LOGGER_H_
 
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
 
@@ -67,5 +68,6 @@ class Logger
 #define LOG_ERROR(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::ERROR, __VA_ARGS__)
 #define LOG_INFO(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::INFO, __VA_ARGS__)
 #define LOG_DEBUG(...) utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::DEBUG, __VA_ARGS__)
+#define LOG_ABORT(...) do { utils::Logger::log(__FILE__, __LINE__, utils::Logger::Level::ERROR, __VA_ARGS__); abort(); } while (0)
 
 #endif  // UTILS_EXPORT_LOGGER_H_
