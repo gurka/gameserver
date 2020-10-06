@@ -31,6 +31,9 @@ General:
     - Separate server/client in namespaces
     - Handle different backends better and easier
 
+  * Add LOG_ABORT to logger, which will log an error message and then abort()
+    - Possibly also log/dump a stacktrace if debug build
+
 ContainerManager:
   * Add support for weight calculation
 
