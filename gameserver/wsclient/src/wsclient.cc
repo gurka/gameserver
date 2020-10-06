@@ -433,6 +433,10 @@ void handlePacket(network::IncomingPacket* packet)
         packet->getU8();  // shield icon
         break;
 
+      case 0x1E:
+        // ping
+        break;
+
       default:
         LOG_ERROR("%s: unknown packet type: 0x%X at position %u (position %u with packet header) num recv packets: %d",
                   __func__,
@@ -553,6 +557,17 @@ extern "C" void main_loop()  // NOLINT
           LOG_INFO("%s: stopping client", __func__);
           emscripten_cancel_main_loop();
           return;
+
+        case SDL_SCANCODE_RETURN:
+          if (wsclient::map.ready())
+          {
+            // Print player position, number of known floors ... more?
+            LOG_ERROR("%s: position: %s number of known floors: %d",
+                      __func__,
+                      wsclient::map.getPlayerPosition().toString().c_str(),
+                      wsclient::map.getNumFloors());
+          }
+          break;
 
         default:
           break;

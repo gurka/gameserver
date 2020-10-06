@@ -153,7 +153,7 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
       }
     }
   }
-  else if (up && m_tiles.getMapPosition().getZ() == 7)
+  else if (up && m_tiles.getMapPosition().getZ() > 7)
   {
     // Move up from underground to underground
     // We have 5 to 3 floors (depending on old z)
@@ -194,7 +194,7 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
       }
     }
   }
-  else if (!up && m_tiles.getMapPosition().getZ() == 1)
+  else if (!up && m_tiles.getMapPosition().getZ() > 8)
   {
     // Moved down from underground to underground
     // We have 5 to 3 floors (depending on old z)
@@ -230,7 +230,26 @@ void Map::updateThing(const common::Position& position,
 
 void Map::addThing(const common::Position& position, Thing thing)
 {
-  auto& things = m_tiles.getTile(position)->things;
+  auto* tile = m_tiles.getTile(position);
+  if (!tile)
+  {
+    LOG_ERROR("%s: no Tile found at %s player position: %s known floors: %d",
+              __func__,
+              position.toString().c_str(),
+              getPlayerPosition().toString().c_str(),
+              getNumFloors());
+    abort();
+  }
+  auto& things = tile->things;
+  if (things.empty())
+  {
+    LOG_ERROR("%s: cannot add Thing to empty Tile at position: %s player position: %s known floors: %d",
+              __func__,
+              position.toString().c_str(),
+              getPlayerPosition().toString().c_str(),
+              getNumFloors());
+    abort();
+  }
 
   const auto pre = things.size();
 

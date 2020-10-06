@@ -127,7 +127,7 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
   const auto& texture = getItemTexture(item.type->id);
 
   auto version = 0;
-  if (item.type->is_fluid_container && item.extra < texture.getNumVersions())
+  if ((item.type->is_fluid_container || item.type->is_splash) && item.extra < texture.getNumVersions())
   {
     version = item.extra;
   }
@@ -443,10 +443,11 @@ void draw(const wsworld::Map& map)
   }
   else
   {
-    // Underground, draw below floors up to player floor
-    drawFloor(map, tiles.cbegin() + (0 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
-    drawFloor(map, tiles.cbegin() + (1 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
-    drawFloor(map, tiles.cbegin() + (2 * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+    // Underground, draw at the bottom floor up to player floor (which is always local z=2)
+    for (auto z = map.getNumFloors() - 1; z >= 2; --z)
+    {
+      drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+    }
   }
 
   SDL_RenderPresent(sdl_renderer);
