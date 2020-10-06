@@ -25,8 +25,6 @@ General:
 
   * Find more good warning flags to enable
 
-  * Remove io from logger and config
-
   * Cleanup network module
     - Separate server/client in namespaces
     - Handle different backends better and easier

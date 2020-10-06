@@ -226,12 +226,12 @@ void handleEvents()
       }
       else if (event.key.keysym.sym == SDLK_ESCAPE)
       {
-        stop = true;
+        emscripten_cancel_main_loop();
       }
     }
     else if (event.type == SDL_QUIT)
     {
-      stop = true;
+      emscripten_cancel_main_loop();
     }
   }
 }
