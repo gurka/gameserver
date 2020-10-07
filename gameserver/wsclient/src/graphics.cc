@@ -46,15 +46,49 @@
 namespace
 {
 
-constexpr auto TILE_SIZE = 32;
-constexpr auto SCALE = 2;
-constexpr auto TILE_SIZE_SCALED = TILE_SIZE * SCALE;
+//        map width       sidebar width
+//  _______________________________
+// |                        |      |
+// |                        |      |
+// |                  map   |      |
+// |                 height |      |
+// |                        |      |  sidebar
+// |                        |      |  height
+// |     chat width         |      |
+// |________________________|      |
+// |                  chat  |      |
+// |                  height|      |
+// |________________________|______|
+//
+// Map width is constant
+// Map height is constant
+// Sidebar width is dynamic
+// Sidebar height = map height + chat height
+// Chat width = map width
+// Chat height is dynamic
+//
+// Screen size: map width + sidebar width, sidebar height
+//
 
-constexpr auto SCREEN_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE_SCALED;
-constexpr auto SCREEN_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE_SCALED;
+constexpr auto TILE_SIZE = 32;
+constexpr auto MAP_TEXTURE_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE;
+constexpr auto MAP_TEXTURE_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE;
+
+constexpr auto CHAT_TEXTURE_WIDTH = MAP_TEXTURE_WIDTH;
+constexpr auto CHAT_TEXTURE_HEIGHT = 18 * 8; // 6 lines of chat + 1 line of chat windows + spacing
+
+constexpr auto SIDEBAR_TEXTURE_WIDTH = 32 * 4;  // need to fit at least 3 columns of sprites + spacing
+constexpr auto SIDEBAR_TEXTURE_HEIGHT = MAP_TEXTURE_HEIGHT + CHAT_TEXTURE_HEIGHT;
+
+constexpr auto SCREEN_WIDTH = MAP_TEXTURE_WIDTH + SIDEBAR_TEXTURE_WIDTH;
+constexpr auto SCREEN_HEIGHT = SIDEBAR_TEXTURE_HEIGHT;
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
+SDL_Texture* sdl_map_texture = nullptr;
+SDL_Texture* sdl_chat_texture = nullptr;
+SDL_Texture* sdl_sidebar_texture = nullptr;
+
 const utils::data_loader::ItemTypes* itemtypes = nullptr;
 wsclient::SpriteLoader sprite_loader;
 
@@ -193,10 +227,10 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
   {
-    (x * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.width - 1) * 32)) * SCALE,
-    (y * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.height - 1) * 32)) * SCALE,
-    item.type->sprite_info.width * TILE_SIZE_SCALED,
-    item.type->sprite_info.height * TILE_SIZE_SCALED
+    (x * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.width - 1) * 32)),
+    (y * TILE_SIZE - elevation - (item.type->is_displaced ? 8 : 0) - ((item.type->sprite_info.height - 1) * 32)),
+    item.type->sprite_info.width * TILE_SIZE,
+    item.type->sprite_info.height * TILE_SIZE
   };
   SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
 }
@@ -228,10 +262,10 @@ void drawCreature(int x, int y, const wsclient::wsworld::Creature& creature, std
 
   const SDL_Rect dest
   {
-    (x * TILE_SIZE - offset - 8) * SCALE,
-    (y * TILE_SIZE - offset - 8) * SCALE,
-    TILE_SIZE_SCALED,
-    TILE_SIZE_SCALED
+    (x * TILE_SIZE - offset - 8),
+    (y * TILE_SIZE - offset - 8),
+    TILE_SIZE,
+    TILE_SIZE
   };
   SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
 }
@@ -404,6 +438,39 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
     return false;
   }
 
+  sdl_map_texture = SDL_CreateTexture(sdl_renderer,
+                                      SDL_PIXELFORMAT_RGBA8888,
+                                      SDL_TEXTUREACCESS_TARGET,
+                                      MAP_TEXTURE_WIDTH,
+                                      MAP_TEXTURE_HEIGHT);
+  if (!sdl_map_texture)
+  {
+    LOG_ERROR("%s: could not create map texture: %s", __func__, SDL_GetError());
+    return false;
+  }
+
+  sdl_chat_texture = SDL_CreateTexture(sdl_renderer,
+                                       SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_TARGET,
+                                       CHAT_TEXTURE_WIDTH,
+                                       CHAT_TEXTURE_HEIGHT);
+  if (!sdl_chat_texture)
+  {
+    LOG_ERROR("%s: could not create chat texture: %s", __func__, SDL_GetError());
+    return false;
+  }
+
+  sdl_sidebar_texture = SDL_CreateTexture(sdl_renderer,
+                                          SDL_PIXELFORMAT_RGBA8888,
+                                          SDL_TEXTUREACCESS_TARGET,
+                                          SIDEBAR_TEXTURE_WIDTH,
+                                          SIDEBAR_TEXTURE_HEIGHT);
+  if (!sdl_sidebar_texture)
+  {
+    LOG_ERROR("%s: could not create sidebar texture: %s", __func__, SDL_GetError());
+    return false;
+  }
+
   if (!sprite_loader.load(sprite_filename))
   {
     LOG_ERROR("%s: could not sprites", __func__);
@@ -420,35 +487,79 @@ void draw(const wsworld::Map& map)
   SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
   SDL_RenderClear(sdl_renderer);
 
-  if (!map.ready())
-  {
-    SDL_RenderPresent(sdl_renderer);
-    return;
-  }
+  // Render chat
+  SDL_SetRenderTarget(sdl_renderer, sdl_chat_texture);
+  SDL_SetRenderDrawColor(sdl_renderer, 127, 127, 127, 255);
+  SDL_RenderClear(sdl_renderer);
 
-  const auto& tiles = map.getTiles();
-  if (map.getPlayerPosition().getZ() <= 7)
+  // Render sidebar
+  SDL_SetRenderTarget(sdl_renderer, sdl_sidebar_texture);
+  SDL_SetRenderDrawColor(sdl_renderer, 170, 99, 93, 255);
+  SDL_RenderClear(sdl_renderer);
+
+  // Render map
+  SDL_SetRenderTarget(sdl_renderer, sdl_map_texture);
+  SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
+  SDL_RenderClear(sdl_renderer);
+  if (map.ready())
   {
-    // We have floors 7  6  5  4  3  2  1  0
-    // and we want to draw them in that order
-    // Skip floors above player z as we don't know when floor above blocks view of player yet
-    for (auto z = 0; z <= 7; ++z)
+    const auto& tiles = map.getTiles();
+    if (map.getPlayerPosition().getZ() <= 7)
     {
-      drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
-      if (7 - map.getPlayerPosition().getZ() == z)
+      // We have floors 7  6  5  4  3  2  1  0
+      // and we want to draw them in that order
+      // Skip floors above player z as we don't know when floor above blocks view of player yet
+      for (auto z = 0; z <= 7; ++z)
       {
-        break;
+        drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
+        if (7 - map.getPlayerPosition().getZ() == z)
+        {
+          break;
+        }
+      }
+    }
+    else
+    {
+      // Underground, draw at the bottom floor up to player floor (which is always local z=2)
+      for (auto z = map.getNumFloors() - 1; z >= 2; --z)
+      {
+        drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
       }
     }
   }
-  else
+
+  // Finally render everything to screen
+  SDL_SetRenderTarget(sdl_renderer, nullptr);
+
+  // Chat
+  const SDL_Rect dest_chat =
   {
-    // Underground, draw at the bottom floor up to player floor (which is always local z=2)
-    for (auto z = map.getNumFloors() - 1; z >= 2; --z)
-    {
-      drawFloor(map, tiles.cbegin() + (z * consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y), anim_tick);
-    }
-  }
+    0,
+    MAP_TEXTURE_HEIGHT,
+    CHAT_TEXTURE_WIDTH,
+    CHAT_TEXTURE_HEIGHT
+  };
+  SDL_RenderCopy(sdl_renderer, sdl_chat_texture, nullptr, &dest_chat);
+
+  // Sidebar
+  const SDL_Rect dest_sidebar =
+  {
+    MAP_TEXTURE_WIDTH,
+    0,
+    SIDEBAR_TEXTURE_WIDTH,
+    SIDEBAR_TEXTURE_HEIGHT
+  };
+  SDL_RenderCopy(sdl_renderer, sdl_sidebar_texture, nullptr, &dest_sidebar);
+
+  // Map
+  const SDL_Rect dest_map =
+  {
+    0,
+    0,
+    MAP_TEXTURE_WIDTH,
+    MAP_TEXTURE_HEIGHT
+  };
+  SDL_RenderCopy(sdl_renderer, sdl_map_texture, nullptr, &dest_map);
 
   SDL_RenderPresent(sdl_renderer);
 }
@@ -480,9 +591,10 @@ void removeCreatureTexture(const wsworld::Creature& creature)
 
 common::Position screenToMapPosition(int x, int y)
 {
+  // TODO(simon): fix
   return {
-    static_cast<std::uint16_t>((x / TILE_SIZE_SCALED) + 1),  // adjust for draw tiles vs. known tiles
-    static_cast<std::uint16_t>((y / TILE_SIZE_SCALED) + 1),  // adjust for draw tiles vs. known tiles
+    static_cast<std::uint16_t>((x / TILE_SIZE) + 1),  // adjust for draw tiles vs. known tiles
+    static_cast<std::uint16_t>((y / TILE_SIZE) + 1),  // adjust for draw tiles vs. known tiles
     0  // only map knows
   };
 }
