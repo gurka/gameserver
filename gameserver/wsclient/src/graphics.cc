@@ -71,17 +71,20 @@ namespace
 //
 
 constexpr auto TILE_SIZE = 32;
-constexpr auto MAP_TEXTURE_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE;
-constexpr auto MAP_TEXTURE_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE;
+constexpr auto MAP_TEXTURE_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE;  // 480
+constexpr auto MAP_TEXTURE_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE;  // 352
 
-constexpr auto CHAT_TEXTURE_WIDTH = MAP_TEXTURE_WIDTH;
-constexpr auto CHAT_TEXTURE_HEIGHT = 18 * 8; // 6 lines of chat + 1 line of chat windows + spacing
+constexpr auto CHAT_TEXTURE_WIDTH = MAP_TEXTURE_WIDTH;  // 480
+constexpr auto CHAT_TEXTURE_HEIGHT = 128;
 
-constexpr auto SIDEBAR_TEXTURE_WIDTH = 32 * 4;  // need to fit at least 3 columns of sprites + spacing
-constexpr auto SIDEBAR_TEXTURE_HEIGHT = MAP_TEXTURE_HEIGHT + CHAT_TEXTURE_HEIGHT;
+constexpr auto SIDEBAR_TEXTURE_WIDTH = 160;
+constexpr auto SIDEBAR_TEXTURE_HEIGHT = MAP_TEXTURE_HEIGHT + CHAT_TEXTURE_HEIGHT;  // 480
 
-constexpr auto SCREEN_WIDTH = MAP_TEXTURE_WIDTH + SIDEBAR_TEXTURE_WIDTH;
-constexpr auto SCREEN_HEIGHT = SIDEBAR_TEXTURE_HEIGHT;
+constexpr auto SCREEN_WIDTH_NO_SCALING = MAP_TEXTURE_WIDTH + SIDEBAR_TEXTURE_WIDTH;  // 640
+constexpr auto SCREEN_HEIGHT_NO_SCALING = SIDEBAR_TEXTURE_HEIGHT;  // 480
+
+double current_width_scale = 1.0f;
+double current_height_scale = 1.0f;
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
@@ -422,9 +425,16 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
 
   SDL_Init(SDL_INIT_VIDEO);
 
-  // TODO(simon): create multiple surfaces to draw on (draw game in one, chat in one, sidebar in one) and then render them together on the screen
-  //              also make game surface "known tiles" large and then draw a sub-window of it ("draw tiles") to the screen
-  sdl_window = SDL_CreateWindow("wsclient", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+  current_width_scale = 1.5f;
+  current_height_scale = 1.5f;
+
+  // Create the window initially as maximized
+  sdl_window = SDL_CreateWindow("wsclient",
+                                SDL_WINDOWPOS_CENTERED,
+                                SDL_WINDOWPOS_CENTERED,
+                                SCREEN_WIDTH_NO_SCALING * current_width_scale,
+                                SCREEN_HEIGHT_NO_SCALING * current_height_scale,
+                                SDL_WINDOW_RESIZABLE);
   if (!sdl_window)
   {
     LOG_ERROR("%s: could not create window: %s", __func__, SDL_GetError());
@@ -478,6 +488,13 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
   }
 
   return true;
+}
+
+void setWindowSize(int width, int height)
+{
+  LOG_INFO("%s: setWindowSize(%d, %d)", __func__, width, height);
+  current_width_scale = static_cast<double>(width) / SCREEN_WIDTH_NO_SCALING;
+  current_height_scale = static_cast<double>(height) / SCREEN_HEIGHT_NO_SCALING;
 }
 
 void draw(const wsworld::Map& map)
@@ -535,29 +552,33 @@ void draw(const wsworld::Map& map)
   const SDL_Rect dest_chat =
   {
     0,
-    MAP_TEXTURE_HEIGHT,
-    CHAT_TEXTURE_WIDTH,
-    CHAT_TEXTURE_HEIGHT
+    static_cast<int>(MAP_TEXTURE_HEIGHT * current_height_scale),
+    static_cast<int>(CHAT_TEXTURE_WIDTH * current_width_scale),
+    static_cast<int>(CHAT_TEXTURE_HEIGHT * current_height_scale)
   };
   SDL_RenderCopy(sdl_renderer, sdl_chat_texture, nullptr, &dest_chat);
 
   // Sidebar
   const SDL_Rect dest_sidebar =
   {
-    MAP_TEXTURE_WIDTH,
+    static_cast<int>(MAP_TEXTURE_WIDTH * current_width_scale),
     0,
-    SIDEBAR_TEXTURE_WIDTH,
-    SIDEBAR_TEXTURE_HEIGHT
+    static_cast<int>(SIDEBAR_TEXTURE_WIDTH * current_width_scale),
+    static_cast<int>(SIDEBAR_TEXTURE_HEIGHT * current_height_scale)
   };
   SDL_RenderCopy(sdl_renderer, sdl_sidebar_texture, nullptr, &dest_sidebar);
 
   // Map
+  // Note: we always want to keep 1:1 ratio, so there is some special handling
+  //       if there is a difference in width and height scaling
+  const auto spacing = static_cast<int>((MAP_TEXTURE_WIDTH * current_width_scale) -
+                                        (MAP_TEXTURE_WIDTH * current_height_scale));
   const SDL_Rect dest_map =
   {
+    spacing / 2,
     0,
-    0,
-    MAP_TEXTURE_WIDTH,
-    MAP_TEXTURE_HEIGHT
+    static_cast<int>(MAP_TEXTURE_WIDTH * current_height_scale) + (spacing < 0 ? (spacing / 2) : 0),  // spacing here should be moved to source rect
+    static_cast<int>(MAP_TEXTURE_HEIGHT * current_height_scale)
   };
   SDL_RenderCopy(sdl_renderer, sdl_map_texture, nullptr, &dest_map);
 

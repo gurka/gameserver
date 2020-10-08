@@ -35,6 +35,7 @@ namespace wsclient::graphics
 {
 
 bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
+void setWindowSize(int width, int height);
 void draw(const wsworld::Map& map);
 void createCreatureTexture(const wsworld::Creature& creature);
 void removeCreatureTexture(const wsworld::Creature& creature);

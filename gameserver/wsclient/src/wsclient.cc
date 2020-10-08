@@ -623,6 +623,24 @@ extern "C" void main_loop()  // NOLINT
         LOG_ERROR("%s: clicked on invalid tile", __func__);
       }
     }
+    else if (event.type == SDL_WINDOWEVENT)
+    {
+      if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+      {
+        wsclient::graphics::setWindowSize(event.window.data1, event.window.data2);
+      }
+    }
+    else if (event.type == SDL_QUIT)
+    {
+      if (wsclient::connection)
+      {
+        LOG_INFO("%s: closing connection", __func__);
+        wsclient::connection->close(true);
+      }
+      LOG_INFO("%s: stopping client", __func__);
+      emscripten_cancel_main_loop();
+      return;
+    }
   }
 
   // Render
