@@ -57,6 +57,7 @@
 #include "graphics.h"
 #include "wsworld.h"
 #include "types.h"
+#include "player_info.h"
 
 namespace wsclient
 {
@@ -65,6 +66,9 @@ std::unique_ptr<network::Connection> connection;
 utils::data_loader::ItemTypes itemtypes;
 wsworld::Map map;
 int num_received_packets = 0;
+
+// TODO(simon): parse/move below stuff
+PlayerInfo player_info;
 
 void handleLoginPacket(const protocol::client::Login& login)
 {
@@ -103,7 +107,7 @@ void handleMagicEffect(const protocol::client::MagicEffect& effect)
 
 void handlePlayerStats(const protocol::client::PlayerStats& stats)
 {
-  (void)stats;
+  player_info.stats = stats;
 }
 
 void handleWorldLight(const protocol::client::WorldLight& light)
@@ -113,12 +117,16 @@ void handleWorldLight(const protocol::client::WorldLight& light)
 
 void handlePlayerSkills(const protocol::client::PlayerSkills& skills)
 {
-  (void)skills;
+  player_info.skills = skills;
 }
 
 void handleEquipmentUpdate(const protocol::client::Equipment& equipment)
 {
-  (void)equipment;
+  player_info.equipment[equipment.inventory_index - 1] =
+  {
+    equipment.empty ? nullptr : &itemtypes[equipment.item.item_type_id],
+    static_cast<std::uint8_t>(equipment.empty ? 0U : equipment.item.extra)
+  };
 }
 
 void handleTextMessage(const protocol::client::TextMessage& message)
@@ -281,7 +289,7 @@ void handlePacket(network::IncomingPacket* packet)
 
       case 0x78:
       case 0x79:
-        handleEquipmentUpdate(protocol::client::getEquipment(type == 0x78, packet));
+        handleEquipmentUpdate(protocol::client::getEquipment(type == 0x79, packet));
         break;
 
       case 0xB4:
@@ -644,7 +652,7 @@ extern "C" void main_loop()  // NOLINT
   }
 
   // Render
-  wsclient::graphics::draw(wsclient::map);
+  wsclient::graphics::draw(wsclient::map, wsclient::player_info);
 }
 
 int main()

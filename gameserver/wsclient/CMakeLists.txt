@@ -5,6 +5,7 @@ project(gameserver)
 add_executable(wsclient
   "src/graphics.cc"
   "src/graphics.h"
+  "src/player_info.h"
   "src/sprite_loader.cc"
   "src/sprite_loader.h"
   "src/texture.cc"

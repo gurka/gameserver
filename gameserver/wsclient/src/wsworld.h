@@ -84,6 +84,7 @@ class Map
 
   void setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull);
 
+  common::CreatureId getPlayerId() const { return m_player_id; }
   const common::Position& getPlayerPosition() const { return m_tiles.getMapPosition(); }
   const auto& getTiles() const { return m_tiles.getTiles(); }
   int getNumFloors() const { return m_tiles.getNumFloors(); }

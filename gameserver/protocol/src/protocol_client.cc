@@ -114,7 +114,7 @@ Equipment getEquipment(bool empty, network::IncomingPacket* packet)
   Equipment equipment;
   equipment.empty = empty;
   packet->get(&equipment.inventory_index);
-  if (equipment.empty)
+  if (!equipment.empty)
   {
     equipment.item = getItem(packet);
   }

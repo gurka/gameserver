@@ -27,7 +27,9 @@
 #include <cstdint>
 
 #include <algorithm>
+#include <array>
 #include <iterator>
+#include <tuple>
 #include <variant>
 
 #ifdef EMSCRIPTEN
@@ -148,18 +150,8 @@ const wsclient::Texture& getItemTexture(common::ItemTypeId item_type_id)
   return *it;
 }
 
-void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSide hook_side, std::uint16_t elevation, int anim_tick)
+SDL_Texture* getItemSDLTexture(int x, int y, const wsclient::wsworld::Item& item, HangableHookSide hook_side, int anim_tick)
 {
-  if (item.type->type != common::ItemType::Type::ITEM)
-  {
-    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item.type->id);
-    return;
-  }
-
-  if (item.type->id == 0)
-  {
-    return;
-  }
 
   const auto& texture = getItemTexture(item.type->id);
 
@@ -221,11 +213,23 @@ void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSid
     version = ((y % item.type->sprite_info.ydiv) * item.type->sprite_info.xdiv) + (x % item.type->sprite_info.xdiv);
   }
 
-  auto* sdl_texture = texture.getItemTexture(version, anim_tick);
-  if (!sdl_texture)
+  return texture.getItemTexture(version, anim_tick);
+}
+
+void drawItem(int x, int y, const wsclient::wsworld::Item& item, HangableHookSide hook_side, std::uint16_t elevation, int anim_tick)
+{
+  if (item.type->type != common::ItemType::Type::ITEM)
+  {
+    LOG_ERROR("%s: called but item type: %u is not an item", __func__, item.type->id);
+    return;
+  }
+
+  if (item.type->id == 0)
   {
     return;
   }
+
+  auto* sdl_texture = getItemSDLTexture(x, y, item, hook_side, anim_tick);
 
   // TODO(simon): there is probably a max offset...
   const SDL_Rect dest
@@ -497,7 +501,7 @@ void setWindowSize(int width, int height)
   current_height_scale = static_cast<double>(height) / SCREEN_HEIGHT_NO_SCALING;
 }
 
-void draw(const wsworld::Map& map)
+void draw(const wsworld::Map& map, const PlayerInfo& player_info)
 {
   const auto anim_tick = SDL_GetTicks() / 540;
 
@@ -505,14 +509,59 @@ void draw(const wsworld::Map& map)
   SDL_RenderClear(sdl_renderer);
 
   // Render chat
-  SDL_SetRenderTarget(sdl_renderer, sdl_chat_texture);
-  SDL_SetRenderDrawColor(sdl_renderer, 127, 127, 127, 255);
-  SDL_RenderClear(sdl_renderer);
+  {
+    SDL_SetRenderTarget(sdl_renderer, sdl_chat_texture);
+    SDL_SetRenderDrawColor(sdl_renderer, 127, 127, 127, 255);
+    SDL_RenderClear(sdl_renderer);
+  }
 
   // Render sidebar
-  SDL_SetRenderTarget(sdl_renderer, sdl_sidebar_texture);
-  SDL_SetRenderDrawColor(sdl_renderer, 170, 99, 93, 255);
-  SDL_RenderClear(sdl_renderer);
+  {
+    SDL_SetRenderTarget(sdl_renderer, sdl_sidebar_texture);
+    SDL_SetRenderDrawColor(sdl_renderer, 170, 99, 93, 255);
+    SDL_RenderClear(sdl_renderer);
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
+
+    for (auto i = 0; i < 10; ++i)
+    {
+      const auto& item = player_info.equipment[i];
+      if (!item.type)
+      {
+        continue;
+      }
+
+      // SIDEBAR_TEXTURE_WIDTH = 160;
+      // each item is 32x32
+      // 3x32=96 pixels for items, 64 pixels for spacing
+      // 24p spacing, item, 8p spacing, item, 8p spacing, item, 24p spacing
+      static const std::array<std::tuple<int, int>, 10> offset_xy =
+      {
+        std::make_tuple(          24 + 32 + 8,                            15 ),  // head
+        std::make_tuple(                   24,                       15 + 15 ),  // amulet
+        std::make_tuple( 24 + 32 + 8 + 32 + 8,                       15 + 15 ),  // bag
+        std::make_tuple(          24 + 32 + 8,                   15 + 32 + 8 ),  // armor
+        std::make_tuple( 24 + 32 + 8 + 32 + 8,              15 + 15 + 32 + 8 ),  // shield
+        std::make_tuple(                   24,              15 + 15 + 32 + 8 ),  // weapon
+        std::make_tuple(          24 + 32 + 8,          15 + 32 + 8 + 32 + 8 ),  // legs
+        std::make_tuple(          24 + 32 + 8, 15 + 32 + 8 + 32 + 8 + 32 + 8 ),  // feet
+        std::make_tuple(                   24,     15 + 15 + 32 + 8 + 32 + 8 ),  // ring
+        std::make_tuple( 24 + 32 + 8 + 32 + 8,     15 + 15 + 32 + 8 + 32 + 8 ),  // ammo
+      };
+      const auto x = std::get<0>(offset_xy[i]);
+      const auto y = std::get<1>(offset_xy[i]);
+
+      auto* sdl_texture = getItemSDLTexture(x, y, item, HangableHookSide::NONE, anim_tick);
+
+      const SDL_Rect dest
+      {
+        x,
+        y,
+        TILE_SIZE,
+        TILE_SIZE
+      };
+      SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
+    }
+  }
 
   // Render map
   SDL_SetRenderTarget(sdl_renderer, sdl_map_texture);
@@ -571,16 +620,24 @@ void draw(const wsworld::Map& map)
   // Map
   // Note: we always want to keep 1:1 ratio, so there is some special handling
   //       if there is a difference in width and height scaling
+  // TODO(simon): fix source/dest spacing issues
   const auto spacing = static_cast<int>((MAP_TEXTURE_WIDTH * current_width_scale) -
                                         (MAP_TEXTURE_WIDTH * current_height_scale));
+  const SDL_Rect source_map =
+  {
+    spacing < 0 ? (-spacing / 2) : 0,
+    0,
+    MAP_TEXTURE_WIDTH - (spacing < 0 ? -spacing : 0),
+    MAP_TEXTURE_HEIGHT
+  };
   const SDL_Rect dest_map =
   {
     spacing / 2,
     0,
-    static_cast<int>(MAP_TEXTURE_WIDTH * current_height_scale) + (spacing < 0 ? (spacing / 2) : 0),  // spacing here should be moved to source rect
+    static_cast<int>(MAP_TEXTURE_WIDTH * current_height_scale) - (spacing < 0 ? -spacing : 0),
     static_cast<int>(MAP_TEXTURE_HEIGHT * current_height_scale)
   };
-  SDL_RenderCopy(sdl_renderer, sdl_map_texture, nullptr, &dest_map);
+  SDL_RenderCopy(sdl_renderer, sdl_map_texture, &source_map, &dest_map);
 
   SDL_RenderPresent(sdl_renderer);
 }
