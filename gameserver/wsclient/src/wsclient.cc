@@ -708,7 +708,11 @@ int main()
         };
         wsclient::connection->init(connection_callbacks, false);
       },
-      []() { LOG_INFO("%s: could not connect", __func__); },
+      []()
+      {
+        LOG_INFO("%s: stopping client", __func__);
+        emscripten_cancel_main_loop();
+      },
   };
 #ifdef EMSCRIPTEN
   if (!network::ClientFactory::createWebsocketClient(uri, callbacks))

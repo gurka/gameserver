@@ -30,6 +30,7 @@
 #include <array>
 #include <iterator>
 #include <tuple>
+#include <unordered_map>
 #include <variant>
 
 #ifdef EMSCRIPTEN
@@ -37,6 +38,7 @@
 #include <SDL.h>
 #else
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #endif
 
 #include "logger.h"
@@ -93,6 +95,7 @@ SDL_Renderer* sdl_renderer = nullptr;
 SDL_Texture* sdl_map_texture = nullptr;
 SDL_Texture* sdl_chat_texture = nullptr;
 SDL_Texture* sdl_sidebar_texture = nullptr;
+TTF_Font* ttf_font = nullptr;
 
 const utils::data_loader::ItemTypes* itemtypes = nullptr;
 wsclient::SpriteLoader sprite_loader;
@@ -418,6 +421,55 @@ void drawFloor(const wsclient::wsworld::Map& map,
   }
 }
 
+void renderText(int x, int y, const std::string& text)
+{
+  struct CachedTextTexture
+  {
+    SDL_Texture* texture;
+    int width;
+    int height;
+  };
+  // FIXME(simon): remove from cache when too many entries (based on last access?)
+  static std::unordered_map<std::string, CachedTextTexture> cache;
+
+  // Check if we have the text cached
+  if (cache.count(text) == 0)
+  {
+    LOG_DEBUG("%s: \"%s\" not in cache -> rendering", __func__, text.c_str());
+
+    // Create it in cache
+    auto& cached_texture = cache[text];
+
+    // Render it
+    auto* text_surface = TTF_RenderText_Blended(ttf_font, text.c_str(), { 42U, 42U, 42U, 255U });
+    if (!text_surface)
+    {
+      LOG_ABORT("%s: could not render text: %s", __func__, TTF_GetError());
+    }
+    cached_texture.texture = SDL_CreateTextureFromSurface(sdl_renderer, text_surface);
+    SDL_FreeSurface(text_surface);
+    if (!cached_texture.texture)
+    {
+      LOG_ABORT("%s: could not create text texture from surface: %s", __func__, SDL_GetError());
+    }
+    if (SDL_QueryTexture(cached_texture.texture, nullptr, nullptr, &cached_texture.width, &cached_texture.height) != 0)
+    {
+      LOG_ABORT("%s: could not query text texture: %s", __func__, SDL_GetError());
+    }
+  }
+
+  // Fetch it from cache
+  auto& cached_texture = cache[text];
+  SDL_Rect dest
+  {
+    x,
+    y,
+    cached_texture.width,
+    cached_texture.height,
+  };
+  SDL_RenderCopy(sdl_renderer, cached_texture.texture, nullptr, &dest);
+}
+
 }  // namespace
 
 namespace wsclient::graphics
@@ -427,7 +479,11 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
 {
   itemtypes = itemtypes_in;
 
-  SDL_Init(SDL_INIT_VIDEO);
+  if (SDL_Init(SDL_INIT_VIDEO) != 0)
+  {
+    LOG_ERROR("%s: could not initialize SDL: %s", __func__, SDL_GetError());
+    return false;
+  }
 
   current_width_scale = 1.5f;
   current_height_scale = 1.5f;
@@ -488,6 +544,20 @@ bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& 
   if (!sprite_loader.load(sprite_filename))
   {
     LOG_ERROR("%s: could not sprites", __func__);
+    return false;
+  }
+
+  if (TTF_Init() != 0)
+  {
+    LOG_ERROR("%s: could not initialize SDL TTF: %s", __func__, TTF_GetError());
+    return false;
+  }
+
+  // FIXME(simon): won't work for emscripten
+  ttf_font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 12);
+  if (!ttf_font)
+  {
+    LOG_ERROR("%s: could not open font: %s", __func__, TTF_GetError());
     return false;
   }
 
@@ -561,6 +631,26 @@ void draw(const wsworld::Map& map, const PlayerInfo& player_info)
       };
       SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, &dest);
     }
+
+    renderText(7, 180, "Health");
+    renderText(7 + (6 * 7) + 7, 180, std::to_string(player_info.stats.health));
+    renderText(7 + (6 * 7) + 7 + (4 * 7) + 7, 180, "/");
+    renderText(7 + (6 * 7) + 7 + (4 * 7) + 7 + (1 * 7) + 7, 180, std::to_string(player_info.stats.max_health));
+
+    // Make Mana align with Health
+    renderText(7, 200, "Mana");
+    renderText(7 + (6 * 7) + 7, 200, std::to_string(player_info.stats.mana));
+    renderText(7 + (6 * 7) + 7 + (4 * 7) + 7, 200, "/");
+    renderText(7 + (6 * 7) + 7 + (4 * 7) + 7 + (1 * 7) + 7, 200, std::to_string(player_info.stats.max_mana));
+
+    renderText(7, 220, "Capacity");
+    renderText(7 + (8 * 7) + 7, 220, std::to_string(player_info.stats.capacity));
+
+    renderText(7, 240, "Level");
+    renderText(7 + (5 * 7) + 7, 240, std::to_string(player_info.stats.level));
+
+    renderText(7, 260, "Experience");
+    renderText(7 + (10 * 7) + 7, 260, std::to_string(player_info.stats.exp));
   }
 
   // Render map

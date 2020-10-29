@@ -31,6 +31,7 @@ if (EMSCRIPTEN)
 else()
   target_link_libraries(wsclient PRIVATE
     SDL2
+    SDL2_ttf
     asio
     websocketpp
   )
