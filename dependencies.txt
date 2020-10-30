@@ -1,2 +1,5 @@
 libboost-date-time-dev
+
+# For wsclient / itemview
 libsdl2-dev
+libsdl2-ttf-dev
