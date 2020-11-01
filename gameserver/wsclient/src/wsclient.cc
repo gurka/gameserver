@@ -70,6 +70,8 @@ int num_received_packets = 0;
 // TODO(simon): parse/move below stuff
 PlayerInfo player_info;
 
+std::vector<std::string> text_messages;
+
 void handleLoginPacket(const protocol::client::Login& login)
 {
   map.setPlayerId(login.player_id);
@@ -131,7 +133,7 @@ void handleEquipmentUpdate(const protocol::client::Equipment& equipment)
 
 void handleTextMessage(const protocol::client::TextMessage& message)
 {
-  LOG_INFO("%s: message: %s", __func__, message.message.c_str());
+  text_messages.push_back(message.message);
 }
 
 void handleThingAdded(const protocol::client::ThingAdded& thing_added)
@@ -231,7 +233,10 @@ void handlePacket(network::IncomingPacket* packet)
         // animatedText
         protocol::getPosition(packet);
         packet->getU8();  // color
-        packet->getString();  // text
+        const auto message = packet->getString();  // text
+
+        text_messages.push_back(message);
+
         break;
       }
       case 0xA0:
@@ -362,8 +367,7 @@ void handlePacket(network::IncomingPacket* packet)
         }
         const auto text = packet->getString();  // text
 
-        LOG_INFO("%s: %s said \"%s\"", __func__, talker.c_str(), text.c_str());
-
+        text_messages.push_back(talker + ": " + text);
         break;
       }
 
@@ -652,7 +656,7 @@ extern "C" void main_loop()  // NOLINT
   }
 
   // Render
-  wsclient::graphics::draw(wsclient::map, wsclient::player_info);
+  wsclient::graphics::draw(wsclient::map, wsclient::player_info, wsclient::text_messages);
 }
 
 int main()

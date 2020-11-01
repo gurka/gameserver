@@ -571,8 +571,12 @@ void setWindowSize(int width, int height)
   current_height_scale = static_cast<double>(height) / SCREEN_HEIGHT_NO_SCALING;
 }
 
-void draw(const wsworld::Map& map, const PlayerInfo& player_info)
+void draw(const wsworld::Map& map,
+          const PlayerInfo& player_info,
+          const std::vector<std::string>& text_messages)
 {
+  // TODO(simon): only render [chat, sidebar, map] if anything has changed [chat, player_info, map]
+
   const auto anim_tick = SDL_GetTicks() / 540;
 
   SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
@@ -583,6 +587,10 @@ void draw(const wsworld::Map& map, const PlayerInfo& player_info)
     SDL_SetRenderTarget(sdl_renderer, sdl_chat_texture);
     SDL_SetRenderDrawColor(sdl_renderer, 127, 127, 127, 255);
     SDL_RenderClear(sdl_renderer);
+    for (auto i = 0; i < std::min(8, static_cast<int>(text_messages.size())); ++i)
+    {
+      renderText(10, 105 - (i * 14), text_messages[text_messages.size() - 1 - i]);
+    }
   }
 
   // Render sidebar
