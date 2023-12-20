@@ -25,6 +25,8 @@
 #ifndef WORLD_EXPORT_CREATURE_CTRL_H_
 #define WORLD_EXPORT_CREATURE_CTRL_H_
 
+#include <cstdint>
+
 #include <string>
 
 namespace common

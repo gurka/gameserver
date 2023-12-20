@@ -22,43 +22,39 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
-#define WSCLIENT_SRC_SPRITE_LOADER_H_
+#ifndef WSCLIENT_SRC_CONSOLE_H_
+#define WSCLIENT_SRC_CONSOLE_H_
 
-#include <cstdint>
-
-#include <array>
-#include <fstream>
-#include <memory>
+#include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
-
-namespace utils
-{
-
-class FileReader;
-
-}  // namespace utils
 
 namespace wsclient
 {
 
-using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
-
-class SpriteLoader
+class Console
 {
  public:
-  SpriteLoader();
-  ~SpriteLoader();
+  using Command = std::function<std::string(const std::string&)>;
 
-  bool load(const std::string& filename);
-  SpritePixels getSpritePixels(int sprite_id) const;
+  void addCommand(std::string&& keyword, Command&& command);
+
+  void addInput(char c);
+  void deleteInput(int n);
+  void clearInput();
+  void executeInput();
+
+  const std::string& getInput() const { return m_input; }
+  const std::vector<std::string>& getHistory() const { return m_history; }
 
  private:
-  std::unique_ptr<utils::FileReader> m_fr;
-  std::vector<std::uint32_t> m_offsets;
+  std::unordered_map<std::string, Command> m_commands;
+  std::string m_input;
+  std::vector<std::string> m_history;
 };
 
-}  // namespace wsclient
+}
 
-#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_
+#endif  // WSCLIENT_SRC_CONSOLE_H_
+

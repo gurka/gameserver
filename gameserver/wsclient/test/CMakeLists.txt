@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_executable(wsclient_test
+  "../src/console.cc"
+  "../src/console.h"
+  "src/console_test.cc"
   "src/tiles_test.cc"
 )
 

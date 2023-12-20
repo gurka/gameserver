@@ -22,43 +22,72 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
-#define WSCLIENT_SRC_SPRITE_LOADER_H_
-
-#include <cstdint>
-
-#include <array>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <vector>
-
-namespace utils
-{
-
-class FileReader;
-
-}  // namespace utils
+#include "console.h"
 
 namespace wsclient
 {
 
-using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
-
-class SpriteLoader
+void Console::addCommand(std::string&& keyword, wsclient::Console::Command&& command)
 {
- public:
-  SpriteLoader();
-  ~SpriteLoader();
+  m_commands.emplace(std::move(keyword), std::move(command));
+}
 
-  bool load(const std::string& filename);
-  SpritePixels getSpritePixels(int sprite_id) const;
+void Console::addInput(char c)
+{
+  m_input += c;
+}
 
- private:
-  std::unique_ptr<utils::FileReader> m_fr;
-  std::vector<std::uint32_t> m_offsets;
-};
+void Console::deleteInput(int n)
+{
+  if (n <= 0) {
+    return;
+  }
+
+  if (n >= static_cast<int>(m_input.size()))
+  {
+    m_input.clear();
+  }
+  else
+  {
+    m_input.erase(m_input.size() - n);
+  }
+}
+
+void Console::clearInput()
+{
+  m_input.clear();
+}
+
+void Console::executeInput()
+{
+  std::string keyword;
+  std::string argument;
+  const auto first_space = m_input.find_first_of(' ');
+  if (first_space == std::string::npos)
+  {
+    keyword = m_input;
+    argument = "";
+  }
+  else
+  {
+    keyword = m_input.substr(0, first_space);
+    argument = m_input.substr(first_space + 1);
+  }
+
+  m_history.emplace_back("$ " + m_input);
+
+  if (m_commands.count(keyword) == 0)
+  {
+    m_history.emplace_back("Command not found");
+  }
+  else
+  {
+    m_history.emplace_back(m_commands[keyword](argument));
+  }
+
+  m_input.clear();
+
+  // TODO cap size of m_history
+}
 
 }  // namespace wsclient
-
-#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_

@@ -67,7 +67,7 @@ add_library(rapidxml INTERFACE)
 target_include_directories(rapidxml SYSTEM INTERFACE "../external/rapidxml")
 
 # -- Unit tests --
-add_subdirectory("../external/googletest" "external/googletest" EXCLUDE_FROM_ALL)
+add_subdirectory("../external/googletest" "external/googletest")
 add_subdirectory("account/test" EXCLUDE_FROM_ALL)
 add_subdirectory("common/test" EXCLUDE_FROM_ALL)
 add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)

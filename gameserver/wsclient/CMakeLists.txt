@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_executable(wsclient
+  "src/console.cc"
+  "src/console.h"
   "src/graphics.cc"
   "src/graphics.h"
   "src/sprite_loader.cc"
