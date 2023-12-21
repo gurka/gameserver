@@ -22,43 +22,37 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_SPRITE_LOADER_H_
-#define WSCLIENT_SRC_SPRITE_LOADER_H_
+#include "../../src/console.h"
 
-#include <cstdint>
-
-#include <array>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <vector>
-
-namespace utils
-{
-
-class FileReader;
-
-}  // namespace utils
+#include "gtest/gtest.h"
 
 namespace wsclient
 {
 
-using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
-
-class SpriteLoader
+TEST(ConsoleTest, test)
 {
- public:
-  SpriteLoader();
-  ~SpriteLoader();
+  Console console;
 
-  bool load(const std::string& filename);
-  SpritePixels getSpritePixels(int sprite_id) const;
+  bool testCalled = false;
+  std::string testCalledArgs;
+  console.addCommand("test", [&](const std::string& args)
+  {
+    testCalled = true;
+    testCalledArgs = args;
+    return "OK";
+  });
 
- private:
-  std::unique_ptr<utils::FileReader> m_fr;
-  std::vector<std::uint32_t> m_offsets;
-};
+  std::string input = "test foo bar";
+  for (auto c : input)
+  {
+    console.addInput(c);
+  }
+  console.executeInput();
+
+  ASSERT_TRUE(testCalled);
+  ASSERT_EQ("foo bar", testCalledArgs);
+  ASSERT_EQ(2u, console.getHistory().size());
+  ASSERT_TRUE(console.getInput().empty());
+}
 
 }  // namespace wsclient
-
-#endif  // WSCLIENT_SRC_SPRITE_LOADER_H_
