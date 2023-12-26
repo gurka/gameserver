@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
-#include "tile.h"
+#include "world/tile.h"
+
+#include <gtest/gtest.h>
+
 #include "item_mock.h"
 #include "creature_mock.h"
-
-#include "gtest/gtest.h"
 
 namespace world
 {

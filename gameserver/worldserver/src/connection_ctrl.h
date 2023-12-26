@@ -30,16 +30,14 @@
 #include <string>
 #include <memory>
 
-// gameengine
-#include "player_ctrl.h"
-#include "player.h"
-#include "game_position.h"
-#include "container.h"
+#include "gameengine/player_ctrl.h"
+#include "gameengine/player.h"
+#include "gameengine/container.h"
 
-// world
-#include "creature.h"
-#include "position.h"
-#include "item.h"
+#include "common/game_position.h"
+#include "common/creature.h"
+#include "common/position.h"
+#include "common/item.h"
 
 namespace account
 {

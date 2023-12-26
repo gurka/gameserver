@@ -28,9 +28,9 @@
 #include <functional>
 #include <vector>
 
-#include "thing.h"
-#include "item.h"
-#include "creature.h"
+#include "common/thing.h"
+#include "common/item.h"
+#include "common/creature.h"
 
 namespace world
 {

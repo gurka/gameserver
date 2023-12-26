@@ -21,18 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "protocol_server.h"
+#include "protocol/protocol_server.h"
 
-#include <cstdint>
-
-#include "logger.h"
-#include "creature.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
-#include "world.h"
-#include "position.h"
-#include "container.h"
-#include "player.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
+#include "world/world.h"
+#include "common/creature.h"
+#include "common/position.h"
+#include "gameengine/container.h"
+#include "gameengine/player.h"
 
 namespace protocol::server
 {

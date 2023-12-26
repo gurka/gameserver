@@ -34,10 +34,11 @@
 #include <SDL2/SDL.h>
 #endif
 
-#include "creature.h"
-#include "item.h"
+#include "common/creature.h"
+#include "common/item.h"
+#include "common/direction.h"
+
 #include "sprite_loader.h"
-#include "direction.h"
 
 namespace wsclient
 {

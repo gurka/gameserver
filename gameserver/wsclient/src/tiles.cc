@@ -24,7 +24,7 @@
 
 #include "tiles.h"
 
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace
 {

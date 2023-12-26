@@ -25,7 +25,7 @@
 #ifndef NETWORK_SRC_WEBSOCKET_SERVER_BACKEND_H_
 #define NETWORK_SRC_WEBSOCKET_SERVER_BACKEND_H_
 
-#include "server.h"
+#include "network/server.h"
 
 #include <cstdint>
 #include <functional>
@@ -36,9 +36,10 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
+#include "utils/logger.h"
+
 #include "error_code.h"
 #include "connection_impl.h"
-#include "logger.h"
 
 namespace network
 {

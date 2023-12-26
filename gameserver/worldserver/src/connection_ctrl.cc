@@ -30,30 +30,25 @@
 #include <deque>
 #include <utility>
 
-// network
-#include "connection.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "network/connection.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
 
-// gameengine
-#include "game_engine.h"
-#include "game_engine_queue.h"
-#include "game_position.h"
+#include "gameengine/game_engine.h"
+#include "gameengine/game_engine_queue.h"
 
-// world
-#include "world.h"
-#include "tile.h"
-#include "item.h"
+#include "common/game_position.h"
+#include "common/item.h"
 
-// utils
-#include "logger.h"
+#include "world/world.h"
+#include "world/tile.h"
 
-// account
-#include "account.h"
+#include "utils/logger.h"
 
-// protocol
-#include "protocol_common.h"
-#include "protocol_server.h"
+#include "account/account.h"
+
+#include "protocol/protocol_common.h"
+#include "protocol/protocol_server.h"
 
 using namespace protocol::server;  // NOLINT yes we want it all
 

@@ -34,9 +34,9 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
-#include "client_factory.h"
+#include "network/client_factory.h"
+#include "network/connection.h"
 #include "error_code.h"
-#include "connection.h"
 
 namespace network
 {

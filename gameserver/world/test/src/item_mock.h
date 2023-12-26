@@ -25,8 +25,9 @@
 #ifndef WORLD_TEST_SRC_ITEM_MOCK_H_
 #define WORLD_TEST_SRC_ITEM_MOCK_H_
 
-#include "item.h"
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
+
+#include "common/item.h"
 
 namespace world
 {

@@ -26,7 +26,7 @@
 
 #include <algorithm>
 
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace wsclient::wsworld
 {

@@ -28,21 +28,17 @@
 #include <unordered_map>
 #include <asio.hpp>
 
-// utils
-#include "config_parser.h"
-#include "logger.h"
+#include "utils/config_parser.h"
+#include "utils/logger.h"
 
-// account
-#include "account.h"
+#include "account/account.h"
 
-// network
-#include "server_factory.h"
-#include "server.h"
-#include "connection.h"
+#include "network/server_factory.h"
+#include "network/server.h"
+#include "network/connection.h"
 
-// gameengine
-#include "game_engine.h"
-#include "game_engine_queue.h"
+#include "gameengine/game_engine.h"
+#include "gameengine/game_engine_queue.h"
 
 // worldserver
 #include "connection_ctrl.h"

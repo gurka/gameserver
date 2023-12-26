@@ -36,21 +36,16 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
-// network
-#include "incoming_packet.h"
+#include "network/incoming_packet.h"
 
-// protocol
-#include "protocol_common.h"
-#include "protocol_client.h"
+#include "protocol/protocol_common.h"
+#include "protocol/protocol_client.h"
 
-// utils
-#include "data_loader.h"
-#include "logger.h"
+#include "utils/data_loader.h"
+#include "utils/logger.h"
 
-// common
-#include "position.h"
+#include "common/position.h"
 
-// wsclient
 #include "graphics.h"
 #include "wsworld.h"
 #include "types.h"

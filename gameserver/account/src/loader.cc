@@ -28,9 +28,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "logger.h"
-#include "rapidxml.hpp"
-#include "account.h"
+#include <rapidxml.hpp>
+
+#include "account/account.h"
+#include "utils/logger.h"
 
 namespace
 {

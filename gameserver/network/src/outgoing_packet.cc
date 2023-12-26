@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include "outgoing_packet.h"
+#include "network/outgoing_packet.h"
 
 #include <algorithm>
 
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace network
 {

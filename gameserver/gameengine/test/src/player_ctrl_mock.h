@@ -25,9 +25,9 @@
 #ifndef GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_
 #define GAMEENGINE_TEST_PLAYERCTRL_MOCK_H_
 
-#include "gmock/gmock.h"
+#include "gameengine/player_ctrl.h"
 
-#include "player_ctrl.h"
+#include <gmock/gmock.h>
 
 namespace gameengine
 {

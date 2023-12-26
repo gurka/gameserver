@@ -25,16 +25,16 @@
 #include <memory>
 #include <unordered_map>
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+#include "common/creature.h"
+#include "common/position.h"
+#include "common/item.h"
+#include "world/world.h"
 
 #include "creaturectrl_mock.h"
 #include "item_mock.h"
-#include "world.h"
-#include "creature.h"
-#include "creature_ctrl.h"
-#include "position.h"
-#include "item.h"
 
 namespace world
 {

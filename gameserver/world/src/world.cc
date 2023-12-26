@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "world.h"
+#include "world/world.h"
 
 #include <algorithm>
 #include <array>
@@ -33,8 +33,8 @@
 #include <tuple>
 #include <utility>
 
-#include "logger.h"
-#include "tick.h"
+#include "utils/logger.h"
+#include "utils/tick.h"
 
 namespace world
 {

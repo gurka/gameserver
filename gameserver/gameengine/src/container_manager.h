@@ -28,10 +28,10 @@
 #include <array>
 #include <unordered_map>
 
-#include "container.h"
-#include "item.h"
-#include "creature.h"
-#include "game_position.h"
+#include "gameengine/container.h"
+#include "common/item.h"
+#include "common/creature.h"
+#include "common/game_position.h"
 
 namespace common
 {

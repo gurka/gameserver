@@ -29,10 +29,10 @@
 #include <variant>
 #include <vector>
 
-#include "game_position.h"
-#include "creature.h"
-#include "item.h"
-#include "data_loader.h"
+#include "common/game_position.h"
+#include "common/creature.h"
+#include "common/item.h"
+#include "utils/data_loader.h"
 
 namespace network
 {

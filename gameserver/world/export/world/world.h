@@ -30,11 +30,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "creature.h"
 #include "creature_ctrl.h"
-#include "item.h"
 #include "tile.h"
-#include "position.h"
+#include "common/creature.h"
+#include "common/item.h"
+#include "common/position.h"
 
 namespace world
 {

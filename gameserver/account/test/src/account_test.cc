@@ -22,9 +22,11 @@
  * SOFTWARE.
  */
 
+#include "account/account.h"
+
 #include <algorithm>
-#include "gtest/gtest.h"
-#include "account.h"
+
+#include <gtest/gtest.h>
 
 namespace account
 {

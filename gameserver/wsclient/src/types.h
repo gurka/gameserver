@@ -25,7 +25,7 @@
 #ifndef WSCLIENT_SRC_TYPES_H_
 #define WSCLIENT_SRC_TYPES_H_
 
-#include "position.h"
+#include "common/position.h"
 
 namespace wsclient::consts
 {

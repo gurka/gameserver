@@ -21,15 +21,16 @@
  * SOFTWARE.
  */
 
-#include "data_loader.h"
+#include "utils/data_loader.h"
 
 #include <cstring>
 #include <fstream>
 #include <sstream>
 
-#include "logger.h"
-#include "file_reader.h"
-#include "rapidxml.hpp"
+#include <rapidxml.hpp>
+
+#include "utils/logger.h"
+#include "utils/file_reader.h"
 
 namespace utils::data_loader
 {

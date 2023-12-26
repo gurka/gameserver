@@ -21,13 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "protocol_client.h"
+#include "protocol/protocol_client.h"
 
-#include <cstdint>
-
-#include "logger.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "network/incoming_packet.h"
+#include "utils/logger.h"
 
 namespace
 {

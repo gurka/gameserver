@@ -24,13 +24,11 @@
 
 #include "sprite_loader.h"
 
-#include <cstdint>
 #include <array>
-#include <fstream>
 #include <vector>
 
-#include "logger.h"
-#include "file_reader.h"
+#include "utils/logger.h"
+#include "utils/file_reader.h"
 
 namespace wsclient
 {

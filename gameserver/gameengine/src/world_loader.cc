@@ -30,13 +30,12 @@
 #include <utility>
 #include <vector>
 
-#include "logger.h"
-#include "item.h"
-#include "position.h"
-#include "tile.h"
-#include "world.h"
+#include <rapidxml.hpp>
 
-#include "rapidxml.hpp"
+#include "utils/logger.h"
+#include "common/item.h"
+#include "world/tile.h"
+#include "world/world.h"
 
 namespace gameengine::world_loader
 {

@@ -29,9 +29,9 @@
 #include <string>
 #include <vector>
 
-#include "creature_ctrl.h"
-#include "creature.h"
-#include "item.h"
+#include "world/creature_ctrl.h"
+#include "common/creature.h"
+#include "common/item.h"
 
 namespace common
 {

@@ -30,8 +30,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "item.h"
-#include "data_loader.h"
+#include "common/item.h"
+#include "utils/data_loader.h"
 
 namespace gameengine
 {

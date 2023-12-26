@@ -31,9 +31,9 @@
 #include <unordered_map>
 #include <utility>
 
-#include "creature.h"
-#include "direction.h"
-#include "item.h"
+#include "common/creature.h"
+#include "common/direction.h"
+#include "common/item.h"
 
 namespace gameengine
 {

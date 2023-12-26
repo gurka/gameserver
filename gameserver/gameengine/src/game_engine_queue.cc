@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include "game_engine_queue.h"
+#include "gameengine/game_engine_queue.h"
 
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace gameengine
 {
