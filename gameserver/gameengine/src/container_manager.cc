@@ -25,12 +25,10 @@
 #include "container_manager.h"
 
 #include <algorithm>
-#include <functional>
-#include <iterator>
 
-#include "item.h"
-#include "logger.h"
-#include "player_ctrl.h"
+#include "common/item.h"
+#include "utils/logger.h"
+#include "gameengine/player_ctrl.h"
 
 namespace gameengine
 {

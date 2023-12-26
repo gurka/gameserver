@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "client_factory.h"
+#include "network/client_factory.h"
 
 #include <memory>
 

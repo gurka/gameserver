@@ -36,8 +36,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
-#include "logger.h"
-#include "data_loader.h"
+#include "utils/logger.h"
+#include "utils/data_loader.h"
+
 #include "sprite_loader.h"
 #include "texture.h"
 

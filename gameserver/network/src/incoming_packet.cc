@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "incoming_packet.h"
+#include "network/incoming_packet.h"
 
 #include <algorithm>
 #include <vector>

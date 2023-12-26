@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-#include "tile.h"
+#include "world/tile.h"
 
-#include <type_traits>
-
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace world
 {

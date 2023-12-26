@@ -25,16 +25,16 @@
 #ifndef NETWORK_SRC_CONNECTION_IMPL_H_
 #define NETWORK_SRC_CONNECTION_IMPL_H_
 
-#include "connection.h"
+#include "network/connection.h"
 
 #include <deque>
 #include <memory>
 #include <vector>
 #include <utility>
 
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
-#include "logger.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
+#include "utils/logger.h"
 
 namespace network
 {

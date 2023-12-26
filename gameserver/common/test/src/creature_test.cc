@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include "creature.h"
+#include "common/creature.h"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace common
 {

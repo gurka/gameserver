@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-#include "game_position.h"
+#include "common/game_position.h"
 
 namespace common
 {

@@ -21,17 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "protocol_common.h"
+#include "protocol/protocol_common.h"
 
 #include <algorithm>
 #include <variant>
 
-#include "logger.h"
-#include "thing.h"
-#include "creature.h"
-#include "item.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "utils/logger.h"
+#include "common/thing.h"
+#include "common/creature.h"
+#include "common/item.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
 
 namespace protocol
 {

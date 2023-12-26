@@ -23,7 +23,7 @@
 
 #include "item_manager.h"
 
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace gameengine
 {

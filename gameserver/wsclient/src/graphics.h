@@ -27,9 +27,9 @@
 
 #include <string>
 
+#include "common/position.h"
+#include "common/creature.h"
 #include "wsworld.h"
-#include "position.h"
-#include "creature.h"
 #include "player_info.h"
 
 namespace wsclient::graphics

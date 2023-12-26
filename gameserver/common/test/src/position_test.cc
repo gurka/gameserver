@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include "position.h"
+#include "common/position.h"
 
 #include <sstream>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace common
 {

@@ -21,14 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "container.h"
+#include "gameengine/container.h"
 
 #include <string>
 #include <sstream>
 
-#include "player_ctrl.h"
-#include "item.h"
-#include "creature.h"
+#include "gameengine/player_ctrl.h"
+#include "common/item.h"
+#include "common/creature.h"
 
 namespace gameengine
 {

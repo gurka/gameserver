@@ -29,8 +29,8 @@
 #include <memory>
 #include <string>
 
-#include "tile.h"
-#include "item.h"
+#include "world/tile.h"
+#include "common/item.h"
 
 namespace gameengine::world_loader
 {

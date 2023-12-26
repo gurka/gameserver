@@ -22,13 +22,11 @@
  * SOFTWARE.
  */
 
-#include "account.h"
+#include "account/account.h"
 
 #include <algorithm>
-#include <sstream>
-#include <utility>
 
-#include "logger.h"
+#include "utils/logger.h"
 #include "loader.h"
 
 namespace account

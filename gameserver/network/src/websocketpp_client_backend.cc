@@ -31,8 +31,8 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
+#include "utils/logger.h"
 #include "connection_impl.h"
-#include "logger.h"
 
 namespace network
 {

@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-#include "player.h"
+#include "gameengine/player.h"
 
-#include <utility>
-
-#include "logger.h"
+#include "utils/logger.h"
 
 namespace gameengine
 {

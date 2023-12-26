@@ -27,7 +27,7 @@
 
 #include <array>
 
-#include "protocol_client.h"
+#include "protocol/protocol_client.h"
 #include "tiles.h"
 
 namespace wsclient

@@ -28,11 +28,11 @@
 #include <array>
 #include <variant>
 
-#include "position.h"
-#include "item.h"
-#include "creature.h"
+#include "common/position.h"
+#include "common/item.h"
+#include "common/creature.h"
+#include "utils/logger.h"
 #include "types.h"
-#include "logger.h"
 
 namespace wsclient::wsworld
 {

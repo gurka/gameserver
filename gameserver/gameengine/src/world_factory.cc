@@ -24,18 +24,13 @@
 
 #include "world_factory.h"
 
-#include <cstring>
 #include <fstream>
-#include <sstream>
 #include <utility>
-#include <vector>
 
-#include "logger.h"
+#include "utils/logger.h"
+#include "world/world.h"
 #include "world_loader.h"
 #include "item_manager.h"
-#include "item.h"
-#include "tile.h"
-#include "world.h"
 
 namespace gameengine
 {

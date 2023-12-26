@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include "config_parser.h"
+#include "utils/config_parser.h"
 
 #include <sstream>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace utils
 {

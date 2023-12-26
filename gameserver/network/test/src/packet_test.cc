@@ -24,11 +24,10 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <gtest/gtest.h>
 
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
 
 namespace network
 {

@@ -28,19 +28,16 @@
 
 #include <asio.hpp>
 
-// utils
-#include "config_parser.h"
-#include "logger.h"
+#include "utils/config_parser.h"
+#include "utils/logger.h"
 
-// account
-#include "account.h"
+#include "account/account.h"
 
-// network
-#include "server_factory.h"
-#include "server.h"
-#include "connection.h"
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "network/server_factory.h"
+#include "network/server.h"
+#include "network/connection.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
 
 // We need to use unique_ptr, so that we can deallocate everything before
 // static things (like Logger) gets deallocated

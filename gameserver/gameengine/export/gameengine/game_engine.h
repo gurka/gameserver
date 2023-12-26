@@ -33,10 +33,10 @@
 #include <unordered_map>
 #include <utility>
 
-#include "world.h"
+#include "world/world.h"
+#include "common/game_position.h"
+#include "common/position.h"
 #include "player.h"
-#include "position.h"
-#include "game_position.h"
 
 class OutgoingPacket;
 

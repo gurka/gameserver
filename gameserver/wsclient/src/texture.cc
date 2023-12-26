@@ -24,7 +24,7 @@
 
 #include "texture.h"
 
-#include "logger.h"
+#include "utils/logger.h"
 
 /*
  * Item -> ItemType -> Sprites -> Texture

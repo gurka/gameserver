@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "server_factory.h"
+#include "network/server_factory.h"
 
 #include <asio.hpp>
 

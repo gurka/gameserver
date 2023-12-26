@@ -22,26 +22,28 @@
  * SOFTWARE.
  */
 
-#include "game_engine.h"
+#include "gameengine/game_engine.h"
 
-#include <cstdio>
-#include <cstdlib>
 #include <memory>
 #include <sstream>
 #include <utility>
 
-#include "game_engine_queue.h"
-#include "player.h"
-#include "player_ctrl.h"
-#include "creature.h"
-#include "creature_ctrl.h"
-#include "item.h"
+#include "common/creature.h"
+#include "common/item.h"
+#include "common/position.h"
+
+#include "gameengine/game_engine_queue.h"
+#include "gameengine/player.h"
+#include "gameengine/player_ctrl.h"
+
+#include "utils/logger.h"
+#include "utils/tick.h"
+
+#include "world/creature_ctrl.h"
+
 #include "item_manager.h"
 #include "container_manager.h"
-#include "position.h"
 #include "world_factory.h"
-#include "logger.h"
-#include "tick.h"
 
 namespace
 {

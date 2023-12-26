@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-
-#include "player.h"
 #include "container_manager.h"
+
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+#include "gameengine/player.h"
 #include "player_ctrl_mock.h"
 
 namespace gameengine

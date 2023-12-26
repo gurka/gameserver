@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "tick.h"
+#include "utils/tick.h"
 
 #ifndef __EMSCRIPTEN__
 #include <boost/date_time/posix_time/posix_time.hpp>

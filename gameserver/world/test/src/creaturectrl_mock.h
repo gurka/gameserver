@@ -25,9 +25,9 @@
 #ifndef COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
 #define COMMON_WORLD_MOCKS_CREATURECTRL_MOCK_H_
 
-#include "gmock/gmock.h"
+#include "world/creature_ctrl.h"
 
-#include "creature_ctrl.h"
+#include <gmock/gmock.h>
 
 namespace world
 {

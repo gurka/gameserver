@@ -26,8 +26,8 @@
 #define WORLD_TEST_SRC_CREATURE_MOCK_H_
 
 #include <string>
-#include "creature.h"
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
+#include "common/creature.h"
 
 namespace world
 {

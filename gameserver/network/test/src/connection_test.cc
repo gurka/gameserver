@@ -24,8 +24,8 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "connection_impl.h"
 #include "backend_mock.h"
@@ -34,6 +34,7 @@ namespace network
 {
 
 using ::testing::_;
+using ::testing::DoAll;
 using ::testing::SaveArg;
 using ::testing::Pointee;
 using ::testing::Return;
