@@ -22,37 +22,29 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_MAP_H_
-#define WSCLIENT_SRC_MAP_H_
+#ifndef WSCLIENT_SRC_GAME_GAME_H_
+#define WSCLIENT_SRC_GAME_GAME_H_
 
-#include <array>
+#include <cstdint>
 #include <functional>
 #include <vector>
 
 #include "common/position.h"
 #include "common/creature.h"
-#include "common/item.h"
 #include "protocol/protocol_common.h"
 #include "protocol/protocol_client.h"
 #include "utils/data_loader.h"
 
-#include "tiles.h"
 #include "types.h"
+#include "tiles.h"
 
-namespace model
+namespace game
 {
 
-class Map
+class Game
 {
  public:
-  struct Callbacks
-  {
-    std::function<void(const Creature&)> known_creature_added;
-    std::function<void(const Creature&)> known_creature_removed;
-  };
-
-  void setCallbacks(const Callbacks& callbacks) { m_callbacks = callbacks; }
-  void setItemTypes(const utils::data_loader::ItemTypes* itemtypes) { m_itemtypes = itemtypes; }
+  void setItemTypes(const utils::data_loader::ItemTypes* item_types) { m_item_types = item_types; }
   void setPlayerId(common::CreatureId player_id) { m_player_id = player_id; }
 
   // Methods that work with protocol objects
@@ -92,13 +84,12 @@ class Map
   Thing getThing(const common::Position& position, std::uint8_t stackpos);
 
   Tiles m_tiles;
-  Callbacks m_callbacks;
-  const utils::data_loader::ItemTypes* m_itemtypes;
+  const utils::data_loader::ItemTypes* m_item_types;
   common::CreatureId m_player_id = 0U;
   bool m_ready = false;
   std::vector<Creature> m_known_creatures;
 };
 
-}  // namespace model
+}
 
-#endif  // WSCLIENT_SRC_MAP_H_
+#endif  // WSCLIENT_SRC_GAME_GAME_H_

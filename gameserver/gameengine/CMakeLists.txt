@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_library(gameengine
-  "export/container.h"
-  "export/game_engine.h"
-  "export/game_engine_queue.h"
-  "export/player.h"
-  "export/player_ctrl.h"
+  "export/gameengine/container.h"
+  "export/gameengine/game_engine.h"
+  "export/gameengine/game_engine_queue.h"
+  "export/gameengine/player.h"
+  "export/gameengine/player_ctrl.h"
   "src/container.cc"
   "src/container_manager.cc"
   "src/container_manager.h"

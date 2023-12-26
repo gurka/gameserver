@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_library(account
-  "export/account.h"
+  "export/account/account.h"
   "src/account.cc"
   "src/loader.cc"
   "src/loader.h"

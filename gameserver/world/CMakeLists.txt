@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_library(world
-  "export/creature_ctrl.h"
-  "export/tile.h"
-  "export/world.h"
+  "export/world/creature_ctrl.h"
+  "export/world/tile.h"
+  "export/world/world.h"
   "src/tile.cc"
   "src/world.cc"
 )

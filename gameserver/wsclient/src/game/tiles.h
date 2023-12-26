@@ -22,35 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_TILES_H_
-#define WSCLIENT_SRC_TILES_H_
+#ifndef WSCLIENT_SRC_GAME_TILES_H_
+#define WSCLIENT_SRC_GAME_TILES_H_
 
+#include <cstdint>
 #include <array>
 #include <variant>
 
 #include "common/position.h"
 #include "common/item.h"
 #include "common/creature.h"
+#include "common/direction.h"
 #include "utils/logger.h"
+
 #include "types.h"
 
-namespace wsclient::wsworld
+namespace game
 {
 
-struct Item
-{
-  const common::ItemType* type;
-  std::uint8_t extra;
-};
-
-using Thing = std::variant<common::CreatureId, Item>;
+constexpr auto KNOWN_TILES_X = 18;
+constexpr auto KNOWN_TILES_Y = 14;
 
 struct Tile
 {
   std::vector<Thing> things;
 };
 
-using TileArray = std::array<Tile, consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y * 8>;
+using TileArray = std::array<Tile, KNOWN_TILES_X * KNOWN_TILES_Y * 8>;
 
 class Tiles
 {
@@ -126,6 +124,6 @@ class Tiles
   TileArray m_tiles;
 };
 
-}  // namespace wsclient::wsworld
+}  // namespace game
 
-#endif  // WSCLIENT_SRC_TILES_H_
+#endif  // WSCLIENT_SRC_GAME_TILES_H_

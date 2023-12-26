@@ -22,26 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_GAME_H_
-#define WSCLIENT_SRC_GAME_H_
+#ifndef WSCLIENT_SRC_GAME_TYPES_H_
+#define WSCLIENT_SRC_GAME_TYPES_H_
 
-#include <memory>
-#include <SDL2/SDL.h>
-#include "ui_widget.h"
+#include <cstdint>
 
-class SDL_Renderer;
-class SDL_Texture;
+#include "common/creature.h"
+#include "common/direction.h"
 
-namespace model
+namespace game
 {
 
-class Game
+struct Creature
 {
- public:
- private:
-
+  common::CreatureId id;
+  std::string name;
+  std::uint8_t health_percent;
+  common::Direction direction;
+  common::Outfit outfit;
+  std::uint16_t speed;
 };
 
-}
+struct Item
+{
+  const common::ItemType* type;
+  std::uint8_t extra;
+};
 
-#endif  // WSCLIENT_SRC_GAME_H_
+// TODO(simon): CreatureId is 32 bits and ItemTypeId+extra is 16+8 bits
+//              We could use Thing = std::uint32_t
+//              if we can figure out the valid range of creature ids
+using Thing = std::variant<common::CreatureId, Item>;
+
+}  // namespace model
+
+#endif  // WSCLIENT_SRC_GAME_TYPES_H_

@@ -29,8 +29,8 @@
 #include <fstream>
 #include <vector>
 
-#include "incoming_packet.h"
-#include "outgoing_packet.h"
+#include "network/incoming_packet.h"
+#include "network/outgoing_packet.h"
 
 class ReplayPacket
 {
@@ -66,6 +66,9 @@ class Replay
   std::uint32_t getNextPacketTime() const { return m_packets[m_next_packet_index].getPacketTime(); }
   network::OutgoingPacket&& getNextPacket() { return std::move(m_packets[m_next_packet_index++].getPacket()); }
 
+  // playback
+  bool timeForNextPacket();
+
  private:
   std::string m_load_error;
 
@@ -73,6 +76,10 @@ class Replay
   uint32_t m_length;
   std::vector<ReplayPacket> m_packets;
   std::size_t m_next_packet_index;
+
+  // playback
+  std::uint32_t getFakeTime(int speed);
+  std::uint32_t m_start_time_ms;
 };
 
 #endif  // REPLAYSERVER_SRC_REPLAY_READER_H_

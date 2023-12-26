@@ -37,7 +37,7 @@ struct PlayerInfo
 {
   protocol::client::PlayerStats stats;
   protocol::client::PlayerSkills skills;
-  std::array<wsworld::Item, 10> equipment;
+  std::array<model::Item, 10> equipment;
 };
 
 }  // namespace wsclient

@@ -26,6 +26,8 @@
 
 #include <iterator>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 namespace
 {
 
@@ -140,4 +142,37 @@ bool Replay::load(const std::string& filename)
   }
 
   return true;
+}
+
+// playback
+
+bool Replay::timeForNextPacket()
+{
+  if (m_start_time_ms == 0u)
+  {
+    m_start_time_ms = getFakeTime(1);
+  }
+
+  const auto elapsed_ms = getFakeTime(1) - m_start_time_ms;
+  return getNumberOfPacketsLeft() > 0U && getNextPacketTime() <= elapsed_ms;
+}
+
+std::uint32_t Replay::getFakeTime(int speed)
+{
+  using boost::posix_time::ptime;
+  using boost::posix_time::microsec_clock;
+
+  static auto last_current_time = microsec_clock::universal_time();
+  static auto last_fake_ms = 0U;
+
+  const auto current_time = microsec_clock::universal_time();
+  const auto elapsed_ms = (current_time - last_current_time).total_milliseconds();
+
+  // Add an extra fake ms in case this function gets called too fast
+  const auto fake_time_ms = last_fake_ms + (elapsed_ms * speed) + (elapsed_ms == 0 ? 1 : 0);
+
+  last_current_time = current_time;
+  last_fake_ms = fake_time_ms;
+
+  return fake_time_ms;
 }

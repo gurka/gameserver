@@ -26,16 +26,18 @@
 
 #include <SDL2/SDL.h>
 
-#include "types.h"
+#include "game/game.h"
 
 namespace ui
 {
 
 constexpr auto TILE_SIZE = 32;
-constexpr auto MAP_TEXTURE_WIDTH  = wsclient::consts::DRAW_TILES_X * TILE_SIZE;  // 480
-constexpr auto MAP_TEXTURE_HEIGHT = wsclient::consts::DRAW_TILES_Y * TILE_SIZE;  // 352
+constexpr auto DRAW_TILES_X = 15;
+constexpr auto DRAW_TILES_Y = 11;
+constexpr auto MAP_TEXTURE_WIDTH  = DRAW_TILES_X * TILE_SIZE;  // 480
+constexpr auto MAP_TEXTURE_HEIGHT = DRAW_TILES_Y * TILE_SIZE;  // 352
 
-Game::Game(const model::Game* game)
+Game::Game(const game::Game* game)
     : m_game(game),
       m_width(0),
       m_height(0),
@@ -73,6 +75,7 @@ void Game::onClick(int x, int y)
 
 SDL_Texture* Game::render()
 {
+  m_game->getPlayerId();
   return nullptr;
 }
 

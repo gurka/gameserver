@@ -32,7 +32,7 @@
 class SDL_Renderer;
 class SDL_Texture;
 
-namespace model
+namespace game
 {
 class Game;
 }
@@ -43,14 +43,14 @@ namespace ui
 class Game : public Widget
 {
  public:
-  Game(const model::Game* game);
+  Game(const game::Game* game);
   void init(SDL_Renderer* sdl_renderer, int width, int height) override;
   void onResize(int width, int height) override;
   void onClick(int x, int y) override;
   SDL_Texture* render() override;
 
  private:
-  const model::Game* m_game;
+  const game::Game* m_game;
   SDL_Renderer* m_renderer;
   int m_width;
   int m_height;

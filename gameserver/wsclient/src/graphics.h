@@ -26,10 +26,12 @@
 #define WSCLIENT_SRC_GRAPHICS_H_
 
 #include <string>
+#include <vector>
 
 #include "common/position.h"
-#include "common/creature.h"
-#include "wsworld.h"
+#include "utils/data_loader.h"
+#include "creature.h"
+#include "map.h"
 #include "player_info.h"
 
 namespace wsclient::graphics
@@ -37,11 +39,11 @@ namespace wsclient::graphics
 
 bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
 void setWindowSize(int width, int height);
-void draw(const wsworld::Map& map,
+void draw(const model::Map& map,
           const PlayerInfo& player_info,
           const std::vector<std::string>& text_messages);
-void createCreatureTexture(const wsworld::Creature& creature);
-void removeCreatureTexture(const wsworld::Creature& creature);
+void createCreatureTexture(const model::Creature& creature);
+void removeCreatureTexture(const model::Creature& creature);
 common::Position screenToMapPosition(int x, int y);
 
 }  // namespace wsclient::graphics

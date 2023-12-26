@@ -22,25 +22,31 @@
  * SOFTWARE.
  */
 
-#include "wsworld.h"
+#include "game.h"
 
+#include <cstdint>
 #include <algorithm>
 
+#include "common/creature.h"
+#include "common/direction.h"
+#include "protocol/protocol_client.h"
+#include "protocol/protocol_common.h"
 #include "utils/logger.h"
+#include "tiles.h"
 
-namespace wsclient::wsworld
+namespace game
 {
 
-void Map::setFullMapData(const protocol::client::FullMap& map_data)
+void Game::setFullMapData(const protocol::client::FullMap& map_data)
 {
   // Full map data is width=18, height=14
   m_tiles.setMapPosition(map_data.position);
   auto it = map_data.tiles.begin();
   for (auto z = 0; z < m_tiles.getNumFloors(); z++)
   {
-    for (auto x = 0; x < consts::KNOWN_TILES_X; x++)
+    for (auto x = 0; x < KNOWN_TILES_X; x++)
     {
-      for (auto y = 0; y < consts::KNOWN_TILES_Y; y++)
+      for (auto y = 0; y < KNOWN_TILES_Y; y++)
       {
         auto* tile = m_tiles.getTileLocalPos(x, y, z);
         setTile(*it, tile);
@@ -52,7 +58,7 @@ void Map::setFullMapData(const protocol::client::FullMap& map_data)
   m_ready = true;
 }
 
-void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
+void Game::setPartialMapData(const protocol::client::PartialMap& map_data)
 {
   // Set new map position
   const auto old_position = m_tiles.getMapPosition();
@@ -77,7 +83,7 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
     switch (map_data.direction)
     {
       case common::Direction::NORTH:
-        for (auto x = 0; x < consts::KNOWN_TILES_X; x++)
+        for (auto x = 0; x < KNOWN_TILES_X; x++)
         {
           auto* tile = m_tiles.getTileLocalPos(x, 0, z);
           setTile(*it, tile);
@@ -86,25 +92,25 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
         break;
 
       case common::Direction::EAST:
-        for (auto y = 0; y < consts::KNOWN_TILES_Y; y++)
+        for (auto y = 0; y < KNOWN_TILES_Y; y++)
         {
-          auto* tile = m_tiles.getTileLocalPos(consts::KNOWN_TILES_X - 1, y, z);
+          auto* tile = m_tiles.getTileLocalPos(KNOWN_TILES_X - 1, y, z);
           setTile(*it, tile);
           ++it;
         }
         break;
 
       case common::Direction::SOUTH:
-        for (auto x = 0; x < consts::KNOWN_TILES_X; x++)
+        for (auto x = 0; x < KNOWN_TILES_X; x++)
         {
-          auto* tile = m_tiles.getTileLocalPos(x, consts::KNOWN_TILES_Y - 1, z);
+          auto* tile = m_tiles.getTileLocalPos(x, KNOWN_TILES_Y - 1, z);
           setTile(*it, tile);
           ++it;
         }
         break;
 
       case common::Direction::WEST:
-        for (auto y = 0; y < consts::KNOWN_TILES_Y; y++)
+        for (auto y = 0; y < KNOWN_TILES_Y; y++)
         {
           auto* tile = m_tiles.getTileLocalPos(0, y, z);
           setTile(*it, tile);
@@ -115,13 +121,13 @@ void Map::setPartialMapData(const protocol::client::PartialMap& map_data)
   }
 }
 
-void Map::updateTile(const protocol::client::TileUpdate& tile_update)
+void Game::updateTile(const protocol::client::TileUpdate& tile_update)
 {
   auto* world_tile = m_tiles.getTile(tile_update.position);
   setTile(tile_update.tile, world_tile);
 }
 
-void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
+void Game::handleFloorChange(bool up, const protocol::client::FloorChange& floor_change)
 {
   // Save number of floors _before_ changing map position
   const auto num_floors = m_tiles.getNumFloors();
@@ -143,9 +149,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     auto it = floor_change.tiles.cbegin();
     for (auto z = 2; z < 8; ++z)
     {
-      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      for (auto x = 0; x < KNOWN_TILES_X; ++x)
       {
-        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+        for (auto y = 0; y < KNOWN_TILES_Y; ++y)
         {
           setTile(*it, m_tiles.getTileLocalPos(x, y, z));
           ++it;
@@ -164,9 +170,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     // or from 7 8 9 10 11 to 6 7 8 9 10
     m_tiles.shiftFloorForwards(num_floors);
     auto it = floor_change.tiles.cbegin();
-    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+    for (auto x = 0; x < KNOWN_TILES_X; ++x)
     {
-      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      for (auto y = 0; y < KNOWN_TILES_Y; ++y)
       {
         setTile(*it, m_tiles.getTileLocalPos(x, y, 0));
         ++it;
@@ -184,9 +190,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     auto it = floor_change.tiles.cbegin();
     for (auto z = 2; z < 5; ++z)
     {
-      for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+      for (auto x = 0; x < KNOWN_TILES_X; ++x)
       {
-        for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+        for (auto y = 0; y < KNOWN_TILES_Y; ++y)
         {
           setTile(*it, m_tiles.getTileLocalPos(x, y, z));
           ++it;
@@ -205,9 +211,9 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
     // or 12 13 14 15 to 13 14 15
     m_tiles.shiftFloorBackwards(num_floors);
     auto it = floor_change.tiles.cbegin();
-    for (auto x = 0; x < consts::KNOWN_TILES_X; ++x)
+    for (auto x = 0; x < KNOWN_TILES_X; ++x)
     {
-      for (auto y = 0; y < consts::KNOWN_TILES_Y; ++y)
+      for (auto y = 0; y < KNOWN_TILES_Y; ++y)
       {
         setTile(*it, m_tiles.getTileLocalPos(x, y, num_floors - 1));
         ++it;
@@ -216,19 +222,19 @@ void Map::handleFloorChange(bool up, const protocol::client::FloorChange& floor_
   }
 }
 
-void Map::addProtocolThing(const common::Position& position, const protocol::Thing& thing)
+void Game::addProtocolThing(const common::Position& position, const protocol::Thing& thing)
 {
   addThing(position, parseThing(thing));
 }
 
-void Map::updateThing(const common::Position& position,
+void Game::updateThing(const common::Position& position,
                       std::uint8_t stackpos,
                       const protocol::Thing& thing)
 {
   m_tiles.getTile(position)->things[stackpos] = parseThing(thing);
 }
 
-void Map::addThing(const common::Position& position, Thing thing)
+void Game::addThing(const common::Position& position, Thing thing)
 {
   auto* tile = m_tiles.getTile(position);
   if (!tile)
@@ -328,7 +334,7 @@ void Map::addThing(const common::Position& position, Thing thing)
 #endif
 }
 
-void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
+void Game::removeThing(const common::Position& position, std::uint8_t stackpos)
 {
   const auto pre = m_tiles.getTile(position)->things.size();
 
@@ -355,7 +361,7 @@ void Map::removeThing(const common::Position& position, std::uint8_t stackpos)
 #endif
 }
 
-void Map::moveThing(const common::Position& from_position,
+void Game::moveThing(const common::Position& from_position,
                     std::uint8_t from_stackpos,
                     const common::Position& to_position)
 {
@@ -425,7 +431,7 @@ void Map::moveThing(const common::Position& from_position,
   //LOG_DEBUG("%s: moved Creature %d from %s to %s", __func__, creature->id, from_position.toString().c_str(), to_position.toString().c_str());
 }
 
-void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
+void Game::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
 {
   auto* creature = getCreature(creature_id);
   if (!creature)
@@ -437,19 +443,19 @@ void Map::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
   // TODO(simon): it->skull = skull;
 }
 
-const Tile* Map::getTile(const common::Position& position) const
+const Tile* Game::getTile(const common::Position& position) const
 {
   return m_tiles.getTile(position);
 }
 
-const Creature* Map::getCreature(common::CreatureId creature_id) const
+const Creature* Game::getCreature(common::CreatureId creature_id) const
 {
   auto it = std::find_if(m_known_creatures.cbegin(),
                          m_known_creatures.cend(),
                          [creature_id](const Creature& creature)
-  {
-    return creature_id == creature.id;
-  });
+                         {
+                           return creature_id == creature.id;
+                         });
   if (it == m_known_creatures.cend())
   {
     return nullptr;
@@ -457,7 +463,7 @@ const Creature* Map::getCreature(common::CreatureId creature_id) const
   return &(*it);
 }
 
-Thing Map::parseThing(const protocol::Thing& thing)
+Thing Game::parseThing(const protocol::Thing& thing)
 {
   if (std::holds_alternative<protocol::Creature>(thing))
   {
@@ -469,7 +475,7 @@ Thing Map::parseThing(const protocol::Thing& thing)
       if (!known_creature)
       {
         LOG_ERROR("%s: received creature id %u that is not known", __func__, creature.id);
-        return Thing();
+        return {};
       }
 
       known_creature->direction = creature.direction;
@@ -489,9 +495,9 @@ Thing Map::parseThing(const protocol::Thing& thing)
         auto it = std::find_if(m_known_creatures.begin(),
                                m_known_creatures.end(),
                                [id_to_remove = creature.id_to_remove](const Creature& creature)
-        {
-          return id_to_remove == creature.id;
-        });
+                               {
+                                 return id_to_remove == creature.id;
+                               });
         if (it == m_known_creatures.end())
         {
           LOG_ERROR("%s: received CreatureId to remove %u but we do not know a Creature with that id",
@@ -501,7 +507,6 @@ Thing Map::parseThing(const protocol::Thing& thing)
         else
         {
           LOG_DEBUG("%s: removing known Creature with id %u", __func__, creature.id_to_remove);
-          m_callbacks.known_creature_removed(*it);
           m_known_creatures.erase(it);
         }
       }
@@ -514,7 +519,6 @@ Thing Map::parseThing(const protocol::Thing& thing)
       m_known_creatures.back().direction = creature.direction;
       m_known_creatures.back().outfit = creature.outfit;
       m_known_creatures.back().speed = creature.speed;
-      m_callbacks.known_creature_added(m_known_creatures.back());
 
       if (creature.id == m_player_id)
       {
@@ -529,14 +533,14 @@ Thing Map::parseThing(const protocol::Thing& thing)
 
   // Item
   const auto& protocol_item = std::get<protocol::Item>(thing);
-  const auto& itemtype = (*m_itemtypes)[protocol_item.item_type_id];
+  const auto& itemtype = (*m_item_types)[protocol_item.item_type_id];
   Item item;
   item.type = &itemtype;
   item.extra = protocol_item.extra;
   return item;
 }
 
-void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
+void Game::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
 {
   // Note: this not care about stackpos, just adds the Things are they are in protocol_tile
   world_tile->things.clear();
@@ -551,16 +555,16 @@ void Map::setTile(const protocol::Tile& protocol_tile, Tile* world_tile)
   }
 }
 
-Creature* Map::getCreature(common::CreatureId creature_id)
+Creature* Game::getCreature(common::CreatureId creature_id)
 {
   // According to https://stackoverflow.com/a/123995/969365
-  const auto* creature = static_cast<const Map*>(this)->getCreature(creature_id);
+  const auto* creature = static_cast<const Game*>(this)->getCreature(creature_id);
   return const_cast<Creature*>(creature);
 }
 
-Thing Map::getThing(const common::Position& position, std::uint8_t stackpos)
+Thing Game::getThing(const common::Position& position, std::uint8_t stackpos)
 {
   return m_tiles.getTile(position)->things[stackpos];
 }
 
-}  // namespace wsclient::wsworld
+}  // namespace game

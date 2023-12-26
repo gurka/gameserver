@@ -31,14 +31,14 @@ namespace
 
 int index(int x, int y, int z)
 {
-  return (z * wsclient::consts::KNOWN_TILES_X * wsclient::consts::KNOWN_TILES_Y) +
-         (y * wsclient::consts::KNOWN_TILES_X) +
+  return (z * game::KNOWN_TILES_X * game::KNOWN_TILES_Y) +
+         (y * game::KNOWN_TILES_X) +
          (x);
 }
 
 }  // namespace
 
-namespace wsclient::wsworld
+namespace game
 {
 
 void Tiles::shiftTiles(common::Direction direction)
@@ -54,9 +54,9 @@ void Tiles::shiftTiles(common::Direction direction)
     {
       case common::Direction::NORTH:
         // Shift everything down, starting from bottom row
-        for (int y = consts::KNOWN_TILES_Y - 1; y > 0; --y)
+        for (int y = KNOWN_TILES_Y - 1; y > 0; --y)
         {
-          for (int x = 0; x < consts::KNOWN_TILES_X; ++x)
+          for (int x = 0; x < KNOWN_TILES_X; ++x)
           {
             const auto index_from = index(x, y - 1, z);
             const auto index_to = index(x, y, z);
@@ -67,9 +67,9 @@ void Tiles::shiftTiles(common::Direction direction)
 
       case common::Direction::EAST:
         // Shift everything left, starting from left column
-        for (int x = 0; x < consts::KNOWN_TILES_X - 1; ++x)
+        for (int x = 0; x < KNOWN_TILES_X - 1; ++x)
         {
-          for (int y = 0; y < consts::KNOWN_TILES_Y; ++y)
+          for (int y = 0; y < KNOWN_TILES_Y; ++y)
           {
             const auto index_from = index(x + 1, y, z);
             const auto index_to = index(x, y, z);
@@ -80,9 +80,9 @@ void Tiles::shiftTiles(common::Direction direction)
 
       case common::Direction::SOUTH:
         // Shift everything up, starting from top row
-        for (int y = 0; y < consts::KNOWN_TILES_Y - 1; ++y)
+        for (int y = 0; y < KNOWN_TILES_Y - 1; ++y)
         {
-          for (int x = 0; x < consts::KNOWN_TILES_X; ++x)
+          for (int x = 0; x < KNOWN_TILES_X; ++x)
           {
             const auto index_from = index(x, y + 1, z);
             const auto index_to = index(x, y, z);
@@ -93,9 +93,9 @@ void Tiles::shiftTiles(common::Direction direction)
 
       case common::Direction::WEST:
         // Shift everything right, starting from right column
-        for (int x = consts::KNOWN_TILES_X - 1; x > 0; --x)
+        for (int x = KNOWN_TILES_X - 1; x > 0; --x)
         {
-          for (int y = 0; y < consts::KNOWN_TILES_Y; ++y)
+          for (int y = 0; y < KNOWN_TILES_Y; ++y)
           {
             const auto index_from = index(x - 1, y, z);
             const auto index_to = index(x, y, z);
@@ -116,7 +116,7 @@ void Tiles::swapFloors(int z1, int z2)
 
   const auto start_z1 = index(0, 0, z1);
   const auto start_z2 = index(0, 0, z2);
-  const auto tiles_per_floor = consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y;
+  const auto tiles_per_floor = KNOWN_TILES_X * KNOWN_TILES_Y;
   for (auto i = 0; i < tiles_per_floor; ++i)
   {
     std::swap(m_tiles[start_z1 + i], m_tiles[start_z2 + i]);
@@ -129,7 +129,7 @@ void Tiles::shiftFloorForwards(int num_floors)
   {
     const auto a = index(0, 0, z);
     const auto b = index(0, 0, z - 1);
-    for (auto i = 0; i < consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y; ++i)
+    for (auto i = 0; i < KNOWN_TILES_X * KNOWN_TILES_Y; ++i)
     {
       std::swap(m_tiles[a + i], m_tiles[b + i]);
     }
@@ -142,7 +142,7 @@ void Tiles::shiftFloorBackwards(int num_floors)
   {
     const auto a = index(0, 0, z);
     const auto b = index(0, 0, z + 1);
-    for (auto i = 0; i < consts::KNOWN_TILES_X * consts::KNOWN_TILES_Y; ++i)
+    for (auto i = 0; i < KNOWN_TILES_X * KNOWN_TILES_Y; ++i)
     {
       std::swap(m_tiles[a + i], m_tiles[b + i]);
     }
@@ -186,4 +186,4 @@ const Tile* Tiles::getTile(const common::Position& position) const
   return getTileLocalPos(local_pos.getX(), local_pos.getY(), local_pos.getZ());
 }
 
-}  // namespace wsclient::wsworld
+}  // namespace game
