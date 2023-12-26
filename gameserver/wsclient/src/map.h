@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_WSWORLD_H_
-#define WSCLIENT_SRC_WSWORLD_H_
+#ifndef WSCLIENT_SRC_MAP_H_
+#define WSCLIENT_SRC_MAP_H_
 
 #include <array>
 #include <functional>
@@ -39,18 +39,8 @@
 
 #include "types.h"
 
-namespace wsclient::wsworld
+namespace model
 {
-
-struct Creature
-{
-  common::CreatureId id;
-  std::string name;
-  std::uint8_t health_percent;
-  common::Direction direction;
-  common::Outfit outfit;
-  std::uint16_t speed;
-};
 
 class Map
 {
@@ -109,6 +99,6 @@ class Map
   std::vector<Creature> m_known_creatures;
 };
 
-}  // namespace wsclient::wsworld
+}  // namespace model
 
-#endif  // WSCLIENT_SRC_WSWORLD_H_
+#endif  // WSCLIENT_SRC_MAP_H_
