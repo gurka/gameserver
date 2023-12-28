@@ -79,7 +79,7 @@ constexpr auto BMASK = 0x00FF0000U;
 constexpr auto AMASK = 0xFF000000U;
 #endif
 
-using wsclient::SpritePixels;
+using game::SpritePixels;
 
 SpritePixels blendSprites(const SpritePixels& bottom,
                           const SpritePixels& top)
@@ -190,6 +190,7 @@ SpritePixels colorizeSprite(const SpritePixels& sprite_base,
   }
   return result;
 }
+
 SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
                               const common::ItemType::SpriteInfo& sprite_info,
                               const std::vector<SpritePixels>& sprite_data,
@@ -276,7 +277,7 @@ SDL_Texture* createSDLTexture(SDL_Renderer* renderer,
 
 }  // namespace
 
-namespace wsclient
+namespace game
 {
 
 Texture Texture::createOutfitTexture(SDL_Renderer* renderer,
@@ -368,7 +369,8 @@ SDL_Texture* Texture::getCreatureStillTexture(common::Direction direction) const
 
 SDL_Texture* Texture::getCreatureWalkTexture(common::Direction direction, int walk_tick) const
 {
-  const auto texture_index = static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_info.getNumAnimations() - 1)) + 1) * 4);
+  const auto texture_index =
+      static_cast<int>(direction) + (((walk_tick % (m_item_type.sprite_info.getNumAnimations() - 1)) + 1) * 4);
   if (texture_index < 0 || texture_index >= getNumTextures())
   {
     LOG_ERROR("%s: texture_index: %d is invalid (m_textures.size(): %d)",
@@ -381,4 +383,4 @@ SDL_Texture* Texture::getCreatureWalkTexture(common::Direction direction, int wa
   return m_textures[texture_index].get();
 }
 
-}  // namespace wsclient
+}  // namespace game

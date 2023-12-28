@@ -25,42 +25,76 @@
 #ifndef WSCLIENT_SRC_UI_GAME_H_
 #define WSCLIENT_SRC_UI_GAME_H_
 
+#include <cstdint>
 #include <memory>
 #include <SDL2/SDL.h>
-#include "ui_widget.h"
+
+#include "utils/data_loader.h"
+
+#include "../widget.h"
+#include "tiles.h"
+#include "sprite_loader.h"
+#include "texture.h"
 
 class SDL_Renderer;
 class SDL_Texture;
 
 namespace game
 {
+
 class Game;
-}
 
-namespace ui
-{
-
-class Game : public Widget
+class GameUI : public Widget
 {
  public:
-  Game(const game::Game* game);
-  void init(SDL_Renderer* sdl_renderer, int width, int height) override;
+  GameUI(const game::Game* game,
+       SDL_Renderer* renderer,
+       int width,
+       int height,
+       const SpriteLoader* sprite_loader,
+       const utils::data_loader::ItemTypes* item_types);
+
   void onResize(int width, int height) override;
   void onClick(int x, int y) override;
   SDL_Texture* render() override;
 
  private:
+  enum class HangableHookSide
+  {
+    NONE,
+    SOUTH,
+    EAST,
+  };
+
+  void renderFloor(game::TileArray::const_iterator it);
+  void renderTile(int x, int y, const game::Tile& tile);
+  void renderItem(int x, int y, const game::Item& item, HangableHookSide hook_side, std::uint16_t elevation);
+  void renderCreature(int x, int y, const game::Creature& creature, std::uint16_t offset);
+  SDL_Texture* getItemSDLTexture(int x, int y, const game::Item& item, HangableHookSide hook_side);
+  const Texture& getItemTexture(common::ItemTypeId item_type_id);
+  const Texture* getCreatureTexture(common::CreatureId creature_id);
+
   const game::Game* m_game;
   SDL_Renderer* m_renderer;
   int m_width;
   int m_height;
+  const SpriteLoader* m_sprite_loader;
+  const utils::data_loader::ItemTypes* m_item_types;
 
   using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  TexturePtr m_texture;
 
-  TexturePtr m_base_texture;
-  TexturePtr m_resized_texture;
+  std::uint32_t m_anim_tick;
+
+  struct CreatureTexture
+  {
+    common::CreatureId creature_id;
+    Texture texture;
+  };
+  std::vector<CreatureTexture> m_creature_textures;
+  std::vector<Texture> m_item_textures;
 };
 
-}
+}  // namespace game
 
 #endif  // WSCLIENT_SRC_UI_GAME_H_

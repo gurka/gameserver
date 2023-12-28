@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <string>
+#include <functional>
 #include <memory>
 
 #ifdef EMSCRIPTEN
@@ -31,8 +32,9 @@
 #include <emscripten/val.h>
 #include <SDL.h>
 #else
-#include <asio/io_context.hpp>
+#include <asio/error_code.hpp>
 #include <asio/deadline_timer.hpp>
+#include <asio/io_context.hpp>
 #include <SDL2/SDL.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #endif
@@ -44,6 +46,7 @@
 #include "common/position.h"
 
 #include "game/game.h"
+#include "game/game_ui.h"
 #include "protocol.h"
 #include "replay_reader.h"
 
@@ -52,6 +55,7 @@ namespace replay_client
 
 utils::data_loader::ItemTypes item_types;
 std::unique_ptr<game::Game> game;
+std::unique_ptr<game::GameUI> game_ui;
 
 std::unique_ptr<Protocol> protocol;
 
@@ -65,7 +69,7 @@ std::unique_ptr<asio::deadline_timer> timer;
 const int TARGET_FPS = 60;
 #endif
 
-}  // namespace
+}  // namespace replay_client
 
 #ifndef EMSCRIPTEN
 void timerCallback(const asio::error_code& ec)

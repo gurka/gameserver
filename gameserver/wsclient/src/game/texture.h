@@ -40,7 +40,7 @@
 
 #include "sprite_loader.h"
 
-namespace wsclient
+namespace game
 {
 
 class Texture
@@ -78,7 +78,7 @@ class Texture
   std::vector<TexturePtr> m_textures;
 };
 
-}  // namespace wsclient
+}  // namespace game
 
 #endif  // WSCLIENT_SRC_TEXTURE_H_
 

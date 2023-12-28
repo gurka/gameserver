@@ -30,7 +30,7 @@
 #include "utils/logger.h"
 #include "utils/file_reader.h"
 
-namespace wsclient
+namespace game
 {
 
 SpriteLoader::SpriteLoader()
@@ -127,4 +127,4 @@ SpritePixels SpriteLoader::getSpritePixels(int sprite_id) const
   return sprite_pixels;
 }
 
-}  // namespace wsclient
+}  // namespace game

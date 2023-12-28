@@ -5,6 +5,12 @@ project(gameserver)
 add_executable(replayclient
   "src/game/game.cc"
   "src/game/game.h"
+  "src/game/game_ui.cc"
+  "src/game/game_ui.h"
+  "src/game/sprite_loader.cc"
+  "src/game/sprite_loader.h"
+  "src/game/texture.cc"
+  "src/game/texture.h"
   "src/game/tiles.cc"
   "src/game/tiles.h"
   "src/game/types.h"
@@ -14,13 +20,7 @@ add_executable(replayclient
   "src/replay_client.cc"
   "src/replay_reader.cc"
   "src/replay_reader.h"
-  "src/sprite_loader.cc"
-  "src/sprite_loader.h"
-  "src/texture.cc"
-  "src/texture.h"
-  "src/ui_game.cc"
-  "src/ui_game.h"
-  "src/ui_widget.h"
+  "src/widget.h"
 )
 
 target_link_libraries(replayclient PRIVATE

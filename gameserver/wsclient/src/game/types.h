@@ -26,6 +26,7 @@
 #define WSCLIENT_SRC_GAME_TYPES_H_
 
 #include <cstdint>
+#include <variant>
 
 #include "common/creature.h"
 #include "common/direction.h"

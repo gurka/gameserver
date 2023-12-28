@@ -22,24 +22,20 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_UI_WIDGET_H_
-#define WSCLIENT_SRC_UI_WIDGET_H_
+#ifndef WSCLIENT_SRC_WIDGET_H_
+#define WSCLIENT_SRC_WIDGET_H_
 
 class SDL_Renderer;
 class SDL_Texture;
 
-namespace ui
-{
-
 class Widget
 {
  public:
-  virtual void init(SDL_Renderer* sdl_renderer, int width, int height) = 0;
+  virtual ~Widget() = default;
+
   virtual void onResize(int width, int height) = 0;
   virtual void onClick(int x, int y) = 0;
   virtual SDL_Texture* render() = 0;
 };
 
-}
-
-#endif  // WSCLIENT_SRC_UI_WIDGET_H_
+#endif  // WSCLIENT_SRC_WIDGET_H_

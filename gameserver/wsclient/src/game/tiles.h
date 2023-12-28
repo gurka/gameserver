@@ -25,9 +25,8 @@
 #ifndef WSCLIENT_SRC_GAME_TILES_H_
 #define WSCLIENT_SRC_GAME_TILES_H_
 
-#include <cstdint>
 #include <array>
-#include <variant>
+#include <vector>
 
 #include "common/position.h"
 #include "common/item.h"

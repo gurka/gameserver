@@ -28,19 +28,16 @@
 #include <cstdint>
 
 #include <array>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace utils
 {
-
 class FileReader;
-
 }  // namespace utils
 
-namespace wsclient
+namespace game
 {
 
 using SpritePixels = std::array<std::uint8_t, 32 * 32 * 4>;
@@ -59,6 +56,6 @@ class SpriteLoader
   std::vector<std::uint32_t> m_offsets;
 };
 
-}  // namespace wsclient
+}  // namespace game
 
 #endif  // WSCLIENT_SRC_SPRITE_LOADER_H_
