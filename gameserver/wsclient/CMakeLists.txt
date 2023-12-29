@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.12)
 project(gameserver)
 
 add_executable(replayclient
+  "src/chat/chat.cc"
+  "src/chat/chat.h"
+  "src/chat/chat_ui.cc"
+  "src/chat/chat_ui.h"
   "src/game/game.cc"
   "src/game/game.h"
   "src/game/game_ui.cc"

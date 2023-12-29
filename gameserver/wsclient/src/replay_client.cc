@@ -49,6 +49,8 @@
 #include "game/game.h"
 #include "game/game_ui.h"
 #include "game/sprite_loader.h"
+#include "chat/chat.h"
+#include "chat/chat_ui.h"
 #include "protocol.h"
 #include "replay_reader.h"
 
@@ -59,6 +61,9 @@ utils::data_loader::ItemTypes item_types;
 std::unique_ptr<game::SpriteLoader> sprite_loader;
 std::unique_ptr<game::Game> game;
 std::unique_ptr<game::GameUI> game_ui;
+
+std::unique_ptr<chat::Chat> chat;
+std::unique_ptr<chat::ChatUI> chat_ui;
 
 std::unique_ptr<Protocol> protocol;
 
@@ -255,8 +260,11 @@ int main()
   replay_client::game = std::make_unique<game::Game>();
   replay_client::game->setItemTypes(&replay_client::item_types);
 
+  // Create Chat model
+  replay_client::chat = std::make_unique<chat::Chat>();
+
   // Create Protocol
-  replay_client::protocol = std::make_unique<Protocol>(replay_client::game.get());
+  replay_client::protocol = std::make_unique<Protocol>(replay_client::game.get(), replay_client::chat.get());
 
   // Create UI
   main_ui::init();

@@ -25,12 +25,15 @@
 #include "protocol.h"
 
 #include "game/game.h"
+#include "chat/chat.h"
 #include "network/incoming_packet.h"
+#include "protocol/protocol_client.h"
 #include "utils/logger.h"
 
-Protocol::Protocol(game::Game* game)
+Protocol::Protocol(game::Game* game, chat::Chat* chat)
     : m_num_handled_packets(0),
-      m_game(game)
+      m_game(game),
+      m_chat(chat)
 {
 }
 
@@ -108,9 +111,7 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
         packet->getU8();  // color
         const auto message = packet->getString();  // text
 
-        // TODO
-        //text_messages.push_back(message);
-
+        // TODO, to Game
         break;
       }
       case 0xA0:
@@ -130,7 +131,7 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
         // open channel
         const auto id = packet->getU16();
         const auto name = packet->getString();
-        LOG_INFO("%s: open channel %u -> %s", __func__, id, name.c_str());
+        m_chat->openChannel(id, name);
         break;
       }
 
@@ -223,32 +224,43 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
           case 3:  // yell
           case 16:  // monster?
           case 17:  // monster?
-            protocol::getPosition(packet);
+          {
+            // Both Game and Chat needs to know
+            const auto position =  protocol::getPosition(packet);
+            (void)position;
+            const auto text = packet->getString();  // text
+            // TODO Game
+            m_chat->message(talker, talk_type, text);
             break;
+          }
 
           case 5:   // channel
           case 10:  // gm?
           case 14:  // ??
-            packet->getU16();  // channel id?
+          {
+            const auto channel_id = packet->getU16();  // channel id?
+            const auto text = packet->getString();  // text
+            m_chat->message(talker, talk_type, channel_id, text);
             break;
+          }
 
           case 4:  // whisper?
+          {
+            const auto text = packet->getString();  // text
+            m_chat->message(talker, talk_type, text);
             break;
+          }
 
           default:
             LOG_ERROR("%s: unknown talk type: %u", __func__, talk_type);
             break;
         }
-        const auto text = packet->getString();  // text
-
-        // TODO
-        //text_messages.push_back(talker + ": " + text);
         break;
       }
 
       case 0xAD:
         // Open private channel
-        packet->getString();
+        m_chat->openPrivateChannel(packet->getString());
         break;
 
       case 0xB5:
