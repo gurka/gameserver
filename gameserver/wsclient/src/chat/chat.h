@@ -27,6 +27,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace chat
@@ -35,12 +36,6 @@ namespace chat
 class Chat
 {
  public:
-  void openChannel(std::uint16_t id, const std::string& name);
-  void openPrivateChannel(const std::string& name);
-  void message(const std::string& talker, std::uint8_t talk_type, const std::string& text);
-  void message(const std::string& talker, std::uint8_t talk_type, std::uint16_t channel_id, const std::string& text);
-
- private:
   struct Message
   {
     std::string talker;
@@ -50,20 +45,26 @@ class Chat
 
   struct Channel
   {
-    std::uint16_t id;
     std::string name;
     std::vector<Message> messages;
   };
 
-  struct PrivateChannel
-  {
-    std::string name;
-    std::vector<Message> messages;
-  };
+  void openChannel(std::uint16_t id, const std::string& name);
+  void openPrivateChannel(const std::string& name);
+  void message(const std::string& talker, std::uint8_t talk_type, const std::string& text);
+  void message(const std::string& talker, std::uint8_t talk_type, std::uint16_t channel_id, const std::string& text);
 
+  const std::vector<Message>& getDefaultMessages() const { return m_default_messages; }
+  const std::unordered_map<std::uint16_t, Channel>& getChannels() const { return m_channels; }
+  const std::unordered_map<std::string, std::vector<Message>>& getPrivateChannels() const { return m_private_channels; }
+  int getVersion() const { return m_version; }
+
+ private:
   std::vector<Message> m_default_messages;
-  std::vector<Channel> m_channels;
-  std::vector<PrivateChannel> m_private_channels;
+  std::unordered_map<std::uint16_t, Channel> m_channels;
+  std::unordered_map<std::string, std::vector<Message>> m_private_channels;
+
+  int m_version;
 };
 
 }  // namespace chat

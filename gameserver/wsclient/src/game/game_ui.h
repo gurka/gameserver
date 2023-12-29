@@ -78,8 +78,7 @@ class GameUI
   const SpriteLoader* m_sprite_loader;
   const utils::data_loader::ItemTypes* m_item_types;
 
-  using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
-  TexturePtr m_texture;
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
 
   std::uint32_t m_anim_tick;
 

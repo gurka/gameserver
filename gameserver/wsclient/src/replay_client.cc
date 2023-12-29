@@ -238,6 +238,8 @@ extern "C" void main_loop()  // NOLINT
 
 int main()
 {
+  //utils::Logger::setLevel("wsclient", utils::Logger::Level::DEBUG);
+
   constexpr auto data_filename = "files/data.dat";
   constexpr auto sprite_filename = "files/sprite.dat";
 
@@ -273,6 +275,10 @@ int main()
                                                           replay_client::sprite_loader.get(),
                                                           &replay_client::item_types);
   main_ui::setGameUI(replay_client::game_ui.get());
+  replay_client::chat_ui = std::make_unique<chat::ChatUI>(replay_client::chat.get(),
+                                                          main_ui::get_renderer(),
+                                                          main_ui::get_font());
+  main_ui::setChatUI(replay_client::chat_ui.get());
 
   LOG_INFO("%s: loading replay", __func__);
   replay_client::replay = std::make_unique<Replay>();

@@ -137,7 +137,7 @@ Logger::Level Logger::getLevel(const std::string& module)
   if (module_to_level.count(module) == 0)
   {
     // Set default level
-    module_to_level[module] = Level::DEBUG;
+    module_to_level[module] = Level::INFO;
   }
   return module_to_level[module];
 }

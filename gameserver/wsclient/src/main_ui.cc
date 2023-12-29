@@ -28,6 +28,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include "game/game_ui.h"
+#include "chat/chat_ui.h"
 #include "utils/logger.h"
 
 namespace
@@ -64,6 +65,7 @@ SDL_Renderer* sdl_renderer = nullptr;
 TTF_Font* ttf_font = nullptr;
 
 game::GameUI* game_ui = nullptr;
+chat::ChatUI* chat_ui = nullptr;
 
 }
 
@@ -120,9 +122,19 @@ SDL_Renderer* get_renderer()
   return sdl_renderer;
 }
 
+TTF_Font* get_font()
+{
+  return ttf_font;
+}
+
 void setGameUI(game::GameUI* game_ui)
 {
   ::game_ui = game_ui;
+}
+
+void setChatUI(chat::ChatUI* chat_ui)
+{
+  ::chat_ui = chat_ui;
 }
 
 void render()
@@ -135,14 +147,24 @@ void render()
   SDL_SetRenderTarget(sdl_renderer, nullptr);
   const SDL_Rect game_dest =
   {
-      0,
-      0,
-      720,
-      528
+    0,
+    0,
+    720,
+    528
   };
   SDL_RenderCopy(sdl_renderer, game_texture, nullptr, &game_dest);
 
   // Render chat
+  auto* chat_texture = chat_ui->render();
+  SDL_SetRenderTarget(sdl_renderer, nullptr);
+  const SDL_Rect chat_dest =
+  {
+    0,
+    528,
+    720,
+    192
+  };
+  SDL_RenderCopy(sdl_renderer, chat_texture, nullptr, &chat_dest);
 
   // Render sidebar
 

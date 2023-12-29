@@ -25,12 +25,31 @@
 #ifndef WSCLIENT_SRC_CHAT_CHAT_UI_H_
 #define WSCLIENT_SRC_CHAT_CHAT_UI_H_
 
+#include <memory>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+
 namespace chat
 {
 
+class Chat;
+
 class ChatUI
 {
+ public:
+  static constexpr auto TEXTURE_WIDTH = 720;
+  static constexpr auto TEXTURE_HEIGHT = 192;
 
+  ChatUI(const Chat* chat, SDL_Renderer* renderer, TTF_Font* font);
+
+  SDL_Texture* render();
+
+ private:
+  const Chat* m_chat;
+  SDL_Renderer* m_renderer;
+  TTF_Font* m_font;
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
+  int m_last_rendered_version;
 };
 
 }  // namespace chat

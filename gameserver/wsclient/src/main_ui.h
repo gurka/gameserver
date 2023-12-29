@@ -25,6 +25,8 @@
 #ifndef WSCLIENT_SRC_MAIN_UI_H_
 #define WSCLIENT_SRC_MAIN_UI_H_
 
+#include <SDL2/SDL_ttf.h>
+
 class SDL_Renderer;
 
 namespace game
@@ -32,12 +34,19 @@ namespace game
 class GameUI;
 }
 
+namespace chat
+{
+class ChatUI;
+}
+
 namespace main_ui
 {
 
 bool init();
 SDL_Renderer* get_renderer();
+TTF_Font* get_font();
 void setGameUI(game::GameUI* game_ui);
+void setChatUI(chat::ChatUI* chat_ui);
 void render();
 
 }
