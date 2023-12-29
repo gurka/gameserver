@@ -35,22 +35,12 @@
 namespace game
 {
 
-constexpr auto TILE_SIZE = 32;
-constexpr auto DRAW_TILES_X = 15;
-constexpr auto DRAW_TILES_Y = 11;
-//constexpr auto MAP_TEXTURE_WIDTH  = DRAW_TILES_X * TILE_SIZE;  // 480
-//constexpr auto MAP_TEXTURE_HEIGHT = DRAW_TILES_Y * TILE_SIZE;  // 352
-
 GameUI::GameUI(const game::Game* game,
                SDL_Renderer* renderer,
-               int width,
-               int height,
                const SpriteLoader* sprite_loader,
                const utils::data_loader::ItemTypes* item_types)
     : m_game(game),
       m_renderer(renderer),
-      m_width(width),
-      m_height(height),
       m_sprite_loader(sprite_loader),
       m_item_types(item_types),
       m_texture(nullptr, SDL_DestroyTexture),
@@ -58,31 +48,16 @@ GameUI::GameUI(const game::Game* game,
       m_creature_textures(),
       m_item_textures()
 {
-  onResize(width, height);
-}
-
-void GameUI::onResize(int width, int height)
-{
-  m_width = width;
-  m_height = height;
   m_texture.reset(SDL_CreateTexture(m_renderer,
                                     SDL_PIXELFORMAT_RGBA8888,
                                     SDL_TEXTUREACCESS_TARGET,
-                                    m_width,
-                                    m_height));
-}
-
-void GameUI::onClick(int x, int y)
-{
-
+                                    TEXTURE_WIDTH,
+                                    TEXTURE_HEIGHT));
 }
 
 SDL_Texture* GameUI::render()
 {
   m_anim_tick = SDL_GetTicks() / 540;
-
-  SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-  SDL_RenderClear(m_renderer);
 
   SDL_SetRenderTarget(m_renderer, m_texture.get());
   SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
@@ -407,9 +382,14 @@ const Texture* GameUI::getCreatureTexture(common::CreatureId creature_id)
   // Create textures if not found
   if (it == m_creature_textures.cend())
   {
-    // TODO
-    //const auto* creature = m_game->getCreature(creature_id);
+    const auto* creature = m_game->getCreature(creature_id);
+    const auto& item_type = (*m_item_types)[3134 + creature->outfit.type];
+    m_creature_textures.emplace_back();
+    m_creature_textures.back().creature_id = creature_id;
+    m_creature_textures.back().texture = Texture::createOutfitTexture(m_renderer, *m_sprite_loader, item_type, creature->outfit);
+    it = m_creature_textures.end() - 1;
   }
+  // TODO: remove texture when creature removed from knownCreatures..?
   return &(it->texture);
 }
 

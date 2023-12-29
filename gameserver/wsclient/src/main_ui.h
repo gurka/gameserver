@@ -22,20 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_WIDGET_H_
-#define WSCLIENT_SRC_WIDGET_H_
+#ifndef WSCLIENT_SRC_MAIN_UI_H_
+#define WSCLIENT_SRC_MAIN_UI_H_
 
 class SDL_Renderer;
-class SDL_Texture;
 
-class Widget
+namespace game
 {
- public:
-  virtual ~Widget() = default;
+class GameUI;
+}
 
-  virtual void onResize(int width, int height) = 0;
-  virtual void onClick(int x, int y) = 0;
-  virtual SDL_Texture* render() = 0;
-};
+namespace main_ui
+{
 
-#endif  // WSCLIENT_SRC_WIDGET_H_
+bool init();
+SDL_Renderer* get_renderer();
+void setGameUI(game::GameUI* game_ui);
+void render();
+
+}
+
+#endif  // WSCLIENT_SRC_MAIN_UI_H_

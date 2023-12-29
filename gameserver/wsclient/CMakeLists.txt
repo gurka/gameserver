@@ -14,13 +14,14 @@ add_executable(replayclient
   "src/game/tiles.cc"
   "src/game/tiles.h"
   "src/game/types.h"
+  "src/main_ui.cc"
+  "src/main_ui.h"
   "src/player_info.h"
   "src/protocol.cc"
   "src/protocol.h"
   "src/replay_client.cc"
   "src/replay_reader.cc"
   "src/replay_reader.h"
-  "src/widget.h"
 )
 
 target_link_libraries(replayclient PRIVATE

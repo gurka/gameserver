@@ -27,36 +27,35 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include <SDL2/SDL.h>
 
 #include "utils/data_loader.h"
 
-#include "../widget.h"
 #include "tiles.h"
 #include "sprite_loader.h"
 #include "texture.h"
-
-class SDL_Renderer;
-class SDL_Texture;
 
 namespace game
 {
 
 class Game;
 
-class GameUI : public Widget
+class GameUI
 {
  public:
-  GameUI(const game::Game* game,
-       SDL_Renderer* renderer,
-       int width,
-       int height,
-       const SpriteLoader* sprite_loader,
-       const utils::data_loader::ItemTypes* item_types);
+  static constexpr auto TILE_SIZE = 32;
+  static constexpr auto DRAW_TILES_X = 15;
+  static constexpr auto DRAW_TILES_Y = 11;
+  static constexpr auto TEXTURE_WIDTH  = DRAW_TILES_X * TILE_SIZE;  // 480
+  static constexpr auto TEXTURE_HEIGHT = DRAW_TILES_Y * TILE_SIZE;  // 352
 
-  void onResize(int width, int height) override;
-  void onClick(int x, int y) override;
-  SDL_Texture* render() override;
+  GameUI(const game::Game* game,
+         SDL_Renderer* renderer,
+         const SpriteLoader* sprite_loader,
+         const utils::data_loader::ItemTypes* item_types);
+
+  SDL_Texture* render();
 
  private:
   enum class HangableHookSide
@@ -76,8 +75,6 @@ class GameUI : public Widget
 
   const game::Game* m_game;
   SDL_Renderer* m_renderer;
-  int m_width;
-  int m_height;
   const SpriteLoader* m_sprite_loader;
   const utils::data_loader::ItemTypes* m_item_types;
 

@@ -45,8 +45,10 @@
 #include "utils/logger.h"
 #include "common/position.h"
 
+#include "main_ui.h"
 #include "game/game.h"
 #include "game/game_ui.h"
+#include "game/sprite_loader.h"
 #include "protocol.h"
 #include "replay_reader.h"
 
@@ -54,6 +56,7 @@ namespace replay_client
 {
 
 utils::data_loader::ItemTypes item_types;
+std::unique_ptr<game::SpriteLoader> sprite_loader;
 std::unique_ptr<game::Game> game;
 std::unique_ptr<game::GameUI> game_ui;
 
@@ -225,17 +228,24 @@ extern "C" void main_loop()  // NOLINT
   }
 
   // Render
-  //graphics::draw(map, wsclient::player_info, wsclient::text_messages);
+  main_ui::render();
 }
 
 int main()
 {
   constexpr auto data_filename = "files/data.dat";
-  //constexpr auto sprite_filename = "files/sprite.dat";
+  constexpr auto sprite_filename = "files/sprite.dat";
 
   if (!utils::data_loader::load(data_filename, &replay_client::item_types, nullptr, nullptr))
   {
     LOG_ERROR("%s: could not load data file: %s", __func__, data_filename);
+    return 1;
+  }
+
+  replay_client::sprite_loader = std::make_unique<game::SpriteLoader>();
+  if (!replay_client::sprite_loader->load(sprite_filename))
+  {
+    LOG_ERROR("%s: could not load sprite file: %s", __func__, sprite_filename);
     return 1;
   }
 
@@ -248,13 +258,13 @@ int main()
   // Create Protocol
   replay_client::protocol = std::make_unique<Protocol>(replay_client::game.get());
 
-  /*
-  if (!wsclient::graphics::init(&wsclient::itemtypes, sprite_filename))
-  {
-    LOG_ERROR("%s: could not initialize graphics", __func__);
-    return 1;
-  }
-   */
+  // Create UI
+  main_ui::init();
+  replay_client::game_ui = std::make_unique<game::GameUI>(replay_client::game.get(),
+                                                          main_ui::get_renderer(),
+                                                          replay_client::sprite_loader.get(),
+                                                          &replay_client::item_types);
+  main_ui::setGameUI(replay_client::game_ui.get());
 
   LOG_INFO("%s: loading replay", __func__);
   replay_client::replay = std::make_unique<Replay>();
