@@ -148,12 +148,13 @@ bool Replay::load(const std::string& filename)
 
 bool Replay::timeForNextPacket()
 {
+  constexpr auto speed = 2;
   if (m_start_time_ms == 0u)
   {
-    m_start_time_ms = getFakeTime(1);
+    m_start_time_ms = getFakeTime(speed);
   }
 
-  const auto elapsed_ms = getFakeTime(1) - m_start_time_ms;
+  const auto elapsed_ms = getFakeTime(speed) - m_start_time_ms;
   return getNumberOfPacketsLeft() > 0U && getNextPacketTime() <= elapsed_ms;
 }
 

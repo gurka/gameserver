@@ -26,6 +26,7 @@
 #define WSCLIENT_SRC_CHAT_CHAT_UI_H_
 
 #include <memory>
+#include <string>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -45,11 +46,16 @@ class ChatUI
   SDL_Texture* render();
 
  private:
+  SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
+
   const Chat* m_chat;
   SDL_Renderer* m_renderer;
   TTF_Font* m_font;
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
   int m_last_rendered_version;
+
+  // TODO: this will break if there are multiple channels with the same name, e.g. a player with name Default
+  std::string m_active_channel;
 };
 
 }  // namespace chat

@@ -64,6 +64,8 @@ class Chat
   std::unordered_map<std::uint16_t, Channel> m_channels;
   std::unordered_map<std::string, std::vector<Message>> m_private_channels;
 
+  // TODO: change to timestamp (of latest activity) in Channel
+  //       and make all channels use Channel (default and private channels too)
   int m_version;
 };
 
