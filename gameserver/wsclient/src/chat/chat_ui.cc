@@ -74,18 +74,47 @@ SDL_Texture* ChatUI::render()
   SDL_RenderFillRect(m_renderer, &border_rect);
 
   // Render channels
+  m_channel_rects.clear();
   SDL_Rect channel_bounding_box;
   channel_bounding_box = renderText(12, 6, "[Default]", m_active_channel == "Default" ? WHITE : GRAY);
+  m_channel_rects.push_back({ "Default", channel_bounding_box });
   for (const auto& pair : m_chat->getChannels())
   {
     channel_bounding_box = renderText(channel_bounding_box.x + channel_bounding_box.w + 6,
                                       6,
                                       std::string("[") + pair.second.name + "]",
                                       m_active_channel == pair.second.name ? WHITE : GRAY);
+    m_channel_rects.push_back({ pair.second.name, channel_bounding_box });
   }
 
   // Render messages
-  const auto& messages = m_chat->getDefaultMessages();
+  const auto& messages = [this]()
+  {
+    if (m_active_channel == "Default")
+    {
+      return m_chat->getDefaultMessages();
+    }
+    else
+    {
+      for (const auto& pair : m_chat->getChannels())
+      {
+        if (m_active_channel == pair.second.name)
+        {
+          return pair.second.messages;
+        }
+      }
+      for (const auto& pair : m_chat->getPrivateChannels())
+      {
+        if (m_active_channel == pair.first)
+        {
+          return pair.second;
+        }
+      }
+    }
+
+    LOG_ERROR("%s: could not find active channel: %s", __func__, m_active_channel.c_str());
+    return m_chat->getDefaultMessages();
+  }();
   for (auto i = 0; i < 10; i++)
   {
     if (i >= static_cast<int>(messages.size()))
@@ -100,6 +129,22 @@ SDL_Texture* ChatUI::render()
 
   m_last_rendered_version = m_chat->getVersion();
   return m_texture.get();
+}
+
+void ChatUI::onClick(int x, int y)
+{
+  for (const auto& channel_rect : m_channel_rects)
+  {
+    if (channel_rect.rect.x <= x &&
+        channel_rect.rect.x + channel_rect.rect.w >= x &&
+        channel_rect.rect.y <= y &&
+        channel_rect.rect.y + channel_rect.rect.h >= y)
+    {
+      m_active_channel = channel_rect.channel_name;
+      m_last_rendered_version = -1;  // force render
+      break;
+    }
+  }
 }
 
 SDL_Rect ChatUI::renderText(int x, int y, const std::string& text, const SDL_Color& color)

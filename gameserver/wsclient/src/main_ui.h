@@ -48,6 +48,7 @@ TTF_Font* get_font();
 void setGameUI(game::GameUI* game_ui);
 void setChatUI(chat::ChatUI* chat_ui);
 void render();
+void onClick(int x, int y);
 
 }
 

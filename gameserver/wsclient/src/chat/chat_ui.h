@@ -27,6 +27,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -44,6 +46,7 @@ class ChatUI
   ChatUI(const Chat* chat, SDL_Renderer* renderer, TTF_Font* font);
 
   SDL_Texture* render();
+  void onClick(int x, int y);
 
  private:
   SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
@@ -56,6 +59,13 @@ class ChatUI
 
   // TODO: this will break if there are multiple channels with the same name, e.g. a player with name Default
   std::string m_active_channel;
+
+  struct ChannelRect
+  {
+    std::string channel_name;
+    SDL_Rect rect;
+  };
+  std::vector<ChannelRect> m_channel_rects;
 };
 
 }  // namespace chat

@@ -171,4 +171,15 @@ void render()
   SDL_RenderPresent(sdl_renderer);
 }
 
+void onClick(int x, int y)
+{
+  if (x >= 0 && x < 720 && y >= 0 && y < 528)
+  {
+    // game_ui->onClick(x, y);
+  } else if (x >= 0 && x < 720 && y >= 528 && y < (528 + 192))
+  {
+    chat_ui->onClick(x, y - 528);
+  }
+}
+
 }

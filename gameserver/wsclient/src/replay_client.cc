@@ -163,60 +163,63 @@ extern "C" void main_loop()  // NOLINT
           break;
       }
     }
-    /*
     else if (event.type == SDL_MOUSEBUTTONDOWN)
     {
-      // note: z is not set by screenToMapPosition
-      const auto map_position = graphics::screenToMapPosition(event.button.x, event.button.y);
+      LOG_INFO("%s: mouse click on %d, %d", __func__, event.button.x, event.button.y);
+      main_ui::onClick(event.button.x, event.button.y);
 
-      // Convert to global position
-      const auto& player_position = map.getPlayerPosition();
-      const auto global_position = common::Position(player_position.getX() - 8 + map_position.getX(),
-                                                    player_position.getY() - 6 + map_position.getY(),
-                                                    player_position.getZ());
-      const auto* tile = map.getTile(global_position);
-      if (tile)
-      {
-        LOG_INFO("Tile at %s", global_position.toString().c_str());
-        int stackpos = 0;
-        for (const auto& thing : tile->things)
+      /*
+        // note: z is not set by screenToMapPosition
+        const auto map_position = graphics::screenToMapPosition(event.button.x, event.button.y);
+
+        // Convert to global position
+        const auto& player_position = map.getPlayerPosition();
+        const auto global_position = common::Position(player_position.getX() - 8 + map_position.getX(),
+                                                      player_position.getY() - 6 + map_position.getY(),
+                                                      player_position.getZ());
+        const auto* tile = map.getTile(global_position);
+        if (tile)
         {
-          if (std::holds_alternative<wsworld::Item>(thing))
+          LOG_INFO("Tile at %s", global_position.toString().c_str());
+          int stackpos = 0;
+          for (const auto& thing : tile->things)
           {
-            const auto& item = std::get<wsworld::Item>(thing);
-            std::ostringstream oss;
-            oss << "  stackpos=" << stackpos << " ";
-            item.type->dump(&oss, false);
-            oss << " [extra=" << static_cast<int>(item.extra) << "]\n";
-            LOG_INFO(oss.str().c_str());
-          }
-          else if (std::holds_alternative<common::CreatureId>(thing))
-          {
-            const auto creature_id = std::get<common::CreatureId>(thing);
-            const auto* creature = static_cast<const wsworld::Map*>(&map)->getCreature(creature_id);
-            if (creature)
+            if (std::holds_alternative<wsworld::Item>(thing))
             {
-              LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
+              const auto& item = std::get<wsworld::Item>(thing);
+              std::ostringstream oss;
+              oss << "  stackpos=" << stackpos << " ";
+              item.type->dump(&oss, false);
+              oss << " [extra=" << static_cast<int>(item.extra) << "]\n";
+              LOG_INFO(oss.str().c_str());
+            }
+            else if (std::holds_alternative<common::CreatureId>(thing))
+            {
+              const auto creature_id = std::get<common::CreatureId>(thing);
+              const auto* creature = static_cast<const wsworld::Map*>(&map)->getCreature(creature_id);
+              if (creature)
+              {
+                LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
+              }
+              else
+              {
+                LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
+              }
             }
             else
             {
-              LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
+              LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
             }
-          }
-          else
-          {
-            LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
-          }
 
-          ++stackpos;
+            ++stackpos;
+          }
         }
-      }
-      else
-      {
-        LOG_ERROR("%s: clicked on invalid tile", __func__);
-      }
+        else
+        {
+          LOG_ERROR("%s: clicked on invalid tile", __func__);
+        }
+       */
     }
-     */
     else if (event.type == SDL_WINDOWEVENT)
     {
       if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
