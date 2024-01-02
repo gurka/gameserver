@@ -28,7 +28,9 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include "utils/data_loader.h"
 
@@ -52,6 +54,7 @@ class GameUI
 
   GameUI(const game::Game* game,
          SDL_Renderer* renderer,
+         TTF_Font* font,
          const SpriteLoader* sprite_loader,
          const utils::data_loader::ItemTypes* item_types);
 
@@ -66,16 +69,18 @@ class GameUI
     EAST,
   };
 
-  void renderFloor(game::TileArray::const_iterator it);
-  void renderTile(int x, int y, const game::Tile& tile);
+  void renderFloor(int z);
+  void renderTile(int x, int y, int z, const game::Tile& tile);
   void renderItem(int x, int y, const game::Item& item, HangableHookSide hook_side, std::uint16_t elevation);
   void renderCreature(int x, int y, const game::Creature& creature, std::uint16_t offset);
   SDL_Texture* getItemSDLTexture(int x, int y, const game::Item& item, HangableHookSide hook_side);
   const Texture& getItemTexture(common::ItemTypeId item_type_id);
   const Texture* getCreatureTexture(common::CreatureId creature_id);
+  SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
 
   const game::Game* m_game;
   SDL_Renderer* m_renderer;
+  TTF_Font* m_font;
   const SpriteLoader* m_sprite_loader;
   const utils::data_loader::ItemTypes* m_item_types;
 

@@ -46,13 +46,13 @@
 #include "common/position.h"
 
 #include "main_ui.h"
-#include "game/game.h"
-#include "game/game_ui.h"
-#include "game/sprite_loader.h"
-#include "chat/chat.h"
-#include "chat/chat_ui.h"
-#include "sidebar/sidebar.h"
-#include "sidebar/sidebar_ui.h"
+#include "game.h"
+#include "game_ui.h"
+#include "sprite_loader.h"
+#include "chat.h"
+#include "chat_ui.h"
+#include "sidebar.h"
+#include "sidebar_ui.h"
 #include "protocol.h"
 #include "replay_reader.h"
 
@@ -222,6 +222,7 @@ int main()
   main_ui::init();
   replay_client::game_ui = std::make_unique<game::GameUI>(replay_client::game.get(),
                                                           main_ui::get_renderer(),
+                                                          main_ui::get_font(),
                                                           replay_client::sprite_loader.get(),
                                                           &replay_client::item_types);
   main_ui::setGameUI(replay_client::game_ui.get());
@@ -229,7 +230,7 @@ int main()
                                                           main_ui::get_renderer(),
                                                           main_ui::get_font());
   main_ui::setChatUI(replay_client::chat_ui.get());
-  sidebar::SidebarUI::Callbacks sidebar_ui_callbacks
+  const sidebar::SidebarUI::Callbacks sidebar_ui_callbacks
   {
     [](bool playing){ replay_client::sidebar->getReplayInfo().playing = playing; }
   };

@@ -24,8 +24,8 @@
 
 #include "protocol.h"
 
-#include "game/game.h"
-#include "chat/chat.h"
+#include "game.h"
+#include "chat.h"
 #include "network/incoming_packet.h"
 #include "protocol/protocol_client.h"
 #include "utils/logger.h"

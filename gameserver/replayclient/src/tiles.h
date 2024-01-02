@@ -29,8 +29,6 @@
 #include <vector>
 
 #include "common/position.h"
-#include "common/item.h"
-#include "common/creature.h"
 #include "common/direction.h"
 #include "utils/logger.h"
 

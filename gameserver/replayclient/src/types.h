@@ -30,6 +30,7 @@
 
 #include "common/creature.h"
 #include "common/direction.h"
+#include "common/item.h"
 
 namespace game
 {

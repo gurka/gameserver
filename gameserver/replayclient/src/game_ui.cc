@@ -32,15 +32,31 @@
 #include "game.h"
 #include "texture.h"
 
+namespace
+{
+
+struct RenderedCreature
+{
+  std::string name;
+  int health_percentage;
+  common::Position local_position;
+};
+
+std::vector<RenderedCreature> rendered_creatures;
+
+}
+
 namespace game
 {
 
 GameUI::GameUI(const game::Game* game,
                SDL_Renderer* renderer,
+               TTF_Font* font,
                const SpriteLoader* sprite_loader,
                const utils::data_loader::ItemTypes* item_types)
     : m_game(game),
       m_renderer(renderer),
+      m_font(font),
       m_sprite_loader(sprite_loader),
       m_item_types(item_types),
       m_texture(nullptr, SDL_DestroyTexture),
@@ -64,6 +80,9 @@ SDL_Texture* GameUI::render()
   SDL_RenderClear(m_renderer);
   if (m_game->ready())
   {
+    rendered_creatures.clear();
+
+    // Render tiles and things
     const auto& tiles = m_game->getTiles();
     if (m_game->getPlayerPosition().getZ() <= 7)
     {
@@ -71,7 +90,7 @@ SDL_Texture* GameUI::render()
       // Skip floors above player z as we don't know when floor above blocks view of player yet
       for (auto z = 0; z <= 7; ++z)
       {
-        renderFloor(tiles.cbegin() + (z * game::KNOWN_TILES_X * game::KNOWN_TILES_Y));
+        renderFloor(z);
         if (7 - m_game->getPlayerPosition().getZ() == z)
         {
           break;
@@ -83,8 +102,17 @@ SDL_Texture* GameUI::render()
       // Underground, render at the bottom floor up to player floor (which is always local z=2)
       for (auto z = m_game->getNumFloors() - 1; z >= 2; --z)
       {
-        renderFloor(tiles.cbegin() + (z * game::KNOWN_TILES_X * game::KNOWN_TILES_Y));
+        renderFloor(z);
       }
+    }
+
+    // Render creature names
+    for (const auto& rendered_creature : rendered_creatures)
+    {
+      renderText((rendered_creature.local_position.getX() * TILE_SIZE) - 24,
+                 (rendered_creature.local_position.getY() * TILE_SIZE) - 24,
+                 rendered_creature.name,
+                 { 32U, 196U, 32U, 255U });
     }
   }
 
@@ -147,8 +175,10 @@ void GameUI::onClick(int x, int y)
   }
 }
 
-void GameUI::renderFloor(game::TileArray::const_iterator it)
+void GameUI::renderFloor(int z)
 {
+  auto it = m_game->getTiles().cbegin() + (z * game::KNOWN_TILES_X * game::KNOWN_TILES_Y);
+
   // Skip first row
   it += game::KNOWN_TILES_X;
 
@@ -159,7 +189,7 @@ void GameUI::renderFloor(game::TileArray::const_iterator it)
 
     for (auto x = 0; x < DRAW_TILES_X + 1; x++)
     {
-      renderTile(x, y, *it);
+      renderTile(x, y, z, *it);
       ++it;
     }
 
@@ -168,7 +198,7 @@ void GameUI::renderFloor(game::TileArray::const_iterator it)
   }
 }
 
-void GameUI::renderTile(int x, int y, const game::Tile& tile)
+void GameUI::renderTile(int x, int y, int z, const game::Tile& tile)
 {
   if (tile.things.empty())
   {
@@ -254,6 +284,10 @@ void GameUI::renderTile(int x, int y, const game::Tile& tile)
       if (creature)
       {
         renderCreature(x, y, *creature, elevation);
+        if (m_game->getPlayerLocalZ() == z)
+        {
+          rendered_creatures.push_back({ creature->name, creature->health_percent, common::Position(x, y, z) });
+        }
       }
       else
       {
@@ -447,6 +481,25 @@ const Texture* GameUI::getCreatureTexture(common::CreatureId creature_id)
   }
   // TODO: remove texture when creature removed from knownCreatures..?
   return &(it->texture);
+}
+
+SDL_Rect GameUI::renderText(int x, int y, const std::string& text, const SDL_Color& color)
+{
+  auto* text_surface = TTF_RenderText_Blended(m_font, text.c_str(), color);
+  auto* text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
+  SDL_FreeSurface(text_surface);
+
+  int width;
+  int height;
+  if (SDL_QueryTexture(text_texture, nullptr, nullptr, &width, &height) != 0)
+  {
+    LOG_ABORT("%s: could not query text texture: %s", __func__, SDL_GetError());
+  }
+
+  const SDL_Rect dest = { x, y, width, height };
+  SDL_RenderCopy(m_renderer, text_texture, nullptr, &dest);
+
+  return { x, y, width, height };
 }
 
 }  // namespace game

@@ -30,7 +30,7 @@ if (NOT EMSCRIPTEN)
   add_subdirectory("worldserver")
   add_subdirectory("replayserver")
 endif()
-add_subdirectory("wsclient")
+add_subdirectory("replayclient")
 
 # -- Data files --
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
@@ -74,7 +74,7 @@ add_subdirectory("gameengine/test" EXCLUDE_FROM_ALL)
 add_subdirectory("network/test" EXCLUDE_FROM_ALL)
 add_subdirectory("utils/test" EXCLUDE_FROM_ALL)
 add_subdirectory("world/test" EXCLUDE_FROM_ALL)
-add_subdirectory("wsclient/test" EXCLUDE_FROM_ALL)
+add_subdirectory("replayclient/test" EXCLUDE_FROM_ALL)
 add_custom_target(unittest DEPENDS
   account_test
   common_test
@@ -82,7 +82,7 @@ add_custom_target(unittest DEPENDS
   network_test
   utils_test
   world_test
-  wsclient_test
+  replayclient
 )
 
 # -- Docker targets --

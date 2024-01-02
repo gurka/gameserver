@@ -450,17 +450,11 @@ const Tile* Game::getTile(const common::Position& position) const
 
 const Creature* Game::getCreature(common::CreatureId creature_id) const
 {
-  auto it = std::find_if(m_known_creatures.cbegin(),
-                         m_known_creatures.cend(),
-                         [creature_id](const Creature& creature)
-                         {
-                           return creature_id == creature.id;
-                         });
-  if (it == m_known_creatures.cend())
+  if (m_known_creatures.count(creature_id) == 0)
   {
     return nullptr;
   }
-  return &(*it);
+  return &(m_known_creatures.at(creature_id));
 }
 
 Thing Game::parseThing(const protocol::Thing& thing)
@@ -492,13 +486,7 @@ Thing Game::parseThing(const protocol::Thing& thing)
       // Remove known creature if set
       if (creature.id_to_remove != 0U)
       {
-        auto it = std::find_if(m_known_creatures.begin(),
-                               m_known_creatures.end(),
-                               [id_to_remove = creature.id_to_remove](const Creature& creature)
-                               {
-                                 return id_to_remove == creature.id;
-                               });
-        if (it == m_known_creatures.end())
+        if (m_known_creatures.count(creature.id_to_remove) == 0)
         {
           LOG_ERROR("%s: received CreatureId to remove %u but we do not know a Creature with that id",
                     __func__,
@@ -507,18 +495,20 @@ Thing Game::parseThing(const protocol::Thing& thing)
         else
         {
           LOG_DEBUG("%s: removing known Creature with id %u", __func__, creature.id_to_remove);
-          m_known_creatures.erase(it);
+          m_known_creatures.erase(creature.id_to_remove);
         }
       }
 
       // Add new creature
-      m_known_creatures.emplace_back();
-      m_known_creatures.back().id = creature.id;
-      m_known_creatures.back().name = creature.name;
-      m_known_creatures.back().health_percent = creature.health_percent;
-      m_known_creatures.back().direction = creature.direction;
-      m_known_creatures.back().outfit = creature.outfit;
-      m_known_creatures.back().speed = creature.speed;
+      m_known_creatures[creature.id] =
+      {
+        creature.id,
+        creature.name,
+        creature.health_percent,
+        creature.direction,
+        creature.outfit,
+        creature.speed
+      };
 
       if (creature.id == m_player_id)
       {

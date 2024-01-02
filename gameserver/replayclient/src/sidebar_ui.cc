@@ -66,7 +66,7 @@ SDL_Texture* SidebarUI::render()
   SDL_RenderClear(m_renderer);
 
   SDL_SetRenderDrawColor(m_renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
-  const SDL_Rect border_rect = { 6, 6, TEXTURE_WIDTH - 6 - 6 - 1, TEXTURE_HEIGHT - 6 - 6 - 1 };
+  const SDL_Rect border_rect = { 6, 6, (TEXTURE_WIDTH / 2) - 6 - 6 - 1, TEXTURE_HEIGHT - 6 - 6 - 1 };
   SDL_RenderFillRect(m_renderer, &border_rect);
 
   const auto& replay_info = m_sidebar->getReplayInfo();
@@ -81,7 +81,7 @@ SDL_Texture* SidebarUI::render()
 
   // Render playback info
   renderText(12, 40, "Played packets: " + std::to_string(replay_info.packets_played), WHITE);
-  renderText(12, 56, "Total packets: " + std::to_string(replay_info.packets_total), WHITE);
+  renderText(12, 56, " Total packets: " + std::to_string(replay_info.packets_total), WHITE);
 
   return m_texture.get();
 }

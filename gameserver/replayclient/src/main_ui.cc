@@ -27,9 +27,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "game/game_ui.h"
-#include "chat/chat_ui.h"
-#include "sidebar/sidebar_ui.h"
+#include "game_ui.h"
+#include "chat_ui.h"
+#include "sidebar_ui.h"
 #include "utils/logger.h"
 
 namespace
