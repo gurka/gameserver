@@ -40,6 +40,11 @@ namespace game
 class Game;
 }
 
+namespace sidebar
+{
+class Sidebar;
+}
+
 namespace protocol::client
 {
 struct Login;
@@ -67,7 +72,7 @@ struct CreatureSkull;
 class Protocol
 {
  public:
-  Protocol(game::Game* game, chat::Chat* chat);
+  Protocol(game::Game* game, chat::Chat* chat, sidebar::Sidebar* sidebar);
 
   void handlePacket(network::IncomingPacket* packet);
 
@@ -93,6 +98,7 @@ class Protocol
   int m_num_handled_packets;
   game::Game* m_game;
   chat::Chat* m_chat;
+  sidebar::Sidebar* m_sidebar;
 };
 
 #endif  // WSCLIENT_SRC_PROTOCOL_H_

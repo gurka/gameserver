@@ -30,10 +30,11 @@
 #include "protocol/protocol_client.h"
 #include "utils/logger.h"
 
-Protocol::Protocol(game::Game* game, chat::Chat* chat)
+Protocol::Protocol(game::Game* game, chat::Chat* chat, sidebar::Sidebar* sidebar)
     : m_num_handled_packets(0),
       m_game(game),
-      m_chat(chat)
+      m_chat(chat),
+      m_sidebar(sidebar)
 {
 }
 

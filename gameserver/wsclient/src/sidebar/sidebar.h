@@ -22,30 +22,34 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_GRAPHICS_H_
-#define WSCLIENT_SRC_GRAPHICS_H_
+#ifndef WSCLIENT_SRC_SIDEBAR_SIDEBAR_H_
+#define WSCLIENT_SRC_SIDEBAR_SIDEBAR_H_
 
+#include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "common/position.h"
-#include "utils/data_loader.h"
-#include "creature.h"
-#include "map.h"
-#include "player_info.h"
-
-namespace wsclient::graphics
+namespace sidebar
 {
 
-bool init(const utils::data_loader::ItemTypes* itemtypes_in, const std::string& sprite_filename);
-void setWindowSize(int width, int height);
-void draw(const model::Map& map,
-          const PlayerInfo& player_info,
-          const std::vector<std::string>& text_messages);
-void createCreatureTexture(const model::Creature& creature);
-void removeCreatureTexture(const model::Creature& creature);
-common::Position screenToMapPosition(int x, int y);
+class Sidebar
+{
+ public:
+  struct ReplayInfo
+  {
+    bool playing;
+    int packets_played;
+    int packets_total;
+  };
 
-}  // namespace wsclient::graphics
+  ReplayInfo& getReplayInfo() { return m_replay_info; }
+  const ReplayInfo& getReplayInfo() const { return m_replay_info; }
 
-#endif  // WSCLIENT_SRC_GRAPHICS_H_
+ private:
+  ReplayInfo m_replay_info;
+};
+
+}  // namespace sidebar
+
+#endif  // WSCLIENT_SRC_SIDEBAR_SIDEBAR_H_

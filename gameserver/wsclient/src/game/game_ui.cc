@@ -91,6 +91,62 @@ SDL_Texture* GameUI::render()
   return m_texture.get();
 }
 
+void GameUI::onClick(int x, int y)
+{
+  // note: z is not set by screenToMapPosition
+  const auto local_tile_x = static_cast<std::uint16_t>(x / TILE_SIZE);
+  const auto local_tile_y = static_cast<std::uint16_t>(y / TILE_SIZE);
+  LOG_INFO("%s: local_tile: %d,%d", __func__, local_tile_x, local_tile_y);
+
+  // Convert to global position
+  const auto& player_position = m_game->getPlayerPosition();
+  const auto global_position = common::Position(player_position.getX() - 7 + local_tile_x,
+                                                player_position.getY() - 5 + local_tile_y,
+                                                player_position.getZ());
+
+  const auto* tile = m_game->getTile(global_position);
+  if (tile)
+  {
+    LOG_INFO("Tile at %s", global_position.toString().c_str());
+    int stackpos = 0;
+    for (const auto& thing : tile->things)
+    {
+      if (std::holds_alternative<game::Item>(thing))
+      {
+        const auto& item = std::get<game::Item>(thing);
+        std::ostringstream oss;
+        oss << "  stackpos=" << stackpos << " ";
+        item.type->dump(&oss, false);
+        oss << " [extra=" << static_cast<int>(item.extra) << "]\n";
+        LOG_INFO(oss.str().c_str());
+      }
+      else if (std::holds_alternative<common::CreatureId>(thing))
+      {
+        const auto creature_id = std::get<common::CreatureId>(thing);
+        const auto* creature = m_game->getCreature(creature_id);
+        if (creature)
+        {
+          LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
+        }
+        else
+        {
+          LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
+        }
+      }
+      else
+      {
+        LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
+      }
+
+      ++stackpos;
+    }
+  }
+  else
+  {
+    LOG_ERROR("%s: clicked on invalid tile", __func__);
+  }
+}
+
 void GameUI::renderFloor(game::TileArray::const_iterator it)
 {
   // Skip first row

@@ -56,6 +56,7 @@ class GameUI
          const utils::data_loader::ItemTypes* item_types);
 
   SDL_Texture* render();
+  void onClick(int x, int y);
 
  private:
   enum class HangableHookSide

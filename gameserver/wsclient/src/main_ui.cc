@@ -29,6 +29,7 @@
 
 #include "game/game_ui.h"
 #include "chat/chat_ui.h"
+#include "sidebar/sidebar_ui.h"
 #include "utils/logger.h"
 
 namespace
@@ -66,6 +67,7 @@ TTF_Font* ttf_font = nullptr;
 
 game::GameUI* game_ui = nullptr;
 chat::ChatUI* chat_ui = nullptr;
+sidebar::SidebarUI* sidebar_ui = nullptr;
 
 }
 
@@ -137,6 +139,11 @@ void setChatUI(chat::ChatUI* chat_ui)
   ::chat_ui = chat_ui;
 }
 
+void setSidebarUI(sidebar::SidebarUI* sidebar_ui)
+{
+  ::sidebar_ui = sidebar_ui;
+}
+
 void render()
 {
   SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
@@ -167,6 +174,16 @@ void render()
   SDL_RenderCopy(sdl_renderer, chat_texture, nullptr, &chat_dest);
 
   // Render sidebar
+  auto* sidebar_texture = sidebar_ui->render();
+  SDL_SetRenderTarget(sdl_renderer, nullptr);
+  const SDL_Rect sidebar_dest =
+  {
+    720,
+    0,
+    560,
+    720
+  };
+  SDL_RenderCopy(sdl_renderer, sidebar_texture, nullptr, &sidebar_dest);
 
   SDL_RenderPresent(sdl_renderer);
 }
@@ -175,10 +192,15 @@ void onClick(int x, int y)
 {
   if (x >= 0 && x < 720 && y >= 0 && y < 528)
   {
-    // game_ui->onClick(x, y);
-  } else if (x >= 0 && x < 720 && y >= 528 && y < (528 + 192))
+    game_ui->onClick(x / 1.5f, y / 1.5f);
+  }
+  else if (x >= 0 && x < 720 && y >= 528 && y < (528 + 192))
   {
     chat_ui->onClick(x, y - 528);
+  }
+  else if (x >= 720 && x < (720 + 560) && y >= 0 && y < 720)
+  {
+    sidebar_ui->onClick(x - 720, y);
   }
 }
 

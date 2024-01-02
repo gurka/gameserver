@@ -51,6 +51,8 @@
 #include "game/sprite_loader.h"
 #include "chat/chat.h"
 #include "chat/chat_ui.h"
+#include "sidebar/sidebar.h"
+#include "sidebar/sidebar_ui.h"
 #include "protocol.h"
 #include "replay_reader.h"
 
@@ -64,6 +66,8 @@ std::unique_ptr<game::GameUI> game_ui;
 
 std::unique_ptr<chat::Chat> chat;
 std::unique_ptr<chat::ChatUI> chat_ui;
+std::unique_ptr<sidebar::Sidebar> sidebar;
+std::unique_ptr<sidebar::SidebarUI> sidebar_ui;
 
 std::unique_ptr<Protocol> protocol;
 
@@ -124,13 +128,18 @@ void emscripten_cancel_main_loop()  // NOLINT
 
 extern "C" void main_loop()  // NOLINT
 {
-  // Check if it's time to "send" next packet in recording
-  while (replay_client::replay->timeForNextPacket())
+  if (replay_client::sidebar->getReplayInfo().playing)
   {
-    LOG_INFO("%s: sending a packet!", __func__);
-    const auto outgoing_packet = replay_client::replay->getNextPacket();
-    network::IncomingPacket incoming_packet(outgoing_packet.getBuffer() + 2, outgoing_packet.getLength() - 2);
-    replay_client::protocol->handlePacket(&incoming_packet);
+    // Check if it's time to "send" next packet in recording
+    while (replay_client::replay->timeForNextPacket())
+    {
+      LOG_INFO("%s: sending a packet!", __func__);
+      const auto outgoing_packet = replay_client::replay->getNextPacket();
+      network::IncomingPacket incoming_packet(outgoing_packet.getBuffer() + 2, outgoing_packet.getLength() - 2);
+      replay_client::protocol->handlePacket(&incoming_packet);
+    }
+
+    replay_client::sidebar->getReplayInfo().packets_played = replay_client::replay->getNumberOfPackets() - replay_client::replay->getNumberOfPacketsLeft();
   }
 
   // Read input
@@ -146,19 +155,6 @@ extern "C" void main_loop()  // NOLINT
           emscripten_cancel_main_loop();
           return;
 
-          /*
-        case SDL_SCANCODE_RETURN:
-          if (map.ready())
-          {
-            // Print player position, number of known floors ... more?
-            LOG_ERROR("%s: position: %s number of known floors: %d",
-                      __func__,
-                      map.getPlayerPosition().toString().c_str(),
-                      map.getNumFloors());
-          }
-          break;
-          */
-
         default:
           break;
       }
@@ -167,66 +163,16 @@ extern "C" void main_loop()  // NOLINT
     {
       LOG_INFO("%s: mouse click on %d, %d", __func__, event.button.x, event.button.y);
       main_ui::onClick(event.button.x, event.button.y);
-
-      /*
-        // note: z is not set by screenToMapPosition
-        const auto map_position = graphics::screenToMapPosition(event.button.x, event.button.y);
-
-        // Convert to global position
-        const auto& player_position = map.getPlayerPosition();
-        const auto global_position = common::Position(player_position.getX() - 8 + map_position.getX(),
-                                                      player_position.getY() - 6 + map_position.getY(),
-                                                      player_position.getZ());
-        const auto* tile = map.getTile(global_position);
-        if (tile)
-        {
-          LOG_INFO("Tile at %s", global_position.toString().c_str());
-          int stackpos = 0;
-          for (const auto& thing : tile->things)
-          {
-            if (std::holds_alternative<wsworld::Item>(thing))
-            {
-              const auto& item = std::get<wsworld::Item>(thing);
-              std::ostringstream oss;
-              oss << "  stackpos=" << stackpos << " ";
-              item.type->dump(&oss, false);
-              oss << " [extra=" << static_cast<int>(item.extra) << "]\n";
-              LOG_INFO(oss.str().c_str());
-            }
-            else if (std::holds_alternative<common::CreatureId>(thing))
-            {
-              const auto creature_id = std::get<common::CreatureId>(thing);
-              const auto* creature = static_cast<const wsworld::Map*>(&map)->getCreature(creature_id);
-              if (creature)
-              {
-                LOG_INFO("  stackpos=%d Creature [id=%d, name=%s]", stackpos, creature_id, creature->name.c_str());
-              }
-              else
-              {
-                LOG_ERROR("  stackpos=%d: creature with id=%d is nullptr", stackpos, creature_id);
-              }
-            }
-            else
-            {
-              LOG_ERROR("  stackpos=%d: invalid Thing on Tile", stackpos);
-            }
-
-            ++stackpos;
-          }
-        }
-        else
-        {
-          LOG_ERROR("%s: clicked on invalid tile", __func__);
-        }
-       */
     }
+    /*
     else if (event.type == SDL_WINDOWEVENT)
     {
       if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
       {
-        //graphics::setWindowSize(event.window.data1, event.window.data2);
+        graphics::setWindowSize(event.window.data1, event.window.data2);
       }
     }
+    */
     else if (event.type == SDL_QUIT)
     {
       LOG_INFO("%s: stopping client", __func__);
@@ -261,15 +207,16 @@ int main()
 
   protocol::setItemTypes(&replay_client::item_types);
 
-  // Create Game model
+  // Create models
   replay_client::game = std::make_unique<game::Game>();
   replay_client::game->setItemTypes(&replay_client::item_types);
-
-  // Create Chat model
   replay_client::chat = std::make_unique<chat::Chat>();
+  replay_client::sidebar = std::make_unique<sidebar::Sidebar>();
 
   // Create Protocol
-  replay_client::protocol = std::make_unique<Protocol>(replay_client::game.get(), replay_client::chat.get());
+  replay_client::protocol = std::make_unique<Protocol>(replay_client::game.get(),
+                                                       replay_client::chat.get(),
+                                                       replay_client::sidebar.get());
 
   // Create UI
   main_ui::init();
@@ -282,6 +229,16 @@ int main()
                                                           main_ui::get_renderer(),
                                                           main_ui::get_font());
   main_ui::setChatUI(replay_client::chat_ui.get());
+  sidebar::SidebarUI::Callbacks sidebar_ui_callbacks
+  {
+    [](bool playing){ replay_client::sidebar->getReplayInfo().playing = playing; }
+  };
+  replay_client::sidebar_ui = std::make_unique<sidebar::SidebarUI>(replay_client::sidebar.get(),
+                                                                   main_ui::get_renderer(),
+                                                                   main_ui::get_font(),
+                                                                   sidebar_ui_callbacks);
+  main_ui::setSidebarUI(replay_client::sidebar_ui.get());
+
 
   LOG_INFO("%s: loading replay", __func__);
   replay_client::replay = std::make_unique<Replay>();
@@ -291,6 +248,9 @@ int main()
     return 1;
   }
   LOG_INFO("%s: replay info: version=%d length=%d", __func__, replay_client::replay->getVersion(), replay_client::replay->getLength());
+  replay_client::sidebar->getReplayInfo().playing = true;
+  replay_client::sidebar->getReplayInfo().packets_played = 0;
+  replay_client::sidebar->getReplayInfo().packets_total = replay_client::replay->getNumberOfPackets();
 
   LOG_INFO("%s: starting main loop", __func__);
   emscripten_set_main_loop(main_loop, 0, 1);

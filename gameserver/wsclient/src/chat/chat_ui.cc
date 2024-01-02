@@ -136,9 +136,9 @@ void ChatUI::onClick(int x, int y)
   for (const auto& channel_rect : m_channel_rects)
   {
     if (channel_rect.rect.x <= x &&
-        channel_rect.rect.x + channel_rect.rect.w >= x &&
+        channel_rect.rect.x + channel_rect.rect.w > x &&
         channel_rect.rect.y <= y &&
-        channel_rect.rect.y + channel_rect.rect.h >= y)
+        channel_rect.rect.y + channel_rect.rect.h > y)
     {
       m_active_channel = channel_rect.channel_name;
       m_last_rendered_version = -1;  // force render

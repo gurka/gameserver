@@ -22,40 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_MAIN_UI_H_
-#define WSCLIENT_SRC_MAIN_UI_H_
+#ifndef WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
+#define WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
 
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
-class SDL_Renderer;
-
-namespace game
-{
-class GameUI;
-}
-
-namespace chat
-{
-class ChatUI;
-}
 
 namespace sidebar
 {
-class SidebarUI;
-}
 
-namespace main_ui
+class Sidebar;
+
+class SidebarUI
 {
+ public:
+  struct Callbacks
+  {
+    std::function<void(bool playing)> onReplayStatusChange;
+  };
+  static constexpr auto TEXTURE_WIDTH = 560;
+  static constexpr auto TEXTURE_HEIGHT = 720;
 
-bool init();
-SDL_Renderer* get_renderer();
-TTF_Font* get_font();
-void setGameUI(game::GameUI* game_ui);
-void setChatUI(chat::ChatUI* chat_ui);
-void setSidebarUI(sidebar::SidebarUI* sidebar_ui);
-void render();
-void onClick(int x, int y);
+  SidebarUI(const Sidebar* sidebar, SDL_Renderer* renderer, TTF_Font* font, const Callbacks& callbacks);
 
-}
+  SDL_Texture* render();
+  void onClick(int x, int y);
 
-#endif  // WSCLIENT_SRC_MAIN_UI_H_
+ private:
+  SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
+
+  const Sidebar* m_sidebar;
+  SDL_Renderer* m_renderer;
+  TTF_Font* m_font;
+  Callbacks m_callbacks;
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
+};
+
+}  // namespace sidebar
+
+#endif  // WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
