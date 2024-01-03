@@ -115,13 +115,36 @@ bool BitmapFont::load(const std::string& txt_filename, const std::string& bmp_fi
   return true;
 }
 
-void BitmapFont::renderText(int x, int y, const std::string& text, const SDL_Color& color)
+void BitmapFont::renderText(int x, int y, const std::string& text, const SDL_Color& color, bool center)
 {
   // Note: assumes SDL_SetRenderTarget has been set
 
   auto* texture = getTexture(color);
 
   int current_x = x;
+
+  if (center)
+  {
+    // To center the text we first need to calculate how wide it will be
+    int width = 0;
+    for (auto c : text)
+    {
+      const auto unsigned_c = static_cast<unsigned char>(c);
+      const auto& glyph = m_glyphs[unsigned_c];
+      if (glyph.width == 0)
+      {
+        LOG_ERROR("%s: no glyph for character='%c' (%d)", __func__, unsigned_c, static_cast<int>(unsigned_c));
+        // TODO: render a glyph to represent invalid character
+        continue;
+      }
+
+      width += glyph.width - 1;
+    }
+
+    // Adjust x based on width, minus 1 to account for the last glyph
+    current_x -= ((width - 1) / 2);
+  }
+
   for (auto c : text)
   {
     const auto unsigned_c = static_cast<unsigned char>(c);

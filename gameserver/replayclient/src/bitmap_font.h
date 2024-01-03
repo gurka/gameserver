@@ -38,7 +38,7 @@ class BitmapFont
   BitmapFont(SDL_Renderer* renderer);
   bool load(const std::string& txt_filename, const std::string& bmp_filename);
 
-  void renderText(int x, int y, const std::string& text, const SDL_Color& color);
+  void renderText(int x, int y, const std::string& text, const SDL_Color& color, bool center);
 
  private:
   SDL_Texture* getTexture(const SDL_Color& color);

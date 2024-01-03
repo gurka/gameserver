@@ -51,6 +51,8 @@ std::vector<RenderedCreature> rendered_creatures;
 namespace game
 {
 
+using ui::common::BLACK;
+
 GameUI::GameUI(const game::Game* game,
                SDL_Renderer* renderer,
                const SpriteLoader* sprite_loader,
@@ -123,13 +125,62 @@ SDL_Texture* GameUI::render()
   SDL_Rect scaled_rect = { 0, 0, static_cast<int>(TEXTURE_WIDTH * SCALING), static_cast<int>(TEXTURE_HEIGHT * SCALING) };
   SDL_RenderCopy(m_renderer, m_texture.get(), nullptr, &scaled_rect);
 
-  // Render creature names to scaled texture
+  // Render creature names and health bar to scaled texture
   for (const auto& rendered_creature : rendered_creatures)
   {
-    ui::common::get_bitmap_font()->renderText((rendered_creature.local_position.getX() * TILE_SIZE * SCALING) - 24,
-                                              (rendered_creature.local_position.getY() * TILE_SIZE * SCALING) - 24,
+    SDL_Color creature_status_color;
+    if (rendered_creature.health_percentage > 92)
+    {
+      creature_status_color = { 0U, 188U, 0U, 255U };
+    }
+    else if (rendered_creature.health_percentage > 60)
+    {
+      creature_status_color = { 80U, 161U, 80U, 255U };
+    }
+    else if (rendered_creature.health_percentage > 30)
+    {
+      creature_status_color = { 161U, 161U, 0U, 255U };
+    }
+    else if (rendered_creature.health_percentage > 8)
+    {
+      creature_status_color = { 191U, 10U, 10U, 255U };
+    }
+    else if (rendered_creature.health_percentage > 3)
+    {
+      creature_status_color = { 145U, 15U, 15U, 255U };
+    }
+    else
+    {
+      creature_status_color = { 133U, 12U, 12U, 255U };
+    }
+
+    ui::common::get_bitmap_font()->renderText((rendered_creature.local_position.getX() * TILE_SIZE * SCALING) + 16,
+                                              (rendered_creature.local_position.getY() * TILE_SIZE * SCALING) - 30,
                                               rendered_creature.name,
-                                              { 32U, 196U, 32U, 255U });
+                                              creature_status_color,
+                                              true);
+
+    const SDL_Rect health_bar_base_rect
+    {
+      static_cast<int>(rendered_creature.local_position.getX() * TILE_SIZE * SCALING) - 0,
+      static_cast<int>(rendered_creature.local_position.getY() * TILE_SIZE * SCALING) - 17,
+      27,
+      4
+    };
+    SDL_SetRenderDrawColor(m_renderer, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
+    SDL_RenderFillRect(m_renderer, &health_bar_base_rect);
+
+    const SDL_Rect health_bar_rect
+    {
+      health_bar_base_rect.x + 1,
+      health_bar_base_rect.y + 1,
+      // full width is 25, e.g. 1/4 of 100
+      // so for each 4% hp lost, we reduce the width by 1
+      health_bar_base_rect.w - 2 - ((100 - rendered_creature.health_percentage) / 4),
+      health_bar_base_rect.h - 2
+    };
+    SDL_SetRenderDrawColor(m_renderer, creature_status_color.r, creature_status_color.g, creature_status_color.b, 255U);
+    SDL_RenderFillRect(m_renderer, &health_bar_rect);
   }
 
   return m_scaled_texture.get();
