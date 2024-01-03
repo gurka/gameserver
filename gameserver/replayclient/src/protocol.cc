@@ -42,7 +42,7 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
 {
   ++m_num_handled_packets;
 
-  LOG_INFO("%s: handling packet number %d", __func__, m_num_handled_packets);
+  LOG_DEBUG("%s: handling packet number %d", __func__, m_num_handled_packets);
 
   while (!packet->isEmpty())
   {
@@ -111,6 +111,8 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
         protocol::getPosition(packet);
         packet->getU8();  // color
         const auto message = packet->getString();  // text
+
+        LOG_INFO("%s: animatedText message=%s", __func__, message.c_str());
 
         // TODO, to Game
         break;
@@ -228,9 +230,8 @@ void Protocol::handlePacket(network::IncomingPacket* packet)
           {
             // Both Game and Chat needs to know
             const auto position =  protocol::getPosition(packet);
-            (void)position;
             const auto text = packet->getString();  // text
-            // TODO Game
+            m_game->addStaticText(position, talk_type, talker, text);
             m_chat->message(talker, talk_type, text);
             break;
           }

@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <algorithm>
 
+#include <SDL2/SDL.h>
+
 #include "common/creature.h"
 #include "common/direction.h"
 #include "protocol/protocol_client.h"
@@ -68,10 +70,10 @@ void Game::setPartialMapData(const protocol::client::PartialMap& map_data)
                                              old_position.getY() + y_diff,
                                              old_position.getZ());
   m_tiles.setMapPosition(new_position);
-  LOG_INFO("%s: updated map position from %s to %s",
-           __func__,
-           old_position.toString().c_str(),
-           new_position.toString().c_str());
+  //LOG_INFO("%s: updated map position from %s to %s",
+  //         __func__,
+  //         old_position.toString().c_str(),
+  //         new_position.toString().c_str());
 
   // Shift Tiles
   m_tiles.shiftTiles(map_data.direction);
@@ -443,6 +445,24 @@ void Game::setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull)
   // TODO(simon): it->skull = skull;
 }
 
+void Game::removeElapsedTexts()
+{
+  const auto current_tick = SDL_GetTicks();
+  m_static_texts.erase(std::remove_if(m_static_texts.begin(),
+                                      m_static_texts.end(),
+                                      [current_tick](const StaticText& static_text) { return current_tick >= static_text.tick_end; }),
+                       m_static_texts.end());
+}
+
+void Game::addStaticText(const common::Position& position,
+                         std::uint8_t type,
+                         const std::string& talker,
+                         const std::string& text)
+{
+  const auto current_tick = SDL_GetTicks();
+  m_static_texts.emplace_back(StaticText { position, type, talker, text, current_tick + 3000U });
+}
+
 const Tile* Game::getTile(const common::Position& position) const
 {
   return m_tiles.getTile(position);
@@ -512,11 +532,11 @@ Thing Game::parseThing(const protocol::Thing& thing)
 
       if (creature.id == m_player_id)
       {
-        LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
+        //LOG_INFO("%s: we are %s!", __func__, creature.name.c_str());
       }
     }
 
-    LOG_INFO("%s: parsed creature with id %u", __func__, creature.id);
+    //LOG_INFO("%s: parsed creature with id %u", __func__, creature.id);
 
     return creature.id;
   }

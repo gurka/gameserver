@@ -58,14 +58,14 @@ void Chat::openPrivateChannel(const std::string& name)
 
 void Chat::message(const std::string& talker, std::uint8_t talk_type, const std::string& text)
 {
-  LOG_INFO("%s: talker=%s talk_type=%u text=%s", __func__, talker.c_str(), static_cast<std::uint16_t>(talk_type), text.c_str());
+  //LOG_INFO("%s: talker=%s talk_type=%u text=%s", __func__, talker.c_str(), static_cast<std::uint16_t>(talk_type), text.c_str());
   m_default_messages.push_back({ talker, talk_type, text });
   m_version += 1;
 }
 
 void Chat::message(const std::string& talker, std::uint8_t talk_type, std::uint16_t channel_id, const std::string& text)
 {
-  LOG_INFO("%s: talker=%s talk_type=%u channel_id=%u text=%s", __func__, talker.c_str(), static_cast<std::uint16_t>(talk_type), channel_id, text.c_str());
+  //LOG_INFO("%s: talker=%s talk_type=%u channel_id=%u text=%s", __func__, talker.c_str(), static_cast<std::uint16_t>(talk_type), channel_id, text.c_str());
   if (m_channels.count(channel_id) == 0)
   {
     LOG_ERROR("%s: could not find channel with id: %d", __func__, channel_id);

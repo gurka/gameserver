@@ -56,6 +56,16 @@ struct Item
 //              if we can figure out the valid range of creature ids
 using Thing = std::variant<common::CreatureId, Item>;
 
+struct StaticText
+{
+  common::Position position;
+  std::uint8_t type;
+  std::string talker;
+  std::string text;
+
+  std::uint32_t tick_end;
+};
+
 }  // namespace model
 
 #endif  // WSCLIENT_SRC_GAME_TYPES_H_

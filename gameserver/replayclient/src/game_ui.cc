@@ -183,6 +183,49 @@ SDL_Texture* GameUI::render()
     SDL_RenderFillRect(m_renderer, &health_bar_rect);
   }
 
+  // Render static texts
+  for (const auto& static_text : m_game->getStaticTexts())
+  {
+    const auto& local_position = m_game->globalToLocalPosition(static_text.position);
+    std::string text = "";
+    SDL_Color color;
+    switch (static_text.type)
+    {
+      case 1:
+      {
+        text += static_text.talker + " says: " + static_text.text;
+        color = { 239U, 239U, 0U, 255U };
+        break;
+      }
+      case 2:
+      {
+        text += static_text.talker + " whispers: " + static_text.text;
+        color = { 239U, 239U, 0U, 255U };
+        break;
+      }
+      case 3:  // yell
+      {
+        text += static_text.talker + " yells: " + static_text.text;
+        color = { 239U, 239U, 0U, 255U };
+        break;
+      }
+      case 16:
+      case 17:
+      {
+        text = static_text.text;
+        color = { 254U, 101U, 0U, 0U };
+        break;
+      }
+    }
+
+    // TODO: handle text off-screen
+    ui::common::get_bitmap_font()->renderText((local_position.getX() * TILE_SIZE * SCALING) + 16,
+                                              (local_position.getY() * TILE_SIZE * SCALING) - 30,
+                                              text,
+                                              color,
+                                              false);
+  }
+
   return m_scaled_texture.get();
 }
 

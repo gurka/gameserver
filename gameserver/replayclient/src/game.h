@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
+#include <vector>
 
 #include "common/position.h"
 #include "common/creature.h"
@@ -66,6 +67,12 @@ class Game
 
   void setCreatureSkull(common::CreatureId creature_id, std::uint8_t skull);
 
+  void removeElapsedTexts();
+  void addStaticText(const common::Position& position,
+                     std::uint8_t type,
+                     const std::string& talker,
+                     const std::string& text);
+
   common::CreatureId getPlayerId() const { return m_player_id; }
   const common::Position& getPlayerPosition() const { return m_tiles.getMapPosition(); }
   int getPlayerLocalZ() const { return m_tiles.globalToLocalPosition(getPlayerPosition()).getZ(); }
@@ -75,6 +82,11 @@ class Game
   const Creature* getCreature(common::CreatureId creature_id) const;
   bool ready() const { return m_ready; }
   const std::unordered_map<common::CreatureId, Creature>& getKnownCreatures() const { return m_known_creatures; }
+  const std::vector<StaticText>& getStaticTexts() const { return m_static_texts; }
+  common::Position globalToLocalPosition(const common::Position& global_position) const
+  {
+    return m_tiles.globalToLocalPosition(global_position);
+  }
 
  private:
   // Methods that work protocol objects
@@ -90,6 +102,7 @@ class Game
   common::CreatureId m_player_id = 0U;
   bool m_ready = false;
   std::unordered_map<common::CreatureId, Creature> m_known_creatures;
+  std::vector<StaticText> m_static_texts;
 };
 
 }

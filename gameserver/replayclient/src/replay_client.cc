@@ -137,7 +137,7 @@ extern "C" void main_loop()  // NOLINT
     // Check if it's time to "send" next packet in recording
     while (replay_client::replay->timeForNextPacket())
     {
-      LOG_INFO("%s: sending a packet!", __func__);
+      //LOG_INFO("%s: sending a packet!", __func__);
       const auto outgoing_packet = replay_client::replay->getNextPacket();
       network::IncomingPacket incoming_packet(outgoing_packet.getBuffer() + 2, outgoing_packet.getLength() - 2);
       replay_client::protocol->handlePacket(&incoming_packet);
@@ -186,6 +186,7 @@ extern "C" void main_loop()  // NOLINT
   }
 
   // Render
+  replay_client::game->removeElapsedTexts();
   main_ui::render();
 }
 
