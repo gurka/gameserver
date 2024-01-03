@@ -63,7 +63,6 @@ namespace
 
 SDL_Window* sdl_window = nullptr;
 SDL_Renderer* sdl_renderer = nullptr;
-TTF_Font* ttf_font = nullptr;
 
 game::GameUI* game_ui = nullptr;
 chat::ChatUI* chat_ui = nullptr;
@@ -95,6 +94,8 @@ bool init()
     return false;
   }
 
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+
   sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
   if (!sdl_renderer)
   {
@@ -108,25 +109,12 @@ bool init()
     return false;
   }
 
-  // FIXME(simon): won't work for emscripten
-  ttf_font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 12);
-  if (!ttf_font)
-  {
-    LOG_ERROR("%s: could not open font: %s", __func__, TTF_GetError());
-    return false;
-  }
-
   return true;
 }
 
 SDL_Renderer* get_renderer()
 {
   return sdl_renderer;
-}
-
-TTF_Font* get_font()
-{
-  return ttf_font;
 }
 
 void setGameUI(game::GameUI* game_ui)
@@ -152,12 +140,13 @@ void render()
   // Render game
   auto* game_texture = game_ui->render();
   SDL_SetRenderTarget(sdl_renderer, nullptr);
+  const auto scale = 1.5f;
   const SDL_Rect game_dest =
   {
     0,
     0,
-    720,
-    528
+    static_cast<int>(480 * scale),
+    static_cast<int>(352 * scale),
   };
   SDL_RenderCopy(sdl_renderer, game_texture, nullptr, &game_dest);
 

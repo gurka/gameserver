@@ -22,44 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
-#define WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
+#ifndef WSCLIENT_SRC_BITMAP_FONT_H_
+#define WSCLIENT_SRC_BITMAP_FONT_H_
 
-#include <functional>
+#include <array>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 
-namespace sidebar
-{
-
-class Sidebar;
-
-class SidebarUI
+class BitmapFont
 {
  public:
-  struct Callbacks
-  {
-    std::function<void(bool playing)> onReplayStatusChange;
-  };
-  static constexpr auto TEXTURE_WIDTH = 560;
-  static constexpr auto TEXTURE_HEIGHT = 720;
+  BitmapFont(SDL_Renderer* renderer);
+  bool load(const std::string& txt_filename, const std::string& bmp_filename);
 
-  SidebarUI(const Sidebar* sidebar, SDL_Renderer* renderer, const Callbacks& callbacks);
-
-  SDL_Texture* render();
-  void onClick(int x, int y);
+  void renderText(int x, int y, const std::string& text, const SDL_Color& color);
 
  private:
-  const Sidebar* m_sidebar;
+  SDL_Texture* getTexture(const SDL_Color& color);
+
   SDL_Renderer* m_renderer;
-  Callbacks m_callbacks;
-  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
+
+  struct Glyph
+  {
+    int x;
+    int y;
+    int width;
+  };
+  std::array<Glyph, 256> m_glyphs;
+
+  using TexturePtr = std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)>;
+  TexturePtr m_texture;
+  int m_texture_width;
+  int m_texture_height;
+
+  struct SDLColorHash
+  {
+    std::size_t operator()(const SDL_Color& color) const;
+  };
+  struct SDLColorEqualTo
+  {
+    constexpr bool operator()(const SDL_Color& lhs, const SDL_Color& rhs) const;
+  };
+  std::unordered_map<SDL_Color, TexturePtr, SDLColorHash, SDLColorEqualTo> m_color_textures;
 };
 
-}  // namespace sidebar
-
-#endif  // WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
+#endif  // WSCLIENT_SRC_BITMAP_FONT_H_

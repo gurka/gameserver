@@ -45,6 +45,7 @@
 #include "utils/logger.h"
 #include "common/position.h"
 
+#include "common_ui.h"
 #include "main_ui.h"
 #include "game.h"
 #include "game_ui.h"
@@ -55,6 +56,7 @@
 #include "sidebar_ui.h"
 #include "protocol.h"
 #include "replay_reader.h"
+#include "bitmap_font.h"
 
 namespace replay_client
 {
@@ -70,6 +72,8 @@ std::unique_ptr<sidebar::Sidebar> sidebar;
 std::unique_ptr<sidebar::SidebarUI> sidebar_ui;
 
 std::unique_ptr<Protocol> protocol;
+
+std::unique_ptr<BitmapFont> bitmap_font;
 
 std::unique_ptr<Replay> replay;
 
@@ -220,15 +224,14 @@ int main()
 
   // Create UI
   main_ui::init();
+  ui::common::init(main_ui::get_renderer());
   replay_client::game_ui = std::make_unique<game::GameUI>(replay_client::game.get(),
                                                           main_ui::get_renderer(),
-                                                          main_ui::get_font(),
                                                           replay_client::sprite_loader.get(),
                                                           &replay_client::item_types);
   main_ui::setGameUI(replay_client::game_ui.get());
   replay_client::chat_ui = std::make_unique<chat::ChatUI>(replay_client::chat.get(),
-                                                          main_ui::get_renderer(),
-                                                          main_ui::get_font());
+                                                          main_ui::get_renderer());
   main_ui::setChatUI(replay_client::chat_ui.get());
   const sidebar::SidebarUI::Callbacks sidebar_ui_callbacks
   {
@@ -236,14 +239,12 @@ int main()
   };
   replay_client::sidebar_ui = std::make_unique<sidebar::SidebarUI>(replay_client::sidebar.get(),
                                                                    main_ui::get_renderer(),
-                                                                   main_ui::get_font(),
                                                                    sidebar_ui_callbacks);
   main_ui::setSidebarUI(replay_client::sidebar_ui.get());
 
-
   LOG_INFO("%s: loading replay", __func__);
   replay_client::replay = std::make_unique<Replay>();
-  if (!replay_client::replay->load("replay.trp"))
+  if (!replay_client::replay->load("files/replay.trp"))
   {
     LOG_ERROR("%s: could not load replay.trp: ", __func__, replay_client::replay->getErrorStr().c_str());
     return 1;

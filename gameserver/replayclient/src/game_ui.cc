@@ -29,6 +29,8 @@
 #include <SDL2/SDL.h>
 
 #include "utils/data_loader.h"
+#include "bitmap_font.h"
+#include "common_ui.h"
 #include "game.h"
 #include "texture.h"
 
@@ -51,15 +53,14 @@ namespace game
 
 GameUI::GameUI(const game::Game* game,
                SDL_Renderer* renderer,
-               TTF_Font* font,
                const SpriteLoader* sprite_loader,
                const utils::data_loader::ItemTypes* item_types)
     : m_game(game),
       m_renderer(renderer),
-      m_font(font),
       m_sprite_loader(sprite_loader),
       m_item_types(item_types),
       m_texture(nullptr, SDL_DestroyTexture),
+      m_scaled_texture(nullptr, SDL_DestroyTexture),
       m_anim_tick(0u),
       m_creature_textures(),
       m_item_textures()
@@ -69,54 +70,69 @@ GameUI::GameUI(const game::Game* game,
                                     SDL_TEXTUREACCESS_TARGET,
                                     TEXTURE_WIDTH,
                                     TEXTURE_HEIGHT));
+  m_scaled_texture.reset(SDL_CreateTexture(m_renderer,
+                                           SDL_PIXELFORMAT_RGBA8888,
+                                           SDL_TEXTUREACCESS_TARGET,
+                                           TEXTURE_WIDTH * SCALING,
+                                           TEXTURE_HEIGHT * SCALING));
 }
 
 SDL_Texture* GameUI::render()
 {
   m_anim_tick = SDL_GetTicks() / 540;
 
-  SDL_SetRenderTarget(m_renderer, m_texture.get());
-  SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+  SDL_SetRenderTarget(m_renderer, m_scaled_texture.get());
+  SDL_SetRenderDrawColor(m_renderer, 0U, 0U, 0U, 255U);
   SDL_RenderClear(m_renderer);
-  if (m_game->ready())
+
+  if (!m_game->ready())
   {
-    rendered_creatures.clear();
+    return m_scaled_texture.get();
+  }
 
-    // Render tiles and things
-    const auto& tiles = m_game->getTiles();
-    if (m_game->getPlayerPosition().getZ() <= 7)
+  rendered_creatures.clear();
+
+  SDL_SetRenderTarget(m_renderer, m_texture.get());
+  SDL_SetRenderDrawColor(m_renderer, 0U, 0U, 0U, 255U);
+  SDL_RenderClear(m_renderer);
+
+  // Render tiles and things
+  if (m_game->getPlayerPosition().getZ() <= 7)
+  {
+    // We have floors: 7  6  5  4  3  2  1  0, and we want to render them in that order
+    // Skip floors above player z as we don't know when floor above blocks view of player yet
+    for (auto z = 0; z <= 7; ++z)
     {
-      // We have floors: 7  6  5  4  3  2  1  0, and we want to render them in that order
-      // Skip floors above player z as we don't know when floor above blocks view of player yet
-      for (auto z = 0; z <= 7; ++z)
+      renderFloor(z);
+      if (7 - m_game->getPlayerPosition().getZ() == z)
       {
-        renderFloor(z);
-        if (7 - m_game->getPlayerPosition().getZ() == z)
-        {
-          break;
-        }
+        break;
       }
     }
-    else
+  } else
+  {
+    // Underground, render at the bottom floor up to player floor (which is always local z=2)
+    for (auto z = m_game->getNumFloors() - 1; z >= 2; --z)
     {
-      // Underground, render at the bottom floor up to player floor (which is always local z=2)
-      for (auto z = m_game->getNumFloors() - 1; z >= 2; --z)
-      {
-        renderFloor(z);
-      }
-    }
-
-    // Render creature names
-    for (const auto& rendered_creature : rendered_creatures)
-    {
-      renderText((rendered_creature.local_position.getX() * TILE_SIZE) - 24,
-                 (rendered_creature.local_position.getY() * TILE_SIZE) - 24,
-                 rendered_creature.name,
-                 { 32U, 196U, 32U, 255U });
+      renderFloor(z);
     }
   }
 
-  return m_texture.get();
+  // Render to scaled texture
+  SDL_SetRenderTarget(m_renderer, m_scaled_texture.get());
+  SDL_Rect scaled_rect = { 0, 0, static_cast<int>(TEXTURE_WIDTH * SCALING), static_cast<int>(TEXTURE_HEIGHT * SCALING) };
+  SDL_RenderCopy(m_renderer, m_texture.get(), nullptr, &scaled_rect);
+
+  // Render creature names to scaled texture
+  for (const auto& rendered_creature : rendered_creatures)
+  {
+    ui::common::get_bitmap_font()->renderText((rendered_creature.local_position.getX() * TILE_SIZE * SCALING) - 24,
+                                              (rendered_creature.local_position.getY() * TILE_SIZE * SCALING) - 24,
+                                              rendered_creature.name,
+                                              { 32U, 196U, 32U, 255U });
+  }
+
+  return m_scaled_texture.get();
 }
 
 void GameUI::onClick(int x, int y)
@@ -481,25 +497,6 @@ const Texture* GameUI::getCreatureTexture(common::CreatureId creature_id)
   }
   // TODO: remove texture when creature removed from knownCreatures..?
   return &(it->texture);
-}
-
-SDL_Rect GameUI::renderText(int x, int y, const std::string& text, const SDL_Color& color)
-{
-  auto* text_surface = TTF_RenderText_Blended(m_font, text.c_str(), color);
-  auto* text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
-  SDL_FreeSurface(text_surface);
-
-  int width;
-  int height;
-  if (SDL_QueryTexture(text_texture, nullptr, nullptr, &width, &height) != 0)
-  {
-    LOG_ABORT("%s: could not query text texture: %s", __func__, SDL_GetError());
-  }
-
-  const SDL_Rect dest = { x, y, width, height };
-  SDL_RenderCopy(m_renderer, text_texture, nullptr, &dest);
-
-  return { x, y, width, height };
 }
 
 }  // namespace game

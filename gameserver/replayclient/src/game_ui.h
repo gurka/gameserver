@@ -51,10 +51,10 @@ class GameUI
   static constexpr auto DRAW_TILES_Y = 11;
   static constexpr auto TEXTURE_WIDTH  = DRAW_TILES_X * TILE_SIZE;  // 480
   static constexpr auto TEXTURE_HEIGHT = DRAW_TILES_Y * TILE_SIZE;  // 352
+  static constexpr auto SCALING = 1.5f;
 
   GameUI(const game::Game* game,
          SDL_Renderer* renderer,
-         TTF_Font* font,
          const SpriteLoader* sprite_loader,
          const utils::data_loader::ItemTypes* item_types);
 
@@ -76,15 +76,14 @@ class GameUI
   SDL_Texture* getItemSDLTexture(int x, int y, const game::Item& item, HangableHookSide hook_side);
   const Texture& getItemTexture(common::ItemTypeId item_type_id);
   const Texture* getCreatureTexture(common::CreatureId creature_id);
-  SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
 
   const game::Game* m_game;
   SDL_Renderer* m_renderer;
-  TTF_Font* m_font;
   const SpriteLoader* m_sprite_loader;
   const utils::data_loader::ItemTypes* m_item_types;
 
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_scaled_texture;
 
   std::uint32_t m_anim_tick;
 

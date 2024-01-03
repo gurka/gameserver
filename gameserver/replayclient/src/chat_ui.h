@@ -43,17 +43,14 @@ class ChatUI
   static constexpr auto TEXTURE_WIDTH = 720;
   static constexpr auto TEXTURE_HEIGHT = 192;
 
-  ChatUI(const Chat* chat, SDL_Renderer* renderer, TTF_Font* font);
+  ChatUI(const Chat* chat, SDL_Renderer* renderer);
 
   SDL_Texture* render();
   void onClick(int x, int y);
 
  private:
-  SDL_Rect renderText(int x, int y, const std::string& text, const SDL_Color& color);
-
   const Chat* m_chat;
   SDL_Renderer* m_renderer;
-  TTF_Font* m_font;
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
   int m_last_rendered_version;
 

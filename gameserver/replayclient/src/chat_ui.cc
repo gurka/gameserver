@@ -24,6 +24,7 @@
 
 #include "chat_ui.h"
 
+#include "common_ui.h"
 #include "chat.h"
 #include "utils/logger.h"
 
@@ -41,10 +42,9 @@ static const SDL_Color YELLOW = { 255U, 204U,   0U, 255U };
 namespace chat
 {
 
-ChatUI::ChatUI(const Chat* chat, SDL_Renderer* renderer, TTF_Font* font)
+ChatUI::ChatUI(const Chat* chat, SDL_Renderer* renderer)
     : m_chat(chat),
       m_renderer(renderer),
-      m_font(font),
       m_texture(nullptr, SDL_DestroyTexture),
       m_last_rendered_version(-1),
       m_active_channel("Default")
@@ -76,14 +76,16 @@ SDL_Texture* ChatUI::render()
   // Render channels
   m_channel_rects.clear();
   SDL_Rect channel_bounding_box;
-  channel_bounding_box = renderText(12, 6, "[Default]", m_active_channel == "Default" ? WHITE : GRAY);
+  channel_bounding_box = ui::common::renderText(12, 6, 12, false, "[Default]", m_active_channel == "Default" ? WHITE : GRAY);
   m_channel_rects.push_back({ "Default", channel_bounding_box });
   for (const auto& pair : m_chat->getChannels())
   {
-    channel_bounding_box = renderText(channel_bounding_box.x + channel_bounding_box.w + 6,
-                                      6,
-                                      std::string("[") + pair.second.name + "]",
-                                      m_active_channel == pair.second.name ? WHITE : GRAY);
+    channel_bounding_box = ui::common::renderText(channel_bounding_box.x + channel_bounding_box.w + 6,
+                                                  6,
+                                                  12,
+                                                  false,
+                                                  std::string("[") + pair.second.name + "]",
+                                                  m_active_channel == pair.second.name ? WHITE : GRAY);
     m_channel_rects.push_back({ pair.second.name, channel_bounding_box });
   }
 
@@ -124,7 +126,7 @@ SDL_Texture* ChatUI::render()
 
     const auto& message = messages[messages.size() - 1 - i];
     const auto text = std::string("[") + std::to_string((std::uint16_t)message.talk_type) + "] " + message.talker + ": " + message.text;
-    renderText(12, 192 - 24 - (16 * i), text, YELLOW);
+    ui::common::renderText(12, 192 - 24 - (16 * i), 12, false, text, YELLOW);
   }
 
   m_last_rendered_version = m_chat->getVersion();
@@ -145,25 +147,6 @@ void ChatUI::onClick(int x, int y)
       break;
     }
   }
-}
-
-SDL_Rect ChatUI::renderText(int x, int y, const std::string& text, const SDL_Color& color)
-{
-  auto* text_surface = TTF_RenderText_Blended(m_font, text.c_str(), color);
-  auto* text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
-  SDL_FreeSurface(text_surface);
-
-  int width;
-  int height;
-  if (SDL_QueryTexture(text_texture, nullptr, nullptr, &width, &height) != 0)
-  {
-    LOG_ABORT("%s: could not query text texture: %s", __func__, SDL_GetError());
-  }
-
-  const SDL_Rect dest = { x, y, width, height };
-  SDL_RenderCopy(m_renderer, text_texture, nullptr, &dest);
-
-  return { x, y, width, height };
 }
 
 }  // namespace chat

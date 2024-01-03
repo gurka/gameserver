@@ -22,44 +22,27 @@
  * SOFTWARE.
  */
 
-#ifndef WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
-#define WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
+#ifndef WSCLIENT_SRC_COMMON_UI_H_
+#define WSCLIENT_SRC_COMMON_UI_H_
 
-#include <functional>
-#include <memory>
 #include <string>
-#include <vector>
-
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 
-namespace sidebar
+class BitmapFont;
+
+namespace ui::common
 {
 
-class Sidebar;
+static const SDL_Color WHITE  = { 255U, 255U, 255U, 255U };
+static const SDL_Color BLACK  = {   0U,   0U,   0U, 255U };
+static const SDL_Color BROWN  = { 102U,  51U,   0U, 255U };
+static const SDL_Color GRAY   = { 107U, 107U,  71U, 255U };
+static const SDL_Color YELLOW = { 255U, 204U,   0U, 255U };
 
-class SidebarUI
-{
- public:
-  struct Callbacks
-  {
-    std::function<void(bool playing)> onReplayStatusChange;
-  };
-  static constexpr auto TEXTURE_WIDTH = 560;
-  static constexpr auto TEXTURE_HEIGHT = 720;
+void init(SDL_Renderer* renderer);
+BitmapFont* get_bitmap_font();
+SDL_Rect renderText(int x, int y, int size, bool bold, const std::string& text, const SDL_Color& color);
 
-  SidebarUI(const Sidebar* sidebar, SDL_Renderer* renderer, const Callbacks& callbacks);
+}
 
-  SDL_Texture* render();
-  void onClick(int x, int y);
-
- private:
-  const Sidebar* m_sidebar;
-  SDL_Renderer* m_renderer;
-  Callbacks m_callbacks;
-  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_texture;
-};
-
-}  // namespace sidebar
-
-#endif  // WSCLIENT_SRC_SIDEBAR_SIDEBAR_UI_H_
+#endif  // WSCLIENT_SRC_COMMON_UI_H_

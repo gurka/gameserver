@@ -24,17 +24,15 @@
 
 #include "sidebar_ui.h"
 
+#include <sstream>
+
 #include "sidebar.h"
+#include "common_ui.h"
 #include "utils/logger.h"
+#include "bitmap_font.h"
 
 namespace
 {
-
-const SDL_Color WHITE  = { 255U, 255U, 255U, 255U };
-const SDL_Color BLACK  = {   0U,   0U,   0U, 255U };
-const SDL_Color BROWN  = { 102U,  51U,   0U, 255U };
-const SDL_Color GRAY   = { 107U, 107U,  71U, 255U };
-const SDL_Color YELLOW = { 255U, 204U,   0U, 255U };
 
 const SDL_Rect resume_pause_button_rect = { 12, 12, 48, 24 };
 
@@ -43,10 +41,14 @@ const SDL_Rect resume_pause_button_rect = { 12, 12, 48, 24 };
 namespace sidebar
 {
 
-SidebarUI::SidebarUI(const Sidebar* sidebar, SDL_Renderer* renderer, TTF_Font* font, const Callbacks& callbacks)
+using ui::common::BLACK;
+using ui::common::BROWN;
+using ui::common::GRAY;
+using ui::common::WHITE;
+
+SidebarUI::SidebarUI(const Sidebar* sidebar, SDL_Renderer* renderer, const Callbacks& callbacks)
     : m_sidebar(sidebar),
       m_renderer(renderer),
-      m_font(font),
       m_callbacks(callbacks),
       m_texture(nullptr, SDL_DestroyTexture)
 {
@@ -74,14 +76,36 @@ SDL_Texture* SidebarUI::render()
   // Render resume/pause button
   SDL_SetRenderDrawColor(m_renderer, GRAY.r, GRAY.g, GRAY.b, GRAY.a);
   SDL_RenderFillRect(m_renderer, &resume_pause_button_rect);
-  renderText(resume_pause_button_rect.x + 2,
-             resume_pause_button_rect.y + 2,
-             replay_info.playing ? "Pause" : "Resume",
-             WHITE);
+  ui::common::renderText(resume_pause_button_rect.x + 2,
+                         resume_pause_button_rect.y + 2,
+                         12,
+                         false,
+                         replay_info.playing ? "Pause" : "Resume",
+                         WHITE);
 
   // Render playback info
-  renderText(12, 40, "Played packets: " + std::to_string(replay_info.packets_played), WHITE);
-  renderText(12, 56, " Total packets: " + std::to_string(replay_info.packets_total), WHITE);
+  ui::common::renderText(12, 40, 12, false, "Played packets: " + std::to_string(replay_info.packets_played), WHITE);
+  ui::common::renderText(12, 56, 12, false, " Total packets: " + std::to_string(replay_info.packets_total), WHITE);
+
+  // Test
+  /*
+  char c = 32;
+  for (int i = 0; i < 6; ++i)
+  {
+    std::ostringstream oss;
+    for (int j = 0; j < 32; ++j)
+    {
+      oss << (c != 127 ? c : ' ') << ' ';
+      c += 1;
+    }
+    ui::common::get_bitmap_font()->renderText(12, 100 + (i * 20), oss.str());
+
+    if (c == -128)
+    {
+      c = 160;
+    }
+  }
+   */
 
   return m_texture.get();
 }
@@ -96,25 +120,6 @@ void SidebarUI::onClick(int x, int y)
   {
     m_callbacks.onReplayStatusChange(!m_sidebar->getReplayInfo().playing);
   }
-}
-
-SDL_Rect SidebarUI::renderText(int x, int y, const std::string& text, const SDL_Color& color)
-{
-  auto* text_surface = TTF_RenderText_Blended(m_font, text.c_str(), color);
-  auto* text_texture = SDL_CreateTextureFromSurface(m_renderer, text_surface);
-  SDL_FreeSurface(text_surface);
-
-  int width;
-  int height;
-  if (SDL_QueryTexture(text_texture, nullptr, nullptr, &width, &height) != 0)
-  {
-    LOG_ABORT("%s: could not query text texture: %s", __func__, SDL_GetError());
-  }
-
-  const SDL_Rect dest = { x, y, width, height };
-  SDL_RenderCopy(m_renderer, text_texture, nullptr, &dest);
-
-  return { x, y, width, height };
 }
 
 }

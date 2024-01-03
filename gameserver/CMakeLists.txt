@@ -43,8 +43,11 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../data")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/items.xml"        "${CMAKE_BINARY_DIR}/data/items.xml"        COPYONLY)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/world.xml"        "${CMAKE_BINARY_DIR}/data/world.xml"        COPYONLY)
   endif()
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"         "${CMAKE_BINARY_DIR}/files/data.dat"   COPYONLY)
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat"       "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/data.dat"            "${CMAKE_BINARY_DIR}/files/data.dat"   COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/sprite.dat"          "${CMAKE_BINARY_DIR}/files/sprite.dat" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/tibiafont.txt"       "${CMAKE_BINARY_DIR}/files/font.txt"   COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/tibiafont.bmp"       "${CMAKE_BINARY_DIR}/files/font.bmp"   COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../data/replays_740/hej.trp" "${CMAKE_BINARY_DIR}/files/replay.trp" COPYONLY)
 endif()
 
 # -- Modules --
