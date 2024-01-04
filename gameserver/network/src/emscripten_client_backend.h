@@ -32,9 +32,9 @@
 #include <emscripten.h>
 #include <emscripten/val.h>
 
-#include "client_factory.h"
+#include "network/client_factory.h"
+#include "network/connection.h"
 #include "error_code.h"
-#include "connection.h"
 
 namespace network
 {

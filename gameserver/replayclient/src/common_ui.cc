@@ -42,16 +42,11 @@ TTF_Font* getFont(int size, bool bold)
   const auto key = std::to_string(size) + std::to_string(bold);
   if (fonts.count(key) == 0)
   {
-    // FIXME(simon): won't work for emscripten
-    TTF_Font* font;
-    if (!bold)
-    {
-      font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", size);
-    }
-    else
-    {
-      font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", size);
-    }
+#ifdef EMSCRIPTEN
+    TTF_Font* font = TTF_OpenFont("files/DejaVuSansMono.ttf", size);
+#else
+    TTF_Font* font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", size);
+#endif
 
     if (!font)
     {

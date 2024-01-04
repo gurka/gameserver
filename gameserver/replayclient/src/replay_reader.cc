@@ -26,7 +26,7 @@
 
 #include <iterator>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <SDL2/SDL.h>
 
 namespace
 {
@@ -160,14 +160,11 @@ bool Replay::timeForNextPacket()
 
 std::uint32_t Replay::getFakeTime(int speed)
 {
-  using boost::posix_time::ptime;
-  using boost::posix_time::microsec_clock;
-
-  static auto last_current_time = microsec_clock::universal_time();
+  static auto last_current_time = SDL_GetTicks();
   static auto last_fake_ms = 0U;
 
-  const auto current_time = microsec_clock::universal_time();
-  const auto elapsed_ms = (current_time - last_current_time).total_milliseconds();
+  const auto current_time = SDL_GetTicks();
+  const auto elapsed_ms = current_time - last_current_time;
 
   // Add an extra fake ms in case this function gets called too fast
   const auto fake_time_ms = last_fake_ms + (elapsed_ms * speed) + (elapsed_ms == 0 ? 1 : 0);
